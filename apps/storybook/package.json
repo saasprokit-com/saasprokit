@@ -27,7 +27,7 @@
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.3",
     "@repo/typescript-config": "workspace:*",
-    "@storybook/addon-onboarding": "^10.1.11",
+    "@storybook/addon-onboarding": "^10.3.5",
     "@storybook/addon-themes": "^10.1.11",
     "@storybook/nextjs-vite": "10.1.11",
     "@tailwindcss/postcss": "^4.1.16",
