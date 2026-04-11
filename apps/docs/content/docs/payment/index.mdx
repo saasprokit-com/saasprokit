@@ -1,0 +1,124 @@
+---
+title: Payment Overview
+description: Stripe integration architecture for subscriptions, billing, and webhooks
+---
+
+The project uses **Stripe** for all payment processing, integrated through the **Better Auth Stripe plugin** and a custom webhook layer. Billing is scoped to organizations — each organization has its own subscription.
+
+## Architecture
+
+```
+packages/
+├── payment/              # Plan definitions, guards, helpers, hooks
+├── utils/payment.ts      # Constants, pricing, Stripe price mapping
+└── auth/server.ts        # Better Auth Stripe plugin config
+
+apps/web/
+├── lib/billing/
+│   ├── stripe.ts                 # Stripe client singleton
+│   ├── webhook-handlers.ts       # Event handlers (emails, validation)
+│   └── subscription-queries.ts   # Database queries for subscriptions/usage
+├── app/api/stripe/webhook/       # Webhook POST endpoint
+└── app/[locale]/(app)/[orgSlug]/billing/
+    ├── page.tsx         # Billing dashboard
+    ├── actions.ts       # Server actions (checkout, portal, plan change)
+    ├── schemas.ts       # Zod validation
+    └── components/      # UI components
+```
+
+## Key Concepts
+
+### Organization-Scoped Billing
+
+Every subscription is tied to an organization via `referenceId`. Users don't have individual subscriptions — they manage billing through their organization.
+
+### Dual Integration
+
+1. **Better Auth Stripe Plugin** — Handles subscription sync to the database, customer creation, and plan authorization
+2. **Custom Webhook Handlers** — Send transactional emails and handle business logic beyond what the plugin provides
+
+### Three-Tier Subscription Model
+
+| Plan | Monthly | Annual | Members | Storage |
+|------|---------|--------|---------|---------|
+| Free | $0 | $0 | 1 | 100 MB |
+| Pro | $19 | $190 | 10 | 5 GB |
+| Enterprise | $49 | $490 | 50 | 50 GB |
+
+### Environment Variables
+
+```bash
+STRIPE_SECRET_KEY=""                    # Stripe API secret key
+STRIPE_WEBHOOK_SECRET=""                # Webhook signing secret
+STRIPE_FREE_PRICE_ID=""                 # Free plan price ID
+STRIPE_PRO_PRICE_ID_MONTHLY=""          # Pro monthly price ID
+STRIPE_PRO_PRICE_ID_ANNUAL=""           # Pro annual price ID
+STRIPE_ENTERPRISE_PRICE_ID_MONTHLY=""   # Enterprise monthly price ID
+STRIPE_ENTERPRISE_PRICE_ID_ANNUAL=""    # Enterprise annual price ID
+```
+
+## Package Exports
+
+```typescript
+// Plan configuration and utilities
+import { PLANS, getPlanConfig, getAllPlans } from "@repo/payment/plans";
+
+// Type definitions
+import type { Subscription, UsageStats, FeatureAccess } from "@repo/payment/types";
+
+// Downgrade validation
+import { guardDowngrade } from "@repo/payment/guards";
+
+// Display helpers (formatting, status colors)
+import { formatStorage, getStatusColor, calculateUsageStats } from "@repo/payment/helpers";
+
+// React hooks for client components
+import { useSubscription, useCancel } from "@repo/payment/hooks";
+
+// Constants (plan names, pricing, limits)
+import { PLAN_NAMES, PRICING, LIMITS } from "@repo/utils/payment";
+```
+
+## Data Models
+
+### Subscription
+
+```prisma
+model Subscription {
+  id                   String    @id @default(cuid())
+  plan                 String    // "free", "pro", "enterprise"
+  referenceId          String    // organizationId
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  status               String?   @default("incomplete")
+  periodStart          DateTime?
+  periodEnd            DateTime?
+  cancelAtPeriodEnd    Boolean?  @default(false)
+  seats                Int?
+}
+```
+
+### WebhookEvent
+
+Used for idempotent webhook processing — prevents duplicate email sends and state updates.
+
+```prisma
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String    // "stripe"
+  eventId     String    // Stripe event ID
+  eventType   String    // "invoice.paid", etc.
+  data        String    // Full event JSON
+  status      String    @default("pending")
+  attempts    Int       @default(0)
+
+  @@unique([provider, eventId])
+}
+```
+
+## Next Steps
+
+- [Plans & Pricing](/docs/payment/plans) — Plan configuration and limits
+- [Checkout Flow](/docs/payment/checkout-flow) — How subscriptions are created and changed
+- [Webhooks](/docs/payment/webhooks) — Event handling and idempotency
+- [Billing Page](/docs/payment/billing-page) — UI components and server actions

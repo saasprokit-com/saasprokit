@@ -1,0 +1,247 @@
+---
+title: Features
+description: Complete feature list of this SaaS boilerplate — authentication, billing, multi-tenancy, and more
+---
+
+Features are marked as: **Implemented** (working in code), **Partial** (scaffolded or basic implementation), or **Planned** (not yet built).
+
+## Authentication System
+
+### Sign-In Methods
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Email & Password | Implemented | Traditional email/password via Better Auth with email verification |
+| OAuth (Google, GitHub) | Implemented | Third-party sign-in via Better Auth plugins |
+| Magic Links | Implemented | Passwordless email link authentication (10-min expiry) |
+| Email OTP | Implemented | One-time password via email (5-min expiry) |
+| Two-Factor Authentication (2FA) | Implemented | TOTP-based with backup codes (6 digits, 5-min expiry) |
+| Account Linking | Implemented | Link multiple social providers (Google, GitHub) to one account |
+| Multi-Session Support | Implemented | Concurrent sessions with device tracking |
+| Session Management | Implemented | Secure cookie-based sessions with IP/UA tracking (7-day expiry) |
+
+### Account Management
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Sign-Up | Implemented | User registration with email verification enforced |
+| Password Reset | Implemented | Forgot password flow with email verification |
+| Profile Management | Implemented | Update name, avatar at `/account/profile` |
+| Security Settings | Implemented | View active sessions, enable/disable 2FA at `/account/security` |
+| Account Deletion | Implemented | Delete account with confirmation at `/account/danger` |
+| Email Change | Planned | Not yet implemented |
+
+### Auth Pages
+
+| Page | Route | Description |
+|------|-------|-------------|
+| Sign In | `/auth/sign-in` | Email, password, social, magic link, OTP options |
+| Sign Up | `/auth/sign-up` | Registration with email verification |
+| Forgot Password | `/auth/forgot-password` | Password reset request |
+| Reset Password | `/auth/reset-password` | Password reset with token |
+| Magic Link | `/auth/magic-link` | Passwordless auth via email |
+| Verify Email | `/auth/verify-email` | Email verification flow |
+| Two-Factor | `/auth/2fa` | 2FA challenge screen |
+
+## Multi-Organization Support
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Multiple Organizations per User | Implemented | Up to 10 orgs per user (configurable) |
+| Organization Creation | Implemented | Create new orgs at `/account/new-org` |
+| Auto Personal Workspace | Implemented | Created automatically on first login |
+| Organization Settings | Implemented | Configure name, logo, slug at `/[orgSlug]/settings` |
+| Organization Switcher | Implemented | Quick switching between orgs at `/org` |
+| Default Organization | Implemented | Set and remember preferred org |
+| Member Management | Implemented | Add, remove, suspend members at `/[orgSlug]/members` |
+| Role-Based Access Control | Implemented | Owner, Admin, Member org roles |
+| Member Suspension | Implemented | Suspend members with reason tracking |
+| Member Invitations | Implemented | Email-based invitations with 7-day expiry |
+| Bulk Invitations | Implemented | Invite multiple members at once |
+| Resend Invitations | Implemented | Re-send pending invitations |
+| Invite Links | Implemented | Shareable links with max uses and expiry |
+| Revoke Invite Links | Implemented | Deactivate and bulk-revoke links |
+| Teams within Organizations | Partial | Schema exists (Team, TeamMember models), UI not built |
+
+### Organization Limits by Plan
+
+| Plan | Members | Storage | Organizations | Teams | Price |
+|------|---------|---------|---------------|-------|-------|
+| Free | 1 | 100 MB | 1 | 0 | $0 |
+| Pro | 10 | 5 GB | 3 | 5 | $19/mo or $190/yr |
+| Enterprise | Unlimited | Unlimited | 10 | Unlimited | $49/mo or $490/yr |
+
+## Billing & Payment
+
+### Subscription Management
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Subscription Plans | Implemented | Free, Pro ($19/mo), Enterprise ($49/mo) |
+| Plan Upgrade/Downgrade | Implemented | Upgrade/downgrade via Stripe Checkout |
+| Monthly & Annual Billing | Implemented | Annual discount (~17% savings) |
+| Cancellation | Implemented | Cancel, pause, and reactivate subscriptions |
+| Stripe Integration | Implemented | Checkout, webhooks, customer portal |
+| Auto Customer Creation | Implemented | Stripe customer created on signup |
+| Webhook Processing | Implemented | Idempotent Stripe event handling with deduplication |
+| Checkout Flow | Implemented | Checkout with success and canceled pages |
+| Manage Billing | Implemented | Update payment methods via Stripe portal |
+| Usage Stats | Implemented | Display resource usage per org |
+| Free Org Limit | Implemented | Max 1 free org per user; additional require paid plan |
+| Trial Period | Partial | Schema supports trial dates, not wired to checkout |
+| Invoice History | Planned | View past invoices (via Stripe portal link only) |
+| Usage-Based Pricing | Planned | Not implemented |
+| Coupon Support | Planned | Not implemented |
+
+## Multi-Language & Internationalization
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Multiple Languages | Implemented | English, Spanish, French, German, Portuguese, Chinese |
+| Locale-Based Routing | Implemented | `/[locale]/...` URL structure |
+| Language Switching | Implemented | Language selector in UI |
+| SEO-Friendly URLs | Implemented | Locale in URL path |
+| Dictionary-Based Translations | Implemented | Type-safe dictionary access with English fallback |
+| Translation Automation | Implemented | Languine config for automated translation |
+| RTL Support | Planned | Not implemented |
+
+## File Management & Storage
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| File Upload | Implemented | Upload API at `/api/upload` with MIME validation |
+| Local Storage | Implemented | Local filesystem storage provider |
+| S3 Storage | Implemented | AWS S3 provider with configurable credentials |
+| Per-Plan Storage Quotas | Implemented | 100 MB / 5 GB / 50 GB per plan |
+| File Metadata | Implemented | Tracks filename, size, mime type, provider |
+| Allowed Types | Implemented | JPEG, PNG, WebP, GIF, SVG |
+| Soft Delete | Implemented | Files can be soft-deleted with timestamp |
+| File Sharing | Planned | Not implemented |
+| File Versioning | Planned | Not implemented |
+
+## Email System
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Email Preview | Implemented | Preview templates in email app (port 3003) |
+| Email Templating | Implemented | 24 React Email templates with components |
+| Resend Integration | Implemented | Primary email provider via Resend API |
+| Nodemailer (SMTP) | Implemented | Fallback SMTP provider |
+| Pluggable Providers | Implemented | Swap between Resend and Nodemailer |
+
+### Email Templates (24 total)
+
+| Category | Templates |
+|----------|-----------|
+| Auth | Email verification, password reset, magic link, sign-in OTP, verification OTP, 2FA OTP, password changed, account locked, new device login |
+| Organization | Invitation, invitation accepted, role changed, member removed |
+| Billing | Subscription started, upgraded, downgraded, renewed, cancelled, payment receipt, payment failed |
+| Account | Welcome, account deleted |
+| Content | Article published |
+
+## Security
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Security Headers | Implemented | HSTS, X-Frame-Options, X-Content-Type-Options, X-XSS-Protection |
+| Content Security Policy | Implemented | Per-request nonce-based CSP |
+| CSRF Protection | Implemented | Origin header validation on server actions |
+| Permissions Policy | Implemented | Disables camera, microphone, geolocation, payment, USB |
+| Password Hashing | Implemented | Via Better Auth (bcrypt) |
+| Session Security | Implemented | Secure cookies, 7-day expiry, revocation on password reset |
+| Webhook Signature Verification | Implemented | Stripe webhook signature validation |
+| Idempotent Webhook Processing | Implemented | WebhookEvent deduplication model |
+| SQL Injection Prevention | Implemented | All queries via Prisma ORM (parameterized) |
+| Audit Logging | Implemented | AuditLog model for user actions with IP tracking |
+| Edge Route Protection | Implemented | `proxy.ts` for auth checks |
+| Rate Limiting | Partial | Architecture supports it via Better Auth config |
+
+## Monitoring & Logging
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Structured Logging | Implemented | Pino logger (separate server + client exports) |
+| Audit Logging | Implemented | AuditLog model for user actions (password, 2FA, sessions) |
+| Health Check | Implemented | `/api/health` endpoint with database + auth validation |
+| User Activity Tracking | Implemented | `/api/user/activity` endpoint |
+| Error Boundaries | Implemented | React error boundary components |
+| Error Tracking | Partial | Sentry integration ready, needs DSN config |
+
+## SEO & Metadata
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Dynamic Metadata | Implemented | Per-page title, description, keywords |
+| Open Graph | Implemented | OG tags for social sharing |
+| Twitter Cards | Implemented | Twitter card metadata |
+| JSON-LD | Implemented | Structured data schema |
+| Sitemap | Implemented | Auto-generated sitemap |
+| Canonical URLs | Implemented | Canonical link tags |
+
+## Design System
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| UI Components | Implemented | 50+ shadcn/ui components (Radix-based) |
+| Landing Page Blocks | Implemented | 11 blocks: hero, pricing, testimonials, FAQ, CTA, etc. |
+| Dark Mode | Implemented | Theme provider with dark mode toggle |
+| Responsive Design | Implemented | Mobile-first responsive layouts |
+| Direct Imports | Implemented | No barrel imports — always import from source files |
+
+## Developer Experience
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| TypeScript | Implemented | Full type safety across all packages |
+| Turborepo | Implemented | Build orchestration with caching |
+| Component Library | Implemented | shadcn/ui components via design-system package |
+| Storybook | Implemented | Component documentation (port 6006) |
+| Documentation Site | Implemented | Fumadocs-powered docs (port 3004) |
+| Email Preview | Implemented | React Email preview app (port 3003) |
+| Prisma Studio | Implemented | Database inspection (port 3005) |
+| Biome Linting | Implemented | Automated linting and formatting via ultracite |
+| Hot Module Reload | Implemented | Fast development refresh via Turbopack |
+| Code Generation | Implemented | Prisma schema to TypeScript types |
+
+## Testing
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Unit Tests | Partial | 26 tests in auth package only; web, payment, storage have configs but no tests |
+| E2E Tests | Implemented | 428 Playwright tests across 34 spec files (auth, account, org, billing) |
+| Integration Tests | Planned | Not yet implemented |
+
+## Infrastructure & DevOps
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Monorepo Setup | Implemented | pnpm workspaces with Turborepo |
+| Database Migrations | Implemented | Prisma migrate and db push |
+| Database Seeding | Implemented | Comprehensive seed script |
+| CI/CD | Implemented | GitHub Actions workflows |
+| Docker Support | Partial | Dockerfile exists for docs app |
+
+## Feature Coverage by Package
+
+| Package | Features |
+|---------|----------|
+| `@repo/auth` | Authentication, dual RBAC (admin + org), permissions, 2FA, magic links, email OTP |
+| `@repo/database` | Prisma schema, client, types, migrations |
+| `@repo/payment` | Stripe billing, subscriptions, plan management, checkout |
+| `@repo/email` | 24 React Email templates with Resend + Nodemailer |
+| `@repo/design-system` | 50+ shadcn/ui components, 11 landing page blocks, dark mode |
+| `@repo/storage` | File uploads with local + S3 providers, quota management |
+| `@repo/seo` | Meta tags, Open Graph, Twitter cards, JSON-LD, sitemap |
+| `@repo/internationalization` | 6 languages, locale routing, dictionary translations |
+| `@repo/logger` | Structured logging with Pino (server + client) |
+| `@repo/utils` | Date, payment, slug, organization, storage, user utilities |
+
+## Feature Coverage by App
+
+| App | Port | Features |
+|-----|------|----------|
+| `web` | 3000 | Authentication, billing, org management, account settings, file uploads |
+| `docs` | 3004 | Documentation and guides (Fumadocs) |
+| `email` | 3003 | Email template preview (React Email) |
+| `storybook` | 6006 | Component showcase and design system |
+| `studio` | 3005 | Database inspection (Prisma Studio) |

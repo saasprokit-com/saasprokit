@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "shadcn": {
+      "command": "npx",
+      "args": ["shadcn@latest", "mcp"]
+    },
+    "better-auth": {
+      "command": "npx",
+      "args": ["-y", "@better-auth/mcp"]
+    }
+  }
+}

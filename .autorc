@@ -1,0 +1,7 @@
+{
+  "plugins": ["pnpm", "released"],
+  "owner": "luannguyenbkit",
+  "repo": "",
+  "name": "Luan Nguyen",
+  "email": "luannguyenbkit@gmail.com"
+}

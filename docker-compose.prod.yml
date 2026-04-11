@@ -1,0 +1,142 @@
+# =============================================================================
+# Docker Compose — Production
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yml build
+#   docker compose -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.prod.yml down
+#
+# Build with public env vars:
+#   NEXT_PUBLIC_APP_URL=https://app.example.com \
+#   NEXT_PUBLIC_DOCS_URL=https://docs.example.com \
+#   docker compose -f docker-compose.prod.yml build
+#
+# Environment variables:
+#   Copy .env.example to .env and fill in production values, or pass
+#   them via the host environment. Secrets should NEVER be baked into images.
+# =============================================================================
+
+services:
+  # ============================================================================
+  # Infrastructure
+  # ============================================================================
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres-prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-prod}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-next_forge}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-prod}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+
+  # ============================================================================
+  # Application Services
+  # ============================================================================
+
+  # Web — Main SaaS application
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+        - NEXT_PUBLIC_DOCS_URL=${NEXT_PUBLIC_DOCS_URL:-http://localhost:3004}
+    container_name: web-prod
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-prod}:${POSTGRES_PASSWORD:?err}@postgres:5432/${POSTGRES_DB:-next_forge}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3000}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - STRIPE_PRO_PRICE_ID_MONTHLY=${STRIPE_PRO_PRICE_ID_MONTHLY:-}
+      - STRIPE_PRO_PRICE_ID_ANNUAL=${STRIPE_PRO_PRICE_ID_ANNUAL:-}
+      - STRIPE_ENTERPRISE_PRICE_ID_MONTHLY=${STRIPE_ENTERPRISE_PRICE_ID_MONTHLY:-}
+      - STRIPE_ENTERPRISE_PRICE_ID_ANNUAL=${STRIPE_ENTERPRISE_PRICE_ID_ANNUAL:-}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - EMAIL_FROM=${EMAIL_FROM:-noreply@example.com}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+      - CRON_SECRET=${CRON_SECRET:-}
+      - STORAGE_PROVIDER=${STORAGE_PROVIDER:-local}
+      - STORAGE_LOCAL_PATH=${STORAGE_LOCAL_PATH:-./public/uploads}
+      - STORAGE_BASE_URL=${STORAGE_BASE_URL:-http://localhost:3000}
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/apps/web/.next/cache
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+
+  # Docs — Documentation site
+  docs:
+    build:
+      context: .
+      dockerfile: apps/docs/Dockerfile
+    container_name: docs-prod
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - frontend
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/apps/docs/.next/cache
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3004"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+
+volumes:
+  postgres_prod_data:
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge

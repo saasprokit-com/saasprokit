@@ -1,0 +1,103 @@
+---
+title: Testing Overview
+description: Test strategy, coverage summary, and how to run tests in this SaaS boilerplate
+---
+
+## Test Strategy
+
+This project uses two levels of testing:
+
+| Type | Tool | Location | Test Cases | Status |
+|------|------|----------|------------|--------|
+| **E2E Tests** | Playwright | `apps/web/e2e/` | **428** | Comprehensive |
+| **Unit Tests** | Vitest | `packages/auth/` | **26** | Minimal |
+| **Integration Tests** | — | — | **0** | Not started |
+
+**Total test cases: 454**
+
+## Coverage Summary
+
+### E2E Coverage by Feature Area
+
+| Feature Area | Files | Test Cases | Coverage |
+|-------------|-------|------------|----------|
+| Home / Landing Page | 1 | 20 | High — hero, pricing, CTAs, responsive, navigation |
+| Authentication (sign-in, sign-up, password reset, magic link, email OTP, 2FA, verify email) | 17 | 166 | High — all auth flows covered |
+| Account Management (profile, security, danger zone, new org) | 4 | 52 | High — CRUD, validation, 2FA setup, account deletion |
+| Organization (dashboard, settings, selection) | 3 | 39 | High — display, navigation, settings CRUD |
+| Members & Invitations | 3 | 63 | High — tables, search, filters, invite flows, invite links |
+| Billing & Payment | 6 | 69 | High — plans, checkout, success/canceled, guards, plan changes |
+| Invite Accept & Preview | 2 | 27 | High — invalid tokens, error states, navigation |
+| **Total** | **34** (deduplicated) | **428** | |
+
+### Unit Test Coverage
+
+| Package | File | Test Cases | Coverage |
+|---------|------|------------|----------|
+| `@repo/auth` | `permissions.test.ts` | 26 | Roles, permissions, RBAC authorization |
+| `@repo/payment` | — | 0 | No unit tests |
+| `@repo/storage` | — | 0 | No unit tests |
+| `@repo/utils` | — | 0 | No unit tests |
+
+### Uncovered Areas
+
+| Area | Type Needed | Priority |
+|------|-------------|----------|
+| Payment utilities (plan helpers, eligibility) | Unit | Medium |
+| Storage quota validation | Unit | Medium |
+| Slug generation & validation | Unit | Low |
+| Date utilities | Unit | Low |
+| Server actions (org CRUD, billing) | Integration | High |
+| Stripe webhook processing | Integration | High |
+| Auth middleware / session validation | Integration | Medium |
+
+## Running Tests
+
+### E2E Tests (Playwright)
+
+```bash
+# Run all E2E tests
+pnpm --filter web test:e2e
+
+# Run with browser UI
+pnpm --filter web test:e2e:ui
+
+# Run a specific test file
+pnpm --filter web test:e2e -- --grep "Sign In"
+
+# Run a specific test by ID
+pnpm --filter web test:e2e -- --grep "TC-05-05"
+```
+
+### Unit Tests (Vitest)
+
+```bash
+# Run all unit tests
+pnpm test
+
+# Run tests for a specific package
+pnpm --filter auth test
+pnpm --filter web test
+
+# Run in watch mode
+pnpm --filter auth test -- --watch
+```
+
+## Test File Organization
+
+### E2E Tests
+
+E2E tests are organized in two structures:
+
+**Numbered flow tests** (`apps/web/e2e/01-*.spec.ts` through `24-*.spec.ts`):
+Sequential page-by-page tests covering every screen in the app. Each file covers one page with both UI display tests and functional tests.
+
+**Categorized domain tests** (`apps/web/e2e/auth/`, `apps/web/e2e/payment/`):
+Focused domain-specific tests that group related functionality. These overlap with the numbered tests but use a different naming convention (e.g. `SI-01` vs `TC-02-01`).
+
+### Unit Tests
+
+Unit tests are co-located with source files in `packages/`:
+```
+packages/auth/permissions.test.ts
+```

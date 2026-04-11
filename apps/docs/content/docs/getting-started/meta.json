@@ -1,0 +1,13 @@
+{
+  "title": "Getting Started",
+  "icon": "Rocket",
+  "pages": [
+    "index",
+    "requirements",
+    "structure",
+    "project-goals",
+    "deployment",
+    "features",
+    "environment"
+  ]
+}

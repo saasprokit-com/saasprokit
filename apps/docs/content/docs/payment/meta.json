@@ -1,0 +1,11 @@
+{
+  "title": "Payment",
+  "icon": "CreditCard",
+  "pages": [
+    "index",
+    "plans",
+    "checkout-flow",
+    "webhooks",
+    "billing-page"
+  ]
+}

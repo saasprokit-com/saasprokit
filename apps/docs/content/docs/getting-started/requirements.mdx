@@ -1,0 +1,220 @@
+---
+title: Requirements
+description: System requirements and dependencies needed to run the project
+---
+
+## System Requirements
+
+### Minimum Requirements
+
+- **Node.js**: 18.0.0 or higher (recommended 20+ LTS)
+- **pnpm**: 8+ (required, project uses pnpm workspaces)
+- **Git**: 2.0 or higher
+- **Operating System**: macOS, Linux, or Windows (WSL2 recommended for Windows)
+
+### Recommended Setup
+
+- **Node.js**: 20.11+ (LTS)
+- **pnpm**: 9.0+
+- **RAM**: 8GB minimum (16GB recommended for smooth development)
+- **Disk Space**: 5GB+ for dependencies and build artifacts
+- **Terminal**: zsh or bash on Unix-like systems
+
+## Software Dependencies
+
+### Core Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| Next.js | 16.x | React framework with App Router |
+| React | 19.x | UI library |
+| TypeScript | 5.9+ | Type safety |
+| Prisma | 6.x | ORM and database client |
+
+### Authentication & Database
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| Better Auth | Latest | Authentication framework with RBAC |
+| PostgreSQL | 12+ | Database |
+
+### Styling & UI
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| Tailwind CSS | 4.x | Utility-first CSS framework |
+| Radix UI | Latest | Headless UI components |
+| shadcn/ui | Latest | Pre-built component library |
+| Lucide React | Latest | Icon library |
+
+### Development Tools
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| Biome | 2.x | Linting and formatting |
+| Vitest | 4.x | Testing framework |
+| Turborepo | Latest | Build orchestration |
+| Fumadocs | 16.x | Documentation framework |
+
+## External Services
+
+### Required for Production
+
+1. **Database**
+   - PostgreSQL 12+ instance
+   - Recommended: Neon (serverless PostgreSQL)
+   - Alternative: Self-hosted or AWS RDS
+
+2. **Authentication**
+   - Better Auth configured with PostgreSQL adapter
+   - OAuth applications (Google, GitHub) — optional but recommended
+
+3. **Email Service**
+   - Resend (recommended) for transactional emails
+   - Used for sign-up confirmations, password resets, invitations
+
+4. **Payment Processing**
+   - Stripe account (test or live)
+   - For subscription billing and payment handling
+
+### Optional
+
+- **File Storage**: AWS S3 or compatible (Cloudflare R2) for cloud uploads
+- **Monitoring**: Sentry for error tracking
+- **Logging**: Pino configured out of the box
+
+## Environment Variables
+
+### Required
+
+```bash
+# Database
+DATABASE_URL=postgresql://user:password@host:5432/database
+
+# Better Auth
+BETTER_AUTH_SECRET=generate-random-string-32-chars-min
+BETTER_AUTH_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### Optional (recommended)
+
+```bash
+# Stripe
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_test_...
+STRIPE_PRO_PRICE_ID_MONTHLY=price_...
+STRIPE_PRO_PRICE_ID_ANNUAL=price_...
+STRIPE_ENTERPRISE_PRICE_ID_MONTHLY=price_...
+STRIPE_ENTERPRISE_PRICE_ID_ANNUAL=price_...
+
+# OAuth
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+
+# Email
+RESEND_API_KEY=...
+EMAIL_FROM=noreply@yourdomain.com
+
+# Storage
+STORAGE_PROVIDER=local
+```
+
+## Development Environment Setup
+
+### macOS with Homebrew
+
+```bash
+# Install Node.js LTS
+brew install node@20
+
+# Install pnpm
+npm install -g pnpm@latest
+
+# Install Git (usually pre-installed)
+brew install git
+```
+
+### Ubuntu/Debian
+
+```bash
+# Install Node.js LTS
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Install pnpm
+npm install -g pnpm@latest
+
+# Install Git
+sudo apt-get install -y git
+```
+
+### Windows (WSL2)
+
+```bash
+# Install Node.js LTS via WSL
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Install pnpm
+npm install -g pnpm@latest
+
+# Install Git
+sudo apt-get install -y git
+```
+
+## Database Setup
+
+### Local PostgreSQL
+
+```bash
+# Install PostgreSQL
+brew install postgresql@15  # macOS
+
+# Start PostgreSQL
+brew services start postgresql@15
+
+# Create database
+createdb next_forge_dev
+
+# Set DATABASE_URL
+export DATABASE_URL="postgresql://localhost/next_forge_dev"
+```
+
+### Neon (Recommended for Development)
+
+1. Create account at [neon.tech](https://neon.tech)
+2. Create a new project
+3. Copy the connection string to `.env.local`
+4. Run: `pnpm migrate`
+
+## IDE Recommendations
+
+### Visual Studio Code Extensions
+
+- **Tailwind CSS IntelliSense**
+- **Prisma** — Schema highlighting and formatting
+- **Biome** — Linting integration
+
+## Verification
+
+To verify your setup is correct:
+
+```bash
+# Check Node version
+node --version  # Should be 18.0.0 or higher
+
+# Check pnpm version
+pnpm --version  # Should be 8.0.0 or higher
+
+# Check Git version
+git --version  # Should be 2.0 or higher
+
+# Test project setup
+pnpm install
+pnpm build
+```
+
+If all commands succeed without errors, your environment is ready for development.

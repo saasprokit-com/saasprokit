@@ -1,0 +1,26 @@
+{
+  "name": "@repo/payment",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test": "vitest run"
+  },
+  "exports": {
+    "./plans": "./plans.ts",
+    "./guards": "./guards.ts",
+    "./helpers": "./helpers.ts",
+    "./types": "./types.ts",
+    "./hooks": "./hooks.ts"
+  },
+  "dependencies": {
+    "@repo/auth": "workspace:*",
+    "@repo/utils": "workspace:*",
+    "zod": "^4.1.12"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0"
+  }
+}

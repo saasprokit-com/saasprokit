@@ -1,0 +1,176 @@
+---
+title: Webhooks
+description: Stripe webhook handling, event processing, and idempotency
+---
+
+## Webhook Endpoint
+
+The webhook handler is at `apps/web/app/api/stripe/webhook/route.ts`. It processes incoming Stripe events with signature verification and idempotency.
+
+### Processing Flow
+
+```
+Stripe sends POST to /api/stripe/webhook
+  ↓
+1. Verify signature using STRIPE_WEBHOOK_SECRET
+  ↓
+2. Check idempotency (WebhookEvent table)
+   - Skip if already processed or max retries exceeded
+  ↓
+3. Store webhook event data in database
+  ↓
+4. Run custom handlers (emails, business logic)
+  ↓
+5. Pass to Better Auth Stripe plugin (subscription sync)
+  ↓
+6. Mark event as processed (or failed)
+  ↓
+7. Return 200 to Stripe (always, regardless of processing result)
+```
+
+## Handled Events
+
+Only whitelisted event types are processed by custom handlers:
+
+| Event | Handler | Action |
+|-------|---------|--------|
+| `checkout.session.completed` | `handleCheckoutSessionCompleted` | Sends "subscription started" email |
+| `customer.subscription.updated` | `handleCustomerSubscriptionUpdated` | Sends upgrade or downgrade email |
+| `customer.subscription.deleted` | `handleCustomerSubscriptionDeleted` | Sends cancellation email with access-until date |
+| `invoice.payment_failed` | `handleInvoicePaymentFailed` | Sends payment failure email with retry date |
+| `invoice.paid` | `handleInvoicePaid` | Sends renewal email (only for `subscription_cycle` billing reason) |
+
+New event types must be explicitly added to the whitelist in `apps/web/lib/billing/stripe.ts`.
+
+## Idempotency
+
+The `WebhookEvent` model ensures each Stripe event is processed exactly once:
+
+```typescript
+// 1. Check if event was already processed
+const existing = await checkWebhookIdempotency(eventId, provider);
+if (existing.alreadyProcessed) return; // Skip
+
+// 2. Store event data
+await storeWebhookEventData({ provider, eventId, eventType, data });
+
+// 3. Process event...
+
+// 4. Mark as processed or failed
+await markEventProcessed(eventId, provider);
+// or
+await markEventFailed(eventId, provider, error);
+```
+
+This prevents duplicate email sends when Stripe retries failed deliveries.
+
+## Event Handlers
+
+### checkout.session.completed
+
+Triggered when a user completes the Stripe checkout page.
+
+```typescript
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+  // 1. Validate metadata with Zod schema
+  // 2. Verify user and organization exist in database
+  // 3. Send "subscription started" email with:
+  //    - Plan name, billing interval
+  //    - Dashboard URL
+}
+```
+
+### customer.subscription.updated
+
+Triggered when a subscription's plan or status changes.
+
+```typescript
+async function handleCustomerSubscriptionUpdated(
+  subscription: Stripe.Subscription,
+  previousAttributes: Partial<Stripe.Subscription>
+) {
+  // 1. Compare previous vs new plan tier
+  // 2. Determine if upgrade or downgrade
+  // 3. Send appropriate email
+}
+```
+
+### customer.subscription.deleted
+
+Triggered when a subscription is fully canceled (after the billing period ends).
+
+```typescript
+async function handleCustomerSubscriptionDeleted(subscription: Stripe.Subscription) {
+  // 1. Extract access-until date from current_period_end
+  // 2. Send cancellation email with:
+  //    - Access-until date
+  //    - Link to billing page for reactivation
+}
+```
+
+### invoice.payment_failed
+
+Triggered when an automatic payment attempt fails.
+
+```typescript
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  // 1. Retrieve subscription from invoice
+  // 2. Send payment failure email with:
+  //    - Amount due
+  //    - Failure reason
+  //    - Next retry date
+}
+```
+
+### invoice.paid
+
+Triggered when an invoice is successfully paid.
+
+```typescript
+async function handleInvoicePaid(invoice: Stripe.Invoice) {
+  // Only process "subscription_cycle" billing reason
+  // (Skip initial payment — handled by checkout.session.completed)
+  // Send renewal email with:
+  //   - Amount paid, billing interval
+  //   - Next billing date
+}
+```
+
+## Metadata Validation
+
+All Stripe metadata is validated with Zod schemas before use:
+
+```typescript
+// Checkout session metadata
+const metadata = validateStripeCheckoutSessionMetadata(session.metadata);
+// { organizationId, organizationSlug, userId, planName, billingInterval }
+
+// Subscription metadata
+const metadata = validateStripeSubscriptionMetadata(subscription.metadata);
+```
+
+This prevents type confusion and ensures data integrity across the webhook pipeline.
+
+## Stripe Setup
+
+### Create Webhook Endpoint
+
+1. Go to [Stripe Dashboard](https://dashboard.stripe.com) > Developers > Webhooks
+2. Add endpoint: `{NEXT_PUBLIC_APP_URL}/api/stripe/webhook`
+3. Subscribe to these events:
+   - `checkout.session.completed`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+   - `invoice.payment_failed`
+   - `invoice.paid`
+4. Copy the signing secret to `STRIPE_WEBHOOK_SECRET`
+
+### Local Development
+
+Use the Stripe CLI to forward webhooks locally:
+
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+
+The CLI prints a webhook signing secret — use it as `STRIPE_WEBHOOK_SECRET` in `.env.local`.

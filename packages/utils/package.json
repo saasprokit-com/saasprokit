@@ -1,0 +1,20 @@
+{
+  "name": "@repo/utils",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./slug": "./slug.ts",
+    "./date": "./date.ts",
+    "./organization": "./organization.ts",
+    "./payment": "./payment.ts",
+    "./storage": "./storage.ts",
+    "./user": "./user.ts"
+  },
+  "dependencies": {
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.0.0"
+  }
+}

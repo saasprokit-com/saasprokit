@@ -1,0 +1,462 @@
+---
+title: Database Design
+description: Database schema and data models used in next-nest-monorepo
+---
+
+## Overview
+
+The project uses **PostgreSQL** with **Prisma ORM**. The schema supports multi-tenancy with organization-scoped data isolation and dual RBAC.
+
+**Schema location**: `packages/database/prisma/schema.prisma`
+
+## Core Models
+
+### User
+
+Represents a user account in the system.
+
+```prisma
+model User {
+  id                    String       @id @default(cuid())
+  name                  String
+  email                 String       @unique
+  emailVerified         Boolean      @default(false)
+  image                 String?
+  role                  String?      @default("user")    // "admin" | "moderator" | "user"
+  banned                Boolean?     @default(false)
+  banReason             String?
+  banExpires            DateTime?
+  twoFactorEnabled      Boolean?     @default(false)
+  stripeCustomerId      String?
+  firstName             String?
+  lastName              String?
+  defaultOrganizationId String?
+  lastActiveAt          DateTime?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  // Relations
+  sessions              Session[]
+  accounts              Account[]
+  twofactors            TwoFactor[]
+  members               Member[]
+  invitations           Invitation[]
+  createdInviteLinks    InviteLink[]
+  uploadedFiles         File[]
+  auditLogs             AuditLog[]
+  teamMembers           TeamMember[]
+
+  @@map("user")
+}
+```
+
+**Key fields:**
+- `role` — Platform-level role: `admin`, `moderator`, or `user`
+- `banned` / `banReason` / `banExpires` — User banning system
+- `twoFactorEnabled` — Whether 2FA is active
+- `stripeCustomerId` — Stripe customer ID (user-level)
+- `defaultOrganizationId` — Preferred org for login redirect
+
+### Account
+
+Authentication provider accounts linked to users.
+
+```prisma
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String        // "credential" | "google" | "github"
+  userId                String
+  password              String?       // Hashed password (credential provider only)
+  accessToken           String?
+  refreshToken          String?
+  scope                 String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user                  User      @relation(...)
+
+  @@map("account")
+}
+```
+
+**Purpose:** Allows users to link multiple auth providers (email/password, Google, GitHub) to one account.
+
+### Session
+
+Active user sessions for authentication.
+
+```prisma
+model Session {
+  id                   String      @id @default(cuid())
+  token                String      @unique
+  expiresAt            DateTime
+  ipAddress            String?
+  userAgent            String?
+  userId               String
+  impersonatedBy       String?
+  activeOrganizationId String?
+  activeTeamId         String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  user                 User        @relation(...)
+  csrfTokens           CSRFToken[]
+
+  @@map("session")
+}
+```
+
+**Key fields:**
+- `activeOrganizationId` — Currently active org in session
+- `impersonatedBy` — Admin impersonation tracking
+
+### Verification
+
+Verification tokens for email confirmation and password resets.
+
+```prisma
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String       // email or phone
+  value      String       // token value
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+```
+
+### TwoFactor
+
+TOTP-based two-factor authentication data.
+
+```prisma
+model TwoFactor {
+  id          String @id @default(cuid())
+  secret      String     // TOTP secret
+  backupCodes String     // JSON array of backup codes
+  userId      String
+
+  user        User   @relation(...)
+
+  @@map("twoFactor")
+}
+```
+
+## Organization Models
+
+### Organization
+
+Represents a team, company, or workspace.
+
+```prisma
+model Organization {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  logo        String?
+  metadata    String?          // JSON (industry, size, website, etc.)
+  createdAt   DateTime     @default(now())
+
+  members     Member[]
+  invitations Invitation[]
+  inviteLinks InviteLink[]
+  teams       Team[]
+
+  @@map("organization")
+}
+```
+
+**Key fields:**
+- `slug` — URL-friendly identifier (globally unique)
+- `metadata` — JSON string for extensible org data
+
+### Member
+
+Users belonging to an organization with roles.
+
+```prisma
+model Member {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  role           String       @default("member")    // "owner" | "admin" | "member"
+  createdAt      DateTime     @default(now())
+  suspendedAt    DateTime?
+  suspendedBy    String?
+  suspendReason  String?
+
+  organization   Organization @relation(...)
+  user           User         @relation(...)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([userId, organizationId])
+  @@map("member")
+}
+```
+
+**Roles:**
+- `owner` — Full control, can delete org, manage billing
+- `admin` — Manage members, settings, content
+- `member` — Limited access, view-only on settings
+
+**Suspension:** Members can be suspended with reason tracking.
+
+### Invitation
+
+Pending invitations to join an organization.
+
+```prisma
+model Invitation {
+  id             String       @id @default(cuid())
+  organizationId String
+  email          String
+  role           String?
+  status         String       @default("pending")    // "pending" | "accepted" | "declined"
+  expiresAt      DateTime
+  inviterId      String
+  teamId         String?
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(...)
+  user           User         @relation(...)     // inviter
+
+  @@map("invitation")
+}
+```
+
+### InviteLink
+
+Shareable invite links for organizations.
+
+```prisma
+model InviteLink {
+  id             String       @id @default(cuid())
+  organizationId String
+  token          String       @unique
+  role           String       @default("member")
+  expiresAt      DateTime?
+  maxUses        Int?
+  usedCount      Int          @default(0)
+  isActive       Boolean      @default(true)
+  createdById    String
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(...)
+  createdBy      User         @relation(...)
+
+  @@map("invite_link")
+}
+```
+
+**Purpose:** Reusable invite links with optional expiry and max usage limits.
+
+## Subscription & Billing
+
+### Subscription
+
+Subscription plan for a user or organization.
+
+```prisma
+model Subscription {
+  id                   String    @id @default(cuid())
+  plan                 String        // "free" | "pro" | "enterprise"
+  referenceId          String        // User ID or Organization ID
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  status               String?   @default("incomplete")
+  periodStart          DateTime?
+  periodEnd            DateTime?
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  cancelAtPeriodEnd    Boolean?  @default(false)
+  seats                Int?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@map("subscription")
+}
+```
+
+**Key fields:**
+- `referenceId` — Polymorphic reference to either a User or Organization
+- `seats` — Number of seats included (-1 for unlimited)
+- `status` — Stripe subscription status (active, trialing, canceled, etc.)
+
+## Teams
+
+### Team
+
+Teams within an organization for sub-group management.
+
+```prisma
+model Team {
+  id             String       @id @default(cuid())
+  name           String
+  organizationId String
+  members        TeamMember[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(...)
+
+  @@map("team")
+}
+```
+
+### TeamMember
+
+```prisma
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  team      Team     @relation(...)
+  user      User     @relation(...)
+
+  @@map("teamMember")
+}
+```
+
+## File Storage
+
+### File
+
+Tracks uploaded files with polymorphic attachment support.
+
+```prisma
+model File {
+  id             String    @id @default(cuid())
+  filename       String
+  storagePath    String    @unique
+  publicUrl      String?
+  mimeType       String
+  size           Int           // bytes
+  provider       String        // "local" | "s3"
+  bucket         String?
+  visibility     String    @default("public")    // "public" | "private"
+  attachableType String?       // Polymorphic type
+  attachableId   String?       // Polymorphic ID
+  uploadedById   String?
+  deletedAt      DateTime?     // Soft delete
+  metadata       String?       // JSON (dimensions, alt text, tags)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  uploadedBy     User?     @relation(...)
+
+  @@map("file")
+}
+```
+
+## Audit & Security Models
+
+### AuditLog
+
+Tracks user actions for security and compliance.
+
+```prisma
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String       // "password_changed", "profile_updated", "2fa_enabled", etc.
+  changes   String?      // JSON with before/after values
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(...)
+
+  @@map("audit_log")
+}
+```
+
+### CSRFToken
+
+Cross-site request forgery protection tokens.
+
+```prisma
+model CSRFToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  sessionId String
+  expiresAt DateTime
+  usedAt    DateTime?     // Grace period: retry within 5s of first use
+  createdAt DateTime  @default(now())
+
+  session   Session   @relation(...)
+
+  @@map("csrf_token")
+}
+```
+
+### WebhookEvent
+
+Idempotent webhook event processing and tracking.
+
+```prisma
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String        // "stripe", "github", etc.
+  eventId     String        // Provider's event ID
+  eventType   String        // "invoice.paid", "subscription.created", etc.
+  data        String        // Full event payload (JSON)
+  status      String    @default("pending")    // "pending" | "processed" | "failed"
+  error       String?
+  attempts    Int       @default(0)
+  nextRetryAt DateTime?
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([provider, eventId])
+  @@map("webhook_event")
+}
+```
+
+**Purpose:** Ensures webhook events are processed exactly once, with retry support.
+
+## Entity Relationships
+
+```
+User (1) ──→ (N) Member ←── (1) Organization
+  │                              │
+  ├─→ (N) Account                ├─→ (N) Invitation
+  ├─→ (N) Session                ├─→ (N) InviteLink
+  │     └─→ (N) CSRFToken       └─→ (N) Team
+  ├─→ (N) TwoFactor                   └─→ (N) TeamMember
+  ├─→ (N) File
+  ├─→ (N) AuditLog              Subscription (standalone, linked via referenceId)
+  └─→ (N) TeamMember
+                                 WebhookEvent (standalone)
+```
+
+### Cascade Deletes
+
+- **Delete User** → Removes accounts, sessions, members, audit logs, team memberships
+- **Delete Organization** → Removes members, invitations, invite links, teams
+- **Delete Session** → Removes CSRF tokens
+- **Delete Team** → Removes team members
+
+## Migrations
+
+### Workflow
+
+1. **Modify schema** — Edit `packages/database/prisma/schema.prisma`
+2. **Push changes** — `pnpm migrate` (formats, generates, and pushes)
+3. **For recorded migrations** — `npx prisma migrate dev --name description`
+
+### Seeding
+
+The project includes a comprehensive seed script at `packages/database/prisma/seed.ts`:
+
+```bash
+pnpm --filter @repo/database db:seed
+```
+
+This creates sample users (admin, moderator, regular, banned, 2FA-enabled), organizations, memberships, invitations, subscriptions across all tiers, and sessions.

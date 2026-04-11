@@ -1,0 +1,356 @@
+---
+title: Project Structure
+description: Overview of the monorepo directory layout and organization
+---
+
+## Directory Structure
+
+```
+next-nest-monorepo/
+├── apps/                          # Independent applications
+│   ├── web/                       # Main SaaS application (port 3000)
+│   │   ├── app/                   # Next.js app directory
+│   │   │   ├── [locale]/          # Locale routing
+│   │   │   │   ├── (app)/         # Authenticated app routes
+│   │   │   │   │   ├── [orgSlug]/ # Organization-scoped routes
+│   │   │   │   │   ├── account/   # User account pages
+│   │   │   │   │   ├── invite/    # Organization invitation handling
+│   │   │   │   │   └── org/       # Organization selection
+│   │   │   │   ├── (frontier)/    # Public/marketing routes
+│   │   │   │   └── auth/          # Authentication flows
+│   │   │   ├── api/               # API routes
+│   │   │   └── layout.tsx         # Root layout
+│   │   ├── components/            # Shared app components
+│   │   ├── lib/                   # Utilities and helpers
+│   │   ├── public/                # Static assets
+│   │   ├── proxy.ts               # Edge proxy (Next.js 16 route protection)
+│   │   └── package.json
+│   │
+│   ├── docs/                      # Documentation site (port 3004)
+│   │   ├── app/                   # Fumadocs app
+│   │   │   ├── (home)/            # Landing page
+│   │   │   ├── docs/              # Documentation pages
+│   │   │   └── api/               # Search API
+│   │   ├── content/               # Markdown documentation
+│   │   └── package.json
+│   │
+│   ├── email/                     # Email templates (port 3003)
+│   │   ├── app/                   # Email preview app
+│   │   ├── emails/                # React Email templates
+│   │   └── package.json
+│   │
+│   ├── storybook/                 # Component library (port 6006)
+│   │   ├── stories/               # Component stories
+│   │   └── package.json
+│   │
+│   └── studio/                    # Prisma Studio wrapper (port 3005)
+│       └── package.json
+│
+├── packages/                      # Shared packages
+│   ├── auth/                      # Authentication & RBAC
+│   │   ├── client.ts              # Client-side auth hooks
+│   │   ├── server.ts              # Server-side auth instance
+│   │   ├── permissions.ts         # RBAC definitions
+│   │   ├── index.ts               # Main exports
+│   │   └── package.json
+│   │
+│   ├── database/                  # Prisma ORM & schema
+│   │   ├── prisma/
+│   │   │   ├── schema.prisma      # Data models
+│   │   │   └── seed.ts            # Database seed script
+│   │   ├── generated/
+│   │   │   └── client/            # Generated Prisma client
+│   │   ├── prisma.config.ts       # Prisma configuration
+│   │   └── package.json
+│   │
+│   ├── design-system/             # shadcn/ui components
+│   │   ├── components/
+│   │   │   └── ui/                # Base components
+│   │   ├── providers/             # Theme providers
+│   │   ├── lib/
+│   │   │   └── utils.ts           # Utility functions (cn, etc)
+│   │   ├── styles/
+│   │   │   └── globals.css        # Global styles
+│   │   └── package.json
+│   │
+│   ├── payment/                   # Stripe integration
+│   │   ├── plans.ts               # Subscription tier configs
+│   │   ├── keys.ts                # Constants and pricing
+│   │   ├── types.ts               # TypeScript types
+│   │   └── package.json
+│   │
+│   ├── email/                     # React Email templates
+│   │   ├── emails/
+│   │   └── package.json
+│   │
+│   ├── utils/                     # Shared utilities
+│   │   ├── date.ts                # Date constants
+│   │   ├── payment.ts             # Payment constants
+│   │   ├── slug.ts                # Slug utilities
+│   │   └── package.json
+│   │
+│   ├── logger/                    # Structured logging
+│   │   ├── server.ts              # Server-side Pino logger
+│   │   ├── index.ts               # Client logger
+│   │   └── package.json
+│   │
+│   ├── seo/                       # SEO utilities
+│   │   └── package.json
+│   │
+│   ├── internationalization/      # i18n & localization
+│   │   └── package.json
+│   │
+│   ├── storage/                   # File upload & storage
+│   │   └── package.json
+│   │
+│   └── typescript-config/         # Shared TypeScript config
+│       └── base.json
+│
+├── turbo.json                     # Turborepo configuration
+├── pnpm-workspace.yaml            # pnpm workspaces
+├── tsconfig.json                  # Root TypeScript config
+├── biome.jsonc                    # Biome linting config
+├── CLAUDE.md                      # Claude Code guidelines
+└── package.json                   # Root package
+```
+
+## Apps Breakdown
+
+### Web App (`apps/web`)
+
+Main SaaS application with authentication, multi-org support, and billing.
+
+**Key directories:**
+- `app/[locale]/(app)/` — Authenticated routes
+- `app/[locale]/(frontier)/` — Public/marketing pages
+- `app/[locale]/auth/` — Authentication flows
+- `app/api/` — Backend API routes
+- `lib/` — Shared utilities, hooks, helpers
+- `components/` — Shared React components
+
+**Important files:**
+- `proxy.ts` — Edge proxy for route protection (Next.js 16 replacement for middleware.ts)
+- `layout.tsx` — Root layout with locale handling
+- `next.config.mjs` — Next.js configuration
+- `.env.local` — Environment variables
+
+### Docs App (`apps/docs`)
+
+Fumadocs-powered documentation site with MDX support.
+
+**Key directories:**
+- `content/docs/` — MDX documentation files
+- `app/(home)/` — Landing page
+- `app/docs/` — Documentation pages
+
+**Important files:**
+- `source.config.ts` — Fumadocs MDX configuration
+- `mdx-components.tsx` — Custom MDX components
+
+### Email App (`apps/email`)
+
+React Email template preview and development environment.
+
+**Key directories:**
+- `emails/` — React Email component templates
+
+### Storybook
+
+Component library and design system documentation with Storybook.
+
+**Key directories:**
+- `stories/` — Component stories
+
+### Studio
+
+Wrapper around Prisma Studio for database inspection and management.
+
+## Packages Breakdown
+
+### Core Packages
+
+#### `@repo/auth`
+Better Auth configuration with:
+- Authentication methods (email/password, OAuth, magic links, 2FA)
+- Dual RBAC: platform-level admin roles + organization-scoped roles
+- Client hooks and server instance
+- Session management
+
+#### `@repo/database`
+Prisma ORM with:
+- Data models in `schema.prisma`
+- Generated Prisma client in `generated/client/`
+- Seed script for development data
+- Migration management via `prisma.config.ts`
+
+#### `@repo/design-system`
+UI component library with:
+- shadcn/ui base components
+- Theme provider (light/dark mode)
+- Tailwind CSS utilities
+
+#### `@repo/payment`
+Stripe integration featuring:
+- Subscription plan definitions (Free, Pro, Enterprise)
+- Plan utilities and comparison functions
+- Pricing constants and billing intervals
+
+### Supporting Packages
+
+#### `@repo/utils`
+Shared utility functions for:
+- Date constants (durations, intervals)
+- Payment constants (plan names, statuses)
+- Slug generation and validation
+
+#### `@repo/logger`
+Structured logging with:
+- Server-side Pino logger (`/server` export)
+- Client-side logger (default export)
+
+#### `@repo/email`
+React Email templates for:
+- Welcome emails
+- Password reset
+- Invitations
+
+#### `@repo/seo`
+SEO utilities for:
+- Metadata generation
+- Sitemap generation
+- JSON-LD structured data
+
+#### `@repo/internationalization`
+i18n configuration with:
+- Locale definitions
+- Translation keys
+- Locale-specific routing
+
+#### `@repo/storage`
+File storage integration with:
+- Local and S3 storage providers
+- File upload helpers
+
+#### `@repo/typescript-config`
+Shared TypeScript configuration for type consistency.
+
+## Route Structure in Web App
+
+### Authenticated Routes (`/[locale]/(app)/`)
+
+```
+/[locale]/(app)/
+├── [orgSlug]/          # Organization-scoped routes
+│   ├── page.tsx        # Organization dashboard
+│   ├── settings/       # Organization settings
+│   ├── billing/        # Billing management
+│   ├── members/        # Member management
+│   └── checkout/       # Checkout flow
+├── account/            # User account routes (no org required)
+│   ├── profile/        # Profile settings
+│   ├── security/       # Security settings (sessions, 2FA)
+│   ├── danger/         # Account deletion
+│   └── new-org/        # Create organization
+├── invite/             # Organization invitation handling
+└── org/                # Organization selection
+```
+
+### Public Routes (`/[locale]/(frontier)/`)
+
+```
+/[locale]/(frontier)/
+├── page.tsx           # Home/landing page
+└── pricing/           # Pricing page
+```
+
+### Authentication Routes (`/[locale]/auth/`)
+
+```
+/[locale]/auth/
+├── sign-in/
+├── sign-up/
+├── forgot-password/
+├── reset-password/
+├── verify-email/
+├── 2fa/
+└── magic-link/
+```
+
+### API Routes (`/api/`)
+
+```
+/api/
+├── auth/                          # Better Auth endpoints
+├── health/                        # Health check
+├── upload/                        # File uploads
+├── stripe/webhook/                # Stripe webhook handler
+├── organizations/[organizationId]/
+│   ├── checkout/                  # Stripe checkout session
+│   ├── change-plan/               # Plan change
+│   └── usage/                     # Usage data
+├── invitations/                   # Invitation management
+└── user/                          # User activity
+```
+
+## Import Path Aliases
+
+### Web App (`apps/web/tsconfig.json`)
+
+```typescript
+"@/*" → apps/web/         // Web-specific files
+"@repo/*" → packages/     // Shared packages
+```
+
+### Other Apps/Packages
+
+```typescript
+"@/*" → apps/[app-name]/  // App-specific files
+"@repo/*" → packages/     // Shared packages
+```
+
+## Configuration Files
+
+| File | Purpose |
+|------|---------|
+| `turbo.json` | Turborepo build orchestration |
+| `pnpm-workspace.yaml` | pnpm monorepo configuration |
+| `tsconfig.json` | Root TypeScript configuration |
+| `biome.jsonc` | Linting and formatting rules |
+| `CLAUDE.md` | Claude Code guidelines |
+
+## File Organization Best Practices
+
+### By Feature
+```
+app/[locale]/(app)/[orgSlug]/members/
+├── page.tsx              # Page component
+├── layout.tsx            # Layout
+├── components/           # Feature-specific components
+│   ├── member-list.tsx
+│   ├── member-form.tsx
+│   └── ...
+├── actions.ts            # Server actions
+└── ...
+```
+
+### Component Locations
+
+- **UI components**: `packages/design-system/components/ui/`
+- **Feature components**: `app/[feature]/components/`
+- **Shared app components**: `apps/web/components/`
+
+### Utility Locations
+
+- **Database**: `packages/database/`
+- **Auth**: `packages/auth/`
+- **Shared app utilities**: `apps/web/lib/`
+- **Feature utilities**: `app/[feature]/lib/`
+
+## Monorepo Benefits
+
+- **Code reuse** — Shared packages across apps
+- **Unified tooling** — Single build system via Turborepo
+- **Dependency management** — pnpm workspaces
+- **Consistent linting** — One Biome config
+- **Efficient CI/CD** — Only build what changed
+- **Shared types** — TypeScript types across apps

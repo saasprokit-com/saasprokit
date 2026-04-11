@@ -1,0 +1,431 @@
+---
+title: Email Templates
+description: Pre-built React Email templates for common use cases
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+## Template Overview
+
+The email package includes 22+ pre-built templates covering authentication, organization management, subscriptions, and content notifications.
+
+All templates are built with [React Email](https://react.email) components and support:
+- Responsive design
+- Dark mode compatibility
+- i18n (English, Spanish)
+- Consistent branding
+
+## Authentication & Security
+
+### Password Reset
+
+```typescript
+import { sendPasswordResetEmail } from '@repo/email';
+
+await sendPasswordResetEmail({
+  email: 'user@example.com',
+  resetUrl: 'https://app.example.com/reset?token=abc123',
+});
+```
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `email` | `string` | Recipient email address |
+| `resetUrl` | `string` | Password reset link |
+
+### Email Verification
+
+```typescript
+import { sendEmailVerificationEmail } from '@repo/email';
+
+await sendEmailVerificationEmail({
+  email: 'user@example.com',
+  userName: 'John',
+  verificationUrl: 'https://app.example.com/verify?token=abc123',
+});
+```
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `email` | `string` | Recipient email address |
+| `userName` | `string?` | User's display name |
+| `verificationUrl` | `string` | Verification link |
+
+### Two-Factor OTP
+
+```typescript
+import { sendTwoFactorOTPEmail } from '@repo/email';
+
+await sendTwoFactorOTPEmail({
+  email: 'user@example.com',
+  otp: '123456',
+  expiresInMinutes: 5,
+});
+```
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `email` | `string` | Recipient email address |
+| `otp` | `string` | One-time password code |
+| `expiresInMinutes` | `number?` | OTP expiration time (default: 5) |
+
+### Login from New Device
+
+```typescript
+import { sendLoginNewDeviceEmail } from '@repo/email';
+
+await sendLoginNewDeviceEmail({
+  email: 'user@example.com',
+  userName: 'John',
+  deviceInfo: 'Chrome on macOS',
+  location: 'San Francisco, CA',
+  ipAddress: '192.168.1.1',
+  loginTime: '2024-01-15 10:30 AM',
+  secureAccountUrl: 'https://app.example.com/security',
+});
+```
+
+### Password Changed
+
+```typescript
+import { sendPasswordChangedEmail } from '@repo/email';
+
+await sendPasswordChangedEmail({
+  email: 'user@example.com',
+  userName: 'John',
+  changedAt: '2024-01-15 10:30 AM',
+  ipAddress: '192.168.1.1',
+  secureAccountUrl: 'https://app.example.com/security',
+});
+```
+
+### Account Locked
+
+```typescript
+import { sendAccountLockedEmail } from '@repo/email';
+
+await sendAccountLockedEmail({
+  email: 'user@example.com',
+  userName: 'John',
+  lockReason: 'Too many failed login attempts',
+  failedAttempts: 5,
+  lockedAt: '2024-01-15 10:30 AM',
+  unlockTime: '2024-01-15 11:00 AM',
+  resetPasswordUrl: 'https://app.example.com/reset-password',
+});
+```
+
+### Account Deleted
+
+```typescript
+import { sendAccountDeletedEmail } from '@repo/email';
+
+await sendAccountDeletedEmail({
+  email: 'user@example.com',
+  userName: 'John',
+  deletedAt: '2024-01-15 10:30 AM',
+  supportEmail: 'support@example.com',
+});
+```
+
+## Organization Management
+
+### Organization Invitation
+
+```typescript
+import { sendOrgInvitationEmail } from '@repo/email';
+
+await sendOrgInvitationEmail({
+  email: 'newuser@example.com',
+  inviterName: 'John Doe',
+  organizationName: 'Acme Corp',
+  role: 'Editor',
+  inviteUrl: 'https://app.example.com/invite?token=abc123',
+  expiresAt: '2024-01-22',
+  message: 'Looking forward to working with you!',
+});
+```
+
+### Invitation Accepted
+
+```typescript
+import { sendInvitationAcceptedEmail } from '@repo/email';
+
+await sendInvitationAcceptedEmail({
+  email: 'owner@example.com',
+  ownerName: 'John',
+  newMemberName: 'Jane Smith',
+  newMemberEmail: 'jane@example.com',
+  organizationName: 'Acme Corp',
+  role: 'Editor',
+  joinedAt: '2024-01-15 10:30 AM',
+  teamUrl: 'https://app.example.com/team',
+});
+```
+
+### Role Changed
+
+```typescript
+import { sendRoleChangedEmail } from '@repo/email';
+
+await sendRoleChangedEmail({
+  email: 'user@example.com',
+  userName: 'Jane',
+  organizationName: 'Acme Corp',
+  previousRole: 'Viewer',
+  newRole: 'Editor',
+  changedBy: 'John Doe',
+  changedAt: '2024-01-15 10:30 AM',
+  dashboardUrl: 'https://app.example.com/dashboard',
+});
+```
+
+### Removed from Organization
+
+```typescript
+import { sendRemovedFromOrgEmail } from '@repo/email';
+
+await sendRemovedFromOrgEmail({
+  email: 'user@example.com',
+  userName: 'Jane',
+  organizationName: 'Acme Corp',
+  removedBy: 'John Doe',
+  removedAt: '2024-01-15 10:30 AM',
+  supportEmail: 'support@example.com',
+});
+```
+
+## Subscription & Billing
+
+### Subscription Started
+
+```typescript
+import { sendSubscriptionStartedEmail } from '@repo/email';
+
+await sendSubscriptionStartedEmail({
+  email: 'user@example.com',
+  userName: 'John',
+  planName: 'Pro',
+  billingInterval: 'monthly',
+  amount: '$29.00',
+  nextBillingDate: '2024-02-15',
+  dashboardUrl: 'https://app.example.com/dashboard',
+});
+```
+
+### Payment Receipt
+
+```typescript
+import { sendPaymentReceiptEmail } from '@repo/email';
+
+await sendPaymentReceiptEmail({
+  email: 'user@example.com',
+  userName: 'John',
+  invoiceNumber: 'INV-2024-001',
+  amount: '$29.00',
+  planName: 'Pro',
+  billingPeriod: 'Jan 15 - Feb 14, 2024',
+  paymentMethod: 'Visa ending in 4242',
+  paymentDate: '2024-01-15',
+  receiptUrl: 'https://app.example.com/receipts/INV-2024-001',
+});
+```
+
+### Payment Failed
+
+```typescript
+import { sendPaymentFailedEmail } from '@repo/email';
+
+await sendPaymentFailedEmail({
+  email: 'user@example.com',
+  userName: 'John',
+  planName: 'Pro',
+  amount: '$29.00',
+  failureReason: 'Card declined',
+  retryDate: '2024-01-18',
+  updatePaymentUrl: 'https://app.example.com/billing',
+});
+```
+
+### Subscription Upgraded
+
+```typescript
+import { sendSubscriptionUpgradedEmail } from '@repo/email';
+
+await sendSubscriptionUpgradedEmail({
+  email: 'user@example.com',
+  userName: 'John',
+  previousPlan: 'Basic',
+  newPlan: 'Pro',
+  newAmount: '$29.00',
+  billingInterval: 'monthly',
+  effectiveDate: '2024-01-15',
+  dashboardUrl: 'https://app.example.com/dashboard',
+});
+```
+
+### Subscription Downgraded
+
+```typescript
+import { sendSubscriptionDowngradedEmail } from '@repo/email';
+
+await sendSubscriptionDowngradedEmail({
+  email: 'user@example.com',
+  userName: 'John',
+  previousPlan: 'Pro',
+  newPlan: 'Basic',
+  newAmount: '$9.00',
+  billingInterval: 'monthly',
+  effectiveDate: '2024-02-15',
+  lostFeatures: ['Priority support', 'Advanced analytics', 'API access'],
+  dashboardUrl: 'https://app.example.com/dashboard',
+});
+```
+
+### Subscription Cancelled
+
+```typescript
+import { sendSubscriptionCancelledEmail } from '@repo/email';
+
+await sendSubscriptionCancelledEmail({
+  email: 'user@example.com',
+  userName: 'John',
+  planName: 'Pro',
+  accessUntil: '2024-02-15',
+  cancellationReason: 'User requested',
+  reactivateUrl: 'https://app.example.com/reactivate',
+  feedbackUrl: 'https://app.example.com/feedback',
+});
+```
+
+### Subscription Renewed
+
+```typescript
+import { sendSubscriptionRenewedEmail } from '@repo/email';
+
+await sendSubscriptionRenewedEmail({
+  email: 'user@example.com',
+  userName: 'John',
+  planName: 'Pro',
+  amount: '$29.00',
+  billingInterval: 'monthly',
+  renewalDate: '2024-01-15',
+  nextBillingDate: '2024-02-15',
+  dashboardUrl: 'https://app.example.com/dashboard',
+});
+```
+
+### Trial Ending
+
+```typescript
+import { sendTrialEndingEmail } from '@repo/email';
+
+await sendTrialEndingEmail({
+  email: 'user@example.com',
+  userName: 'John',
+  planName: 'Pro',
+  trialEndDate: '2024-01-22',
+  daysRemaining: 3,
+  amount: '$29.00',
+  billingInterval: 'monthly',
+  upgradeUrl: 'https://app.example.com/upgrade',
+  featuresUsed: ['Custom domains', 'Analytics', 'Team collaboration'],
+});
+```
+
+## Content Notifications
+
+### Welcome Email
+
+```typescript
+import { sendWelcomeEmail } from '@repo/email';
+
+await sendWelcomeEmail({
+  email: 'user@example.com',
+  name: 'John',
+});
+```
+
+### Article Published
+
+```typescript
+import { sendArticlePublishedEmail } from '@repo/email';
+
+await sendArticlePublishedEmail({
+  email: 'author@example.com',
+  userName: 'John',
+  articleTitle: 'Getting Started with React',
+  articleExcerpt: 'Learn the basics of React in this comprehensive guide...',
+  articleUrl: 'https://blog.example.com/getting-started-react',
+  coverImageUrl: 'https://blog.example.com/images/react-cover.jpg',
+  publishedAt: '2024-01-15 10:30 AM',
+  dashboardUrl: 'https://app.example.com/dashboard',
+  analyticsUrl: 'https://app.example.com/analytics',
+});
+```
+
+## Previewing Templates
+
+Use the React Email dev server to preview templates:
+
+```bash
+cd packages/email
+pnpm dev
+```
+
+Open http://localhost:3030 to view all templates in the browser.
+
+## Creating Custom Templates
+
+1. Create a new file in `packages/email/templates/`:
+
+```tsx
+// templates/my-custom-email.tsx
+import { EmailLayout, Heading, EmailText, EmailButton } from '../components';
+
+interface MyCustomEmailProps {
+  userName?: string;
+  actionUrl?: string;
+}
+
+export default function MyCustomEmail({
+  userName = 'there',
+  actionUrl = 'https://example.com',
+}: MyCustomEmailProps) {
+  return (
+    <EmailLayout preview="Your custom email preview">
+      <Heading>Hello, {userName}!</Heading>
+      <EmailText>This is your custom email content.</EmailText>
+      <EmailButton href={actionUrl}>Take Action</EmailButton>
+    </EmailLayout>
+  );
+}
+```
+
+2. Add the send function in `index.ts`:
+
+```typescript
+import MyCustomEmail from './templates/my-custom-email';
+
+export async function sendMyCustomEmail({
+  email,
+  userName,
+  actionUrl,
+}: {
+  email: string;
+  userName?: string;
+  actionUrl?: string;
+}) {
+  const provider = getEmailProvider();
+  return provider.send({
+    to: email,
+    subject: 'Your Custom Subject',
+    react: MyCustomEmail({ userName, actionUrl }),
+    from: FROM_EMAIL,
+  });
+}
+```
+
+<Callout type="info">
+  Always use the shared components from `../components` to maintain consistent styling across all templates.
+</Callout>

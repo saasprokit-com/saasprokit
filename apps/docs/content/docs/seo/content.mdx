@@ -1,0 +1,401 @@
+---
+title: Content SEO
+description: Heading hierarchy, internal linking, E-E-A-T optimization, and content freshness
+---
+
+# Content SEO Checklist
+
+## Heading Hierarchy
+
+### Rules
+
+| Status | Rule | Example |
+|--------|------|---------|
+| [ ] | One H1 per page | Page title only |
+| [ ] | Don't skip levels | H1 → H2 → H3 (not H1 → H3) |
+| [ ] | Include keywords naturally | "Next.js SEO Guide" not "Guide" |
+| [ ] | Descriptive, not generic | "Core Web Vitals" not "Section 1" |
+
+### Correct Structure
+
+```tsx
+<h1>Next.js SEO Guide for 2025</h1>
+
+<h2>Technical SEO Fundamentals</h2>
+<h3>Meta Tags Implementation</h3>
+<h3>Core Web Vitals Optimization</h3>
+
+<h2>Content Optimization</h2>
+<h3>Heading Structure</h3>
+<h3>Internal Linking</h3>
+
+<h2>2025 Trends</h2>
+<h3>AI-Powered Search</h3>
+<h4>Google SGE Optimization</h4>
+<h4>Zero-Click Strategies</h4>
+```
+
+### Semantic HTML
+
+| Status | Task | Element |
+|--------|------|---------|
+| [ ] | Use article for content | article |
+| [ ] | Use section for grouping | section |
+| [ ] | Use header for intro | header |
+| [ ] | Use nav for navigation | nav |
+| [ ] | Use aside for sidebars | aside |
+
+```tsx
+<article>
+  <header>
+    <h1>Article Title</h1>
+    <p>Published on {date}</p>
+  </header>
+
+  <section>
+    <h2>Section Title</h2>
+    <p>Content...</p>
+  </section>
+</article>
+```
+
+---
+
+## Internal Linking
+
+### Best Practices
+
+| Status | Task | Benefit |
+|--------|------|---------|
+| [ ] | Use descriptive anchor text | SEO value |
+| [ ] | Link to relevant content | Topic authority |
+| [ ] | 3-5 links per 1000 words | Optimal density |
+| [ ] | Implement hub & spoke model | Content clustering |
+| [ ] | Add breadcrumbs | Navigation + SEO |
+| [ ] | Include related posts | User engagement |
+
+### Hub & Spoke Model
+
+```
+Pillar Page: "Complete SEO Guide"
+    ↓
+Cluster Pages:
+    ├── "Technical SEO"
+    ├── "Content SEO"
+    ├── "Link Building"
+    └── "Local SEO"
+```
+
+### Implementation
+
+```tsx
+import Link from 'next/link'
+
+// In blog post content
+<p>
+  For more details on optimizing images, see our
+  <Link href="/guide/image-optimization">
+    comprehensive image optimization guide
+  </Link>.
+</p>
+
+// Related posts section
+<aside>
+  <h3>Related Articles</h3>
+  <ul>
+    <li><Link href="/blog/core-web-vitals">Core Web Vitals Guide</Link></li>
+    <li><Link href="/blog/metadata-seo">Metadata Best Practices</Link></li>
+  </ul>
+</aside>
+```
+
+### Breadcrumbs
+
+| Status | Task | Implementation |
+|--------|------|----------------|
+| [ ] | Create breadcrumbs component | `components/breadcrumbs.tsx` |
+| [ ] | Add BreadcrumbList schema | JSON-LD |
+| [ ] | Use on all pages | Navigation |
+
+```tsx
+import Link from 'next/link'
+
+export function Breadcrumbs({ items }) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  }
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <nav aria-label="Breadcrumb">
+        <ol>
+          {items.map((item, index) => (
+            <li key={index}>
+              {index < items.length - 1 ? (
+                <Link href={item.url}>{item.name}</Link>
+              ) : (
+                <span>{item.name}</span>
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </>
+  )
+}
+```
+
+---
+
+## E-E-A-T Optimization
+
+### Overview
+
+**E-E-A-T** = Experience, Expertise, Authoritativeness, Trust
+
+| Factor | Weight | Focus |
+|--------|--------|-------|
+| **Trust** | Highest | Security, contact info, reviews |
+| **Experience** | High | First-hand knowledge |
+| **Expertise** | High | Credentials, qualifications |
+| **Authoritativeness** | Medium | Industry recognition |
+
+### Author Expertise
+
+| Status | Task | Implementation |
+|--------|------|----------------|
+| [ ] | Create author pages | `/authors/[slug]` |
+| [ ] | Add author bio to posts | `AuthorBio` component |
+| [ ] | Add Person schema | JSON-LD |
+| [ ] | Link social profiles | `sameAs` property |
+| [ ] | Display credentials | Certifications, experience |
+
+```tsx
+export function AuthorBio({ author }) {
+  return (
+    <section>
+      <img src={author.photo} alt={author.name} />
+      <div>
+        <h3>{author.name}</h3>
+        <p>{author.title}</p>
+        <p>{author.credentials}</p>
+        <ul>
+          <li>{author.yearsExperience} years experience</li>
+          <li>{author.certifications}</li>
+          <li>{author.publications} published articles</li>
+        </ul>
+        <Link href={`/authors/${author.slug}`}>
+          View full profile
+        </Link>
+      </div>
+    </section>
+  )
+}
+```
+
+```typescript
+const authorJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'John Doe',
+  url: 'https://yourdomain.com/authors/john-doe',
+  jobTitle: 'Senior SEO Specialist',
+  worksFor: {
+    '@type': 'Organization',
+    name: 'Your Company',
+  },
+  sameAs: [
+    'https://twitter.com/johndoe',
+    'https://linkedin.com/in/johndoe',
+  ],
+  description: 'John has 10+ years of experience in SEO...',
+}
+```
+
+### Trust Signals
+
+| Status | Task | Location |
+|--------|------|----------|
+| [ ] | HTTPS enabled | Site-wide |
+| [ ] | Privacy Policy | Footer link |
+| [ ] | Contact information | Footer + Contact page |
+| [ ] | Physical address | Footer + About page |
+| [ ] | Phone number | Footer + Contact page |
+| [ ] | Display certifications | About page |
+| [ ] | Customer reviews | Product/service pages |
+
+```tsx
+<footer>
+  <section>
+    <h3>Trust & Security</h3>
+    <ul>
+      <li>SSL Secured</li>
+      <li><Link href="/privacy">Privacy Policy</Link></li>
+      <li>Contact: +1-555-1234</li>
+      <li>support@yourdomain.com</li>
+      <li>123 Business St, City, State</li>
+    </ul>
+  </section>
+</footer>
+```
+
+### First-Hand Experience
+
+| Status | Task | Content Type |
+|--------|------|--------------|
+| [ ] | Include case studies | Real projects |
+| [ ] | Add before/after examples | Visual proof |
+| [ ] | Share personal insights | Expert opinion |
+| [ ] | Include screenshots | Process documentation |
+| [ ] | Reference real data | Original research |
+
+---
+
+## Content Freshness
+
+### Signals
+
+| Status | Task | Implementation |
+|--------|------|----------------|
+| [ ] | Display publish date | `time` element |
+| [ ] | Show last updated | `time` element |
+| [ ] | Add to metadata | `openGraph.modifiedTime` |
+| [ ] | Update old content | Regular schedule |
+| [ ] | Add year to titles | "SEO Guide 2025" |
+
+```tsx
+export function ArticleMetadata({ article }) {
+  return (
+    <div>
+      <time dateTime={article.publishedAt}>
+        Published: {formatDate(article.publishedAt)}
+      </time>
+      {article.updatedAt && (
+        <time dateTime={article.updatedAt}>
+          Last updated: {formatDate(article.updatedAt)}
+        </time>
+      )}
+      <p>Reviewed by: {article.reviewer}</p>
+    </div>
+  )
+}
+```
+
+```typescript
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const post = await getPost(params.slug)
+
+  return {
+    openGraph: {
+      type: 'article',
+      publishedTime: post.createdAt,
+      modifiedTime: post.updatedAt,
+    },
+  }
+}
+```
+
+### Update Schedule
+
+| Content Type | Frequency | Priority |
+|--------------|-----------|----------|
+| Core guides | Quarterly | High |
+| Blog posts | As needed | Medium |
+| Product pages | Monthly | High |
+| News/trends | Weekly | Low |
+
+---
+
+## URL Structure
+
+### Best Practices
+
+| Status | Task | Example |
+|--------|------|---------|
+| [ ] | Use hyphens not underscores | `/seo-guide` not `/seo_guide` |
+| [ ] | Keep URLs short (under 75 chars) | `/blog/seo` not `/blog/complete-seo-guide-2025` |
+| [ ] | Include target keywords | `/nextjs-seo-guide` |
+| [ ] | Use lowercase | `/about` not `/About` |
+| [ ] | Avoid query parameters | `/products/item` not `/products?id=123` |
+
+### Good vs Bad
+
+```
+Good URLs:
+/blog/nextjs-seo-guide-2025
+/products/wireless-headphones
+/category/web-development
+
+Bad URLs:
+/blog/post?id=123
+/p/12345
+/page.php?cat=5&item=99
+```
+
+---
+
+## Error Pages
+
+### 404 Page
+
+| Status | Task | Benefit |
+|--------|------|---------|
+| [ ] | Custom 404 page | UX |
+| [ ] | Don't index error pages | SEO |
+| [ ] | Include navigation | User recovery |
+| [ ] | Add search | Content discovery |
+| [ ] | Log 404s | Find broken links |
+
+```tsx
+// app/not-found.tsx
+import Link from 'next/link'
+
+export const metadata = {
+  title: '404 - Page Not Found',
+  robots: {
+    index: false,
+    follow: true,
+  },
+}
+
+export default function NotFound() {
+  return (
+    <main>
+      <h1>404 - Page Not Found</h1>
+      <p>The page you're looking for doesn't exist.</p>
+      <Link href="/">Return Home</Link>
+
+      <nav>
+        <ul>
+          <li><Link href="/blog">Blog</Link></li>
+          <li><Link href="/products">Products</Link></li>
+          <li><Link href="/about">About</Link></li>
+        </ul>
+      </nav>
+    </main>
+  )
+}
+```
+
+---
+
+## Validation Checklist
+
+| Check | Tool |
+|-------|------|
+| Heading structure | Browser DevTools |
+| Internal links | Screaming Frog |
+| Broken links | Google Search Console |
+| Content quality | Manual review |
+| E-E-A-T signals | Manual audit |

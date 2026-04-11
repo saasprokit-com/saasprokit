@@ -1,0 +1,8 @@
+{
+  "title": "Database",
+  "icon": "Box",
+  "pages": [
+    "index",
+    "database-design"
+  ]
+}

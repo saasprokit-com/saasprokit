@@ -1,0 +1,312 @@
+generator client {
+  provider      = "prisma-client"
+  output        = "../generated/client"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                    String       @id @default(cuid())
+  name                  String
+  email                 String       @unique
+  emailVerified         Boolean      @default(false)
+  image                 String?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  role                  String?      @default("user")
+  banned                Boolean?     @default(false)
+  banReason             String?
+  banExpires            DateTime?
+  twoFactorEnabled      Boolean?     @default(false)
+  stripeCustomerId      String?
+  firstName             String?
+  lastName              String?
+  defaultOrganizationId String?
+  lastActiveAt          DateTime?
+  sessions              Session[]
+  accounts              Account[]
+  twofactors            TwoFactor[]
+  members               Member[]
+  invitations           Invitation[]
+  createdInviteLinks    InviteLink[] @relation("InviteLinkCreator")
+  uploadedFiles         File[]
+  auditLogs             AuditLog[]
+  teamMembers           TeamMember[]
+
+  @@map("user")
+}
+
+model Session {
+  id                   String      @id @default(cuid())
+  expiresAt            DateTime
+  token                String      @unique
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  ipAddress            String?
+  userAgent            String?
+  userId               String
+  user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy       String?
+  activeOrganizationId String?
+
+  activeTeamId String?
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model TwoFactor {
+  id          String @id @default(cuid())
+  secret      String
+  backupCodes String
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([secret])
+  @@index([userId])
+  @@map("twoFactor")
+}
+
+model Organization {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  logo        String?
+  createdAt   DateTime     @default(now())
+  metadata    String?
+  members     Member[]
+  invitations Invitation[]
+  inviteLinks InviteLink[]
+  teams       Team[]
+
+  @@map("organization")
+}
+
+model Member {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String       @default("member")
+  createdAt      DateTime     @default(now())
+  suspendedAt    DateTime?
+  suspendedBy    String?
+  suspendReason  String?
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([userId, organizationId])
+  @@index([organizationId, userId, role])
+  @@index([userId, organizationId, suspendedAt])
+  @@index([organizationId, role, suspendedAt])
+  @@map("member")
+}
+
+model Invitation {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String       @default("pending")
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  inviterId      String
+  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  teamId         String?
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("invitation")
+}
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  plan                 String
+  referenceId          String
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  status               String?   @default("incomplete")
+  periodStart          DateTime?
+  periodEnd            DateTime?
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  cancelAtPeriodEnd    Boolean?  @default(false)
+  seats                Int?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@map("subscription")
+}
+
+model InviteLink {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  token          String       @unique
+  role           String       @default("member")
+  expiresAt      DateTime?
+  maxUses        Int?
+  usedCount      Int          @default(0)
+  createdAt      DateTime     @default(now())
+  createdById    String
+  createdBy      User         @relation("InviteLinkCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  isActive       Boolean      @default(true)
+
+  @@index([organizationId])
+  @@index([token])
+  @@map("invite_link")
+}
+
+model File {
+  id String @id @default(cuid())
+
+  // Core file info
+  filename    String
+  storagePath String  @unique
+  publicUrl   String?
+  mimeType    String
+  size        Int
+
+  // Storage metadata
+  provider   String // "local" | "s3"
+  bucket     String?
+  visibility String  @default("public") // "public" | "private"
+
+  // Polymorphic attachment
+  attachableType String?
+  attachableId   String?
+
+  // Upload tracking
+  uploadedById String?
+  uploadedBy   User?   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  // Soft delete
+  deletedAt DateTime?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Extensibility (JSON for dimensions, alt text, tags, etc.)
+  metadata String?
+
+  @@index([uploadedById])
+  @@index([attachableType, attachableId])
+  @@index([createdAt])
+  @@index([provider])
+  @@index([uploadedById, deletedAt])
+  @@index([deletedAt])
+  @@map("file")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String // "password_changed", "profile_updated", "2fa_enabled", "session_logout", "account_deletion_requested"
+  changes   String? // JSON object with before/after values
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_log")
+}
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  // Provider (stripe, github, etc.)
+  provider    String
+  // Event ID from provider (Stripe event ID, etc.)
+  eventId     String
+  // Event type (invoice.paid, subscription.created, etc.)
+  eventType   String
+  // Full event data (JSON)
+  data        String
+  // Processing status
+  status      String    @default("pending") // pending, processed, failed
+  // Error message if processing failed
+  error       String?
+  // Number of retry attempts
+  attempts    Int       @default(0)
+  // When the event can be retried
+  nextRetryAt DateTime?
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  processedAt DateTime?
+
+  @@unique([provider, eventId])
+  @@index([provider])
+  @@index([eventType])
+  @@index([status])
+  @@index([createdAt])
+  @@index([nextRetryAt])
+  @@map("webhook_event")
+}
+
+model Team {
+  id             String       @id @default(cuid())
+  name           String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members        TeamMember[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@map("team")
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([teamId])
+  @@index([userId])
+  @@index([teamId, userId])
+  @@map("teamMember")
+}

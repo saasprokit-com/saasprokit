@@ -1,0 +1,11 @@
+{
+  "title": "Email",
+  "icon": "Mail",
+  "pages": [
+    "index",
+    "setup",
+    "providers",
+    "templates",
+    "local-development"
+  ]
+}

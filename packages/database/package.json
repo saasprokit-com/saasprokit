@@ -1,0 +1,43 @@
+{
+  "name": "@repo/database",
+  "version": "0.0.0",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./generated/client": "./generated/client/index.js",
+    "./keys": "./keys.ts"
+  },
+  "scripts": {
+    "build": "prisma generate --no-hints",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:reset": "prisma migrate reset",
+    "db:push": "prisma db push",
+    "db:pull": "prisma db pull",
+    "db:seed": "tsx prisma/seed.ts",
+    "studio": "prisma studio",
+    "clean": "git clean -xdf .cache .turbo dist node_modules generated",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.0.0",
+    "@prisma/client": "^7.0.0",
+    "@repo/utils": "workspace:*",
+    "@t3-oss/env-nextjs": "^0.13.8",
+    "server-only": "^0.0.1",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "24.9.1",
+    "better-auth": "^1.4.5",
+    "dotenv": "^17.3.1",
+    "prisma": "^7.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.3"
+  }
+}

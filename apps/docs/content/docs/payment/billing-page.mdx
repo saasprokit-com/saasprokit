@@ -1,0 +1,189 @@
+---
+title: Billing Page
+description: Billing dashboard UI components and server actions
+---
+
+The billing page is at `/[locale]/(app)/[orgSlug]/billing/` and provides a full subscription management interface.
+
+## Page Structure
+
+```
+apps/web/app/[locale]/(app)/[orgSlug]/billing/
+├── page.tsx               # Main page (auth + permission check)
+├── queries.ts             # getBillingUsageData()
+├── schemas.ts             # Zod validation schemas
+├── actions.ts             # Server actions
+└── components/
+    ├── current-plan.tsx       # Current plan display
+    ├── change-plan.tsx        # Plan selection grid
+    ├── upgrade-form.tsx       # Stripe checkout redirect
+    ├── downgrade-button.tsx   # Downgrade with guard check
+    ├── billing-actions.tsx    # Portal + cancel buttons
+    ├── manage-billing-form.tsx # Stripe portal redirect
+    └── usage-stats.tsx        # Members + storage progress
+```
+
+## Access Control
+
+The page requires:
+1. **Organization membership** — validated via `validateOrgMembershipBySlug(orgSlug)`
+2. **Update permission** — only owners and admins see billing controls
+
+Members with read-only access see a restricted view.
+
+## Components
+
+### CurrentPlan
+
+Displays the active subscription:
+- Plan name and description
+- Feature highlights
+- Status badge (Active, Past Due, Canceled, etc.)
+- Next billing date
+- Cancellation warning if `cancelAtPeriodEnd` is true
+
+### ChangePlan
+
+Plan selection grid with:
+- Monthly/Annual toggle with savings badge (17%)
+- Three plan cards side by side
+- "Current Plan" badge on the active plan
+- "Upgrade to X" buttons → `UpgradeForm`
+- "Downgrade to X" buttons → `DowngradeButton`
+
+### UpgradeForm
+
+A server action form that calls `startCheckoutAction`:
+- Redirects to Stripe-hosted checkout
+- Shows loading state during redirect
+
+### DowngradeButton
+
+Confirmation dialog before downgrading:
+- Runs `guardDowngrade()` to check if downgrade is safe
+- Shows block reason if current usage exceeds target plan limits
+- Calls `changePlanAction` server action
+
+### UsageStats
+
+Progress bars for resource consumption:
+- **Team Members** — current / limit with percentage bar
+- **Storage** — current MB/GB / limit with percentage bar
+- Shows "Unlimited" for Enterprise plan resources
+
+### BillingActions
+
+Two action buttons:
+- **Manage Billing** — Opens Stripe customer portal (payment methods, invoices)
+- **Cancel Subscription** — Red destructive button with `AlertDialog` confirmation
+
+## Server Actions
+
+### startCheckoutAction
+
+Creates a Stripe Checkout Session and redirects:
+
+```typescript
+// Input: { planName, billingInterval, organizationId }
+// 1. Verify session + org membership
+// 2. Create/retrieve Stripe customer
+// 3. Create checkout session with metadata
+// 4. Redirect to Stripe checkout URL
+```
+
+### changePlanAction
+
+Updates an existing subscription's plan:
+
+```typescript
+// Input: { targetPlan, organizationId }
+// 1. Validate downgrade direction
+// 2. Run guardDowngrade() for resource checks
+// 3. If downgrade to Free → return action: "cancel"
+// 4. Update Stripe subscription (proration: "create_prorations")
+// 5. Update database subscription.plan
+```
+
+### openBillingPortalAction
+
+Opens Stripe's hosted billing portal:
+
+```typescript
+// Input: { organizationId }
+// 1. Get subscription's stripeCustomerId
+// 2. Create billing portal session
+// 3. Redirect to portal URL
+```
+
+## Queries
+
+### getBillingUsageData
+
+Fetches all data needed by the billing page:
+
+```typescript
+import { getBillingUsageData } from "./queries";
+
+const data = await getBillingUsageData(organizationId);
+// {
+//   usageStats: { members: { current, limit, percentage }, storage: { ... } },
+//   planName: "pro",
+//   hasUnlimitedMembers: false,
+//   hasUnlimitedStorage: false,
+// }
+```
+
+### Subscription Queries
+
+Available from `apps/web/lib/billing/subscription-queries.ts`:
+
+```typescript
+import {
+  getOrgSubscription,        // Latest subscription for org
+  getActiveSubscription,     // Active subscription by referenceId
+  getCurrentPlanForReference, // Plan name or "free"
+  getOrgMemberCount,         // Current member count
+  getOrgStorageUsage,        // Storage in MB (from File table)
+  getOrgUsageStats,          // Combined usage percentages
+  canOrgAddMember,           // Check if org can invite more members
+  canUserCreateOrg,          // Check if user can create another org
+} from "@/lib/billing/subscription-queries";
+```
+
+### Seat Reservation
+
+Both current members **and** pending invitations count toward the member limit. This prevents over-committing seats when multiple invitations are sent simultaneously.
+
+## Validation Schemas
+
+Defined in `schemas.ts` using Zod:
+
+```typescript
+// Checkout: plan must be "pro" or "enterprise", interval must be "monthly" or "yearly"
+checkoutRequestSchema
+
+// Billing portal: just needs organizationId
+billingPortalRequestSchema
+
+// Plan change: targetPlan can be any plan, defaults to monthly
+changePlanRequestSchema
+```
+
+## React Hooks
+
+For client-side subscription management:
+
+```typescript
+import { useSubscription, useCancel } from "@repo/payment/hooks";
+
+// Fetch subscription status
+const { loading, planName, status } = useSubscription({
+  referenceId: organizationId,
+});
+
+// Cancel subscription with callbacks
+const { cancel, loading } = useCancel({
+  onSuccess: () => { /* refresh UI */ },
+  onError: (err) => { /* show error */ },
+});
+```

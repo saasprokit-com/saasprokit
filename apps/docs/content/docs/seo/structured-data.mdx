@@ -1,0 +1,489 @@
+---
+title: Structured Data
+description: JSON-LD schema implementation for rich search results
+---
+
+# Structured Data Checklist
+
+## Overview
+
+Structured data helps search engines understand your content and enables rich results in search.
+
+### Key Statistics
+
+- **30%** CTR lift potential with structured data
+- **45M+** domains use Schema.org
+- **450B+** Schema.org objects on the web
+- Essential for **Google SGE** and AI search
+
+---
+
+## Organization Schema
+
+| Status | Task | Page |
+|--------|------|------|
+| [ ] | Add Organization schema | Homepage |
+| [ ] | Include logo | ImageObject |
+| [ ] | Add social profiles | sameAs |
+| [ ] | Add contact info | contactPoint |
+
+```typescript
+// app/layout.tsx or app/page.tsx
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Your Company Name',
+  url: 'https://yourdomain.com',
+  logo: 'https://yourdomain.com/logo.png',
+  sameAs: [
+    'https://facebook.com/yourcompany',
+    'https://twitter.com/yourcompany',
+    'https://linkedin.com/company/yourcompany',
+    'https://github.com/yourcompany',
+  ],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    telephone: '+1-555-1234',
+    contactType: 'Customer Service',
+    areaServed: 'US',
+    availableLanguage: ['English'],
+  },
+}
+
+// In your component
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+/>
+```
+
+---
+
+## Article Schema
+
+| Status | Task | Page Type |
+|--------|------|-----------|
+| [ ] | Add Article schema | Blog posts |
+| [ ] | Include headline | Post title |
+| [ ] | Add author info | Person schema |
+| [ ] | Add publisher | Organization |
+| [ ] | Include dates | Published + modified |
+| [ ] | Add image | Cover image |
+
+```typescript
+// app/blog/[slug]/page.tsx
+export default function BlogPost({ post }) {
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.excerpt,
+    image: post.coverImage,
+    datePublished: post.publishedAt,
+    dateModified: post.updatedAt,
+    author: {
+      '@type': 'Person',
+      name: post.author.name,
+      url: `https://yourdomain.com/authors/${post.author.slug}`,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Your Company',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://yourdomain.com/logo.png',
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://yourdomain.com/blog/${post.slug}`,
+    },
+  }
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      {/* Article content */}
+    </>
+  )
+}
+```
+
+---
+
+## FAQPage Schema
+
+| Status | Task | Page Type |
+|--------|------|-----------|
+| [ ] | Add FAQPage schema | FAQ sections |
+| [ ] | Include questions | Question type |
+| [ ] | Include answers | Answer type |
+| [ ] | Match visible content | Same as HTML |
+
+```typescript
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What is Next.js?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Next.js is a React framework for production that provides hybrid static and server rendering, TypeScript support, smart bundling, route pre-fetching, and more.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How does Next.js improve SEO?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Next.js improves SEO through server-side rendering, automatic code splitting, image optimization, and built-in metadata management.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What are Core Web Vitals?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Core Web Vitals are a set of metrics that measure user experience: Largest Contentful Paint (LCP), Interaction to Next Paint (INP), and Cumulative Layout Shift (CLS).',
+      },
+    },
+  ],
+}
+```
+
+---
+
+## Product Schema
+
+| Status | Task | Page Type |
+|--------|------|-----------|
+| [ ] | Add Product schema | Product pages |
+| [ ] | Include name | Product title |
+| [ ] | Add price | Offer |
+| [ ] | Add availability | InStock/OutOfStock |
+| [ ] | Add reviews | AggregateRating |
+| [ ] | Add brand | Brand type |
+
+```typescript
+const productJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: 'Product Name',
+  image: 'https://example.com/product.jpg',
+  description: 'Product description here',
+  brand: {
+    '@type': 'Brand',
+    name: 'Brand Name',
+  },
+  offers: {
+    '@type': 'Offer',
+    price: '99.99',
+    priceCurrency: 'USD',
+    availability: 'https://schema.org/InStock',
+    url: 'https://example.com/products/product-name',
+    priceValidUntil: '2025-12-31',
+    seller: {
+      '@type': 'Organization',
+      name: 'Your Company',
+    },
+  },
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue: '4.5',
+    reviewCount: '120',
+    bestRating: '5',
+    worstRating: '1',
+  },
+  review: [
+    {
+      '@type': 'Review',
+      author: {
+        '@type': 'Person',
+        name: 'John Doe',
+      },
+      datePublished: '2025-01-15',
+      reviewRating: {
+        '@type': 'Rating',
+        ratingValue: '5',
+      },
+      reviewBody: 'Excellent product, highly recommend!',
+    },
+  ],
+}
+```
+
+---
+
+## HowTo Schema
+
+| Status | Task | Page Type |
+|--------|------|-----------|
+| [ ] | Add HowTo schema | Tutorial pages |
+| [ ] | Include steps | HowToStep |
+| [ ] | Add description | Summary |
+| [ ] | Add images | Step images |
+| [ ] | Add time estimate | totalTime |
+
+```typescript
+const howToJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: 'How to Optimize Next.js for SEO',
+  description: 'Step-by-step guide to optimizing your Next.js application for search engines.',
+  totalTime: 'PT30M',
+  estimatedCost: {
+    '@type': 'MonetaryAmount',
+    currency: 'USD',
+    value: '0',
+  },
+  step: [
+    {
+      '@type': 'HowToStep',
+      name: 'Configure Metadata API',
+      text: 'Set up the metadata object in your layout.tsx file with title, description, and Open Graph tags.',
+      url: 'https://yourdomain.com/guide#step-1',
+      image: 'https://yourdomain.com/step-1.jpg',
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Create Sitemap',
+      text: 'Add a sitemap.ts file to your app directory to generate a dynamic sitemap.',
+      url: 'https://yourdomain.com/guide#step-2',
+      image: 'https://yourdomain.com/step-2.jpg',
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Optimize Images',
+      text: 'Replace all img tags with next/image component for automatic optimization.',
+      url: 'https://yourdomain.com/guide#step-3',
+      image: 'https://yourdomain.com/step-3.jpg',
+    },
+  ],
+}
+```
+
+---
+
+## BreadcrumbList Schema
+
+| Status | Task | Implementation |
+|--------|------|----------------|
+| [ ] | Add BreadcrumbList | All pages |
+| [ ] | Include position | ListItem |
+| [ ] | Include name | Page title |
+| [ ] | Include item URL | Full URL |
+
+```typescript
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: 'https://yourdomain.com',
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Blog',
+      item: 'https://yourdomain.com/blog',
+    },
+    {
+      '@type': 'ListItem',
+      position: 3,
+      name: 'SEO Guide',
+      item: 'https://yourdomain.com/blog/seo-guide',
+    },
+  ],
+}
+```
+
+---
+
+## LocalBusiness Schema
+
+| Status | Task | Page Type |
+|--------|------|-----------|
+| [ ] | Add LocalBusiness schema | Contact/About |
+| [ ] | Include address | PostalAddress |
+| [ ] | Add phone | telephone |
+| [ ] | Add hours | openingHoursSpecification |
+| [ ] | Add geo coordinates | GeoCoordinates |
+
+```typescript
+const localBusinessJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  name: 'Your Business Name',
+  image: 'https://yourdomain.com/storefront.jpg',
+  '@id': 'https://yourdomain.com',
+  url: 'https://yourdomain.com',
+  telephone: '+1-555-1234',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: '123 Main Street',
+    addressLocality: 'City',
+    addressRegion: 'ST',
+    postalCode: '12345',
+    addressCountry: 'US',
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: 40.7128,
+    longitude: -74.0060,
+  },
+  openingHoursSpecification: [
+    {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      opens: '09:00',
+      closes: '17:00',
+    },
+    {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Saturday'],
+      opens: '10:00',
+      closes: '14:00',
+    },
+  ],
+  priceRange: '$$',
+}
+```
+
+---
+
+## Person Schema
+
+| Status | Task | Page Type |
+|--------|------|-----------|
+| [ ] | Add Person schema | Author pages |
+| [ ] | Include name | Full name |
+| [ ] | Add job title | jobTitle |
+| [ ] | Add employer | worksFor |
+| [ ] | Add social profiles | sameAs |
+| [ ] | Add image | Photo URL |
+
+```typescript
+const personJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'John Doe',
+  url: 'https://yourdomain.com/authors/john-doe',
+  image: 'https://yourdomain.com/authors/john-doe.jpg',
+  jobTitle: 'Senior SEO Specialist',
+  worksFor: {
+    '@type': 'Organization',
+    name: 'Your Company',
+    url: 'https://yourdomain.com',
+  },
+  sameAs: [
+    'https://twitter.com/johndoe',
+    'https://linkedin.com/in/johndoe',
+    'https://github.com/johndoe',
+  ],
+  alumniOf: {
+    '@type': 'EducationalOrganization',
+    name: 'University Name',
+  },
+  knowsAbout: ['SEO', 'Web Development', 'Next.js', 'React'],
+}
+```
+
+---
+
+## VideoObject Schema
+
+| Status | Task | Page Type |
+|--------|------|-----------|
+| [ ] | Add VideoObject schema | Video pages |
+| [ ] | Include name | Video title |
+| [ ] | Add description | Summary |
+| [ ] | Add thumbnail | thumbnailUrl |
+| [ ] | Add duration | ISO 8601 format |
+| [ ] | Add upload date | uploadDate |
+
+```typescript
+const videoJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'VideoObject',
+  name: 'Next.js SEO Tutorial 2025',
+  description: 'Complete guide to optimizing Next.js apps for search engines',
+  thumbnailUrl: ['https://yourdomain.com/video-thumb.jpg'],
+  uploadDate: '2025-01-15T08:00:00Z',
+  duration: 'PT15M33S',
+  contentUrl: 'https://yourdomain.com/videos/nextjs-seo.mp4',
+  embedUrl: 'https://yourdomain.com/embed/nextjs-seo',
+  publisher: {
+    '@type': 'Organization',
+    name: 'Your Company',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://yourdomain.com/logo.png',
+    },
+  },
+}
+```
+
+---
+
+## Reusable Component
+
+```tsx
+// components/seo/json-ld.tsx
+interface JsonLdProps {
+  data: object
+}
+
+export function JsonLd({ data }: JsonLdProps) {
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  )
+}
+
+// Usage
+import { JsonLd } from '@/components/seo/json-ld'
+
+export default function Page() {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    // ...
+  }
+
+  return (
+    <>
+      <JsonLd data={jsonLd} />
+      {/* Page content */}
+    </>
+  )
+}
+```
+
+---
+
+## Validation Checklist
+
+| Tool | Purpose | Link |
+|------|---------|------|
+| Rich Results Test | Test structured data | [search.google.com/test/rich-results](https://search.google.com/test/rich-results) |
+| Schema Validator | Validate syntax | [validator.schema.org](https://validator.schema.org/) |
+| Search Console | Monitor rich results | [search.google.com/search-console](https://search.google.com/search-console) |
+
+### Common Errors
+
+| Error | Solution |
+|-------|----------|
+| Missing required field | Add required properties |
+| Invalid value | Check Schema.org docs |
+| Mismatch with page | Ensure JSON-LD matches visible content |
+| Duplicate schema | Use one schema per type per page |

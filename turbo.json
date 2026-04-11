@@ -1,0 +1,76 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "tui",
+  "globalEnv": ["NODE_ENV", "CI", "VERCEL"],
+  "globalPassThroughEnv": ["GITHUB_TOKEN", "VERCEL_URL"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "env": [
+        "DATABASE_URL",
+        "BETTER_AUTH_*",
+        "GOOGLE_*",
+        "GITHUB_CLIENT_*",
+        "STRIPE_*",
+        "EMAIL_*",
+        "RESEND_API_KEY",
+        "SMTP_*",
+        "STORAGE_*",
+        "AWS_*",
+        "MAX_ORGS_PER_USER",
+        "ALLOWED_ORIGINS",
+        "CRON_SECRET",
+        "VERCEL_PROJECT_PRODUCTION_URL"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env",
+        ".env.local",
+        ".env.production",
+        ".env.production.local"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "**/generated/**",
+        "storybook-static/**",
+        ".react-email/**",
+        "dist/**"
+      ]
+    },
+    "test": {
+      "dependsOn": ["^test"],
+      "env": ["DATABASE_URL", "BETTER_AUTH_SECRET", "STRIPE_SECRET_KEY"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env",
+        ".env.local",
+        ".env.test",
+        ".env.test.local"
+      ]
+    },
+    "analyze": {
+      "dependsOn": ["^analyze"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "translate": {
+      "dependsOn": ["^translate"],
+      "cache": false
+    },
+    "clean": {
+      "cache": false
+    },
+    "//#clean": {
+      "cache": false
+    },
+    "check": {
+      "cache": false
+    },
+    "fix": {
+      "cache": false
+    }
+  }
+}

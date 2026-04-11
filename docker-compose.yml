@@ -1,0 +1,143 @@
+# =============================================================================
+# Docker Compose — Local Development
+#
+# Usage:
+#   docker compose up -d                    # Start all services
+#   docker compose up web postgres maildev  # Start specific services
+#   docker compose up --build web           # Rebuild and start web
+#   docker compose logs -f web              # Follow web logs
+#   docker compose down                     # Stop all services
+#   docker compose down -v                  # Stop and remove volumes
+# =============================================================================
+
+services:
+  # ============================================================================
+  # Infrastructure
+  # ============================================================================
+
+  # PostgreSQL 16 — Primary database for local development
+  # Connection: postgresql://dev:dev@localhost:5432/next_forge_dev
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: next_forge_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Maildev — Local SMTP server for email testing
+  # Web UI: http://localhost:1080
+  # SMTP: localhost:1025
+  maildev:
+    image: maildev/maildev:latest
+    container_name: maildev
+    ports:
+      - "1080:1080"  # Web UI
+      - "1025:1025"  # SMTP
+    environment:
+      - MAILDEV_WEB_PORT=1080
+      - MAILDEV_SMTP_PORT=1025
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:1080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # App Services (dev mode with hot reload)
+  # ============================================================================
+
+  # Web — Main SaaS application (port 3000)
+  web:
+    build:
+      context: .
+      dockerfile: docker/dev.Dockerfile
+    container_name: web
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: pnpm --filter app dev
+    env_file:
+      - apps/web/.env.local
+    environment:
+      # Override DATABASE_URL to point to the Docker PostgreSQL container
+      - DATABASE_URL=postgresql://dev:dev@postgres:5432/next_forge_dev
+      - BETTER_AUTH_URL=http://localhost:3000
+      # Uncomment for WSL2/VirtualBox file watching issues:
+      # - WATCHPACK_POLLING=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Docs — Documentation site (port 3004)
+  docs:
+    build:
+      context: .
+      dockerfile: docker/dev.Dockerfile
+    container_name: docs
+    ports:
+      - "3004:3004"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: pnpm --filter docs dev
+
+  # Email — React Email template preview (port 3003)
+  email:
+    build:
+      context: .
+      dockerfile: docker/dev.Dockerfile
+    container_name: email
+    ports:
+      - "3003:3003"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: pnpm --filter email dev
+
+  # Storybook — Component library & design system (port 6006)
+  storybook:
+    build:
+      context: .
+      dockerfile: docker/dev.Dockerfile
+    container_name: storybook
+    ports:
+      - "6006:6006"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: pnpm --filter storybook dev
+
+  # Studio — Prisma Studio database inspector (port 3005)
+  studio:
+    build:
+      context: .
+      dockerfile: docker/dev.Dockerfile
+    container_name: studio
+    ports:
+      - "3005:3005"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: pnpm --filter studio dev
+    environment:
+      - DATABASE_URL=postgresql://dev:dev@postgres:5432/next_forge_dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

@@ -1,0 +1,138 @@
+---
+title: Getting Started
+description: How to start the next-nest-monorepo project
+---
+
+## Quick Start
+
+The next-nest-monorepo is a production-grade Next.js 16 monorepo built with the next-forge template. Follow these steps to get the project running locally.
+
+### Prerequisites
+
+Ensure you have the following installed:
+- **Node.js** 18+ (recommended 20+)
+- **pnpm** 8+ (package manager for monorepo)
+- **Git** (for version control)
+
+### Installation Steps
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd next-nest-monorepo
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pnpm install
+   ```
+
+3. **Set up environment variables**
+
+   Create `.env.local` in `apps/web/`:
+   ```bash
+   # Database
+   DATABASE_URL=postgresql://user:password@host/database
+
+   # Better Auth
+   BETTER_AUTH_SECRET=your-secret-key
+   BETTER_AUTH_URL=http://localhost:3000
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+   # Stripe (optional for billing features)
+   STRIPE_SECRET_KEY=sk_test_...
+   STRIPE_WEBHOOK_SECRET=whsec_test_...
+
+   # Storage
+   STORAGE_PROVIDER=local
+   ```
+
+4. **Set up the database**
+   ```bash
+   pnpm migrate
+   ```
+
+5. **Seed the database (optional)**
+   ```bash
+   pnpm --filter @repo/database db:seed
+   ```
+
+   This creates sample users, organizations, memberships, and subscriptions for development. See [Database Design](/docs/getting-started/database-design) for details on seeded data.
+
+6. **Run the development server**
+   ```bash
+   pnpm dev
+   ```
+
+   This starts all apps and services:
+   - **Main app**: http://localhost:3000
+   - **Documentation**: http://localhost:3004
+   - **Email preview**: http://localhost:3003
+   - **Storybook**: http://localhost:6006
+   - **Prisma Studio**: http://localhost:3005
+
+### First Time Setup
+
+After starting the dev server:
+
+1. Navigate to http://localhost:3000
+2. Sign up for a new account (or use seeded credentials: `admin@example.com` / `Password@saaspro`)
+3. Create your first organization
+4. Explore the dashboard features
+
+### Common Development Commands
+
+```bash
+# Run all apps in development mode
+pnpm dev
+
+# Run specific app
+pnpm --filter web dev        # Main SaaS app
+pnpm --filter docs dev       # Documentation site
+pnpm --filter storybook dev  # Component library
+
+# Build the entire project
+pnpm build
+
+# Run linting checks
+pnpm check
+
+# Auto-fix linting issues
+pnpm fix
+
+# Run tests
+pnpm test
+
+# Type check the web app
+pnpm --filter web typecheck
+
+# Database commands
+pnpm migrate                              # Format, generate, push schema
+pnpm --filter @repo/database db:seed      # Seed development data
+```
+
+### Troubleshooting
+
+**Port already in use**
+- Change the port: `pnpm --filter web dev -- -p 3001`
+
+**Database connection issues**
+- Verify `DATABASE_URL` in `.env.local`
+- Ensure PostgreSQL is running
+- Check Neon credentials if using Neon database
+
+**Dependencies not installing**
+- Clear pnpm cache: `pnpm store prune`
+- Delete node_modules and reinstall: `rm -rf node_modules && pnpm install`
+
+**Build fails**
+- Ensure all environment variables are set
+- Run `pnpm migrate` to update database schema
+- Check TypeScript errors: `pnpm --filter web typecheck`
+
+### Next Steps
+
+- Read the [Project Structure](/docs/getting-started/structure) guide
+- Learn about [Features](/docs/getting-started/features)
+- Understand the [Database Design](/docs/getting-started/database-design)
+- Review [Deployment](/docs/getting-started/deployment) options

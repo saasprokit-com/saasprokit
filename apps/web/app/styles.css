@@ -1,0 +1,2 @@
+@import "../../../packages/design-system/styles/globals.css";
+@source "../../../packages/design-system/**/*.{ts,tsx}";

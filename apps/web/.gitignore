@@ -1,0 +1,10 @@
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/e2e/.auth/
+
+# Uploaded files (keep structure but ignore uploads)
+/public/uploads/*
+!/public/uploads/.gitkeep

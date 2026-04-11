@@ -1,0 +1,116 @@
+---
+title: SEO Checklist
+description: Comprehensive SEO implementation checklist for Next.js (2025 Best Practices)
+---
+
+# SEO Checklist for Next.js
+
+Comprehensive SEO implementation guide covering technical SEO, content optimization, and 2025 emerging trends.
+
+## Priority Matrix
+
+### Critical Priority (Week 1-2)
+
+| Status | Task | Implementation | Difficulty |
+|--------|------|---------------|------------|
+| [ ] | **Metadata API** | Static + dynamic `generateMetadata` | Easy |
+| [ ] | **Core Web Vitals** | LCP ≤2.5s, INP ≤200ms, CLS ≤0.1 | Medium |
+| [ ] | **Structured Data** | Organization, Article, FAQPage schemas | Medium |
+| [ ] | **Sitemap** | Dynamic `sitemap.ts` generation | Easy |
+| [ ] | **robots.txt** | Configure `robots.ts` | Easy |
+| [ ] | **Image Optimization** | Replace img with `next/image` | Easy |
+| [ ] | **Font Optimization** | Use `next/font` for all fonts | Easy |
+
+### High Priority (Week 3-4)
+
+| Status | Task | Impact |
+|--------|------|--------|
+| [ ] | **E-E-A-T Signals** | 30% higher chance of top 3 rankings |
+| [ ] | **Heading Hierarchy** | Proper H1-H6 structure |
+| [ ] | **Internal Linking** | Hub & spoke model |
+| [ ] | **Canonical URLs** | Prevent duplicate content |
+| [ ] | **Mobile-First** | Required for indexing |
+
+### Medium Priority (Week 5-6)
+
+| Status | Task | 2025 Relevance |
+|--------|------|----------------|
+| [ ] | **Google SGE** | 86%+ searches include AI overviews |
+| [ ] | **Voice Search** | 50% of searches by 2025 |
+| [ ] | **Zero-Click** | 60% searches end without click |
+| [ ] | **Topic Clusters** | Authority building |
+
+---
+
+## Key 2025 Statistics
+
+- **89%** of Next.js deployments meet Core Web Vitals
+- **30%** CTR lift with structured data
+- **86%+** of searches include Google SGE
+- **60%** of searches are zero-click
+- **50%** of searches will be voice by 2025
+- **INP replaced FID** as Core Web Vital (March 2024)
+
+---
+
+## Implementation Phases
+
+### Phase 1: Foundation (Week 1-2)
+
+```
+apps/web/app/
+├── layout.tsx         # Root metadata
+├── sitemap.ts         # Dynamic sitemap
+├── robots.ts          # robots.txt config
+└── [route]/page.tsx   # generateMetadata
+```
+
+### Phase 2: Core Web Vitals (Week 3-4)
+
+- [ ] Replace img tags with `next/image` + `priority`
+- [ ] Replace custom fonts with `next/font`
+- [ ] Implement React 18 `useTransition` for INP
+- [ ] Add `placeholder="blur"` for images
+
+### Phase 3: Structured Data (Week 5-6)
+
+- [ ] Organization schema (homepage)
+- [ ] Article schema (blog posts)
+- [ ] FAQPage schema (FAQ sections)
+- [ ] BreadcrumbList schema (navigation)
+
+### Phase 4: E-E-A-T & Trust (Week 7-8)
+
+- [ ] Author pages with Person schema
+- [ ] Author bios on all content
+- [ ] About page with Organization details
+- [ ] Contact page with full info
+- [ ] Content freshness dates
+
+### Phase 5: 2025 Trends (Week 9-10)
+
+- [ ] Conversational keywords for SGE
+- [ ] FAQ sections for voice search
+- [ ] Featured snippet optimization
+- [ ] Topic cluster strategy
+
+---
+
+## Testing & Validation
+
+| Tool | Purpose | Link |
+|------|---------|------|
+| PageSpeed Insights | Core Web Vitals | [pagespeed.web.dev](https://pagespeed.web.dev/) |
+| Rich Results Test | Structured Data | [search.google.com/test/rich-results](https://search.google.com/test/rich-results) |
+| Schema Validator | JSON-LD | [validator.schema.org](https://validator.schema.org/) |
+| Mobile-Friendly Test | Mobile UX | [search.google.com/test/mobile-friendly](https://search.google.com/test/mobile-friendly) |
+| Search Console | Indexing | [search.google.com/search-console](https://search.google.com/search-console) |
+
+---
+
+## Quick Reference
+
+- [Technical SEO](/docs/seo/technical-seo) - Metadata, Core Web Vitals, Sitemap
+- [Content SEO](/docs/seo/content) - Headings, Internal Links, E-E-A-T
+- [Structured Data](/docs/seo/structured-data) - JSON-LD Schemas
+- [2025 Trends](/docs/seo/trends-2005) - SGE, Voice Search, Zero-Click

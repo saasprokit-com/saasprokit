@@ -1,0 +1,47 @@
+import { getDictionary } from "@repo/internationalization";
+import { Suspense } from "react";
+import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
+import { InvitationsTable } from "../components/invitations-table";
+import { InvitationsTableSkeleton } from "../components/invitations-table-skeleton";
+import { getMemberPermissions } from "../utils";
+import { getInvitations } from "./queries";
+import { invitationsSearchParamsCache } from "./validations";
+
+type InvitationsPageProps = {
+  params: Promise<{ locale: string; orgSlug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function InvitationsPage({
+  params,
+  searchParams,
+}: InvitationsPageProps) {
+  const [{ locale, orgSlug }, resolvedSearchParams] = await Promise.all([
+    params,
+    searchParams,
+  ]);
+  const [orgContext, dict] = await Promise.all([
+    validateOrgMembershipBySlug(orgSlug),
+    getDictionary(locale),
+  ]);
+
+  const parsedParams = invitationsSearchParamsCache.parse(resolvedSearchParams);
+
+  const invitationsPromise = getInvitations({
+    ...parsedParams,
+    organizationId: orgContext.organizationId,
+  });
+
+  const permissions = getMemberPermissions(orgContext.role);
+
+  return (
+    <Suspense fallback={<InvitationsTableSkeleton />}>
+      <InvitationsTable
+        canManage={permissions.canManageInvitations}
+        errors={dict.errors.action}
+        invitationsPromise={invitationsPromise}
+        organizationId={orgContext.organizationId}
+      />
+    </Suspense>
+  );
+}

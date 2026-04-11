@@ -1,0 +1,66 @@
+---
+title: Email Overview
+description: Transactional email system with dual provider support
+---
+
+The `@repo/email` package provides a complete transactional email system with React Email templates and support for multiple email providers.
+
+## Features
+
+- **Dual Provider Support**: Switch between Resend (production) and Nodemailer (local development)
+- **React Email Templates**: 22+ pre-built templates for common use cases
+- **i18n Support**: Built-in internationalization with English and Spanish
+- **Type-Safe**: Full TypeScript support with validated configurations
+- **Auto-Detection**: Automatically selects the appropriate provider based on environment
+
+## Architecture
+
+```
+packages/email/
+├── providers/           # Email provider implementations
+│   ├── types.ts         # Interface definitions
+│   ├── resend.ts        # Resend provider
+│   ├── nodemailer.ts    # Nodemailer provider
+│   └── index.ts         # Provider factory
+├── templates/           # React Email templates
+├── components/          # Shared UI components
+├── i18n/                # Translation messages
+├── config.ts            # Environment configuration
+└── index.ts             # Public API
+```
+
+## Quick Start
+
+### Installation
+
+The package is already included in the monorepo. Import it in your app:
+
+```typescript
+import { sendWelcomeEmail, sendPasswordResetEmail } from '@repo/email';
+```
+
+### Send an Email
+
+```typescript
+await sendWelcomeEmail({
+  email: 'user@example.com',
+  name: 'John Doe',
+});
+```
+
+## Template Categories
+
+| Category | Templates |
+|----------|-----------|
+| **Auth & Security** | Password Reset, Email Verification, 2FA OTP, Account Locked, Password Changed |
+| **Organization** | Invitation, Invitation Accepted, Role Changed, Removed from Org |
+| **Subscription** | Started, Upgraded, Downgraded, Cancelled, Renewed, Trial Ending |
+| **Billing** | Payment Receipt, Payment Failed |
+| **Content** | Article Published, Welcome |
+
+## Next Steps
+
+- [Setup Guide](/docs/email/setup) - Configure email for your environment
+- [Providers](/docs/email/providers) - Learn about Resend and Nodemailer
+- [Templates](/docs/email/templates) - Explore available email templates
+- [Local Development](/docs/email/local-development) - Set up Maildev for testing
