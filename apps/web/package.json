@@ -40,7 +40,7 @@
     "@playwright/test": "^1.58.2",
     "@repo/typescript-config": "workspace:*",
     "@testing-library/dom": "^10.4.1",
-    "@testing-library/react": "^16.3.0",
+    "@testing-library/react": "^16.3.2",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "24.9.1",
     "@types/react": "19.2.2",
