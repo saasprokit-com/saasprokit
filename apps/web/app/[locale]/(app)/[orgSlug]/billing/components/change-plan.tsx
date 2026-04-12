@@ -66,8 +66,8 @@ export function ChangePlan({ errors, organizationId }: ChangePlanProps) {
     if (!pricing) {
       return 0;
     }
-    if (billingPeriod === "annual") {
-      return getMonthlyFromAnnual(pricing.ANNUAL);
+    if (billingPeriod === "yearly") {
+      return getMonthlyFromAnnual(pricing.YEARLY);
     }
     return pricing.MONTHLY;
   };
@@ -93,14 +93,14 @@ export function ChangePlan({ errors, organizationId }: ChangePlanProps) {
               Monthly
             </span>
             <Switch
-              checked={billingPeriod === "annual"}
+              checked={billingPeriod === "yearly"}
               onCheckedChange={(checked) =>
-                setBillingPeriod(checked ? "annual" : "monthly")
+                setBillingPeriod(checked ? "yearly" : "monthly")
               }
             />
             <span
               className={`flex items-center gap-2 text-sm ${
-                billingPeriod === "annual"
+                billingPeriod === "yearly"
                   ? "font-semibold text-foreground"
                   : "text-muted-foreground"
               }`}
@@ -145,7 +145,7 @@ export function ChangePlan({ errors, organizationId }: ChangePlanProps) {
                     <span className="font-bold text-2xl">
                       {price === 0 ? "Free" : `$${price}/mo`}
                     </span>
-                    {billingPeriod === "annual" && price > 0 && (
+                    {billingPeriod === "yearly" && price > 0 && (
                       <p className="mt-1 text-muted-foreground text-xs">
                         Billed annually ($
                         {(price * MONTHS_PER_YEAR).toFixed(0)}

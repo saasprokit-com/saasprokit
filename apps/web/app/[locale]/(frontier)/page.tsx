@@ -139,9 +139,9 @@ const pricingTiers = getAllPlans().map((plan) => ({
   name: plan.displayName,
   monthlyPrice: plan.monthlyPrice,
   annualPrice:
-    plan.annualPrice > 0
+    plan.yearlyPrice > 0
       ? Math.round(
-          (plan.annualPrice / MONTHS_PER_YEAR) * PERCENTAGE_MULTIPLIER
+          (plan.yearlyPrice / MONTHS_PER_YEAR) * PERCENTAGE_MULTIPLIER
         ) / PERCENTAGE_MULTIPLIER
       : 0,
   description: plan.description,
