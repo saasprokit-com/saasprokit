@@ -30,12 +30,14 @@ saasprokit/
     ├── auth/              # Better Auth config + RBAC
     ├── database/          # Prisma schema + client
     ├── design-system/     # shadcn/ui components
+    ├── email/             # React Email templates + Resend
     ├── payment/           # Stripe integration
     ├── internationalization/  # i18n support
     ├── utils/             # Shared utilities
     ├── logger/            # Structured logging (Pino)
     ├── seo/               # Metadata + sitemaps
-    └── storage/           # File uploads
+    ├── storage/           # File uploads
+    └── typescript-config/ # Shared TypeScript configs
 ```
 
 ## Getting Started
@@ -51,7 +53,7 @@ saasprokit/
 
 1. Clone the repository
 2. Copy environment variables: `cp apps/web/.env.example apps/web/.env.local`
-3. Set `DATABASE_URL` in `packages/database/.env`
+3. Copy database env: `cp packages/database/.env.example packages/database/.env` and set `DATABASE_URL`
 4. Install dependencies: `pnpm install`
 5. Run database migrations: `pnpm migrate`
 6. Start development: `pnpm dev`

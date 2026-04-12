@@ -20,8 +20,14 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 10
     groups:
-      # Safe updates — bundle minor and patch into one PR
+      # Dev tooling — low risk, bundle all updates together
+      dev-dependencies:
+        dependency-type: "development"
+        patterns: ["*"]
+      # Production minor+patch — safe to bundle into one PR
+      # Excludes high-risk deps which get individual PRs for careful review
       minor-and-patch:
+        dependency-type: "production"
         update-types:
           - "minor"
           - "patch"
@@ -31,7 +37,3 @@ updates:
           - "next"
           - "better-auth"
           - "stripe"
-      # Dev tooling — low risk, bundle together
-      dev-dependencies:
-        dependency-type: "development"
-        patterns: ["*"]

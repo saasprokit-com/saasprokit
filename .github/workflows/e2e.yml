@@ -1,5 +1,8 @@
+# E2E tests — fully self-contained, no external secrets required.
+# Services: PostgreSQL (database) + Maildev (email capture)
 name: E2E Tests
 
+# Only runs on PRs (not push to main) to save CI minutes
 on:
   pull_request:
     branches: [main, develop]
@@ -9,7 +12,7 @@ on:
       - ".github/workflows/e2e.yml"
 
 concurrency:
-  group: e2e-${{ github.event.pull_request.number || github.sha }}
+  group: e2e-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -18,12 +21,52 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U testuser -d testdb"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      maildev:
+        image: maildev/maildev:2.1.0
+        ports:
+          - 1025:1025
+          - 1080:1080
+
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      # ── Database (local PostgreSQL service container) ──
+      DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+
+      # ── Auth (required by Zod: min 32 chars + valid URL) ──
+      BETTER_AUTH_SECRET: e2e-test-secret-at-least-32-chars-long
       BETTER_AUTH_URL: http://localhost:3000
+
+      # ── App config (required by Zod) ──
       NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_NAME: SaaSProKit
       CI: true
+
+      # ── Email (points to Maildev service container) ──
+      EMAIL_FROM: noreply@test.com
+      SMTP_HOST: localhost
+      SMTP_PORT: "1025"
+
+      # ── E2E test helpers ──
+      MAILDEV_URL: http://localhost:1080
+
+      # ── Stubs (optional services — app starts, features disabled) ──
+      STRIPE_SECRET_KEY: sk_test_stub
+      STRIPE_WEBHOOK_SECRET: whsec_stub
+      STORAGE_PROVIDER: local
 
     steps:
       - name: Checkout
@@ -58,6 +101,9 @@ jobs:
 
       - name: Generate Prisma client
         run: pnpm --filter @repo/database exec prisma generate
+
+      - name: Push database schema
+        run: pnpm --filter @repo/database exec prisma db push --skip-generate
 
       - name: Run E2E tests
         run: pnpm --filter web test:e2e
