@@ -1,16 +1,37 @@
 version: 2
 updates:
-
-  # Maintain dependencies for GitHub Actions
+  # GitHub Actions — keep CI actions up to date
   - package-ecosystem: "github-actions"
     directory: "/"
-    open-pull-requests-limit: 10
     schedule:
       interval: "monthly"
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns: ["*"]
 
-  # Maintain dependencies for npm
+  # npm — root + all monorepo apps and packages
   - package-ecosystem: "npm"
-    directory: "/"
-    open-pull-requests-limit: 10
+    directories:
+      - "/"
+      - "/apps/*"
+      - "/packages/*"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      # Safe updates — bundle minor and patch into one PR
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+        exclude-patterns:
+          - "prisma"
+          - "@prisma/*"
+          - "next"
+          - "better-auth"
+          - "stripe"
+      # Dev tooling — low risk, bundle together
+      dev-dependencies:
+        dependency-type: "development"
+        patterns: ["*"]

@@ -28,8 +28,8 @@ COPY packages/design-system/package.json ./packages/design-system/package.json
 COPY packages/email/package.json ./packages/email/package.json
 COPY packages/internationalization/package.json ./packages/internationalization/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
-COPY packages/next-config/package.json ./packages/next-config/package.json
 COPY packages/payment/package.json ./packages/payment/package.json
+COPY packages/utils/package.json ./packages/utils/package.json
 COPY packages/seo/package.json ./packages/seo/package.json
 COPY packages/storage/package.json ./packages/storage/package.json
 COPY packages/typescript-config/package.json ./packages/typescript-config/package.json

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A production-grade Next.js 16 monorepo built with **next-forge** (v5.2.3) template, using pnpm workspaces and Turborepo. Features a multi-organization SaaS dashboard with Better Auth for authentication, Prisma ORM with PostgreSQL (Neon), and Stripe integration for billing. The app includes multi-language support, international routing, and both organization and personal account management.
+A production-grade Next.js 16 monorepo using pnpm workspaces and Turborepo. Features a multi-organization SaaS dashboard with Better Auth for authentication, Prisma ORM with PostgreSQL (Neon), and Stripe integration for billing. The app includes multi-language support, international routing, and both organization and personal account management.
 
 The app uses grouped routes with `(app)` and `(frontier)` route groups under `/[locale]/(app)/` namespace.
 
