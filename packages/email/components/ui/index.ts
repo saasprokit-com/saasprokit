@@ -1,10 +1,10 @@
-export { Banner } from "./Banner";
+export { Banner } from "./banner";
 export { DetailItem, DetailsBox } from "./details-box";
 export { EmailButton } from "./email-button";
 export { EmailLink } from "./email-link";
 export { EmailText } from "./email-text";
 export { FeatureList } from "./feature-list";
-export { Heading } from "./Heading";
+export { Heading } from "./heading";
 export { InfoBox } from "./info-box";
 export { PlanComparison } from "./plan-comparison";
 export { ReceiptTable } from "./receipt-table";

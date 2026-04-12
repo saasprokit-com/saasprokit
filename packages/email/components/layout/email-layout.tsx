@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
-import { Footer } from "./Footer";
+import { Footer } from "./footer";
 
 type EmailLayoutProps = {
   /** Preview text shown in inbox */
