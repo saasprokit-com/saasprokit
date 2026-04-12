@@ -321,21 +321,28 @@ STORAGE_PROVIDER=local
 
 **Agent Skills** (installed in `.claude/skills/` via `npx skills`, managed by `skills-lock.json`):
 
-Better Auth skills (6):
+Better Auth skills (5):
 - `.claude/skills/better-auth-best-practices/SKILL.md`
 - `.claude/skills/better-auth-security-best-practices/SKILL.md`
-- `.claude/skills/create-auth-skill/SKILL.md`
 - `.claude/skills/email-and-password-best-practices/SKILL.md`
 - `.claude/skills/organization-best-practices/SKILL.md`
 - `.claude/skills/two-factor-authentication-best-practices/SKILL.md`
 
-Prisma skills (6):
+Prisma skills (4):
 - `.claude/skills/prisma-cli/SKILL.md` — CLI commands (migrate, generate, studio)
 - `.claude/skills/prisma-client-api/SKILL.md` — Prisma Client API patterns
 - `.claude/skills/prisma-database-setup/SKILL.md` — Database setup and config
-- `.claude/skills/prisma-driver-adapter-implementation/SKILL.md` — Driver adapter patterns
 - `.claude/skills/prisma-postgres/SKILL.md` — Prisma Postgres specifics
-- `.claude/skills/prisma-upgrade-v7/SKILL.md` — v6 → v7 migration guide
+
+Other skills:
+- `.claude/skills/prisma-postgres-setup/SKILL.md` — Prisma Postgres setup
+- `.claude/skills/deploy-to-vercel/SKILL.md` — Vercel deployment
+- `.claude/skills/shadcn/SKILL.md` — shadcn/ui components
+- `.claude/skills/vercel-cli-with-tokens/SKILL.md` — Vercel CLI with tokens
+- `.claude/skills/vercel-composition-patterns/SKILL.md` — React composition patterns
+- `.claude/skills/vercel-react-best-practices/SKILL.md` — React best practices
+- `.claude/skills/vercel-react-view-transitions/SKILL.md` — View transitions
+- `.claude/skills/web-design-guidelines/SKILL.md` — Web design guidelines
 
 Update skills: `npx skills check` then `npx skills update`.
 
