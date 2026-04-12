@@ -41,11 +41,7 @@ jobs:
         ports:
           - 1025:1025
           - 1080:1080
-        options: >-
-          --health-cmd="printf 'EHLO test\r\n' | nc -w 2 localhost 1025 | grep -q '250'"
-          --health-interval=5s
-          --health-timeout=3s
-          --health-retries=5
+        options: --no-healthcheck
 
     env:
       # ── Database (local PostgreSQL service container) ──
