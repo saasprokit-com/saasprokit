@@ -109,7 +109,7 @@ jobs:
         run: pnpm --filter @repo/database exec prisma generate
 
       - name: Push database schema
-        run: pnpm --filter @repo/database exec prisma db push --skip-generate
+        run: pnpm --filter @repo/database exec prisma db push
 
       - name: Run E2E tests
         run: pnpm --filter app test:e2e
