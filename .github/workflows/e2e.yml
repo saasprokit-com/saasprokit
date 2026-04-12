@@ -42,9 +42,9 @@ jobs:
           - 1025:1025
           - 1080:1080
         options: >-
-          --health-cmd="node -e \"fetch('http://localhost:1080').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""
-          --health-interval=10s
-          --health-timeout=5s
+          --health-cmd="printf 'EHLO test\r\n' | nc -w 2 localhost 1025 | grep -q '250'"
+          --health-interval=5s
+          --health-timeout=3s
           --health-retries=5
 
     env:
