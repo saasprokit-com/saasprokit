@@ -10,8 +10,8 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "check": "npx ultracite@latest check && turbo check",
-    "fix": "npx ultracite@latest fix && turbo fix",
+    "check": "npx ultracite@6.0.3 check && turbo check",
+    "fix": "npx ultracite@6.0.3 fix && turbo fix",
     "test": "turbo test",
     "analyze": "turbo analyze",
     "translate": "turbo translate",
