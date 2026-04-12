@@ -1,2 +1,2 @@
 export { EmailLayout } from "./email-layout";
-export { Footer } from "./footer";
+export { Footer } from "./Footer";
