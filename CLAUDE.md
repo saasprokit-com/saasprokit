@@ -13,7 +13,7 @@ The app uses grouped routes with `(app)` and `(frontier)` route groups under `/[
 ### Development
 ```bash
 pnpm dev                      # Run all apps in dev mode
-pnpm --filter web dev         # Main app only (port 3000)
+pnpm --filter app dev         # Main app only (port 3000)
 pnpm --filter docs dev        # Documentation (port 3004)
 pnpm --filter storybook dev   # Component library (port 6006)
 pnpm --filter email dev       # Email preview (port 3003)
@@ -25,16 +25,16 @@ pnpm --filter studio dev      # Prisma Studio (port 3005)
 pnpm build                    # Build all apps and packages
 pnpm check                    # Lint check via ultracite + Biome
 pnpm fix                      # Auto-fix lint issues
-pnpm --filter web typecheck   # Type check web app
+pnpm --filter app typecheck   # Type check web app
 ```
 
 ### Testing
 ```bash
 pnpm test                     # Run all tests (vitest)
-pnpm --filter web test        # Run tests for web app only
+pnpm --filter app test        # Run tests for web app only
 pnpm --filter [package] test  # Run tests for specific package
-pnpm --filter web test:e2e    # Run Playwright E2E tests
-pnpm --filter web test:e2e:ui # Run E2E tests with UI
+pnpm --filter app test:e2e    # Run Playwright E2E tests
+pnpm --filter app test:e2e:ui # Run E2E tests with UI
 ```
 
 ### Database (Prisma)

@@ -87,7 +87,7 @@ After starting the dev server:
 pnpm dev
 
 # Run specific app
-pnpm --filter web dev        # Main SaaS app
+pnpm --filter app dev        # Main SaaS app
 pnpm --filter docs dev       # Documentation site
 pnpm --filter storybook dev  # Component library
 
@@ -104,7 +104,7 @@ pnpm fix
 pnpm test
 
 # Type check the web app
-pnpm --filter web typecheck
+pnpm --filter app typecheck
 
 # Database commands
 pnpm migrate                              # Format, generate, push schema
@@ -114,7 +114,7 @@ pnpm --filter @repo/database db:seed      # Seed development data
 ### Troubleshooting
 
 **Port already in use**
-- Change the port: `pnpm --filter web dev -- -p 3001`
+- Change the port: `pnpm --filter app dev -- -p 3001`
 
 **Database connection issues**
 - Verify `DATABASE_URL` in `.env.local`
@@ -128,7 +128,7 @@ pnpm --filter @repo/database db:seed      # Seed development data
 **Build fails**
 - Ensure all environment variables are set
 - Run `pnpm migrate` to update database schema
-- Check TypeScript errors: `pnpm --filter web typecheck`
+- Check TypeScript errors: `pnpm --filter app typecheck`
 
 ### Next Steps
 

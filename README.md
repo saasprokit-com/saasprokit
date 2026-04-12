@@ -62,10 +62,10 @@ saasprokit/
 
 ```bash
 pnpm dev                      # All apps
-pnpm --filter web dev         # Main app only (port 3000)
+pnpm --filter app dev         # Main app only (port 3000)
 pnpm check                    # Lint (Biome via ultracite)
 pnpm test                     # Unit tests (Vitest)
-pnpm --filter web test:e2e    # E2E tests (Playwright)
+pnpm --filter app test:e2e    # E2E tests (Playwright)
 pnpm build                    # Build all
 ```
 

@@ -36,6 +36,12 @@ jobs:
   typecheck:
     name: TypeScript
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://stub:stub@localhost:5432/stub
+      BETTER_AUTH_SECRET: ci-typecheck-secret-at-least-32-chars
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_NAME: SaaSProKit
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,11 +62,19 @@ jobs:
         run: pnpm --filter @repo/database exec prisma generate
 
       - name: Typecheck web app
-        run: pnpm --filter web typecheck
+        run: pnpm --filter app typecheck
 
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://stub:stub@localhost:5432/stub
+      BETTER_AUTH_SECRET: ci-unit-test-secret-at-least-32-chars
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_NAME: SaaSProKit
+      STRIPE_SECRET_KEY: sk_test_stub
+      STRIPE_WEBHOOK_SECRET: whsec_stub
     steps:
       - name: Checkout
         uses: actions/checkout@v4

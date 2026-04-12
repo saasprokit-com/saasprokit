@@ -93,11 +93,11 @@ jobs:
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm --filter web exec playwright install --with-deps chromium
+        run: pnpm --filter app exec playwright install --with-deps chromium
 
       - name: Install Playwright system deps
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm --filter web exec playwright install-deps chromium
+        run: pnpm --filter app exec playwright install-deps chromium
 
       - name: Generate Prisma client
         run: pnpm --filter @repo/database exec prisma generate
@@ -106,7 +106,7 @@ jobs:
         run: pnpm --filter @repo/database exec prisma db push --skip-generate
 
       - name: Run E2E tests
-        run: pnpm --filter web test:e2e
+        run: pnpm --filter app test:e2e
 
       - name: Upload test results
         if: ${{ !cancelled() }}
