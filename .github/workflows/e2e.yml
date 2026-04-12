@@ -36,17 +36,6 @@ jobs:
           --health-timeout=5s
           --health-retries=5
 
-      maildev:
-        image: maildev/maildev:2.1.0
-        ports:
-          - 1025:1025
-          - 1080:1080
-        options: >-
-          --health-cmd="node -e 'var h=require(\"http\");h.get(\"http://localhost:1080\",function(r){process.exit(r.statusCode===200?0:1)}).on(\"error\",function(){process.exit(1)})'"
-          --health-interval=5s
-          --health-timeout=3s
-          --health-retries=10
-
     env:
       # ── Database (local PostgreSQL service container) ──
       DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
@@ -60,7 +49,7 @@ jobs:
       NEXT_PUBLIC_APP_NAME: SaaSProKit
       CI: true
 
-      # ── Email (points to Maildev service container) ──
+      # ── Email (points to Maildev container started in steps) ──
       EMAIL_FROM: noreply@test.com
       SMTP_HOST: localhost
       SMTP_PORT: "1025"
@@ -76,6 +65,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Start Maildev
+        run: |
+          docker run -d --name maildev -p 1025:1025 -p 1080:1080 maildev/maildev:2.1.0
+          for i in $(seq 1 15); do
+            if curl -sf http://localhost:1080 > /dev/null 2>&1; then
+              echo "Maildev is ready"
+              break
+            fi
+            echo "Waiting for Maildev... ($i/15)"
+            sleep 2
+          done
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
