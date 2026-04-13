@@ -31,7 +31,7 @@
     "@storybook/addon-themes": "^10.1.11",
     "@storybook/nextjs-vite": "10.1.11",
     "@tailwindcss/postcss": "^4.1.16",
-    "@types/node": "^24",
+    "@types/node": "^25",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "chromatic": "^13.3.2",

@@ -14,7 +14,7 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/lodash.merge": "^4.6.9",
-    "@types/node": "24.9.1",
+    "@types/node": "25.6.0",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "next": "16.0.10"
