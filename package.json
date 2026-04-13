@@ -1,8 +1,8 @@
 {
-  "name": "next-forge",
+  "name": "saasprokit",
   "version": "5.2.3",
   "bin": {
-    "next-forge": "dist/index.js"
+    "saasprokit": "dist/index.js"
   },
   "files": [
     "dist/index.js"
@@ -10,8 +10,8 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "check": "npx ultracite@latest check && turbo check",
-    "fix": "npx ultracite@latest fix && turbo fix",
+    "check": "npx ultracite@6.5.1 check && turbo check",
+    "fix": "npx ultracite@6.5.1 fix && turbo fix",
     "test": "turbo test",
     "analyze": "turbo analyze",
     "translate": "turbo translate",
@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@auto-it/first-time-contributor": "^11.3.0",
-    "@biomejs/biome": "2.4.11",
+    "@biomejs/biome": "2.3.10",
     "@repo/typescript-config": "workspace:*",
     "@turbo/gen": "^2.5.8",
     "@types/node": "^24.9.1",
@@ -31,11 +31,11 @@
     "tsup": "^8.5.0",
     "turbo": "^2.5.8",
     "typescript": "^5.9.3",
-    "ultracite": "6.0.3",
+    "ultracite": "6.5.1",
     "vitest": "^4.0.3"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "packageManager": "pnpm@10.19.0",
   "dependencies": {

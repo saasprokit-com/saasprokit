@@ -3,16 +3,16 @@
 # Uses multi-stage builds with turbo prune for minimal Docker context
 #
 # Build:
-#   docker build -f apps/web/Dockerfile -t next-forge-web:latest .
+#   docker build -f apps/web/Dockerfile -t saasprokit-web:latest .
 #
 # Build with public env vars:
 #   docker build -f apps/web/Dockerfile \
 #     --build-arg NEXT_PUBLIC_APP_URL=https://app.example.com \
 #     --build-arg NEXT_PUBLIC_DOCS_URL=https://docs.example.com \
-#     -t next-forge-web:latest .
+#     -t saasprokit-web:latest .
 #
 # Run:
-#   docker run -p 3000:3000 --env-file .env next-forge-web:latest
+#   docker run -p 3000:3000 --env-file .env saasprokit-web:latest
 # =============================================================================
 
 # ---------------------------------------------------------------------------

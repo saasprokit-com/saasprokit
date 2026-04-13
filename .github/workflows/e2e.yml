@@ -1,0 +1,125 @@
+# E2E tests — fully self-contained, no external secrets required.
+# Services: PostgreSQL (database) + Maildev (email capture)
+name: E2E Tests
+
+# Only runs on PRs (not push to main) to save CI minutes
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - ".github/workflows/e2e.yml"
+
+concurrency:
+  group: e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    # TODO: Re-enable after fixing auth-setup flow in CI
+    if: false
+    name: Playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U testuser -d testdb"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      # ── Database (local PostgreSQL service container) ──
+      DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+
+      # ── Auth (required by Zod: min 32 chars + valid URL) ──
+      BETTER_AUTH_SECRET: e2e-test-secret-at-least-32-chars-long
+      BETTER_AUTH_URL: http://localhost:3000
+
+      # ── App config (required by Zod) ──
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_NAME: SaaSProKit
+      CI: true
+
+      # ── Email (points to Maildev container started in steps) ──
+      EMAIL_FROM: noreply@test.com
+      SMTP_HOST: localhost
+      SMTP_PORT: "1025"
+
+      # ── E2E test helpers ──
+      MAILDEV_URL: http://localhost:1080
+
+      # ── Stubs (optional services — app starts, features disabled) ──
+      STRIPE_SECRET_KEY: sk_test_stub
+      STRIPE_WEBHOOK_SECRET: whsec_stub
+      STORAGE_PROVIDER: local
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Start Maildev
+        run: |
+          docker run -d --name maildev -p 1025:1025 -p 1080:1080 maildev/maildev:2.1.0
+          for i in $(seq 1 15); do
+            if curl -sf http://localhost:1080 > /dev/null 2>&1; then
+              echo "Maildev is ready"
+              break
+            fi
+            echo "Waiting for Maildev... ($i/15)"
+            sleep 2
+          done
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter app exec playwright install --with-deps chromium
+
+      - name: Install Playwright system deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter app exec playwright install-deps chromium
+
+      - name: Generate Prisma client
+        run: pnpm --filter @repo/database exec prisma generate
+
+      - name: Push database schema
+        run: pnpm --filter @repo/database exec prisma db push
+
+      - name: Run E2E tests
+        run: pnpm --filter app test:e2e
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7

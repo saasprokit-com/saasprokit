@@ -16,7 +16,7 @@ services:
   # ============================================================================
 
   # PostgreSQL 16 — Primary database for local development
-  # Connection: postgresql://dev:dev@localhost:5432/next_forge_dev
+  # Connection: postgresql://dev:dev@localhost:5432/saasprokit_dev
   postgres:
     image: postgres:16-alpine
     container_name: postgres
@@ -25,7 +25,7 @@ services:
     environment:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: dev
-      POSTGRES_DB: next_forge_dev
+      POSTGRES_DB: saasprokit_dev
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -74,7 +74,7 @@ services:
       - apps/web/.env.local
     environment:
       # Override DATABASE_URL to point to the Docker PostgreSQL container
-      - DATABASE_URL=postgresql://dev:dev@postgres:5432/next_forge_dev
+      - DATABASE_URL=postgresql://dev:dev@postgres:5432/saasprokit_dev
       - BETTER_AUTH_URL=http://localhost:3000
       # Uncomment for WSL2/VirtualBox file watching issues:
       # - WATCHPACK_POLLING=true
@@ -134,7 +134,7 @@ services:
       - /app/node_modules
     command: pnpm --filter studio dev
     environment:
-      - DATABASE_URL=postgresql://dev:dev@postgres:5432/next_forge_dev
+      - DATABASE_URL=postgresql://dev:dev@postgres:5432/saasprokit_dev
     depends_on:
       postgres:
         condition: service_healthy

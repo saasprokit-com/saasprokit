@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A production-grade Next.js 16 monorepo built with **next-forge** (v5.2.3) template, using pnpm workspaces and Turborepo. Features a multi-organization SaaS dashboard with Better Auth for authentication, Prisma ORM with PostgreSQL (Neon), and Stripe integration for billing. The app includes multi-language support, international routing, and both organization and personal account management.
+A production-grade Next.js 16 monorepo using pnpm workspaces and Turborepo. Features a multi-organization SaaS dashboard with Better Auth for authentication, Prisma ORM with PostgreSQL (Neon), and Stripe integration for billing. The app includes multi-language support, international routing, and both organization and personal account management.
 
 The app uses grouped routes with `(app)` and `(frontier)` route groups under `/[locale]/(app)/` namespace.
 
@@ -13,7 +13,7 @@ The app uses grouped routes with `(app)` and `(frontier)` route groups under `/[
 ### Development
 ```bash
 pnpm dev                      # Run all apps in dev mode
-pnpm --filter web dev         # Main app only (port 3000)
+pnpm --filter app dev         # Main app only (port 3000)
 pnpm --filter docs dev        # Documentation (port 3004)
 pnpm --filter storybook dev   # Component library (port 6006)
 pnpm --filter email dev       # Email preview (port 3003)
@@ -25,16 +25,16 @@ pnpm --filter studio dev      # Prisma Studio (port 3005)
 pnpm build                    # Build all apps and packages
 pnpm check                    # Lint check via ultracite + Biome
 pnpm fix                      # Auto-fix lint issues
-pnpm --filter web typecheck   # Type check web app
+pnpm --filter app typecheck   # Type check web app
 ```
 
 ### Testing
 ```bash
 pnpm test                     # Run all tests (vitest)
-pnpm --filter web test        # Run tests for web app only
+pnpm --filter app test        # Run tests for web app only
 pnpm --filter [package] test  # Run tests for specific package
-pnpm --filter web test:e2e    # Run Playwright E2E tests
-pnpm --filter web test:e2e:ui # Run E2E tests with UI
+pnpm --filter app test:e2e    # Run Playwright E2E tests
+pnpm --filter app test:e2e:ui # Run E2E tests with UI
 ```
 
 ### Database (Prisma)
@@ -321,21 +321,28 @@ STORAGE_PROVIDER=local
 
 **Agent Skills** (installed in `.claude/skills/` via `npx skills`, managed by `skills-lock.json`):
 
-Better Auth skills (6):
+Better Auth skills (5):
 - `.claude/skills/better-auth-best-practices/SKILL.md`
 - `.claude/skills/better-auth-security-best-practices/SKILL.md`
-- `.claude/skills/create-auth-skill/SKILL.md`
 - `.claude/skills/email-and-password-best-practices/SKILL.md`
 - `.claude/skills/organization-best-practices/SKILL.md`
 - `.claude/skills/two-factor-authentication-best-practices/SKILL.md`
 
-Prisma skills (6):
+Prisma skills (4):
 - `.claude/skills/prisma-cli/SKILL.md` — CLI commands (migrate, generate, studio)
 - `.claude/skills/prisma-client-api/SKILL.md` — Prisma Client API patterns
 - `.claude/skills/prisma-database-setup/SKILL.md` — Database setup and config
-- `.claude/skills/prisma-driver-adapter-implementation/SKILL.md` — Driver adapter patterns
 - `.claude/skills/prisma-postgres/SKILL.md` — Prisma Postgres specifics
-- `.claude/skills/prisma-upgrade-v7/SKILL.md` — v6 → v7 migration guide
+
+Other skills:
+- `.claude/skills/prisma-postgres-setup/SKILL.md` — Prisma Postgres setup
+- `.claude/skills/deploy-to-vercel/SKILL.md` — Vercel deployment
+- `.claude/skills/shadcn/SKILL.md` — shadcn/ui components
+- `.claude/skills/vercel-cli-with-tokens/SKILL.md` — Vercel CLI with tokens
+- `.claude/skills/vercel-composition-patterns/SKILL.md` — React composition patterns
+- `.claude/skills/vercel-react-best-practices/SKILL.md` — React best practices
+- `.claude/skills/vercel-react-view-transitions/SKILL.md` — View transitions
+- `.claude/skills/web-design-guidelines/SKILL.md` — Web design guidelines
 
 Update skills: `npx skills check` then `npx skills update`.
 

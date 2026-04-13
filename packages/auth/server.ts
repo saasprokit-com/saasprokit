@@ -389,7 +389,6 @@ export const auth = betterAuth({
                     name: PLAN_NAMES.FREE,
                     priceId: env.STRIPE_FREE_PRICE_ID ?? "",
                     limits: {
-                      maxOrganizations: PLANS.free.limits.maxOrganizations,
                       maxMembers: PLANS.free.limits.maxMembers,
                       maxStorageMB: PLANS.free.limits.maxStorageMB,
                     },
@@ -399,7 +398,6 @@ export const auth = betterAuth({
                     priceId: priceMap.pro_monthly,
                     annualDiscountPriceId: priceMap.pro_yearly,
                     limits: {
-                      maxOrganizations: PLANS.pro.limits.maxOrganizations,
                       maxMembers: PLANS.pro.limits.maxMembers,
                       maxStorageMB: PLANS.pro.limits.maxStorageMB,
                     },
@@ -409,8 +407,6 @@ export const auth = betterAuth({
                     priceId: priceMap.enterprise_monthly,
                     annualDiscountPriceId: priceMap.enterprise_yearly,
                     limits: {
-                      maxOrganizations:
-                        PLANS.enterprise.limits.maxOrganizations,
                       maxMembers: PLANS.enterprise.limits.maxMembers,
                       maxStorageMB: PLANS.enterprise.limits.maxStorageMB,
                     },

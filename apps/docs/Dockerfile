@@ -3,10 +3,10 @@
 # Uses multi-stage builds with turbo prune for minimal Docker context
 #
 # Build:
-#   docker build -f apps/docs/Dockerfile -t next-forge-docs:latest .
+#   docker build -f apps/docs/Dockerfile -t saasprokit-docs:latest .
 #
 # Run:
-#   docker run -p 3004:3004 next-forge-docs:latest
+#   docker run -p 3004:3004 saasprokit-docs:latest
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -45,7 +45,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 # Copy full source code (busts cache on any source change)
 COPY --from=pruner /app/out/full/ .
 
-# Generate Prisma client + build Next.js app
+# Build Next.js docs app
 RUN pnpm build --filter=docs
 
 # ---------------------------------------------------------------------------

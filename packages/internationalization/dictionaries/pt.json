@@ -112,7 +112,8 @@
       "nameTooShort": "Name must be at least 2 characters",
       "sessionNotFound": "Session not found",
       "slugAlreadyTaken": "This slug is already taken. Please choose another.",
-      "memberLimitReached": "This organization has reached its member limit"
+      "memberLimitReached": "Esta organização atingiu o limite de membros",
+      "invalidImageUrl": "URL de imagem inválida"
     }
   }
 }

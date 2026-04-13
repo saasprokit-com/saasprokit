@@ -27,7 +27,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-prod}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
-      POSTGRES_DB: ${POSTGRES_DB:-next_forge}
+      POSTGRES_DB: ${POSTGRES_DB:-saasprokit}
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
     networks:
@@ -61,7 +61,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-prod}:${POSTGRES_PASSWORD:?err}@postgres:5432/${POSTGRES_DB:-next_forge}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-prod}:${POSTGRES_PASSWORD:?err}@postgres:5432/${POSTGRES_DB:-saasprokit}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
       - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3000}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}

@@ -152,7 +152,7 @@
   }
 }
 
-/* This layer is by next-forge */
+/* Base layer styles */
 @layer base {
   ::after,
   ::before,

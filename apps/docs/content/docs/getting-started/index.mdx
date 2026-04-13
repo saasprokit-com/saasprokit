@@ -5,13 +5,13 @@ description: How to start the next-nest-monorepo project
 
 ## Quick Start
 
-The next-nest-monorepo is a production-grade Next.js 16 monorepo built with the next-forge template. Follow these steps to get the project running locally.
+The next-nest-monorepo is a production-grade Next.js 16 monorepo using pnpm workspaces and Turborepo. Follow these steps to get the project running locally.
 
 ### Prerequisites
 
 Ensure you have the following installed:
-- **Node.js** 18+ (recommended 20+)
-- **pnpm** 8+ (package manager for monorepo)
+- **Node.js** 22+ (LTS recommended)
+- **pnpm** 10+ (package manager for monorepo)
 - **Git** (for version control)
 
 ### Installation Steps
@@ -57,7 +57,7 @@ Ensure you have the following installed:
    pnpm --filter @repo/database db:seed
    ```
 
-   This creates sample users, organizations, memberships, and subscriptions for development. See [Database Design](/docs/getting-started/database-design) for details on seeded data.
+   This creates sample users, organizations, memberships, and subscriptions for development. See [Database Design](/docs/database/database-design) for details on seeded data.
 
 6. **Run the development server**
    ```bash
@@ -87,7 +87,7 @@ After starting the dev server:
 pnpm dev
 
 # Run specific app
-pnpm --filter web dev        # Main SaaS app
+pnpm --filter app dev        # Main SaaS app
 pnpm --filter docs dev       # Documentation site
 pnpm --filter storybook dev  # Component library
 
@@ -104,7 +104,7 @@ pnpm fix
 pnpm test
 
 # Type check the web app
-pnpm --filter web typecheck
+pnpm --filter app typecheck
 
 # Database commands
 pnpm migrate                              # Format, generate, push schema
@@ -114,7 +114,7 @@ pnpm --filter @repo/database db:seed      # Seed development data
 ### Troubleshooting
 
 **Port already in use**
-- Change the port: `pnpm --filter web dev -- -p 3001`
+- Change the port: `pnpm --filter app dev -- -p 3001`
 
 **Database connection issues**
 - Verify `DATABASE_URL` in `.env.local`
@@ -128,11 +128,11 @@ pnpm --filter @repo/database db:seed      # Seed development data
 **Build fails**
 - Ensure all environment variables are set
 - Run `pnpm migrate` to update database schema
-- Check TypeScript errors: `pnpm --filter web typecheck`
+- Check TypeScript errors: `pnpm --filter app typecheck`
 
 ### Next Steps
 
 - Read the [Project Structure](/docs/getting-started/structure) guide
 - Learn about [Features](/docs/getting-started/features)
-- Understand the [Database Design](/docs/getting-started/database-design)
+- Understand the [Database Design](/docs/database/database-design)
 - Review [Deployment](/docs/getting-started/deployment) options

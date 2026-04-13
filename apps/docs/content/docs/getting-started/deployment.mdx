@@ -101,7 +101,7 @@ Storybook: storybook.yourdomain.com → Chromatic
 ## Pre-Deployment Checklist
 
 ### Code Quality
-- [ ] No TypeScript errors: `pnpm --filter web typecheck`
+- [ ] No TypeScript errors: `pnpm --filter app typecheck`
 - [ ] Lint checks passing: `pnpm check`
 - [ ] Tests passing: `pnpm test`
 
@@ -225,7 +225,7 @@ vercel rollback
 ### Build Fails
 - Check that all environment variables are set
 - Verify database connection string is correct
-- Check TypeScript errors: `pnpm --filter web typecheck`
+- Check TypeScript errors: `pnpm --filter app typecheck`
 
 ### Database Connection Issues
 - Verify connection string format
