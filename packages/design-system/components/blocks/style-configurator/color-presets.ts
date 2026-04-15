@@ -9,7 +9,13 @@
  */
 
 export type BaseColorName = "neutral" | "slate" | "zinc" | "stone" | "gray";
-export type AccentColorName = "blue" | "green" | "orange" | "red" | "violet";
+export type AccentColorName =
+  | "amber"
+  | "blue"
+  | "green"
+  | "orange"
+  | "red"
+  | "violet";
 export type RadiusValue = "0" | "0.3" | "0.5" | "0.75" | "1.0";
 export type FontName = "geist" | "inter" | "dm-sans" | "jakarta";
 export type DensityValue = "compact" | "comfortable" | "spacious";
@@ -24,7 +30,7 @@ export interface StyleConfig {
 
 export const DEFAULT_CONFIG: StyleConfig = {
   baseColor: "neutral",
-  accent: "blue",
+  accent: "amber",
   radius: "0",
   font: "geist",
   density: "comfortable",
@@ -214,6 +220,19 @@ export const ACCENT_COLORS: Record<
   AccentColorName,
   { light: ColorVars; dark: ColorVars; preview: string }
 > = {
+  amber: {
+    light: {
+      "--primary": "oklch(0.769 0.188 70.08)",
+      "--primary-foreground": "oklch(0.145 0 0)",
+      "--ring": "oklch(0.769 0.188 70.08)",
+    },
+    dark: {
+      "--primary": "oklch(0.828 0.189 84.429)",
+      "--primary-foreground": "oklch(0.145 0 0)",
+      "--ring": "oklch(0.828 0.189 84.429)",
+    },
+    preview: "#F59E0B",
+  },
   blue: {
     light: {
       "--primary": "oklch(0.546 0.245 262.881)",

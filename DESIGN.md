@@ -9,8 +9,8 @@
 ## Aesthetic Direction
 - **Direction:** Brutally Minimal
 - **Decoration level:** Minimal — the grid IS the decoration
-- **Mood:** Confident, geometric, precise. Like looking at an engineering blueprint that happens to be beautiful.
-- **Reference sites:** vercel.com/home, vercel.com/pricing
+- **Mood:** Confident and geometric, but warm. Engineering precision with human energy. Not a cold blueprint... a workshop where things get built.
+- **Reference sites:** vercel.com/home (grid system, structure), shipfa.st (warmth, social proof, energy)
 
 ## Grid System
 - **Type:** Page-level 12-column grid with visible guide lines
@@ -34,7 +34,8 @@
 - **Background:** #fafafa (off-white, light mode) / #0a0a0a (near-black, dark mode)
 - **Foreground:** #171717 (near-black, light mode) / #ededed (off-white, dark mode)
 - **Border/guides:** #ebebeb (light) / #2e2e2e (dark)
-- **Accent:** #0072f5 (Vercel blue) — links and interactive highlights only
+- **Accent (default):** #F59E0B (amber/gold) — CTAs, highlights, badges. Warm energy.
+- **Accent (alternative):** #0072f5 (blue) — available in configurator. Cooler, more corporate.
 - **Muted text:** #666666 (light) / #888888 (dark)
 - **Semantic:** success #17a34a, warning #eab308, error #dc2626, info #0072f5
 - **Dark mode:** Invert surfaces, reduce saturation. No gradients in either mode.
@@ -59,15 +60,23 @@
 - **Easing:** ease-out for enter, ease-in for exit
 - **Duration:** 100-200ms max
 
+## Social Proof (new section, inspired by ShipFast)
+- **GitHub stars badge** in hero (real count from GitHub API or static)
+- **Contributor avatars** row (3-5 contributors, fetched or static)
+- **Key metrics**: "9 features", "35 E2E tests", "8 technologies"
+- Style: understated, not ShipFast-level hype. Numbers, not testimonials.
+- Placement: below hero CTAs or in the benefits column
+
 ## Anti-Patterns (never use)
 - Gradients as backgrounds
 - Colored circles behind icons
 - Card shadows (use borders instead)
-- Rounded corners (radius is 0)
+- Rounded corners (radius is 0 by default, configurable via configurator)
 - Purple/violet anything
 - Centered everything — left-align by default
 - Decorative blobs, waves, or SVG dividers
 - Background patterns (the grid guides ARE the pattern)
+- Fake testimonials or placeholder social proof
 
 ## Decisions Log
 | Date | Decision | Rationale |
@@ -75,3 +84,5 @@
 | 2026-04-14 | Initial design system created | Based on vercel.com/home analysis via /design-consultation. Geist font, 12-col grid, visible guides, 0 radius. |
 | 2026-04-14 | Grid system: DOM elements, not CSS bg | Learned from inspecting vercel.com/pricing that guide lines are real divs with border-right, not background-image patterns. |
 | 2026-04-14 | Border radius: 0rem globally | User requested. Set via --radius CSS variable in globals.css. |
+| 2026-04-15 | Accent color: amber #F59E0B (was blue) | ShipFast comparison showed blue is cold for a boilerplate. Amber adds warmth while keeping geometric grid DNA. |
+| 2026-04-15 | Added social proof section spec | ShipFast has 19 avatars + revenue testimonials. We go understated: GitHub stars, contributor avatars, key metrics. |
