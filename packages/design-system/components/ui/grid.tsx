@@ -100,7 +100,7 @@ export function GridSection({
                 <div
                   className={cn(
                     "h-full",
-                    i < columns - 1 && "border-border/50 border-r"
+                    i < columns - 1 && "border-border border-r"
                   )}
                   key={`guide-${i}`}
                 />
