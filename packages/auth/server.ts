@@ -175,6 +175,19 @@ export const auth = betterAuth({
     useSecureCookies: process.env.NODE_ENV === "production",
   },
 
+  // Rate limiting — persistent storage for serverless (Vercel)
+  rateLimit: {
+    storage: "database",
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-up/email": { window: 60, max: 3 },
+      "/forgot-password": { window: 60, max: 3 },
+      "/reset-password": { window: 60, max: 3 },
+      "/change-password": { window: 60, max: 3 },
+      "/two-factor/*": { window: 60, max: 5 },
+    },
+  },
+
   // Email and password authentication
   emailAndPassword: {
     enabled: true,
