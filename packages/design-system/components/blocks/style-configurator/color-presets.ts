@@ -30,7 +30,7 @@ export interface StyleConfig {
 
 export const DEFAULT_CONFIG: StyleConfig = {
   baseColor: "neutral",
-  accent: "amber",
+  accent: "blue",
   radius: "0",
   font: "geist",
   density: "comfortable",

@@ -34,8 +34,8 @@
 - **Background:** #fafafa (off-white, light mode) / #0a0a0a (near-black, dark mode)
 - **Foreground:** #171717 (near-black, light mode) / #ededed (off-white, dark mode)
 - **Border/guides:** #ebebeb (light) / #2e2e2e (dark)
-- **Accent (default):** #F59E0B (amber/gold) — CTAs, highlights, badges. Warm energy.
-- **Accent (alternative):** #0072f5 (blue) — available in configurator. Cooler, more corporate.
+- **Accent:** #0072f5 (blue) — links, CTAs, interactive highlights. Clean and professional.
+- **Accent (alternatives):** amber #F59E0B, green, orange, red, violet — available in configurator.
 - **Muted text:** #666666 (light) / #888888 (dark)
 - **Semantic:** success #17a34a, warning #eab308, error #dc2626, info #0072f5
 - **Dark mode:** Invert surfaces, reduce saturation. No gradients in either mode.
