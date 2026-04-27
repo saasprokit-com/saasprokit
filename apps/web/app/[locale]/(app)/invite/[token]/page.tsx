@@ -151,9 +151,9 @@ export default async function InviteLinkPage({ params }: InviteLinkPageProps) {
 
   // Calculate remaining uses
   const remainingUses =
-    inviteLink.maxUses !== null
-      ? inviteLink.maxUses - inviteLink.usedCount
-      : null;
+    inviteLink.maxUses === null
+      ? null
+      : inviteLink.maxUses - inviteLink.usedCount;
 
   // Show the invite link details
   return (
@@ -213,7 +213,7 @@ export default async function InviteLinkPage({ params }: InviteLinkPageProps) {
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   <span>
-                    {remainingUses} spot{remainingUses !== 1 ? "s" : ""}{" "}
+                    {remainingUses} spot{remainingUses === 1 ? "" : "s"}{" "}
                     remaining
                   </span>
                 </div>

@@ -81,7 +81,7 @@ export function AccountSidebar({ user, locale }: AccountSidebarProps) {
           className="group mb-2 flex items-center gap-2 rounded-md px-2 py-2 font-medium text-muted-foreground text-xs transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           href={PAGE_ROUTES.ORG}
         >
-          <ArrowLeft className="group-hover:-translate-x-0.5 h-3.5 w-3.5 transition-transform" />
+          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
           <span className="truncate">Organization</span>
         </Link>
         <div className="flex items-center gap-2 px-2 py-4">

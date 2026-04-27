@@ -2,13 +2,13 @@
 
 import type { ReactNode } from "react";
 
-type ErrorContentProps = {
+interface ErrorContentProps {
   code: string;
   title: string;
   description: ReactNode;
   digest?: string;
   children: ReactNode;
-};
+}
 
 export function ErrorContent({
   code,

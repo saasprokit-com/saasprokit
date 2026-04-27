@@ -1,5 +1,10 @@
 import { MONTHS_PER_YEAR } from "@repo/utils/date";
-import { PLAN_ORDER, type PlanConfig, type PlanLimits, type PlanName } from "@repo/utils/payment";
+import {
+  PLAN_ORDER,
+  type PlanConfig,
+  type PlanLimits,
+  type PlanName,
+} from "@repo/utils/payment";
 
 // Re-export PLANS from utils (single source of truth)
 export { PLANS } from "@repo/utils/payment";
@@ -68,4 +73,3 @@ export function comparePlans(
   }
   return isPlanHigherTier(targetPlan, currentPlan) ? "upgrade" : "downgrade";
 }
-

@@ -1,8 +1,4 @@
-import type {
-  Organization,
-  WebSite,
-  WithContext,
-} from "schema-dts";
+import type { Organization, WebSite, WithContext } from "schema-dts";
 import { getSiteConfig } from "./config";
 
 // Organization JSON-LD Schema
@@ -51,4 +47,3 @@ export function generateWebSiteSchema(): WithContext<WebSite> {
     } as unknown as WebSite["potentialAction"],
   };
 }
-

@@ -2,8 +2,8 @@ import { writeFileSync } from "node:fs";
 
 import { test as setup } from "@playwright/test";
 
-import { localePath, TEST_CONFIG } from "./fixtures/test-config";
-import { ensureVerifiedUser } from "./helpers/test-user";
+import { localePath, TEST_CONFIG } from "../fixtures/test-config";
+import { ensureVerifiedUser } from "../helpers/test-user";
 
 const SIGN_IN_RE = /sign in/i;
 

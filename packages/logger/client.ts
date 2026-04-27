@@ -109,4 +109,3 @@ export const logger = {
    */
   error: (message: string, data?: LogData) => log("error", message, data),
 };
-

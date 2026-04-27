@@ -245,7 +245,7 @@ export function BulkInviteDialog({
                   Sending...
                 </>
               ) : (
-                `Send ${valid.length} Invitation${valid.length !== 1 ? "s" : ""}`
+                `Send ${valid.length} Invitation${valid.length === 1 ? "" : "s"}`
               )}
             </Button>
           </DialogFooter>

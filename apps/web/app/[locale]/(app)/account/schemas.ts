@@ -1,8 +1,5 @@
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from "@repo/utils/user";
 import { z } from "zod";
-import {
-  MAX_PASSWORD_LENGTH,
-  MIN_PASSWORD_LENGTH,
-} from "@repo/utils/user";
 
 const MIN_NAME_LENGTH = 2;
 const MAX_NAME_LENGTH = 255;

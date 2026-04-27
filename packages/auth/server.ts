@@ -1,10 +1,6 @@
 import { stripe } from "@better-auth/stripe";
 import { database } from "@repo/database";
 import {
-  SECONDS_PER_DAY,
-  SECONDS_PER_MINUTE,
-} from "@repo/utils/date";
-import {
   sendEmailVerificationEmail,
   sendMagicLinkEmail,
   sendOrgInvitationEmail,
@@ -13,6 +9,7 @@ import {
   sendTwoFactorOTPEmail,
   sendVerificationOTPEmail,
 } from "@repo/email";
+import { SECONDS_PER_DAY, SECONDS_PER_MINUTE } from "@repo/utils/date";
 import {
   ACTIVE_STATUSES,
   checkOrgCreationEligibility,

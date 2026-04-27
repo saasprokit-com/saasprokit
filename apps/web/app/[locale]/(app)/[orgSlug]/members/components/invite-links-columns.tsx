@@ -148,7 +148,7 @@ export function getInviteLinkColumns({
       return (
         <span className="text-muted-foreground">
           {link.usedCount}
-          {link.maxUses != null ? ` / ${link.maxUses}` : null}
+          {link.maxUses == null ? null : ` / ${link.maxUses}`}
         </span>
       );
     },

@@ -1,5 +1,6 @@
 {
   "name": "app",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
@@ -8,7 +9,9 @@
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:auth": "playwright test --project=no-auth",
+    "test:e2e:app": "playwright test --project=authenticated"
   },
   "dependencies": {
     "@better-fetch/fetch": "^1.1.21",

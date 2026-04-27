@@ -1,8 +1,9 @@
 # E2E tests — fully self-contained, no external secrets required.
 # Services: PostgreSQL (database) + Maildev (email capture)
+# Data: Prisma seed populates orgs, memberships, and subscriptions.
+# Auth: E2E user created via Better Auth API in auth.setup.ts.
 name: E2E Tests
 
-# Only runs on PRs (not push to main) to save CI minutes
 on:
   pull_request:
     branches: [main, develop]
@@ -17,49 +18,35 @@ concurrency:
 
 jobs:
   e2e:
-    # TODO: Re-enable after fixing auth-setup flow in CI
-    if: false
     name: Playwright
     runs-on: ubuntu-latest
-    timeout-minutes: 20
 
     services:
       postgres:
-        image: postgres:17
+        image: postgres:16-alpine
         env:
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
-          POSTGRES_DB: testdb
+          POSTGRES_USER: e2euser
+          POSTGRES_PASSWORD: e2epass
+          POSTGRES_DB: e2edb
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U testuser -d testdb"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+          --health-cmd="pg_isready -U e2euser -d e2edb"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
 
     env:
-      # ── Database (local PostgreSQL service container) ──
-      DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
-
-      # ── Auth (required by Zod: min 32 chars + valid URL) ──
+      DATABASE_URL: postgresql://e2euser:e2epass@localhost:5432/e2edb
       BETTER_AUTH_SECRET: e2e-test-secret-at-least-32-chars-long
       BETTER_AUTH_URL: http://localhost:3000
-
-      # ── App config (required by Zod) ──
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       NEXT_PUBLIC_APP_NAME: SaaSProKit
       CI: true
-
-      # ── Email (points to Maildev container started in steps) ──
       EMAIL_FROM: noreply@test.com
       SMTP_HOST: localhost
       SMTP_PORT: "1025"
-
-      # ── E2E test helpers ──
       MAILDEV_URL: http://localhost:1080
-
-      # ── Stubs (optional services — app starts, features disabled) ──
       STRIPE_SECRET_KEY: sk_test_stub
       STRIPE_WEBHOOK_SECRET: whsec_stub
       STORAGE_PROVIDER: local
@@ -113,8 +100,16 @@ jobs:
       - name: Push database schema
         run: pnpm --filter @repo/database exec prisma db push
 
+      - name: Seed database
+        run: pnpm --filter @repo/database exec prisma db seed
+
+      - name: Build app
+        run: pnpm --filter app build
+
       - name: Run E2E tests
         run: pnpm --filter app test:e2e
+        env:
+          BASE_URL: http://localhost:3000
 
       - name: Upload test results
         if: ${{ !cancelled() }}

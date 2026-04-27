@@ -1,4 +1,5 @@
 import { Header } from "@repo/design-system/components/molecules/header/header";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -10,25 +11,37 @@ const Frontier = ({ children }: RootLayoutProperties) => (
   <main>
     <Header
       left={
-        <nav className="flex items-center gap-6">
+        <nav className="hidden items-center gap-6 sm:flex">
           <Link
-            className="text-muted-foreground text-sm transition-colors hover:text-foreground"
+            className="font-mono text-muted-foreground text-xs transition-colors hover:text-foreground"
             href="/docs"
           >
-            Docs
+            docs
+          </Link>
+          <Link
+            className="font-mono text-muted-foreground text-xs transition-colors hover:text-foreground"
+            href="#features"
+          >
+            features
+          </Link>
+          <Link
+            className="font-mono text-muted-foreground text-xs transition-colors hover:text-foreground"
+            href="#pricing"
+          >
+            pricing
           </Link>
         </nav>
       }
-      logo="SaaSProKit"
-      logoHref="/"
+      logo={
+        <span className="font-bold font-mono text-lg tracking-tight">SAAS</span>
+      }
       right={
         <Link
-          className="text-muted-foreground text-sm transition-colors hover:text-foreground"
-          href="https://github.com/saasprokit-com/saasprokit"
-          rel="noopener noreferrer"
-          target="_blank"
+          className="inline-flex items-center gap-1.5 bg-foreground px-3 py-1.5 font-mono text-background text-xs transition-opacity hover:opacity-90"
+          href="#customize"
         >
-          GitHub
+          demo
+          <ArrowRight className="h-3 w-3" />
         </Link>
       }
     />

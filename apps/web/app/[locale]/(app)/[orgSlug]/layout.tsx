@@ -22,18 +22,18 @@ type OrgLayoutProps = {
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { locale, orgSlug } = await params;
 
-  // - If unauthenticated, validateOrgMembershipBySlug redirects, aborting the render
-  const [org, { organizations, defaultOrganizationId }] = await Promise.all([
-    validateOrgMembershipBySlug(orgSlug),
-    getUserOrganizations(),
-  ]);
+  // requireAuth() is independent — run it in parallel with org queries
+  const [org, { organizations, defaultOrganizationId }, session] =
+    await Promise.all([
+      validateOrgMembershipBySlug(orgSlug),
+      getUserOrganizations(),
+      requireAuth(),
+    ]);
 
-  const [session, canManageBilling] = await Promise.all([
-    requireAuth(),
-    checkOrgPermission(org.organizationId, {
-      organization: ["update"],
-    }).then((r) => !!r),
-  ]);
+  // checkOrgPermission depends on org.organizationId, must run after
+  const canManageBilling = await checkOrgPermission(org.organizationId, {
+    organization: ["update"],
+  }).then((r) => !!r);
 
   const user = {
     name: session.user.name,

@@ -5,6 +5,7 @@ import {
   type ColumnFiltersState,
   getCoreRowModel,
   type PaginationState,
+  type Row,
   type SortingState,
   useReactTable,
   type VisibilityState,
@@ -21,16 +22,13 @@ import { sortingStateParser } from "@/lib/parsers";
 
 const coreRowModel = getCoreRowModel();
 
-type FilterField = {
-  /** TanStack Table column ID */
+interface FilterField {
   id: string;
-  /** URL search param key */
   urlKey: string;
-  /** "string" for single text value, "array" for multi-select */
   type: "string" | "array";
-};
+}
 
-type UseDataTableProps<TData> = {
+interface UseDataTableProps<TData> {
   data: TData[];
   columns: ColumnDef<TData, unknown>[];
   pageCount: number;
@@ -38,7 +36,7 @@ type UseDataTableProps<TData> = {
   defaultPerPage?: number;
   defaultSort?: SortingState;
   enableRowSelection?: boolean | ((row: TData) => boolean);
-};
+}
 
 const NUQS_OPTIONS = { shallow: false, clearOnDefault: true } as const;
 
@@ -51,8 +49,6 @@ export function useDataTable<TData>({
   defaultSort = [],
   enableRowSelection,
 }: UseDataTableProps<TData>) {
-  // ── URL-driven state via nuqs ──────────────────────────────────────────
-
   const [page, setPage] = useQueryState(
     "page",
     parseAsInteger.withDefault(1).withOptions(NUQS_OPTIONS)
@@ -68,11 +64,6 @@ export function useDataTable<TData>({
     sortingStateParser.withDefault(defaultSort).withOptions(NUQS_OPTIONS)
   );
 
-  // ── Filter state from URL ─────────────────────────────────────────────
-
-  // Use useQueryStates with a static parsers map built from filterFields.
-  // We build the parsers map once (stable reference via useMemo).
-  // biome-ignore lint/suspicious/noExplicitAny: dynamic parser map requires flexible typing
   const filterParsers = useMemo<Record<string, any>>(() => {
     const parsers: Record<string, unknown> = {};
     for (const field of filterFields) {
@@ -90,12 +81,8 @@ export function useDataTable<TData>({
     NUQS_OPTIONS
   );
 
-  // ── Local (ephemeral) UI state ─────────────────────────────────────────
-
   const [rowSelection, setRowSelection] = useState({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-
-  // ── Map URL state → TanStack Table state ──────────────────────────────
 
   const pagination: PaginationState = useMemo(
     () => ({ pageIndex: page - 1, pageSize: perPage }),
@@ -113,8 +100,6 @@ export function useDataTable<TData>({
     return filters;
   }, [filterFields, filterUrlState]);
 
-  // ── Handlers that sync TanStack changes → URL ─────────────────────────
-
   const handlePaginationChange = useCallback(
     (
       updaterOrValue:
@@ -126,10 +111,10 @@ export function useDataTable<TData>({
           ? updaterOrValue(pagination)
           : updaterOrValue;
 
-      if (next.pageSize !== pagination.pageSize) {
-        setPage(1);
-      } else {
+      if (next.pageSize === pagination.pageSize) {
         setPage(next.pageIndex + 1);
+      } else {
+        setPage(1);
       }
       setPerPage(next.pageSize);
     },
@@ -174,8 +159,6 @@ export function useDataTable<TData>({
     [columnFilters, filterFields, setFilterUrlState, setPage]
   );
 
-  // ── Create table instance ─────────────────────────────────────────────
-
   const table = useReactTable({
     data,
     columns,
@@ -187,10 +170,10 @@ export function useDataTable<TData>({
       columnVisibility,
       rowSelection,
     },
-    enableRowSelection: enableRowSelection as
-      | boolean
-      | ((row: { original: TData }) => boolean)
-      | undefined,
+    enableRowSelection:
+      typeof enableRowSelection === "function"
+        ? (row: Row<TData>) => enableRowSelection(row.original)
+        : enableRowSelection,
     manualPagination: true,
     manualSorting: true,
     manualFiltering: true,

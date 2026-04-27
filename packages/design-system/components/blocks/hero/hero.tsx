@@ -113,8 +113,8 @@ export function Hero({
       </div>
       {/* Background decoration */}
       {showGradientBackground && (
-        <div className="-z-10 absolute inset-0 overflow-hidden">
-          <div className="-top-1/2 -translate-x-1/2 absolute left-1/2 h-[800px] w-[800px] rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute -top-1/2 left-1/2 h-[800px] w-[800px] -translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
         </div>
       )}
     </section>

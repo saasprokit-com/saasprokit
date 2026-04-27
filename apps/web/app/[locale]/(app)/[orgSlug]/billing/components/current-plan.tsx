@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@repo/design-system/components/ui/card";
 import { Skeleton } from "@repo/design-system/components/ui/skeleton";
-import { PLAN_NAMES, type SubscriptionStatus } from "@repo/utils/payment";
 import {
   formatDate,
   getStatusColor,
@@ -18,6 +17,7 @@ import {
 } from "@repo/payment/helpers";
 import { useSubscription } from "@repo/payment/hooks";
 import { PLANS } from "@repo/payment/plans";
+import { PLAN_NAMES, type SubscriptionStatus } from "@repo/utils/payment";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 // Maximum number of features to display in preview

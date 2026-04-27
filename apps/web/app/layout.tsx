@@ -3,9 +3,9 @@ import "./styles.css";
 import { headers } from "next/headers";
 import type { ReactNode } from "react";
 
-type RootLayoutProps = {
+interface RootLayoutProps {
   readonly children: ReactNode;
-};
+}
 
 export default async function RootLayout({ children }: RootLayoutProps) {
   const headersList = await headers();

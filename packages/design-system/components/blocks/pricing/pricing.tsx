@@ -109,7 +109,7 @@ export function Pricing({
                 key={tier.name}
               >
                 {tier.popular && (
-                  <Badge className="-top-3 -translate-x-1/2 absolute left-1/2">
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
                     Most Popular
                   </Badge>
                 )}

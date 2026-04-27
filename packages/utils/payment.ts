@@ -48,9 +48,7 @@ export const SUBSCRIPTION_STATUS = {
 export type SubscriptionStatus =
   (typeof SUBSCRIPTION_STATUS)[keyof typeof SUBSCRIPTION_STATUS];
 
-export const ACTIVE_STATUSES = [
-  SUBSCRIPTION_STATUS.ACTIVE,
-] as const;
+export const ACTIVE_STATUSES = [SUBSCRIPTION_STATUS.ACTIVE] as const;
 
 export const UNLIMITED = -1;
 

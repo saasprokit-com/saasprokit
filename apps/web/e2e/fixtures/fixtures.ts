@@ -28,4 +28,4 @@ export const test = base.extend<{
   },
 });
 
-export { expect, TEST_CONFIG, localePath, orgPath };
+export { expect, localePath, orgPath, TEST_CONFIG };

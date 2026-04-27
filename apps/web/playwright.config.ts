@@ -3,7 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 
 export default defineConfig({
-  globalSetup: "./e2e/global-setup.ts",
+  globalSetup: "./e2e/setup/global-setup.ts",
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -24,39 +24,29 @@ export default defineConfig({
     // Setup: authenticate user
     {
       name: "auth-setup",
-      testMatch: /auth\.setup\.ts/,
+      testMatch: /setup\/auth\.setup\.ts/,
     },
-    // Setup: create/verify org (depends on auth)
+    // Setup: verify org (depends on auth)
     {
       name: "org-setup",
-      testMatch: /org\.setup\.ts/,
+      testMatch: /setup\/org\.setup\.ts/,
       dependencies: ["auth-setup"],
       use: {
         storageState: "e2e/.auth/user.json",
       },
     },
-    // Public & auth pages (no auth needed)
+    // Public pages & auth pages (no auth needed)
     {
       name: "no-auth",
-      testMatch: /0[1-8]-.*\.spec\.ts/,
+      testMatch: /(?:public|auth)\/.*\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
       },
     },
-    // Authenticated pages (account, org, misc)
+    // Authenticated pages: account, dashboard, members, payment
     {
-      name: "chromium",
-      testMatch: /(?:09|1[0-9]|2[0-4])-.*\.spec\.ts/,
-      use: {
-        ...devices["Desktop Chrome"],
-        storageState: "e2e/.auth/user.json",
-      },
-      dependencies: ["auth-setup", "org-setup"],
-    },
-    // Topic-based test folders (payment, auth, members, accounts)
-    {
-      name: "topics",
-      testMatch: /(?:payment|auth|members|accounts)\/.*\.spec\.ts/,
+      name: "authenticated",
+      testMatch: /(?:account|dashboard|members|payment)\/.*\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         storageState: "e2e/.auth/user.json",
@@ -65,7 +55,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm dev",
+    command: process.env.CI ? "pnpm start" : "next dev -p 3000",
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

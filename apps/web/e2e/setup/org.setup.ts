@@ -2,7 +2,7 @@ import { writeFileSync } from "node:fs";
 
 import { test as setup } from "@playwright/test";
 
-import { localePath, TEST_CONFIG } from "./fixtures/test-config";
+import { localePath, TEST_CONFIG } from "../fixtures/test-config";
 
 const ORG_SLUG_PATH = "e2e/.auth/org-slug.txt";
 const NEW_ORG_RE = /\/new-org/;

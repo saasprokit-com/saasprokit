@@ -1,10 +1,10 @@
 import {
   ACTIVE_STATUSES,
   PLAN_NAMES,
-  SUBSCRIPTION_STATUS,
-  UNLIMITED,
   type PlanName,
+  SUBSCRIPTION_STATUS,
   type SubscriptionStatus,
+  UNLIMITED,
 } from "@repo/utils/payment";
 import { getPlanLimits } from "./plans";
 import type { Subscription, UsageStats } from "./types";
@@ -97,7 +97,10 @@ export function formatStorage(mb: number): string {
 /**
  * Format date for display
  */
-export function formatDate(date: Date | string | null, locale = "en-US"): string {
+export function formatDate(
+  date: Date | string | null,
+  locale = "en-US"
+): string {
   if (!date) {
     return "N/A";
   }
