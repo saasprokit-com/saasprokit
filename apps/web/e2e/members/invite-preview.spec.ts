@@ -1,4 +1,4 @@
-import { test, expect, TEST_CONFIG, localePath, orgPath } from "./fixtures/fixtures";
+import { test, expect, TEST_CONFIG, localePath, orgPath } from "../fixtures/fixtures";
 
 test.describe("23 - Invite Link Preview", () => {
   // ─── UI Tests (existing) ───────────────────────────────────────────

@@ -48,7 +48,7 @@ export function CodePreview({ tabs, defaultTab, className }: CodePreviewProps) {
 
         {tabs.map((tab) => (
           <TabsContent
-            className="m-0 max-h-[500px] flex-1 overflow-auto bg-white"
+            className="m-0 max-h-[500px] flex-1 overflow-auto"
             key={tab.id}
             value={tab.id}
           >
@@ -61,10 +61,10 @@ export function CodePreview({ tabs, defaultTab, className }: CodePreviewProps) {
         ))}
       </Tabs>
 
-      {/* <div className="flex items-center justify-between border-border border-t px-4 py-2 font-mono text-[11px] text-muted-foreground">
+      <div className="flex items-center justify-between border-border border-t px-4 py-2 font-mono text-[11px] text-muted-foreground">
         <span>utf-8 · lf</span>
         <span>read-only</span>
-      </div> */}
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { test, expect, TEST_CONFIG, localePath, orgPath } from "./fixtures/fixtures";
+import { test, expect, TEST_CONFIG, localePath, orgPath } from "../fixtures/fixtures";
 
 test.describe("22 - Organization Selection / Redirect", () => {
   test.describe("UI: Redirect Behavior", () => {

@@ -1,4 +1,4 @@
-import { test, expect, TEST_CONFIG, localePath } from "./fixtures/fixtures";
+import { test, expect, TEST_CONFIG, localePath } from "../fixtures/fixtures";
 import { test as baseTest, expect as baseExpect } from "@playwright/test";
 
 test.describe("09 - Account Home (Authenticated)", () => {

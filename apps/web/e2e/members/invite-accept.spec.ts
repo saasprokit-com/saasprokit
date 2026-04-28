@@ -1,4 +1,4 @@
-import { test, expect, TEST_CONFIG, localePath } from "./fixtures/fixtures";
+import { test, expect, TEST_CONFIG, localePath } from "../fixtures/fixtures";
 
 test.describe("24 - Invite Accept (Email Invitation)", () => {
   // ---------------------------------------------------------------------------

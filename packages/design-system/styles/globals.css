@@ -235,8 +235,7 @@
 
 .shiki-preview {
   font-family: var(--font-geist-mono);
-  font-size: 13px;
-  line-height: 1.6;
+  line-height: 1;
   counter-reset: line;
 }
 .shiki-preview pre {

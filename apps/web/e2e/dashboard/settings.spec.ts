@@ -1,4 +1,4 @@
-import { test, expect, TEST_CONFIG, localePath, orgPath } from "./fixtures/fixtures";
+import { test, expect, TEST_CONFIG, localePath, orgPath } from "../fixtures/fixtures";
 
 test.describe("16 - Organization Settings", () => {
   test.use({ storageState: "e2e/.auth/user.json" });

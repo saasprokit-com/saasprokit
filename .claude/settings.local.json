@@ -100,5 +100,9 @@
     "ask": []
   },
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": ["shadcn"]
+  "enabledMcpjsonServers": ["shadcn"],
+  "attribution": {
+    "commit": "",
+    "pullRequest": ""
+  }
 }

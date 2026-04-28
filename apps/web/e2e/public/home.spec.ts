@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { localePath } from "./fixtures/test-config";
+import { localePath } from "../fixtures/test-config";
 
 test.describe("Home Page", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
