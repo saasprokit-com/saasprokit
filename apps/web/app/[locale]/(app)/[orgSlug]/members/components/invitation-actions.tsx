@@ -17,11 +17,11 @@ import { toast } from "sonner";
 import { cancelInvitationAction, resendInvitationAction } from "../actions";
 import type { Invitation } from "../utils";
 
-type InvitationActionsProps = {
+interface InvitationActionsProps {
   errors: ActionErrorMessages;
   invitation: Invitation;
   organizationId: string;
-};
+}
 
 export function InvitationActions({
   errors,

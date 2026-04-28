@@ -11,7 +11,7 @@ import {
 import { colors } from "../components/theme/colors";
 import { typography } from "../components/theme/typography";
 
-type PaymentReceiptProps = {
+interface PaymentReceiptProps {
   userName?: string;
   invoiceNumber?: string;
   amount?: string;
@@ -20,7 +20,7 @@ type PaymentReceiptProps = {
   paymentMethod?: string;
   paymentDate?: string;
   receiptUrl?: string;
-};
+}
 
 export default function PaymentReceipt({
   userName = "there",

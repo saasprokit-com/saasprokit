@@ -40,9 +40,9 @@ function SlugPreview({ control }: { control: Control<CreateOrgInput> }) {
   );
 }
 
-type CreateOrganizationFormProps = {
+interface CreateOrganizationFormProps {
   errors: ActionErrorMessages;
-};
+}
 
 export function CreateOrganizationForm({
   errors,

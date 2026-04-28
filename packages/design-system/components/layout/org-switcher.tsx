@@ -19,14 +19,14 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { Organization } from "./types";
 
-type OrgSwitcherProps = {
+interface OrgSwitcherProps {
   organizations: Organization[];
   activeOrganization?: Organization | null;
   defaultOrganizationId?: string | null;
   onOrganizationChange?: (org: Organization) => void;
   onCreateOrganization?: () => void;
   onSetDefault?: (organizationId: string) => void;
-};
+}
 
 /**
  * Get the appropriate icon for an organization

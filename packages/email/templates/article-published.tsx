@@ -12,7 +12,7 @@ import {
   Text,
 } from "@react-email/components";
 
-type ArticlePublishedProps = {
+interface ArticlePublishedProps {
   userName?: string;
   articleTitle?: string;
   articleExcerpt?: string;
@@ -21,7 +21,7 @@ type ArticlePublishedProps = {
   publishedAt?: string;
   dashboardUrl?: string;
   analyticsUrl?: string;
-};
+}
 
 export default function ArticlePublished({
   userName = "there",

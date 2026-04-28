@@ -23,7 +23,7 @@ import {
 } from "./invitations-columns";
 import { InvitationsToolbar } from "./invitations-toolbar";
 
-type InvitationsTableProps = {
+interface InvitationsTableProps {
   invitationsPromise: Promise<{
     invitations: Invitation[];
     totalCount: number;
@@ -32,7 +32,7 @@ type InvitationsTableProps = {
   errors: ActionErrorMessages;
   organizationId: string;
   canManage: boolean;
-};
+}
 
 const filterFields = [
   { id: "email", urlKey: "search", type: "string" as const },

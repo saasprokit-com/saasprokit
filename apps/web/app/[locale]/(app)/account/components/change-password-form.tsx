@@ -28,9 +28,9 @@ import {
   changePasswordSchema,
 } from "../schemas";
 
-type ChangePasswordFormProps = {
+interface ChangePasswordFormProps {
   errors: ActionErrorMessages;
-};
+}
 
 export function ChangePasswordForm({ errors }: ChangePasswordFormProps) {
   const form = useForm<ChangePasswordFormValues>({

@@ -22,9 +22,9 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { PAGE_ROUTES } from "@/lib/routes";
 
-type SignInClientProps = {
+interface SignInClientProps {
   errors: ActionErrorMessages;
-};
+}
 
 export function SignInClient({ errors }: SignInClientProps) {
   const router = useRouter();

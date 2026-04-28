@@ -22,13 +22,13 @@ const forgotPasswordSchema = z.object({
 
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
-export type ForgotPasswordFormProps = {
+export interface ForgotPasswordFormProps {
   onSubmit: (data: ForgotPasswordFormValues) => Promise<void>;
   signInUrl?: string;
   error?: string;
   success?: boolean;
   className?: string;
-};
+}
 
 export function ForgotPasswordForm({
   onSubmit,

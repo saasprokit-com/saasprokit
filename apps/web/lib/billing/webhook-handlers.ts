@@ -421,12 +421,12 @@ async function handleCustomerSubscriptionDeleted(
   }
 }
 
-type InvoiceEmailContext = {
+interface InvoiceEmailContext {
   metadata: Stripe.Metadata;
   subscription: Stripe.Subscription;
   ownerEmail: string;
   ownerName: string | undefined;
-};
+}
 
 function extractInvoiceSubscriptionId(
   invoice: Stripe.Invoice

@@ -13,9 +13,9 @@ import { SidebarTrigger } from "@repo/design-system/components/ui/sidebar";
 import { Fragment } from "react";
 import { useBreadcrumbContext } from "./breadcrumb-context";
 
-type SiteHeaderProps = {
+interface SiteHeaderProps {
   children?: React.ReactNode;
-};
+}
 
 export function SiteHeader({ children }: SiteHeaderProps) {
   const { items } = useBreadcrumbContext();

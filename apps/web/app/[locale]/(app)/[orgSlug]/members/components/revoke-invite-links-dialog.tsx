@@ -20,12 +20,12 @@ import { revokeInviteLinksAction } from "../actions";
 import type { InviteLink } from "../utils";
 import { TOKEN_PREVIEW_LENGTH } from "../utils";
 
-type RevokeInviteLinksDialogProps = {
+interface RevokeInviteLinksDialogProps {
   errors: ActionErrorMessages;
   organizationId: string;
   selectedLinks: InviteLink[];
   onSuccess: () => void;
-};
+}
 
 export function RevokeInviteLinksDialog({
   errors,

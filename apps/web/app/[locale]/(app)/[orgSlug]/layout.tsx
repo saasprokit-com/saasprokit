@@ -14,10 +14,10 @@ import {
 } from "@/servers/organization/queries";
 import { OrgSidebar } from "./components/org-sidebar";
 
-type OrgLayoutProps = {
+interface OrgLayoutProps {
   readonly children: ReactNode;
   readonly params: Promise<{ locale: string; orgSlug: string }>;
-};
+}
 
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { locale, orgSlug } = await params;

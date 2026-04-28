@@ -41,13 +41,13 @@ const resetPasswordSchema = z
 
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
-export type ResetPasswordFormProps = {
+export interface ResetPasswordFormProps {
   onSubmit: (data: ResetPasswordFormValues) => Promise<void>;
   signInUrl?: string;
   error?: string;
   success?: boolean;
   className?: string;
-};
+}
 
 export function ResetPasswordForm({
   onSubmit,

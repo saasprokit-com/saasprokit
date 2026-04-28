@@ -24,10 +24,7 @@ export function FeaturesTerminal({ heading, features }: FeaturesTerminalProps) {
 
         <div className="grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
-            <div
-              className="flex flex-col bg-background p-8"
-              key={feature.num}
-            >
+            <div className="flex flex-col bg-background p-8" key={feature.num}>
               <div className="mb-6 flex items-start justify-between">
                 <span className="font-mono text-muted-foreground text-xs">
                   {feature.num}

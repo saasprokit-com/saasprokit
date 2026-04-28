@@ -33,10 +33,10 @@ const DEFAULT_PAGE_SIZE_OPTIONS = [
   PAGE_SIZE_50,
 ];
 
-type DataTablePaginationProps<TData> = {
+interface DataTablePaginationProps<TData> {
   table: Table<TData>;
   pageSizeOptions?: number[];
-};
+}
 
 export function DataTablePagination<TData>({
   table,

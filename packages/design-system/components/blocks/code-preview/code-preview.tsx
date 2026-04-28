@@ -31,7 +31,7 @@ export function CodePreview({ tabs, defaultTab, className }: CodePreviewProps) {
       )}
     >
       <Tabs
-        className="flex flex-1 flex-col overflow-hidden border border-border"
+        className="flex flex-1 flex-col overflow-hidden border border-border border-red-400"
         defaultValue={initial}
       >
         <TabsList className="h-auto w-full justify-start gap-0 rounded-none border-border border-b bg-transparent p-0">

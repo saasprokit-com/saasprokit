@@ -244,10 +244,10 @@ export async function openBillingPortalAction(
 // Change Plan (Downgrade)
 // =============================================================================
 
-export type ChangePlanResult = {
+export interface ChangePlanResult {
   action: "cancel" | "changed";
   blockReason?: string;
-};
+}
 
 export async function changePlanAction(
   input: ChangePlanRequest,

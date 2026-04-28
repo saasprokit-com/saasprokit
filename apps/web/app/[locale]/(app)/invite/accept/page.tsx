@@ -21,12 +21,12 @@ import { AcceptInvitationButton } from "./accept-button";
 
 type SessionResult = Awaited<ReturnType<typeof getServerSession>>;
 
-type InvitationFooterProps = {
+interface InvitationFooterProps {
   session: SessionResult;
   invitationId: string;
   invitationEmail: string;
   errors: ActionErrorMessages;
-};
+}
 
 function InvitationFooter({
   session,
@@ -81,10 +81,10 @@ function InvitationFooter({
   );
 }
 
-type AcceptInvitePageProps = {
+interface AcceptInvitePageProps {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ token?: string }>;
-};
+}
 
 export default async function AcceptInvitePage({
   params,

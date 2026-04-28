@@ -33,10 +33,10 @@ import { toast } from "sonner";
 import { DowngradeButton } from "./downgrade-button";
 import { UpgradeForm } from "./upgrade-form";
 
-type ChangePlanProps = {
+interface ChangePlanProps {
   errors: ActionErrorMessages;
   organizationId: string;
-};
+}
 
 export function ChangePlan({ errors, organizationId }: ChangePlanProps) {
   const { locale } = useParams<{ locale: string }>();

@@ -33,17 +33,14 @@ const RANDOM_RADIX = 36; // Base-36 encoding for alphanumeric characters
 const RANDOM_SUBSTRING_START = 2; // Skip "0." prefix from toString(36)
 const RANDOM_SUBSTRING_LENGTH = 8; // Length of random suffix (8 chars)
 
-/**
- * S3 environment configuration type
- */
-type S3Config = {
+interface S3Config {
   accessKeyId: string;
   secretAccessKey: string;
   region: string;
   bucket: string;
   publicUrl?: string;
   signedUrlExpires: number;
-};
+}
 
 /**
  * Get and validate S3 configuration from environment variables

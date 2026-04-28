@@ -11,14 +11,14 @@ import {
   Text,
 } from "@react-email/components";
 
-type SubscriptionStartedProps = {
+interface SubscriptionStartedProps {
   userName?: string;
   planName?: string;
   billingInterval?: string;
   amount?: string;
   nextBillingDate?: string;
   dashboardUrl?: string;
-};
+}
 
 export default function SubscriptionStarted({
   userName = "there",

@@ -8,10 +8,10 @@ import { getMemberPermissions } from "../utils";
 import { getInviteLinks } from "./queries";
 import { inviteLinksSearchParamsCache } from "./validations";
 
-type InviteLinksPageProps = {
+interface InviteLinksPageProps {
   params: Promise<{ locale: string; orgSlug: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
+}
 
 export default async function InviteLinksPage({
   params,

@@ -10,11 +10,11 @@ import {
   Text,
 } from "@react-email/components";
 
-type TwoFactorOTPEmailProps = {
+interface TwoFactorOTPEmailProps {
   userEmail?: string;
   otp?: string;
   expiresInMinutes?: number;
-};
+}
 
 export default function TwoFactorOTPEmail({
   userEmail = "user@example.com",

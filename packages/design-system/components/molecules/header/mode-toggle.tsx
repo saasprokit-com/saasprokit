@@ -17,9 +17,9 @@ const themes = [
   { label: "System", value: "system" },
 ] as const;
 
-export type ModeToggleProps = {
+export interface ModeToggleProps {
   className?: string;
-};
+}
 
 export function ModeToggle({ className }: ModeToggleProps) {
   const { setTheme } = useTheme();

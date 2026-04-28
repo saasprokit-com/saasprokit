@@ -27,14 +27,14 @@ import { toast } from "sonner";
 import type { ActionResult } from "@/lib/auth/auth";
 import { type ChangePlanResult, changePlanAction } from "../actions";
 
-type DowngradeButtonProps = {
+interface DowngradeButtonProps {
   planName: PlanName;
   currentPlan: PlanName;
   organizationId: string;
   billingInterval: BillingInterval;
   errors: ActionErrorMessages;
   onSuccess?: (action: "cancel" | "changed") => void;
-};
+}
 
 export function DowngradeButton({
   planName,

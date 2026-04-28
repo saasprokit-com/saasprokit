@@ -4,14 +4,14 @@ import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 
-type DetailItemProps = {
+interface DetailItemProps {
   /** Label text (e.g., "Plan", "Amount", "Date") */
   label: string;
   /** Value to display */
   value: ReactNode;
   /** Whether this is the last item (removes bottom margin) */
   isLast?: boolean;
-};
+}
 
 /**
  * DetailItem - Single label/value pair for use inside DetailsBox
@@ -27,10 +27,10 @@ export function DetailItem({ label, value, isLast = false }: DetailItemProps) {
   );
 }
 
-type DetailsBoxProps = {
+interface DetailsBoxProps {
   /** Detail items as children */
   children: ReactNode;
-};
+}
 
 /**
  * DetailsBox - Gray box containing label/value pairs

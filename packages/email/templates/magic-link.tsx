@@ -11,11 +11,11 @@ import {
   Text,
 } from "@react-email/components";
 
-type MagicLinkEmailProps = {
+interface MagicLinkEmailProps {
   userEmail?: string;
   magicLinkUrl?: string;
   expiresInMinutes?: number;
-};
+}
 
 export default function MagicLinkEmail({
   userEmail = "user@example.com",

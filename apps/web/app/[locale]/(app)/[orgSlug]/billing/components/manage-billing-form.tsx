@@ -8,12 +8,12 @@ import { toast } from "sonner";
 import type { ActionResult } from "@/lib/auth/auth";
 import { openBillingPortalAction } from "../actions";
 
-type ManageBillingFormProps = {
+interface ManageBillingFormProps {
   errors: ActionErrorMessages;
   organizationId: string;
   organizationSlug: string;
   locale: string;
-};
+}
 
 export function ManageBillingForm({
   errors,

@@ -1,9 +1,9 @@
 import { getDictionary } from "@repo/internationalization";
 import { SignInClient } from "./sign-in-client";
 
-type SignInPageProps = {
+interface SignInPageProps {
   params: Promise<{ locale: string }>;
-};
+}
 
 export default async function SignInPage({ params }: SignInPageProps) {
   const { locale } = await params;

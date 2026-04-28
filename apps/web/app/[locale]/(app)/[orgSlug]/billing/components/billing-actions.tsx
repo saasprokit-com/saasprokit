@@ -28,11 +28,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ManageBillingForm } from "./manage-billing-form";
 
-type BillingActionsProps = {
+interface BillingActionsProps {
   errors: ActionErrorMessages;
   organizationId: string;
   organizationSlug: string;
-};
+}
 
 export function BillingActions({
   errors,

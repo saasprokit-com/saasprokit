@@ -4,26 +4,26 @@ import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "../../ui/card";
 
-export type DemoShowcaseItemProps = {
+export interface DemoShowcaseItemProps {
   icon: LucideIcon;
   label: string;
   value: string;
   description: string;
-};
+}
 
-export type DemoShowcaseCtaProps = {
+export interface DemoShowcaseCtaProps {
   label: string;
   href: string;
-};
+}
 
-export type DemoShowcaseProps = {
+export interface DemoShowcaseProps {
   badge?: string;
   title: string;
   subtitle?: string;
   items: DemoShowcaseItemProps[];
   cta?: DemoShowcaseCtaProps;
   className?: string;
-};
+}
 
 export function DemoShowcase({
   badge,

@@ -40,14 +40,14 @@ const signUpSchema = z
 
 export type SignUpFormValues = z.infer<typeof signUpSchema>;
 
-export type SignUpFormProps = {
+export interface SignUpFormProps {
   onSubmit: (data: SignUpFormValues) => Promise<void>;
   onSocialLogin?: (provider: SocialProvider) => void;
   socialProviders?: SocialProvider[];
   signInUrl?: string;
   error?: string;
   className?: string;
-};
+}
 
 export function SignUpForm({
   onSubmit,

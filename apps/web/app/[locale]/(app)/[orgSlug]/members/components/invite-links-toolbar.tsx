@@ -37,7 +37,7 @@ import type { InviteLink } from "../utils";
 import { SEARCH_DEBOUNCE_MS } from "../utils";
 import { RevokeInviteLinksDialog } from "./revoke-invite-links-dialog";
 
-type InviteLinksToolbarProps = {
+interface InviteLinksToolbarProps {
   table: Table<InviteLink>;
   errors: ActionErrorMessages;
   organizationId: string;
@@ -51,7 +51,7 @@ type InviteLinksToolbarProps = {
       icon?: ComponentType<{ className?: string }>;
     }[];
   }[];
-};
+}
 
 export function InviteLinksToolbar({
   table,

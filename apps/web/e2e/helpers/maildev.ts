@@ -20,7 +20,7 @@ function authHeaders(): HeadersInit {
   return { Authorization: `Basic ${credentials}` };
 }
 
-export type MaildevEmail = {
+export interface MaildevEmail {
   id: string;
   from: { address: string; name: string }[];
   to: { address: string; name: string }[];
@@ -29,7 +29,7 @@ export type MaildevEmail = {
   html: string;
   time: string;
   headers: Record<string, string>;
-};
+}
 
 /** Clear all emails from Maildev inbox */
 export async function clearInbox(): Promise<void> {

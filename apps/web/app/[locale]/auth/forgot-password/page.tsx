@@ -1,9 +1,9 @@
 import { getDictionary } from "@repo/internationalization";
 import { ForgotPasswordClient } from "./forgot-password-client";
 
-type ForgotPasswordPageProps = {
+interface ForgotPasswordPageProps {
   params: Promise<{ locale: string }>;
-};
+}
 
 export default async function ForgotPasswordPage({
   params,

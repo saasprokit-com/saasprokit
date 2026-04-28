@@ -3,9 +3,9 @@ import { getDictionary } from "@repo/internationalization";
 import { Suspense } from "react";
 import { VerifyEmailClient } from "./verify-email-client";
 
-type VerifyEmailPageProps = {
+interface VerifyEmailPageProps {
   params: Promise<{ locale: string }>;
-};
+}
 
 export default async function VerifyEmailPage({
   params,

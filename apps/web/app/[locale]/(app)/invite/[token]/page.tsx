@@ -22,9 +22,9 @@ import { getServerSession } from "@/lib/auth/auth";
 import { getInviteLinkDetails } from "../queries";
 import { JoinButton } from "./join-button";
 
-type InviteLinkPageProps = {
+interface InviteLinkPageProps {
   params: Promise<{ locale: string; token: string }>;
-};
+}
 
 export default async function InviteLinkPage({ params }: InviteLinkPageProps) {
   const { locale, token } = await params;

@@ -1,4 +1,4 @@
-export type SiteConfig = {
+export interface SiteConfig {
   name: string;
   description: string;
   url: string;
@@ -7,7 +7,7 @@ export type SiteConfig = {
   twitterHandle?: string;
   author?: { name: string; url?: string };
   links?: { twitter?: string; github?: string };
-};
+}
 
 let _siteConfig: SiteConfig | null = null;
 

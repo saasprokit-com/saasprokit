@@ -3,14 +3,14 @@ import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 
-type PlanComparisonProps = {
+interface PlanComparisonProps {
   /** Previous plan name */
   previousPlan: string;
   /** New plan name */
   newPlan: string;
   /** Whether this is an upgrade (true) or downgrade (false) */
   isUpgrade?: boolean;
-};
+}
 
 /**
  * PlanComparison - Shows plan change with arrow

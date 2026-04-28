@@ -19,12 +19,12 @@
 type LogLevel = "debug" | "info" | "warn" | "error";
 type LogData = Record<string, unknown>;
 
-type LogEntry = {
+interface LogEntry {
   timestamp: string;
   level: string;
   message: string;
   data?: LogData;
-};
+}
 
 function formatLogEntry(
   level: LogLevel,

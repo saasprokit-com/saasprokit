@@ -17,7 +17,7 @@ import type { MemberPermissions } from "../utils";
 import { MemberActions } from "./member-actions";
 import { RoleSelector } from "./role-selector";
 
-export type Member = {
+export interface Member {
   id: string;
   role: OrgRoleName;
   createdAt: Date;
@@ -32,7 +32,7 @@ export type Member = {
     image: string | null;
     lastActiveAt: Date | null;
   };
-};
+}
 
 export const roleFilterOptions = [
   { label: "Owner", value: ORG_ROLES.OWNER, icon: Crown },
@@ -40,12 +40,12 @@ export const roleFilterOptions = [
   { label: "Member", value: ORG_ROLES.MEMBER, icon: User },
 ];
 
-type GetColumnsParams = {
+interface GetColumnsParams {
   currentUserId: string;
   errors: ActionErrorMessages;
   organizationId: string;
   permissions: MemberPermissions;
-};
+}
 
 export function getColumns({
   currentUserId,

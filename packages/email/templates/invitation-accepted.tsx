@@ -11,7 +11,7 @@ import {
   Text,
 } from "@react-email/components";
 
-type InvitationAcceptedProps = {
+interface InvitationAcceptedProps {
   ownerName?: string;
   newMemberName?: string;
   newMemberEmail?: string;
@@ -19,7 +19,7 @@ type InvitationAcceptedProps = {
   role?: string;
   joinedAt?: string;
   teamUrl?: string;
-};
+}
 
 export default function InvitationAccepted({
   ownerName = "there",

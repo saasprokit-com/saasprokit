@@ -10,12 +10,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PLANS } from "./plans";
 import type { Subscription, SubscriptionWithPlan } from "./types";
 
-type UseSubscriptionOptions = {
+interface UseSubscriptionOptions {
   /** Reference ID to fetch subscription for (org ID). If not provided, uses active organization */
   referenceId?: string;
-};
+}
 
-type UseSubscriptionReturn = {
+interface UseSubscriptionReturn {
   /** The current subscription data */
   subscription: Subscription | null;
   /** Subscription with plan configuration */
@@ -34,7 +34,7 @@ type UseSubscriptionReturn = {
   isCanceled: boolean;
   /** Refetch the subscription data */
   refetch: () => Promise<void>;
-};
+}
 
 /**
  * Hook to get the current subscription for an organization
@@ -185,21 +185,21 @@ export function useSubscription(
   };
 }
 
-type UseCancelOptions = {
+interface UseCancelOptions {
   /** Current locale for URL construction (e.g., "en") */
   locale?: string;
   onSuccess?: () => void;
   onError?: (error: Error) => void;
-};
+}
 
-type UseCancelReturn = {
+interface UseCancelReturn {
   /** Cancel the current subscription */
   cancel: () => Promise<void>;
   /** Whether a cancellation is in progress */
   isCanceling: boolean;
   /** Error if cancellation failed */
   error: Error | null;
-};
+}
 
 /**
  * Hook to handle subscription cancellation

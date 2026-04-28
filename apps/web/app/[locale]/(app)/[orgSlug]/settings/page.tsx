@@ -8,9 +8,9 @@ import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
 import { OrgSettingsForm } from "./components/org-settings-form";
 import { getOrgSettingsData } from "./queries";
 
-type OrgSettingsPageProps = {
+interface OrgSettingsPageProps {
   params: Promise<{ locale: string; orgSlug: string }>;
-};
+}
 
 export default async function OrgSettingsPage({
   params,

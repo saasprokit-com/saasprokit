@@ -26,7 +26,7 @@ import { toast } from "sonner";
 import { updateProfileAction } from "../actions";
 import { type ProfileFormValues, profileSchema } from "../schemas";
 
-type ProfileFormProps = {
+interface ProfileFormProps {
   errors: ActionErrorMessages;
   user: {
     id: string;
@@ -35,7 +35,7 @@ type ProfileFormProps = {
     emailVerified: boolean;
     image?: string | null;
   };
-};
+}
 
 export function ProfileForm({ errors, user }: ProfileFormProps) {
   const form = useForm<ProfileFormValues>({

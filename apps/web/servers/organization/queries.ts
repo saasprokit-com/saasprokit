@@ -6,12 +6,12 @@ import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { getServerSession } from "@/lib/auth/auth";
 
-type OrganizationContext = {
+interface OrganizationContext {
   organizationId: string;
   userId: string;
   role: OrgRoleName;
   organizationName: string;
-};
+}
 
 /**
  * Validate that a user is a member of an organization.

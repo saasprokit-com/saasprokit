@@ -39,12 +39,12 @@ export type BodyFont = (typeof BODY_FONTS)[number];
 export const RADIUS_VALUES = [0, 0.3, 0.5, 0.625, 0.75, 1.0] as const;
 export type RadiusValue = (typeof RADIUS_VALUES)[number];
 
-export type DesignConfig = {
+export interface DesignConfig {
   baseColor: BaseColor;
   headingFont: HeadingFont;
   bodyFont: BodyFont;
   radius: number;
-};
+}
 
 export const DEFAULT_DESIGN_CONFIG: DesignConfig = {
   baseColor: "neutral",
@@ -75,10 +75,14 @@ const DesignConfigContext = createContext<DesignConfigContextValue | null>(
 );
 
 function readStoredConfig(): DesignConfig {
-  if (typeof window === "undefined") return DEFAULT_DESIGN_CONFIG;
+  if (typeof window === "undefined") {
+    return DEFAULT_DESIGN_CONFIG;
+  }
   try {
     const raw = window.localStorage.getItem(DESIGN_CONFIG_STORAGE_KEY);
-    if (!raw) return DEFAULT_DESIGN_CONFIG;
+    if (!raw) {
+      return DEFAULT_DESIGN_CONFIG;
+    }
     const parsed = JSON.parse(raw);
     return {
       baseColor: BASE_COLORS.includes(parsed.baseColor)

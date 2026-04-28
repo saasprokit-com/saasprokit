@@ -3,13 +3,13 @@ import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 
-type LineItemProps = {
+interface LineItemProps {
   label: string;
   value: string;
   isTotal?: boolean;
-};
+}
 
-type ReceiptTableProps = {
+interface ReceiptTableProps {
   /** Company/App name */
   companyName?: string;
   /** Invoice number */
@@ -18,7 +18,7 @@ type ReceiptTableProps = {
   items: LineItemProps[];
   /** Total amount */
   total: string;
-};
+}
 
 /**
  * ReceiptTable - Payment receipt table with Outlook-compatible layout

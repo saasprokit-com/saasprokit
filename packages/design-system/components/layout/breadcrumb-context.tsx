@@ -9,15 +9,15 @@ import {
   useState,
 } from "react";
 
-export type BreadcrumbItem = {
+export interface BreadcrumbItem {
   label: string;
   href?: string;
-};
+}
 
-type BreadcrumbContextValue = {
+interface BreadcrumbContextValue {
   items: BreadcrumbItem[];
   setItems: (items: BreadcrumbItem[]) => void;
-};
+}
 
 const BreadcrumbContext = createContext<BreadcrumbContextValue | null>(null);
 

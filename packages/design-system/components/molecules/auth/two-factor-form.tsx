@@ -29,7 +29,7 @@ const twoFactorSchema = z.object({
 
 export type TwoFactorFormValues = z.infer<typeof twoFactorSchema>;
 
-export type TwoFactorFormProps = {
+export interface TwoFactorFormProps {
   onSubmit: (data: TwoFactorFormValues) => Promise<void>;
   onResendCode?: () => Promise<void>;
   onUseBackupCode?: () => void;
@@ -37,7 +37,7 @@ export type TwoFactorFormProps = {
   error?: string;
   method?: "totp" | "otp";
   className?: string;
-};
+}
 
 export function TwoFactorForm({
   onSubmit,

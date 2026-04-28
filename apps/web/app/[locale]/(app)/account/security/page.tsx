@@ -13,9 +13,9 @@ export const metadata = {
   description: "Manage your password, sessions, and two-factor authentication",
 };
 
-type SecurityPageProps = {
+interface SecurityPageProps {
   params: Promise<{ locale: string }>;
-};
+}
 
 export default async function SecurityPage({ params }: SecurityPageProps) {
   const { locale } = await params;

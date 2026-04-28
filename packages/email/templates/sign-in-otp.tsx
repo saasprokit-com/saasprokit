@@ -10,11 +10,11 @@ import {
   Text,
 } from "@react-email/components";
 
-type SignInOTPEmailProps = {
+interface SignInOTPEmailProps {
   userEmail?: string;
   otp?: string;
   expiresInMinutes?: number;
-};
+}
 
 export default function SignInOTPEmail({
   userEmail = "user@example.com",

@@ -11,7 +11,7 @@ import {
   Text,
 } from "@react-email/components";
 
-type RoleChangedProps = {
+interface RoleChangedProps {
   userName?: string;
   organizationName?: string;
   previousRole?: string;
@@ -19,7 +19,7 @@ type RoleChangedProps = {
   changedBy?: string;
   changedAt?: string;
   dashboardUrl?: string;
-};
+}
 
 export default function RoleChanged({
   userName = "there",

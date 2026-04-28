@@ -10,11 +10,11 @@ import {
   Text,
 } from "@react-email/components";
 
-type AccountDeletedProps = {
+interface AccountDeletedProps {
   userName?: string;
   deletedAt?: string;
   supportEmail?: string;
-};
+}
 
 export default function AccountDeleted({
   userName = "there",

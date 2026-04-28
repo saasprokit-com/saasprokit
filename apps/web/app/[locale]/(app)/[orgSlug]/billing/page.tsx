@@ -16,9 +16,9 @@ import { CurrentPlan } from "./components/current-plan";
 import { UsageStats } from "./components/usage-stats";
 import { getBillingUsageData } from "./queries";
 
-type OrgBillingPageProps = {
+interface OrgBillingPageProps {
   params: Promise<{ locale: string; orgSlug: string }>;
-};
+}
 
 export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
   const { locale, orgSlug } = await params;

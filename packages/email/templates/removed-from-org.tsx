@@ -10,13 +10,13 @@ import {
   Text,
 } from "@react-email/components";
 
-type RemovedFromOrgProps = {
+interface RemovedFromOrgProps {
   userName?: string;
   organizationName?: string;
   removedBy?: string;
   removedAt?: string;
   supportEmail?: string;
-};
+}
 
 export default function RemovedFromOrg({
   userName = "there",

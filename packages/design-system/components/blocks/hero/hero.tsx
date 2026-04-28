@@ -3,17 +3,17 @@ import Link from "next/link";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 
-export type HeroCtaProps = {
+export interface HeroCtaProps {
   label: string;
   href: string;
-};
+}
 
-export type HeroBenefitProps = {
+export interface HeroBenefitProps {
   text: string;
   icon?: React.ReactNode;
-};
+}
 
-export type HeroProps = {
+export interface HeroProps {
   badge?: string;
   title: string;
   highlightedText?: string;
@@ -24,7 +24,7 @@ export type HeroProps = {
   showGradientBackground?: boolean;
   className?: string;
   id?: string;
-};
+}
 
 export function Hero({
   badge,

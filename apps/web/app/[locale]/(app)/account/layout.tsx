@@ -10,10 +10,10 @@ import { ActivityTracker } from "@/components/activity-tracker";
 import { requireAuth } from "@/lib/auth/auth";
 import { AccountSidebar } from "./components/account-sidebar";
 
-type AccountLayoutProps = {
+interface AccountLayoutProps {
   readonly children: ReactNode;
   readonly params: Promise<{ locale: string }>;
-};
+}
 
 export default async function AccountLayout({
   children,

@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { updateMemberRoleAction } from "../actions";
 import type { UpdateRoleInput } from "../schemas";
 
-type RoleSelectorProps = {
+interface RoleSelectorProps {
   memberId: string;
   errors: ActionErrorMessages;
   organizationId: string;
@@ -25,7 +25,7 @@ type RoleSelectorProps = {
   isOwner: boolean;
   isSelf: boolean;
   canUpdateRole: boolean;
-};
+}
 
 const roleOptions = [
   { value: ORG_ROLES.ADMIN, label: "Admin", icon: Shield },

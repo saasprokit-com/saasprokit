@@ -17,12 +17,12 @@ import { revokeInviteLinkAction } from "../actions";
 import type { InviteLink } from "../utils";
 import { isInviteLinkExpired, isInviteLinkMaxedOut } from "../utils";
 
-type InviteLinkActionsProps = {
+interface InviteLinkActionsProps {
   errors: ActionErrorMessages;
   inviteLink: InviteLink;
   organizationId: string;
   baseUrl: string;
-};
+}
 
 export function InviteLinkActions({
   errors,

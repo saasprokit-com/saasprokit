@@ -45,13 +45,13 @@ import {
 import type { MemberPermissions } from "../utils";
 import type { Member } from "./columns";
 
-type MemberActionsProps = {
+interface MemberActionsProps {
   member: Member;
   currentUserId: string;
   errors: ActionErrorMessages;
   organizationId: string;
   permissions: MemberPermissions;
-};
+}
 
 export function MemberActions({
   member,

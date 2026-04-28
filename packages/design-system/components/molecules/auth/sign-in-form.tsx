@@ -26,7 +26,7 @@ const signInSchema = z.object({
 
 export type SignInFormValues = z.infer<typeof signInSchema>;
 
-export type SignInFormProps = {
+export interface SignInFormProps {
   onSubmit: (data: SignInFormValues) => Promise<void>;
   onSocialLogin?: (provider: SocialProvider) => void;
   socialProviders?: SocialProvider[];
@@ -34,7 +34,7 @@ export type SignInFormProps = {
   forgotPasswordUrl?: string;
   error?: string;
   className?: string;
-};
+}
 
 export function SignInForm({
   onSubmit,

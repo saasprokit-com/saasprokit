@@ -11,14 +11,14 @@ import {
   Text,
 } from "@react-email/components";
 
-type SubscriptionCancelledProps = {
+interface SubscriptionCancelledProps {
   userName?: string;
   planName?: string;
   accessUntil?: string;
   cancellationReason?: string;
   reactivateUrl?: string;
   feedbackUrl?: string;
-};
+}
 
 export default function SubscriptionCancelled({
   userName = "there",

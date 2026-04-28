@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { colors } from "../theme/colors";
 import { typography } from "../theme/typography";
 
-type FooterProps = {
+interface FooterProps {
   /** Main footer message */
   children?: ReactNode;
   /** App name for branding */
@@ -12,7 +12,7 @@ type FooterProps = {
   showBranding?: boolean;
   /** Support email address */
   supportEmail?: string;
-};
+}
 
 export function Footer({
   children,

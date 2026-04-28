@@ -246,7 +246,7 @@ export function generateStaticParams() {
 
 ### TypeScript
 
-**Prefer `type` over `interface`** except for declaration merging.
+**Prefer `interface` over `type` for object shapes** (enforced by Biome's `useConsistentTypeDefinitions`). Use `type` only when the language requires it: unions, intersections, mapped/conditional types, tuple types, primitive aliases, and `z.infer<>` / other inferred results.
 
 ### Linting & Formatting
 

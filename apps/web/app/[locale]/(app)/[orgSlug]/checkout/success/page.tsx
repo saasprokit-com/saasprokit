@@ -9,10 +9,10 @@ import {
 import { CheckCircle } from "lucide-react";
 import Link from "next/link";
 
-type Props = {
+interface Props {
   params: Promise<{ locale: string; orgSlug: string }>;
   searchParams: Promise<{ session_id?: string }>;
-};
+}
 
 export default async function CheckoutSuccessPage({
   params,

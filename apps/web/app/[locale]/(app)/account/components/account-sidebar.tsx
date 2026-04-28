@@ -40,10 +40,10 @@ import {
 import Link from "next/link";
 import { accountRoutes, PAGE_ROUTES } from "@/lib/routes";
 
-type AccountSidebarProps = {
+interface AccountSidebarProps {
   user: User;
   locale: string;
-};
+}
 
 export function AccountSidebar({ user, locale }: AccountSidebarProps) {
   // Build navigation items with locale-aware URLs

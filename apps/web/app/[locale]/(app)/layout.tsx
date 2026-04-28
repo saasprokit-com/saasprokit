@@ -3,10 +3,10 @@ import { requireAuth } from "@/lib/auth/auth";
 import { createDefaultWorkspace } from "@/lib/organization/personal-org";
 import { getUserMembershipCount } from "./queries";
 
-type AppLayoutProps = {
+interface AppLayoutProps {
   readonly children: ReactNode;
   readonly params: Promise<{ locale: string }>;
-};
+}
 
 /**
  * Root layout for authenticated (app) routes.

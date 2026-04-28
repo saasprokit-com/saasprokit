@@ -3,12 +3,12 @@ import { getCurrentPlan } from "./helpers";
 import { comparePlans, getPlanLimits } from "./plans";
 import type { Subscription } from "./types";
 
-export type GuardResult = {
+export interface GuardResult {
   allowed: boolean;
   reason?: string;
   requiredPlan?: PlanName;
   upgradeUrl?: string;
-};
+}
 
 /**
  * Guard: Check if downgrade is safe based on current resource usage

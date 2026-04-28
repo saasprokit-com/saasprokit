@@ -14,19 +14,19 @@ import {
   DropdownMenuTrigger,
 } from "../../ui/dropdown-menu";
 
-export type UserMenuUser = {
+export interface UserMenuUser {
   name?: string | null;
   email?: string | null;
   image?: string | null;
-};
+}
 
-export type UserMenuItem = {
+export interface UserMenuItem {
   label: string;
   href: string;
   icon?: LucideIcon;
-};
+}
 
-export type UserMenuProps = {
+export interface UserMenuProps {
   user: UserMenuUser | null | undefined;
   menuItems?: UserMenuItem[];
   onLogout?: () => void | Promise<void>;
@@ -36,7 +36,7 @@ export type UserMenuProps = {
   signUpLabel?: string;
   logoutLabel?: string;
   className?: string;
-};
+}
 
 function getInitials(name?: string | null): string {
   if (!name) {

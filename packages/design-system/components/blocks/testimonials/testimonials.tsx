@@ -1,17 +1,17 @@
 import { cn } from "@repo/design-system/lib/utils";
 
-export type TestimonialProps = {
+export interface TestimonialProps {
   quote: string;
   author: string;
   role: string;
   initials: string;
-};
+}
 
-export type TestimonialsSectionProps = {
+export interface TestimonialsSectionProps {
   title: string;
   testimonials: TestimonialProps[];
   className?: string;
-};
+}
 
 export function TestimonialsSection({
   title,

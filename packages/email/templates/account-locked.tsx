@@ -9,7 +9,7 @@ import {
   InfoBox,
 } from "../components";
 
-type AccountLockedProps = {
+interface AccountLockedProps {
   userEmail?: string;
   userName?: string;
   lockReason?: string;
@@ -18,7 +18,7 @@ type AccountLockedProps = {
   unlockTime?: string;
   resetPasswordUrl?: string;
   supportEmail?: string;
-};
+}
 
 export default function AccountLocked({
   userEmail = "user@example.com",

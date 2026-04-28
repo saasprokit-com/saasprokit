@@ -9,7 +9,7 @@ import { getLocaleFromRequest } from "@/lib/infrastructure/revalidation";
 export type ActionErrorCode = keyof Dictionary["errors"]["action"];
 type BAFallbackKey = keyof Dictionary["errors"]["fallback"];
 
-type ActionErrorOptions = {
+interface ActionErrorOptions {
   /** Error code key from errors.action dictionary */
   fallback: ActionErrorCode;
   /** If the action calls Better Auth API, provide the BA fallback key */
@@ -18,7 +18,7 @@ type ActionErrorOptions = {
   logger?: { error: (obj: Record<string, unknown>, msg: string) => void };
   /** Custom log message (defaults to the fallback dictionary text) */
   logMessage?: string;
-};
+}
 
 /**
  * Unified error handler for server action catch blocks.

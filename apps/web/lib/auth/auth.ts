@@ -5,11 +5,11 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
-export type ActionResult<T = void> = {
+export interface ActionResult<T = void> {
   success: boolean;
   error?: string;
   data?: T;
-};
+}
 
 /**
  * Get the current session on the server side.

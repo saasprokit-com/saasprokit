@@ -3,14 +3,14 @@ import type { ReactNode } from "react";
 import { colors } from "../theme/colors";
 import { typography } from "../theme/typography";
 
-type HeadingProps = {
+interface HeadingProps {
   /** Heading level (1 or 2) */
   as?: "h1" | "h2";
   /** Heading content */
   children: ReactNode;
   /** Whether to center the heading */
   centered?: boolean;
-};
+}
 
 /**
  * Heading - Styled heading component

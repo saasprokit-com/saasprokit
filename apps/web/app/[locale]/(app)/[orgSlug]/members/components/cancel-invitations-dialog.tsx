@@ -20,12 +20,12 @@ import { toast } from "sonner";
 import { cancelInvitationsAction } from "../actions";
 import type { Invitation } from "../utils";
 
-type CancelInvitationsDialogProps = {
+interface CancelInvitationsDialogProps {
   errors: ActionErrorMessages;
   organizationId: string;
   selectedInvitations: Invitation[];
   onSuccess: () => void;
-};
+}
 
 export function CancelInvitationsDialog({
   errors,

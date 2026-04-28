@@ -8,12 +8,12 @@ import {
   getOrgUsageStats,
 } from "@/lib/billing/subscription-queries";
 
-export type BillingUsageData = {
+export interface BillingUsageData {
   usageStats: UsageStats;
   planName: PlanName;
   hasUnlimitedMembers: boolean;
   hasUnlimitedStorage: boolean;
-};
+}
 
 export async function getBillingUsageData(
   organizationId: string

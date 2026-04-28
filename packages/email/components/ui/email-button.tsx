@@ -5,7 +5,7 @@ import { typography } from "../theme/typography";
 
 type ButtonVariant = "primary" | "secondary" | "danger" | "success";
 
-type EmailButtonProps = {
+interface EmailButtonProps {
   /** Button variant determines colors */
   variant?: ButtonVariant;
   /** URL the button links to */
@@ -14,7 +14,7 @@ type EmailButtonProps = {
   children: string;
   /** Whether to center the button */
   centered?: boolean;
-};
+}
 
 /**
  * EmailButton - Styled button for email templates
