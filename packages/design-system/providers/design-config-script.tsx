@@ -3,16 +3,6 @@ import {
   DESIGN_CONFIG_STORAGE_KEY,
 } from "./design-config";
 
-/**
- * Inline script that applies stored design config to `<html>` BEFORE the
- * browser paints. Mount in `<head>` (root layout). Safe with CSP — pass the
- * nonce so it's allowlisted.
- *
- * Security: This script body is entirely hardcoded from build-time constants.
- * No user input is interpolated. The only runtime input is localStorage which
- * is same-origin and parsed with JSON.parse (safe). The setAttribute and
- * setProperty calls only write to the document element's style/attributes.
- */
 export const DesignConfigScript = ({ nonce }: { nonce?: string }) => {
   const storageKey = JSON.stringify(DESIGN_CONFIG_STORAGE_KEY);
   const defaults = JSON.stringify(DEFAULT_DESIGN_CONFIG);

@@ -44,14 +44,6 @@ function readStoredPreset(): DesignPreset {
   }
 }
 
-/**
- * Applies the active design preset as `data-design` on `<html>` so the CSS
- * rules in `design-presets.css` take effect. Persists the selection to
- * localStorage so it survives reloads and navigation.
- *
- * Pair with `DesignPresetScript` in `<head>` to eliminate the first-paint
- * flash; the inline script applies the stored preset before React hydrates.
- */
 export const DesignPresetProvider = ({ children }: { children: ReactNode }) => {
   const [preset, setPresetState] = useState<DesignPreset>(
     DEFAULT_DESIGN_PRESET

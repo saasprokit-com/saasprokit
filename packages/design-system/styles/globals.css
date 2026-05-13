@@ -237,6 +237,8 @@
   font-family: var(--font-geist-mono);
   line-height: 1;
   counter-reset: line;
+  width: max-content;
+  min-width: 100%;
 }
 .shiki-preview pre {
   margin: 0;
