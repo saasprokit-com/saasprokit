@@ -32,9 +32,9 @@ import { toast } from "sonner";
 import type { ActionResult } from "@/lib/auth/auth";
 import { deleteAccountFormAction } from "../actions";
 
-type DeleteAccountFormProps = {
+interface DeleteAccountFormProps {
   errors: ActionErrorMessages;
-};
+}
 
 const initialState: ActionResult = { success: false };
 

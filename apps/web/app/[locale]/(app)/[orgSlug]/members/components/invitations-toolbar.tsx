@@ -15,7 +15,7 @@ import type { Invitation } from "../utils";
 import { SEARCH_DEBOUNCE_MS } from "../utils";
 import { CancelInvitationsDialog } from "./cancel-invitations-dialog";
 
-type InvitationsToolbarProps = {
+interface InvitationsToolbarProps {
   table: Table<Invitation>;
   errors: ActionErrorMessages;
   organizationId: string;
@@ -29,7 +29,7 @@ type InvitationsToolbarProps = {
       icon?: ComponentType<{ className?: string }>;
     }[];
   }[];
-};
+}
 
 export function InvitationsToolbar({
   table,

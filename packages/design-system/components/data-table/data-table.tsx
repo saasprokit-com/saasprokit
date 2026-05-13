@@ -27,7 +27,7 @@ import { useState } from "react";
 import { DataTablePagination } from "./pagination";
 import { DataTableToolbar } from "./toolbar";
 
-type DataTableProps<TData, TValue> = {
+interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   searchKey?: string;
@@ -43,7 +43,7 @@ type DataTableProps<TData, TValue> = {
   }[];
   pageSizeOptions?: number[];
   defaultPageSize?: number;
-};
+}
 
 export function DataTable<TData, TValue>({
   columns,

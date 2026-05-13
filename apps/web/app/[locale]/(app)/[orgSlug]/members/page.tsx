@@ -7,10 +7,10 @@ import { getMembers } from "./queries";
 import { getMemberPermissions } from "./utils";
 import { membersSearchParamsCache } from "./validations";
 
-type OrgMembersPageProps = {
+interface OrgMembersPageProps {
   params: Promise<{ locale: string; orgSlug: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
+}
 
 export default async function OrgMembersPage({
   params,

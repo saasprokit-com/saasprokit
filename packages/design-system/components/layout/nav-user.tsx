@@ -31,14 +31,14 @@ import {
 import Link from "next/link";
 import type { User } from "./types";
 
-type NavUserProps = {
+interface NavUserProps {
   user: User;
   onSignOut?: () => void;
   onUpgrade?: () => void;
   accountUrl?: string;
   securityUrl?: string;
   dangerUrl?: string;
-};
+}
 
 export function NavUser({
   user,

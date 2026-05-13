@@ -39,4 +39,3 @@ const I18nMiddleware = createI18nMiddleware({
 
 export const internationalizationMiddleware = (request: NextRequest) =>
   I18nMiddleware(request);
-

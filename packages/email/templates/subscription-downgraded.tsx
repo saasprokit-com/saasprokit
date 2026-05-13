@@ -10,7 +10,7 @@ import {
   PlanComparison,
 } from "../components";
 
-type SubscriptionDowngradedProps = {
+interface SubscriptionDowngradedProps {
   userName?: string;
   previousPlan?: string;
   newPlan?: string;
@@ -19,7 +19,7 @@ type SubscriptionDowngradedProps = {
   effectiveDate?: string;
   lostFeatures?: string[];
   dashboardUrl?: string;
-};
+}
 
 export default function SubscriptionDowngraded({
   userName = "there",

@@ -10,9 +10,9 @@ import {
 import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
 import { getOrgDashboardData } from "./queries";
 
-type OrgDashboardPageProps = {
+interface OrgDashboardPageProps {
   params: Promise<{ orgSlug: string }>;
-};
+}
 
 export default async function OrgDashboardPage({
   params,

@@ -5,14 +5,14 @@ import { typography } from "../theme/typography";
 
 type FeatureListVariant = "default" | "success" | "warning" | "error";
 
-type FeatureListProps = {
+interface FeatureListProps {
   /** List title (optional) */
   title?: string;
   /** Features to display */
   features: string[];
   /** Visual variant */
   variant?: FeatureListVariant;
-};
+}
 
 /**
  * FeatureList - Bulleted list of features

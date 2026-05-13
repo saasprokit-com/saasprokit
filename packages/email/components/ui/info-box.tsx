@@ -6,14 +6,14 @@ import { typography } from "../theme/typography";
 
 type InfoBoxVariant = "blue" | "yellow" | "red" | "green";
 
-type InfoBoxProps = {
+interface InfoBoxProps {
   /** Variant determines colors */
   variant?: InfoBoxVariant;
   /** Optional title/heading */
   title?: string;
   /** Content - can be string or ReactNode */
   children: ReactNode;
-};
+}
 
 /**
  * InfoBox - Colored info/warning/alert box

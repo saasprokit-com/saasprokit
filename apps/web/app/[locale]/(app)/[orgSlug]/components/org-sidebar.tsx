@@ -22,7 +22,7 @@ import { useTransition } from "react";
 import { orgRoutes, PAGE_ROUTES } from "@/lib/routes";
 import { setDefaultWorkspaceAction } from "../actions";
 
-type OrgSidebarProps = {
+interface OrgSidebarProps {
   user: User;
   organizations: Organization[];
   activeOrganization?: Organization | null;
@@ -30,7 +30,7 @@ type OrgSidebarProps = {
   locale: string;
   orgSlug: string;
   canManageBilling: boolean;
-};
+}
 
 export function OrgSidebar({
   user,

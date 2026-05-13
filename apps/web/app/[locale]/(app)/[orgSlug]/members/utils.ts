@@ -9,7 +9,7 @@ import type { InvitationStatusValue } from "@repo/utils/organization";
 // Types
 // ============================================================================
 
-export type Invitation = {
+export interface Invitation {
   id: string;
   email: string;
   role: OrgRoleName | null;
@@ -19,9 +19,9 @@ export type Invitation = {
   inviter: {
     name: string | null;
   } | null;
-};
+}
 
-export type InviteLink = {
+export interface InviteLink {
   id: string;
   token: string;
   role: OrgRoleName;
@@ -33,9 +33,9 @@ export type InviteLink = {
   createdBy: {
     name: string | null;
   } | null;
-};
+}
 
-export type MemberPermissions = {
+export interface MemberPermissions {
   canInvite: boolean;
   canRemove: boolean;
   canUpdateRole: boolean;
@@ -44,7 +44,7 @@ export type MemberPermissions = {
   canSuspend: boolean;
   canTransferOwnership: boolean;
   isOwner: boolean;
-};
+}
 
 // ============================================================================
 // Helper to get permissions

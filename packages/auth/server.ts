@@ -1,10 +1,6 @@
 import { stripe } from "@better-auth/stripe";
 import { database } from "@repo/database";
 import {
-  SECONDS_PER_DAY,
-  SECONDS_PER_MINUTE,
-} from "@repo/utils/date";
-import {
   sendEmailVerificationEmail,
   sendMagicLinkEmail,
   sendOrgInvitationEmail,
@@ -13,6 +9,7 @@ import {
   sendTwoFactorOTPEmail,
   sendVerificationOTPEmail,
 } from "@repo/email";
+import { SECONDS_PER_DAY, SECONDS_PER_MINUTE } from "@repo/utils/date";
 import {
   ACTIVE_STATUSES,
   checkOrgCreationEligibility,
@@ -173,6 +170,19 @@ export const auth = betterAuth({
 
   advanced: {
     useSecureCookies: process.env.NODE_ENV === "production",
+  },
+
+  // Rate limiting — persistent storage for serverless (Vercel)
+  rateLimit: {
+    storage: "database",
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-up/email": { window: 60, max: 3 },
+      "/forgot-password": { window: 60, max: 3 },
+      "/reset-password": { window: 60, max: 3 },
+      "/change-password": { window: 60, max: 3 },
+      "/two-factor/*": { window: 60, max: 5 },
+    },
   },
 
   // Email and password authentication

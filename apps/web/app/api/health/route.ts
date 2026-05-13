@@ -15,7 +15,7 @@ const HTTP_OK = 200;
 const HTTP_SERVICE_UNAVAILABLE = 503;
 const HTTP_INTERNAL_SERVER_ERROR = 500;
 
-type HealthCheckResponse = {
+interface HealthCheckResponse {
   status: "healthy" | "degraded" | "unhealthy";
   timestamp: string;
   responseTime: number;
@@ -23,7 +23,7 @@ type HealthCheckResponse = {
     database: { status: "ok" | "error"; responseTime?: number; error?: string };
     auth: { status: "ok" | "error"; error?: string };
   };
-};
+}
 
 export async function GET(): Promise<NextResponse<HealthCheckResponse>> {
   const startTime = Date.now();
@@ -134,4 +134,3 @@ function checkAuth(): {
     };
   }
 }
-

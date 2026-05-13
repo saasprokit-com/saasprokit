@@ -29,10 +29,10 @@ import { inviteMemberAction } from "../actions";
 import type { InviteMemberInput } from "../schemas";
 import { ROLE_DESCRIPTIONS } from "../utils";
 
-type InviteMemberDialogProps = {
+interface InviteMemberDialogProps {
   errors: ActionErrorMessages;
   organizationId: string;
-};
+}
 
 export function InviteMemberDialog({
   errors,

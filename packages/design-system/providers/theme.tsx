@@ -1,5 +1,6 @@
 import type { ThemeProviderProps } from "next-themes";
 import { ThemeProvider as NextThemeProvider } from "next-themes";
+import { DesignConfigProvider } from "./design-config";
 
 export const ThemeProvider = ({
   children,
@@ -13,6 +14,6 @@ export const ThemeProvider = ({
     enableSystem
     {...properties}
   >
-    {children}
+    <DesignConfigProvider>{children}</DesignConfigProvider>
   </NextThemeProvider>
 );

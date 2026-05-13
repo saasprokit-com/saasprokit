@@ -7,10 +7,10 @@ import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
 import { MembersNav } from "./components/members-nav";
 import { getMembersLayoutCounts } from "./queries";
 
-type MembersLayoutProps = {
+interface MembersLayoutProps {
   children: ReactNode;
   params: Promise<{ orgSlug: string }>;
-};
+}
 
 export default async function MembersLayout({
   children,

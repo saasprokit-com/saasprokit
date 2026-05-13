@@ -1,4 +1,5 @@
 import { Toaster } from "@repo/design-system/components/ui/sonner";
+import { DesignConfigScript } from "@repo/design-system/providers/design-config-script";
 import { ThemeProvider } from "@repo/design-system/providers/theme";
 import { locales } from "@repo/internationalization";
 import {
@@ -31,12 +32,12 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-type LocaleLayoutProps = {
+interface LocaleLayoutProps {
   readonly children: ReactNode;
   readonly params: Promise<{
     locale: string;
   }>;
-};
+}
 
 const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
   await params;
@@ -45,6 +46,7 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
 
   return (
     <>
+      <DesignConfigScript nonce={nonce} />
       <JsonLd code={generateOrganizationSchema()} />
       <JsonLd code={generateWebSiteSchema()} />
       <ThemeProvider nonce={nonce}>

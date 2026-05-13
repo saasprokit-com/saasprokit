@@ -5,12 +5,12 @@ import { typography } from "../theme/typography";
 
 type BannerVariant = "success" | "warning" | "error" | "info";
 
-type BannerProps = {
+interface BannerProps {
   /** Banner variant determines colors */
   variant: BannerVariant;
   /** Text to display in the banner */
   children: string;
-};
+}
 
 /**
  * Banner - Status banner shown at the top of emails

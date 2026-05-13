@@ -9,7 +9,7 @@ import {
   PlanComparison,
 } from "../components";
 
-type SubscriptionUpgradedProps = {
+interface SubscriptionUpgradedProps {
   userName?: string;
   previousPlan?: string;
   newPlan?: string;
@@ -17,7 +17,7 @@ type SubscriptionUpgradedProps = {
   billingInterval?: string;
   effectiveDate?: string;
   dashboardUrl?: string;
-};
+}
 
 export default function SubscriptionUpgraded({
   userName = "there",

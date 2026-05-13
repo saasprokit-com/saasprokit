@@ -9,9 +9,9 @@ export const metadata = {
   description: "Permanently delete your account",
 };
 
-type DangerZonePageProps = {
+interface DangerZonePageProps {
   params: Promise<{ locale: string }>;
-};
+}
 
 export default async function DangerZonePage({ params }: DangerZonePageProps) {
   const { locale } = await params;

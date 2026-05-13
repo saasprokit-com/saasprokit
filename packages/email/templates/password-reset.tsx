@@ -7,10 +7,10 @@ import {
   Heading,
 } from "../components";
 
-type PasswordResetEmailProps = {
+interface PasswordResetEmailProps {
   userEmail?: string;
   resetUrl?: string;
-};
+}
 
 export default function PasswordResetEmail({
   userEmail = "user@example.com",

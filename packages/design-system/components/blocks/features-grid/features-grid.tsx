@@ -2,13 +2,13 @@ import type { LucideIcon } from "lucide-react";
 import { Badge } from "../../ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "../../ui/card";
 
-export type FeatureItemProps = {
+export interface FeatureItemProps {
   icon: LucideIcon;
   title: string;
   description: string;
-};
+}
 
-export type FeaturesGridProps = {
+export interface FeaturesGridProps {
   badge?: string;
   title: string;
   subtitle?: string;
@@ -16,7 +16,7 @@ export type FeaturesGridProps = {
   columns?: 2 | 3 | 4;
   className?: string;
   id?: string;
-};
+}
 
 export function FeaturesGrid({
   badge,

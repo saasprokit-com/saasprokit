@@ -10,10 +10,10 @@ import { toast } from "sonner";
 import type { ActionResult } from "@/lib/auth/auth";
 import { acceptInviteLinkFormAction } from "../actions";
 
-type JoinButtonProps = {
+interface JoinButtonProps {
   token: string;
   errors: ActionErrorMessages;
-};
+}
 
 const initialState: ActionResult<{ organizationSlug: string }> = {
   success: false,

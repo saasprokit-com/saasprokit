@@ -32,10 +32,10 @@ import { bulkInviteAction } from "../actions";
 import { type BulkInviteInput, emailSchema } from "../schemas";
 import { ROLE_DESCRIPTIONS } from "../utils";
 
-type BulkInviteDialogProps = {
+interface BulkInviteDialogProps {
   errors: ActionErrorMessages;
   organizationId: string;
-};
+}
 
 function validateEmails(emails: string[]): {
   valid: string[];
@@ -245,7 +245,7 @@ export function BulkInviteDialog({
                   Sending...
                 </>
               ) : (
-                `Send ${valid.length} Invitation${valid.length !== 1 ? "s" : ""}`
+                `Send ${valid.length} Invitation${valid.length === 1 ? "" : "s"}`
               )}
             </Button>
           </DialogFooter>

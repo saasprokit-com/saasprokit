@@ -11,7 +11,7 @@ import {
   Text,
 } from "@react-email/components";
 
-type SubscriptionRenewedProps = {
+interface SubscriptionRenewedProps {
   userName?: string;
   planName?: string;
   amount?: string;
@@ -19,7 +19,7 @@ type SubscriptionRenewedProps = {
   renewalDate?: string;
   nextBillingDate?: string;
   dashboardUrl?: string;
-};
+}
 
 export default function SubscriptionRenewed({
   userName = "there",

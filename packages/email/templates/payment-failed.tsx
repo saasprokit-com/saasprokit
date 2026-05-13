@@ -11,14 +11,14 @@ import {
   Text,
 } from "@react-email/components";
 
-type PaymentFailedProps = {
+interface PaymentFailedProps {
   userName?: string;
   planName?: string;
   amount?: string;
   failureReason?: string;
   retryDate?: string;
   updatePaymentUrl?: string;
-};
+}
 
 export default function PaymentFailed({
   userName = "there",

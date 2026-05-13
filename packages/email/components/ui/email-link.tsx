@@ -2,14 +2,14 @@ import { Link } from "@react-email/components";
 import { colors } from "../theme/colors";
 import { typography } from "../theme/typography";
 
-type EmailLinkProps = {
+interface EmailLinkProps {
   /** URL to link to */
   href: string;
   /** Link text (optional when showUrl is true) */
   children?: string;
   /** Whether to show the full URL (for email clients that don't support buttons) */
   showUrl?: boolean;
-};
+}
 
 /**
  * EmailLink - Styled link component

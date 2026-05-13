@@ -1,24 +1,24 @@
 import type { LucideIcon } from "lucide-react";
 
-export type User = {
+export interface User {
   name: string;
   email: string;
   avatar?: string;
-};
+}
 
-export type Organization = {
+export interface Organization {
   id: string;
   name: string;
   slug: string;
   logo?: string | null;
   plan?: string;
-};
+}
 
-export type BaseNavItem = {
+export interface BaseNavItem {
   title: string;
   badge?: string;
   icon?: LucideIcon;
-};
+}
 
 export type NavLink = BaseNavItem & {
   url: string;
@@ -32,13 +32,13 @@ export type NavCollapsible = BaseNavItem & {
 
 export type NavItem = NavCollapsible | NavLink;
 
-export type NavGroup = {
+export interface NavGroup {
   title: string;
   items: NavItem[];
-};
+}
 
-export type SidebarData = {
+export interface SidebarData {
   user: User;
   organizations: Organization[];
   navGroups: NavGroup[];
-};
+}

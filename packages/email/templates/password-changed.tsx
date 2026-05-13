@@ -8,13 +8,13 @@ import {
   InfoBox,
 } from "../components";
 
-type PasswordChangedProps = {
+interface PasswordChangedProps {
   userEmail?: string;
   userName?: string;
   changedAt?: string;
   ipAddress?: string;
   secureAccountUrl?: string;
-};
+}
 
 export default function PasswordChanged({
   userEmail = "user@example.com",

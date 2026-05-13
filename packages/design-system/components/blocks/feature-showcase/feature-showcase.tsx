@@ -2,18 +2,18 @@ import type { LucideIcon } from "lucide-react";
 import { CheckCircle2 } from "lucide-react";
 import { Badge } from "../../ui/badge";
 
-export type FeatureShowcaseItemProps = {
+export interface FeatureShowcaseItemProps {
   badge: string;
   title: string;
   description: string;
   bullets: string[];
   icon: LucideIcon;
-};
+}
 
-export type FeatureShowcaseProps = {
+export interface FeatureShowcaseProps {
   items: FeatureShowcaseItemProps[];
   className?: string;
-};
+}
 
 export function FeatureShowcase({ items, className }: FeatureShowcaseProps) {
   return (

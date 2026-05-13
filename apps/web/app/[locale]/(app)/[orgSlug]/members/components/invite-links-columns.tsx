@@ -29,12 +29,12 @@ export const inviteLinkStatusFilterOptions = [
   { label: "Revoked", value: INVITE_LINK_STATUS.REVOKED, icon: Ban },
 ];
 
-type GetInviteLinkColumnsParams = {
+interface GetInviteLinkColumnsParams {
   errors: ActionErrorMessages;
   organizationId: string;
   baseUrl: string;
   canManage: boolean;
-};
+}
 
 function getLinkStatusBadge(link: InviteLink) {
   if (!link.isActive) {
@@ -148,7 +148,7 @@ export function getInviteLinkColumns({
       return (
         <span className="text-muted-foreground">
           {link.usedCount}
-          {link.maxUses != null ? ` / ${link.maxUses}` : null}
+          {link.maxUses == null ? null : ` / ${link.maxUses}`}
         </span>
       );
     },

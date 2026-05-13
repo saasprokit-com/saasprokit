@@ -19,7 +19,7 @@ import type { MemberPermissions } from "../utils";
 import { getColumns, type Member, roleFilterOptions } from "./columns";
 import { MembersToolbar } from "./members-toolbar";
 
-type MembersTableProps = {
+interface MembersTableProps {
   membersPromise: Promise<{
     members: Member[];
     totalCount: number;
@@ -29,7 +29,7 @@ type MembersTableProps = {
   errors: ActionErrorMessages;
   organizationId: string;
   permissions: MemberPermissions;
-};
+}
 
 const filterFields = [
   { id: "user", urlKey: "search", type: "string" as const },

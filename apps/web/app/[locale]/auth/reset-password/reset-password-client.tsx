@@ -9,10 +9,10 @@ import type { ActionErrorMessages } from "@repo/internationalization";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-type ResetPasswordClientProps = {
+interface ResetPasswordClientProps {
   token?: string;
   errors: ActionErrorMessages;
-};
+}
 
 export function ResetPasswordClient({
   token,

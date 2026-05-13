@@ -8,7 +8,7 @@ import type { ComponentType } from "react";
 import { DataTableFacetedFilter } from "./faceted-filter";
 import { DataTableViewOptions } from "./view-options";
 
-type DataTableToolbarProps<TData> = {
+interface DataTableToolbarProps<TData> {
   table: Table<TData>;
   searchKey?: string;
   searchPlaceholder?: string;
@@ -21,7 +21,7 @@ type DataTableToolbarProps<TData> = {
       icon?: ComponentType<{ className?: string }>;
     }[];
   }[];
-};
+}
 
 export function DataTableToolbar<TData>({
   table,

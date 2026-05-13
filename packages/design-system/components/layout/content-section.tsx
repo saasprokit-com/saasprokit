@@ -2,14 +2,14 @@ import { Separator } from "@repo/design-system/components/ui/separator";
 import { cn } from "@repo/design-system/lib/utils";
 import type { ReactNode } from "react";
 
-type ContentSectionProps = {
+interface ContentSectionProps {
   title: string;
   description: string;
   children: ReactNode;
   action?: ReactNode;
   className?: string;
   contentClassName?: string;
-};
+}
 
 export function ContentSection({
   title,

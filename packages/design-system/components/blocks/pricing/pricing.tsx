@@ -16,7 +16,7 @@ import {
 } from "../../ui/card";
 import { Switch } from "../../ui/switch";
 
-export type PricingTierProps = {
+export interface PricingTierProps {
   name: string;
   monthlyPrice: number;
   annualPrice: number;
@@ -26,9 +26,9 @@ export type PricingTierProps = {
   ctaHref: string;
   variant?: "default" | "outline";
   popular?: boolean;
-};
+}
 
-export type PricingProps = {
+export interface PricingProps {
   badge?: string;
   title: string;
   subtitle?: string;
@@ -36,7 +36,7 @@ export type PricingProps = {
   showBillingToggle?: boolean;
   className?: string;
   id?: string;
-};
+}
 
 export function Pricing({
   badge,
@@ -109,7 +109,7 @@ export function Pricing({
                 key={tier.name}
               >
                 {tier.popular && (
-                  <Badge className="-top-3 -translate-x-1/2 absolute left-1/2">
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
                     Most Popular
                   </Badge>
                 )}

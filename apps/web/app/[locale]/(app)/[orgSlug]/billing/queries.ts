@@ -1,19 +1,19 @@
 import "server-only";
 
-import { PLAN_NAMES, type PlanName } from "@repo/utils/payment";
 import { getPlanLimits } from "@repo/payment/plans";
 import type { UsageStats } from "@repo/payment/types";
+import { PLAN_NAMES, type PlanName } from "@repo/utils/payment";
 import {
   getOrgSubscription,
   getOrgUsageStats,
 } from "@/lib/billing/subscription-queries";
 
-export type BillingUsageData = {
+export interface BillingUsageData {
   usageStats: UsageStats;
   planName: PlanName;
   hasUnlimitedMembers: boolean;
   hasUnlimitedStorage: boolean;
-};
+}
 
 export async function getBillingUsageData(
   organizationId: string

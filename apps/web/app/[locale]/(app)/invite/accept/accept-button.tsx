@@ -10,10 +10,10 @@ import { toast } from "sonner";
 import type { ActionResult } from "@/lib/auth/auth";
 import { acceptInvitationFormAction } from "../actions";
 
-type AcceptInvitationButtonProps = {
+interface AcceptInvitationButtonProps {
   invitationId: string;
   errors: ActionErrorMessages;
-};
+}
 
 const initialState: ActionResult<{ organizationSlug: string }> = {
   success: false,

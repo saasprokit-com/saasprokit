@@ -11,7 +11,7 @@ import {
   Text,
 } from "@react-email/components";
 
-type LoginNewDeviceProps = {
+interface LoginNewDeviceProps {
   userEmail?: string;
   userName?: string;
   deviceInfo?: string;
@@ -19,7 +19,7 @@ type LoginNewDeviceProps = {
   ipAddress?: string;
   loginTime?: string;
   secureAccountUrl?: string;
-};
+}
 
 export default function LoginNewDevice({
   userEmail = "user@example.com",

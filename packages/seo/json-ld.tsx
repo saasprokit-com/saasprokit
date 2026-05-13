@@ -1,8 +1,8 @@
 import type { Thing, WithContext } from "schema-dts";
 
-type JsonLdProps = {
+interface JsonLdProps {
   code: WithContext<Thing>;
-};
+}
 
 const escapeJsonForHtml = (json: string): string =>
   json

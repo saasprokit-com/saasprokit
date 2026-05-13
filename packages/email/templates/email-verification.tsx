@@ -7,11 +7,11 @@ import {
   Heading,
 } from "../components";
 
-type EmailVerificationProps = {
+interface EmailVerificationProps {
   userEmail?: string;
   userName?: string;
   verificationUrl?: string;
-};
+}
 
 export default function EmailVerification({
   userEmail = "user@example.com",

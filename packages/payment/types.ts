@@ -7,7 +7,7 @@ import {
 } from "@repo/utils/payment";
 import { z } from "zod";
 
-export type Subscription = {
+export interface Subscription {
   id: string;
   plan: string;
   referenceId: string;
@@ -22,7 +22,7 @@ export type Subscription = {
   seats: number | null;
   createdAt: Date;
   updatedAt: Date;
-};
+}
 
 // Runtime validation schema for Subscription data from database
 export const SubscriptionSchema = z.object({
@@ -48,33 +48,33 @@ export type SubscriptionWithPlan = Subscription & {
 
 export type FeatureKey = (typeof FEATURE_KEYS)[keyof typeof FEATURE_KEYS];
 
-export type FeatureAccess = {
+export interface FeatureAccess {
   feature: FeatureKey;
   enabled: boolean;
   limit?: number;
   usage?: number;
-};
+}
 
-export type BillingPortalSession = {
+export interface BillingPortalSession {
   url: string;
-};
+}
 
-export type UpgradeOptions = {
+export interface UpgradeOptions {
   plan: PlanName;
   annual?: boolean;
   referenceId?: string;
   successUrl: string;
   cancelUrl: string;
   seats?: number;
-};
+}
 
-export type CancelOptions = {
+export interface CancelOptions {
   subscriptionId?: string;
   referenceId?: string;
   returnUrl?: string;
-};
+}
 
-export type UsageStats = {
+export interface UsageStats {
   members: {
     current: number;
     limit: number;
@@ -85,4 +85,4 @@ export type UsageStats = {
     limitMB: number;
     percentage: number;
   };
-};
+}

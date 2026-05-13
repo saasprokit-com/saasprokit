@@ -1,13 +1,13 @@
-export type StatItemProps = {
+export interface StatItemProps {
   value: string;
   label: string;
   description: string;
-};
+}
 
-export type StatsSectionProps = {
+export interface StatsSectionProps {
   stats: StatItemProps[];
   className?: string;
-};
+}
 
 export function StatsSection({ stats, className }: StatsSectionProps) {
   return (

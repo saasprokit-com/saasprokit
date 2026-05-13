@@ -12,9 +12,9 @@ import { PAGE_ROUTES } from "@/lib/routes";
 const RESEND_COOLDOWN_SECONDS = 60;
 const COUNTDOWN_INTERVAL_MS = 1000;
 
-type VerifyEmailClientProps = {
+interface VerifyEmailClientProps {
   errors: ActionErrorMessages;
-};
+}
 
 export function VerifyEmailClient({ errors }: VerifyEmailClientProps) {
   const searchParams = useSearchParams();

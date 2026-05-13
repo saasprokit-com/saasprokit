@@ -3,14 +3,14 @@ import type { ReactNode } from "react";
 import { colors } from "../theme/colors";
 import { typography } from "../theme/typography";
 
-type EmailTextProps = {
+interface EmailTextProps {
   /** Text variant */
   variant?: "default" | "small" | "muted";
   /** Text content */
   children: ReactNode;
   /** Custom margin override */
   margin?: string;
-};
+}
 
 /**
  * EmailText - Styled text component

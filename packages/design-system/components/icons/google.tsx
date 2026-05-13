@@ -2,9 +2,9 @@
 
 import { cn } from "@repo/design-system/lib/utils";
 
-type GoogleIconProps = {
+interface GoogleIconProps {
   className?: string;
-};
+}
 
 export function GoogleIcon({ className }: GoogleIconProps) {
   return (

@@ -13,10 +13,10 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { accountRoutes } from "@/lib/routes";
 
-type UpgradePromptProps = {
+interface UpgradePromptProps {
   reason?: string;
   showUpgrade?: boolean;
-};
+}
 
 export function UpgradePrompt({
   reason,

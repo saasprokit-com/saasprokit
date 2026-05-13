@@ -4,17 +4,17 @@ import { cn } from "@repo/design-system/lib/utils";
 import Link from "next/link";
 import type * as React from "react";
 
-export type SimpleFooterLink = {
+export interface SimpleFooterLink {
   label: string;
   href: string;
-};
+}
 
-export type SimpleFooterProps = {
+export interface SimpleFooterProps {
   logo?: React.ReactNode;
   links?: SimpleFooterLink[];
   copyright?: string;
   className?: string;
-};
+}
 
 export function SimpleFooter({
   logo,

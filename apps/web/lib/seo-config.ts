@@ -3,20 +3,20 @@ import { env } from "@/lib/env";
 
 // Site configuration - Update these values for your site
 export const siteConfig: SiteConfig = {
-  name: "Frontier Blog",
+  name: "SaaSProKit",
   description:
-    "Discover insightful articles on technology, development, and innovation. Stay updated with the latest trends and best practices.",
+    "Production-ready SaaS boilerplate with auth, billing, organizations, and everything you need to launch your SaaS.",
   url: env.NEXT_PUBLIC_APP_URL,
   ogImage: "/og-image.png",
   locale: "en_US",
-  twitterHandle: "@frontierblog",
+  twitterHandle: "@saasprokit",
   author: {
-    name: "Frontier Team",
-    url: "https://frontier.blog/about",
+    name: "SaaSProKit",
+    url: "https://github.com/saasprokit-com/saasprokit",
   },
   links: {
-    twitter: "https://twitter.com/frontierblog",
-    github: "https://github.com/frontierblog",
+    twitter: "https://twitter.com/saasprokit",
+    github: "https://github.com/saasprokit-com/saasprokit",
   },
 };
 

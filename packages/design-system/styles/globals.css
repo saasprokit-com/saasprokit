@@ -1,5 +1,9 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./design-config.css";
 @source "../**/*.{ts,tsx}";
 
 @plugin "@tailwindcss/typography";
@@ -43,6 +47,13 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   --font-weight-bold: 700;
+
+  --heading-font: var(--font-geist-mono);
+  --code-keyword: oklch(0.65 0.18 280);
+  --code-string: oklch(0.62 0.14 145);
+  --code-function: oklch(0.62 0.14 225);
+  --code-type: oklch(0.7 0.14 60);
+  --code-comment: var(--muted-foreground);
 }
 
 .dark {
@@ -220,4 +231,43 @@
 }
 .light {
   color-scheme: light;
+}
+
+.shiki-preview {
+  font-family: var(--font-geist-mono);
+  line-height: 1;
+  counter-reset: line;
+  width: max-content;
+  min-width: 100%;
+}
+.shiki-preview pre {
+  margin: 0;
+  padding: 1rem;
+  overflow: visible;
+}
+.shiki-preview code {
+  display: block;
+}
+.shiki-preview .line {
+  display: block;
+  min-height: 1lh;
+}
+.shiki-preview .line::before {
+  counter-increment: line;
+  content: counter(line);
+  display: inline-block;
+  width: 1.5rem;
+  margin-right: 1rem;
+  color: color-mix(in oklch, var(--muted-foreground) 50%, transparent);
+  text-align: right;
+  user-select: none;
+}
+
+.dark .shiki-preview .shiki,
+.dark .shiki-preview .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
 }

@@ -9,9 +9,9 @@ import {
 import { XCircle } from "lucide-react";
 import Link from "next/link";
 
-type Props = {
+interface Props {
   params: Promise<{ locale: string; orgSlug: string }>;
-};
+}
 
 export default async function CheckoutCanceledPage({ params }: Props) {
   const { locale, orgSlug } = await params;

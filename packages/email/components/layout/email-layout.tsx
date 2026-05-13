@@ -5,7 +5,7 @@ import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 import { Footer } from "./footer";
 
-type EmailLayoutProps = {
+interface EmailLayoutProps {
   /** Preview text shown in inbox */
   preview: string;
   /** Email content */
@@ -18,7 +18,7 @@ type EmailLayoutProps = {
   showFooter?: boolean;
   /** Support email for footer */
   supportEmail?: string;
-};
+}
 
 /**
  * EmailLayout - Base layout wrapper for all email templates

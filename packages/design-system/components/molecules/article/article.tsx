@@ -12,34 +12,34 @@ import Link from "next/link";
 // ============================================================================
 
 /** Author fields used by the Article component */
-export type ArticleAuthor = {
+export interface ArticleAuthor {
   id?: string;
   firstName?: string | null;
   lastName?: string | null;
   name?: string | null;
-};
+}
 
 /** Category fields used by the Article component */
-export type ArticleCategory = {
+export interface ArticleCategory {
   id?: number;
   name: string;
   slug: string;
   color?: string | null;
-};
+}
 
 /** Tag fields used by the Article component */
-export type ArticleTag = {
+export interface ArticleTag {
   id: number;
   name: string;
   slug: string;
   color?: string | null;
-};
+}
 
 /** Cover image fields used by the Article component */
-export type ArticleCoverImage = {
+export interface ArticleCoverImage {
   id?: string;
   path: string;
-};
+}
 
 /**
  * Article with relations for display purposes.
@@ -52,7 +52,7 @@ export type ArticleWithRelations = PrismaArticle & {
   tags?: { tag: ArticleTag }[];
 };
 
-export type ArticleProps = {
+export interface ArticleProps {
   /** Article data with relations */
   article: ArticleWithRelations;
 
@@ -78,7 +78,7 @@ export type ArticleProps = {
 
   /** Override className */
   className?: string;
-};
+}
 
 // ============================================================================
 // Utility Functions

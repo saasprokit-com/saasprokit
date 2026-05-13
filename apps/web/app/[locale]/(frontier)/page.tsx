@@ -1,226 +1,207 @@
-import { CTABanner } from "@repo/design-system/components/blocks/cta-banner/cta-banner";
-import { DemoShowcase } from "@repo/design-system/components/blocks/demo-showcase/demo-showcase";
-import { FeaturesGrid } from "@repo/design-system/components/blocks/features-grid/features-grid";
-import { Hero } from "@repo/design-system/components/blocks/hero/hero";
-import { Pricing } from "@repo/design-system/components/blocks/pricing/pricing";
-import { TechStack } from "@repo/design-system/components/blocks/tech-stack/tech-stack";
-import { Footer } from "@repo/design-system/components/molecules/footer/footer";
+import { ConfigureBuild } from "@repo/design-system/components/blocks/configure-build/configure-build";
+import { CtaTerminal } from "@repo/design-system/components/blocks/cta-terminal/cta-terminal";
+import { DepsTable } from "@repo/design-system/components/blocks/deps-table/deps-table";
+import { FeaturesTerminal } from "@repo/design-system/components/blocks/features-terminal/features-terminal";
+import { FooterTerminal } from "@repo/design-system/components/blocks/footer-terminal/footer-terminal";
+import { HeroTerminal } from "@repo/design-system/components/blocks/hero-terminal/hero-terminal";
+import { PricingTerminal } from "@repo/design-system/components/blocks/pricing/pricing-terminal";
+import { SectionHeading } from "@repo/design-system/components/blocks/section-heading/section-heading";
+import { TestimonialsSection } from "@repo/design-system/components/blocks/testimonials/testimonials";
 import { getAllPlans } from "@repo/payment/plans";
-import { MONTHS_PER_YEAR } from "@repo/utils/date";
 import {
-  Building2,
   CreditCard,
-  FileText,
-  Globe,
+  FileCode2,
   Lock,
   Mail,
+  Palette,
   Shield,
-  Users,
-  Zap,
 } from "lucide-react";
 import type { Metadata } from "next";
+import { HeroCodePreview } from "@/components/marketing/hero-code-preview";
+import { APP_VERSION } from "@/lib/version";
 import { siteConfig } from "../../../lib/seo-config";
 
 export const metadata: Metadata = {
   title: {
     absolute: `${siteConfig.name} - Production-Ready SaaS Boilerplate`,
   },
-  description:
-    "Ship your SaaS faster with our production-ready boilerplate. Built with Next.js, Better Auth, and all the features you need to launch.",
+  description: siteConfig.description,
   alternates: {
     canonical: siteConfig.url,
   },
 };
 
-const features = [
-  {
-    icon: Building2,
-    title: "Organization Management",
-    description:
-      "Multi-tenant architecture with organization switching, member invitations, and role-based access.",
-  },
-  {
-    icon: Users,
-    title: "User Management",
-    description:
-      "Complete user lifecycle: registration, profiles, team management, and activity tracking.",
-  },
-  {
-    icon: CreditCard,
-    title: "Payment Integration",
-    description:
-      "Stripe integration with subscriptions, invoices, usage-based billing, and customer portal.",
-  },
-  {
-    icon: Lock,
-    title: "Authentication",
-    description:
-      "Secure auth with email/password, OAuth providers, 2FA, magic links, and session management.",
-  },
-  {
-    icon: Shield,
-    title: "Role-Based Access",
-    description:
-      "Granular permissions with roles, policies, and organization-level access control.",
-  },
-  {
-    icon: Mail,
-    title: "Email System",
-    description:
-      "Transactional emails with React Email templates, automated workflows, and delivery tracking.",
-  },
-  {
-    icon: FileText,
-    title: "File Storage",
-    description:
-      "File uploads with cloud storage integration, image optimization, and access permissions.",
-  },
-  {
-    icon: Globe,
-    title: "Internationalization",
-    description:
-      "Multi-language support with i18n, locale detection, and content translation.",
-  },
-  {
-    icon: Zap,
-    title: "API & Webhooks",
-    description:
-      "RESTful API with OpenAPI docs, rate limiting, API keys, and webhook integrations.",
-  },
-];
-
-const demoItems = [
-  {
-    icon: Users,
-    label: "Users",
-    value: "Auth",
-    description: "Sign up, login, OAuth",
-  },
-  {
-    icon: Building2,
-    label: "Organizations",
-    value: "Multi-tenant",
-    description: "Teams & workspaces",
-  },
-  {
-    icon: Shield,
-    label: "Permissions",
-    value: "RBAC",
-    description: "Roles & access",
-  },
-  {
-    icon: CreditCard,
-    label: "Billing",
-    value: "Stripe",
-    description: "Subscriptions",
-  },
-];
-
-const PERCENTAGE_MULTIPLIER = 100;
-
-const PRICING_CTA: Record<
-  string,
-  { cta: string; ctaHref: string; variant?: "outline"; popular?: boolean }
-> = {
-  free: { cta: "Get Started", ctaHref: "/auth/sign-up", variant: "outline" },
-  pro: {
-    cta: "Upgrade to Pro",
-    ctaHref: "/auth/sign-up?plan=pro",
-    popular: true,
-  },
-  enterprise: {
-    cta: "Contact Sales",
-    ctaHref: "/auth/sign-up?plan=enterprise",
-    variant: "outline",
-  },
-};
-
-const pricingTiers = getAllPlans().map((plan) => ({
-  name: plan.displayName,
-  monthlyPrice: plan.monthlyPrice,
-  annualPrice:
-    plan.yearlyPrice > 0
-      ? Math.round(
-          (plan.yearlyPrice / MONTHS_PER_YEAR) * PERCENTAGE_MULTIPLIER
-        ) / PERCENTAGE_MULTIPLIER
-      : 0,
-  description: plan.description,
-  features: plan.features,
-  ...PRICING_CTA[plan.name],
-}));
-
-const techStack = [
-  { name: "Next.js 16", description: "React framework" },
-  { name: "Better Auth", description: "Authentication" },
-  { name: "Prisma", description: "Database ORM" },
-  { name: "PostgreSQL", description: "Database" },
-  { name: "Tailwind CSS", description: "Styling" },
-  { name: "shadcn/ui", description: "Components" },
-  { name: "Stripe", description: "Payments" },
-];
-
-const benefits = [
-  "Production-ready code",
-  "TypeScript end-to-end",
-  "Monorepo architecture",
-  "CI/CD configured",
-  "Testing setup",
-  "Documentation included",
-];
-
 export default function HomePage() {
+  const plans = getAllPlans();
+
   return (
     <div className="min-h-screen">
-      <main>
-        <Hero
-          badge="Ready to Ship"
-          benefits={benefits}
-          highlightedText="Ships Fast"
-          primaryCta={{ label: "Get Started Free", href: "/auth/sign-up" }}
-          secondaryCta={{ label: "View Demo", href: "/auth/sign-up" }}
-          subtitle="Stop building the same features from scratch. Start with a production-ready foundation and focus on what makes your product unique."
-          title="The SaaS Boilerplate That"
-        />
+      <HeroTerminal
+        bullets={[
+          "// MIT for your app code",
+          "// private repo mirror",
+          "// deploy anywhere",
+        ]}
+        codePreview={<HeroCodePreview className="flex-1 border-0" />}
+        description="Full-stack SaaS boilerplate. Next.js · React · better-auth. Auth, billing, teams, email, jobs - every wire already run."
+        headline="ship saas in a weekend"
+        primaryCta={{ label: "clone & ship", href: "/auth/sign-up" }}
+        secondaryCta={{ label: "source", href: "https://github.com" }}
+        sublines={["_not a weekend", "\u00A0\u00A0of setup."]}
+        version={APP_VERSION}
+      />
 
-        <DemoShowcase
-          badge="Live Demo"
-          cta={{ label: "Explore Dashboard", href: "/auth/sign-up" }}
-          items={demoItems}
-          subtitle="Explore a fully functional demo with all the foundational features. Experience authentication, organization management, and more."
-          title="See It In Action"
-        />
+      <FeaturesTerminal
+        features={[
+          {
+            num: "01",
+            icon: Lock,
+            title: "Auth, from day one",
+            description:
+              "better-auth with email/password, magic links, OAuth, 2FA, org & team tenancy, RBAC. No rolling your own.",
+          },
+          {
+            num: "02",
+            icon: CreditCard,
+            title: "Billing wired up",
+            description:
+              "Stripe subscriptions, metered usage, customer portal, webhooks verified. Plans in one config file.",
+          },
+          {
+            num: "03",
+            icon: FileCode2,
+            title: "Typed end to end",
+            description:
+              "Next.js App Router, Prisma ORM, Postgres, Server Actions. Types flow from schema to UI with zero glue.",
+          },
+          {
+            num: "04",
+            icon: Mail,
+            title: "Transactional mail",
+            description:
+              "React Email templates, Resend adapter, preview server. Swap provider without touching send sites.",
+          },
+          {
+            num: "05",
+            icon: Shield,
+            title: "Admin dashboard",
+            description:
+              "User & org management, impersonation, plan overrides, audit log. Gate routes by role with a single check.",
+          },
+          {
+            num: "06",
+            icon: Palette,
+            title: "UI that ships",
+            description:
+              "shadcn-style primitives, dark mode, keyboard nav, a11y audited. Drop in, rename, adjust tokens.",
+          },
+        ]}
+        heading="the boring parts, already done."
+      />
 
-        <FeaturesGrid
-          badge="Features"
-          features={features}
-          subtitle="A comprehensive set of features that every SaaS needs, built with best practices and ready for production."
-          title="Everything You Need to Ship"
-        />
+      {/* Dependencies */}
+      <section className="border-border border-b px-6 py-20 sm:px-10">
+        <div className="mx-auto max-w-7xl">
+          <SectionHeading>every dep, accounted for.</SectionHeading>
+          <DepsTable />
+        </div>
+      </section>
 
-        <Pricing
-          badge="Pricing"
-          showBillingToggle
-          subtitle="Choose the plan that fits your needs. Cancel anytime."
-          tiers={pricingTiers}
-          title="Simple, Transparent Pricing"
-        />
+      {/* Testimonials */}
+      <section className="border-border border-b px-6 py-20 sm:px-10">
+        <div className="mx-auto max-w-7xl">
+          <SectionHeading>teams shipping with SAAS.</SectionHeading>
+          <TestimonialsSection
+            testimonials={[
+              {
+                quote:
+                  "Shipped our MVP in four days. Auth, billing, and teams were already done — we just wrote the product.",
+                author: "Alice Tran",
+                role: "Founder, Ledgerloop",
+                initials: "AT",
+              },
+              {
+                quote:
+                  "I had stopped starting side projects because setup was miserable. Now I start one every weekend.",
+                author: "Marco Devlin",
+                role: "Staff Eng, ex-Stripe",
+                initials: "MD",
+              },
+              {
+                quote:
+                  "The auth and billing code is the first thing I read in any boilerplate. This one I actually trusted.",
+                author: "Priya Raman",
+                role: "CTO, Slatework",
+                initials: "PR",
+              },
+            ]}
+            title=""
+          />
+        </div>
+      </section>
 
-        <TechStack
-          badge="Tech Stack"
-          subtitle="Carefully selected technologies that work seamlessly together for the best developer experience."
-          technologies={techStack}
-          title="Built with Modern Technologies"
-        />
+      <ConfigureBuild />
 
-        <CTABanner
-          primaryCta={{ label: "Start Building Now", href: "/auth/sign-up" }}
-          secondaryCta={{ label: "View Demo", href: "/auth/sign-up" }}
-          subtitle="Get started today and ship your product faster. No more building authentication, payments, or user management from scratch."
-          title="Ready to Build Your SaaS?"
-        />
-      </main>
+      <PricingTerminal
+        heading="buy the source once."
+        plans={plans.map((plan) => ({
+          name: plan.name,
+          description: plan.description,
+          monthlyPrice: plan.monthlyPrice,
+          features: plan.features,
+          badge: plan.badge,
+          href: `/auth/sign-up${plan.name === "free" ? "" : `?plan=${plan.name}`}`,
+        }))}
+      />
 
-      <Footer />
+      <CtaTerminal
+        headline="you — shipping by Sunday."
+        subtitle="# fork the repo. ship by Sunday."
+      />
+
+      <FooterTerminal
+        brand="SAAS"
+        columns={[
+          {
+            title: "/product",
+            links: [
+              { label: "features", href: "#features" },
+              { label: "stack", href: "#deps" },
+              { label: "pricing", href: "#pricing" },
+              { label: "changelog", href: "#" },
+            ],
+          },
+          {
+            title: "/docs",
+            links: [
+              { label: "quickstart", href: "/docs" },
+              { label: "auth", href: "/docs" },
+              { label: "billing", href: "/docs" },
+              { label: "email", href: "/docs" },
+            ],
+          },
+          {
+            title: "/resources",
+            links: [
+              { label: "blog", href: "#" },
+              { label: "templates", href: "#" },
+              { label: "discord", href: "#" },
+              { label: "github", href: "#" },
+            ],
+          },
+          {
+            title: "/legal",
+            links: [
+              { label: "license", href: "#" },
+              { label: "privacy", href: "#" },
+              { label: "terms", href: "#" },
+              { label: "security", href: "#" },
+            ],
+          },
+        ]}
+        copyright={`© ${new Date().getFullYear()} SAAS Labs · MIT`}
+        taglines={["/* a SaaS boilerplate */", "/* for people who ship */"]}
+      />
     </div>
   );
 }

@@ -5,24 +5,24 @@ import { cn } from "@repo/design-system/lib/utils";
 import Link from "next/link";
 import type * as React from "react";
 
-export type FooterLink = {
+export interface FooterLink {
   label: string;
   href: string;
   external?: boolean;
-};
+}
 
-export type FooterSection = {
+export interface FooterSection {
   title: string;
   links: FooterLink[];
-};
+}
 
-export type SocialLink = {
+export interface SocialLink {
   label: string;
   href: string;
   icon: React.ReactNode;
-};
+}
 
-export type FooterProps = {
+export interface FooterProps {
   logo?: React.ReactNode;
   description?: string;
   sections?: FooterSection[];
@@ -30,7 +30,7 @@ export type FooterProps = {
   copyright?: string;
   bottomLinks?: FooterLink[];
   className?: string;
-};
+}
 
 export function Footer({
   logo,

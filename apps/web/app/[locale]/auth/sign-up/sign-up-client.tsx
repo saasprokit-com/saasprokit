@@ -9,9 +9,9 @@ import type { SocialProvider } from "@repo/design-system/components/molecules/au
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useRouter } from "next/navigation";
 
-type SignUpClientProps = {
+interface SignUpClientProps {
   errors: ActionErrorMessages;
-};
+}
 
 export function SignUpClient({ errors }: SignUpClientProps) {
   const router = useRouter();

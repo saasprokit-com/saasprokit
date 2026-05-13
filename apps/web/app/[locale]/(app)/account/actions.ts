@@ -2,11 +2,11 @@
 
 import { database } from "@repo/database";
 import { createRequestLogger } from "@repo/logger/server";
-import { profileSchema } from "./schemas";
 import { verifySession } from "@/lib/auth/action-auth";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
 import { revalidateAccountPage } from "@/lib/infrastructure/revalidation";
+import { profileSchema } from "./schemas";
 
 /**
  * Update user profile (name and avatar)

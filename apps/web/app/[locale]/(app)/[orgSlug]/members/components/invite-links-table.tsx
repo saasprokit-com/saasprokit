@@ -22,7 +22,7 @@ import {
 } from "./invite-links-columns";
 import { InviteLinksToolbar } from "./invite-links-toolbar";
 
-type InviteLinksTableProps = {
+interface InviteLinksTableProps {
   inviteLinksPromise: Promise<{
     inviteLinks: InviteLink[];
     totalCount: number;
@@ -32,7 +32,7 @@ type InviteLinksTableProps = {
   organizationId: string;
   baseUrl: string;
   canManage: boolean;
-};
+}
 
 const filterFields = [
   { id: "token", urlKey: "search", type: "string" as const },

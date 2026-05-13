@@ -10,13 +10,13 @@ const logger = createRequestLogger({
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_BACKOFF_MS = 60_000; // 1 minute between retries
 
-export type WebhookEventPayload = {
+export interface WebhookEventPayload {
   id: string;
   type: string;
   created: number;
   data: Record<string, unknown>;
   [key: string]: unknown;
-};
+}
 
 /**
  * CRITICAL: Check if webhook event has already been processed

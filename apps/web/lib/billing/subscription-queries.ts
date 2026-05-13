@@ -10,22 +10,22 @@ import "server-only";
 import { ORG_ROLES } from "@repo/auth/permissions";
 import { database } from "@repo/database";
 import { calculateUsageStats } from "@repo/payment/helpers";
-import { ACTIVE_STATUSES, PLAN_NAMES, type PlanName } from "@repo/utils/payment";
 import { getPlanLimits } from "@repo/payment/plans";
 import type { Subscription } from "@repo/payment/types";
 import { SubscriptionSchema } from "@repo/payment/types";
-import { ATTACHABLE_TYPE } from "@repo/utils/storage";
 import { INVITATION_STATUS } from "@repo/utils/organization";
 import {
+  ACTIVE_STATUSES,
   checkOrgCreationEligibility,
   type OrgCreationCheck,
+  PLAN_NAMES,
+  type PlanName,
 } from "@repo/utils/payment";
+import { ATTACHABLE_TYPE } from "@repo/utils/storage";
 import { env } from "@/lib/env";
 
 const BYTES_PER_KILOBYTE = 1024;
 const BYTES_PER_MEGABYTE = BYTES_PER_KILOBYTE * BYTES_PER_KILOBYTE;
-
-
 
 /**
  * Get subscription for an organization by org ID
@@ -112,9 +112,7 @@ export async function getOrgStorageUsage(
  * Get count of pending invitations for an organization.
  * Pending invitations reserve seats toward the member limit.
  */
-function getOrgPendingInvitationCount(
-  organizationId: string
-): Promise<number> {
+function getOrgPendingInvitationCount(organizationId: string): Promise<number> {
   return database.invitation.count({
     where: { organizationId, status: INVITATION_STATUS.PENDING },
   });

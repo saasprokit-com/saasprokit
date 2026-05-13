@@ -290,3 +290,5 @@ packages/database/generated
 logs/security/
 
 .docs/
+.gstack/
+/docs/

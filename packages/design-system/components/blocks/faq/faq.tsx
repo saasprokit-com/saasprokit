@@ -8,18 +8,18 @@ import {
 } from "../../ui/accordion";
 import { Badge } from "../../ui/badge";
 
-export type FAQItemProps = {
+export interface FAQItemProps {
   question: string;
   answer: string;
-};
+}
 
-export type FAQSectionProps = {
+export interface FAQSectionProps {
   badge?: string;
   title: string;
   subtitle?: string;
   items: FAQItemProps[];
   className?: string;
-};
+}
 
 export function FAQSection({
   badge,

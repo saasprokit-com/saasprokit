@@ -16,21 +16,25 @@ import {
 } from "@repo/design-system/components/ui/alert-dialog";
 import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { type BillingInterval, PLAN_DISPLAY_NAMES, type PlanName } from "@repo/utils/payment";
+import {
+  type BillingInterval,
+  PLAN_DISPLAY_NAMES,
+  type PlanName,
+} from "@repo/utils/payment";
 import { AlertTriangle, ArrowDown, Loader2 } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { ActionResult } from "@/lib/auth/auth";
 import { type ChangePlanResult, changePlanAction } from "../actions";
 
-type DowngradeButtonProps = {
+interface DowngradeButtonProps {
   planName: PlanName;
   currentPlan: PlanName;
   organizationId: string;
   billingInterval: BillingInterval;
   errors: ActionErrorMessages;
   onSuccess?: (action: "cancel" | "changed") => void;
-};
+}
 
 export function DowngradeButton({
   planName,

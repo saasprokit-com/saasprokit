@@ -1,13 +1,13 @@
-export type SocialProofItemProps = {
+export interface SocialProofItemProps {
   name: string;
   description: string;
-};
+}
 
-export type SocialProofBarProps = {
+export interface SocialProofBarProps {
   label: string;
   items: SocialProofItemProps[];
   className?: string;
-};
+}
 
 export function SocialProofBar({
   label,

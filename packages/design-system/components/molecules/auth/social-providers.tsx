@@ -8,13 +8,13 @@ import type * as React from "react";
 
 export type SocialProvider = "google" | "github";
 
-export type SocialProvidersProps = {
+export interface SocialProvidersProps {
   providers: SocialProvider[];
   onProviderClick: (provider: SocialProvider) => void;
   isLoading?: boolean;
   disabled?: boolean;
   className?: string;
-};
+}
 
 const providerConfig: Record<
   SocialProvider,

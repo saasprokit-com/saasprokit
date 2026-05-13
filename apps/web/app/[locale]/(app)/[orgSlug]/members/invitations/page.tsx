@@ -7,10 +7,10 @@ import { getMemberPermissions } from "../utils";
 import { getInvitations } from "./queries";
 import { invitationsSearchParamsCache } from "./validations";
 
-type InvitationsPageProps = {
+interface InvitationsPageProps {
   params: Promise<{ locale: string; orgSlug: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
+}
 
 export default async function InvitationsPage({
   params,

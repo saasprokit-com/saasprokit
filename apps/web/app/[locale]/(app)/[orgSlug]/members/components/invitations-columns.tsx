@@ -25,11 +25,11 @@ export const invitationStatusFilterOptions = [
   { label: "Rejected", value: INVITATION_STATUS.REJECTED, icon: Ban },
 ];
 
-type GetInvitationColumnsParams = {
+interface GetInvitationColumnsParams {
   errors: ActionErrorMessages;
   organizationId: string;
   canManage: boolean;
-};
+}
 
 export function getInvitationColumns({
   errors,

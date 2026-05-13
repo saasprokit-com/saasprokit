@@ -2,18 +2,18 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../../ui/button";
 
-export type CTABannerCtaProps = {
+export interface CTABannerCtaProps {
   label: string;
   href: string;
-};
+}
 
-export type CTABannerProps = {
+export interface CTABannerProps {
   title: string;
   subtitle?: string;
   primaryCta?: CTABannerCtaProps;
   secondaryCta?: CTABannerCtaProps;
   className?: string;
-};
+}
 
 export function CTABanner({
   title,

@@ -2,7 +2,7 @@ export type StorageProviderType = "local" | "s3";
 
 export type FileVisibility = "public" | "private";
 
-export type UploadOptions = {
+export interface UploadOptions {
   filename: string;
   buffer: Buffer;
   mimeType: string;
@@ -12,9 +12,9 @@ export type UploadOptions = {
   attachableId?: string;
   uploadedById?: string;
   metadata?: Record<string, unknown>;
-};
+}
 
-export type UploadResult = {
+export interface UploadResult {
   storagePath: string;
   publicUrl: string | null;
   filename: string;
@@ -23,23 +23,23 @@ export type UploadResult = {
   provider: StorageProviderType;
   bucket: string | null;
   visibility: FileVisibility;
-};
+}
 
-export type DeleteOptions = {
+export interface DeleteOptions {
   path: string;
   bucket?: string;
-};
+}
 
-export type GetUrlOptions = {
+export interface GetUrlOptions {
   path: string;
   bucket?: string;
   expiresIn?: number;
-};
+}
 
-export type StorageProvider = {
+export interface StorageProvider {
   readonly type: StorageProviderType;
   upload(options: UploadOptions): Promise<UploadResult>;
   delete(options: DeleteOptions): Promise<void>;
   getUrl(options: GetUrlOptions): Promise<string>;
   exists(path: string): Promise<boolean>;
-};
+}

@@ -3,10 +3,10 @@ import { ResetPasswordClient } from "./reset-password-client";
 
 export const dynamic = "force-dynamic";
 
-type PageProps = {
+interface PageProps {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ token?: string }>;
-};
+}
 
 export default async function ResetPasswordPage({
   params,

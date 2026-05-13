@@ -3,17 +3,17 @@ import Link from "next/link";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 
-export type HeroCtaProps = {
+export interface HeroCtaProps {
   label: string;
   href: string;
-};
+}
 
-export type HeroBenefitProps = {
+export interface HeroBenefitProps {
   text: string;
   icon?: React.ReactNode;
-};
+}
 
-export type HeroProps = {
+export interface HeroProps {
   badge?: string;
   title: string;
   highlightedText?: string;
@@ -24,7 +24,7 @@ export type HeroProps = {
   showGradientBackground?: boolean;
   className?: string;
   id?: string;
-};
+}
 
 export function Hero({
   badge,
@@ -113,8 +113,8 @@ export function Hero({
       </div>
       {/* Background decoration */}
       {showGradientBackground && (
-        <div className="-z-10 absolute inset-0 overflow-hidden">
-          <div className="-top-1/2 -translate-x-1/2 absolute left-1/2 h-[800px] w-[800px] rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute -top-1/2 left-1/2 h-[800px] w-[800px] -translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
         </div>
       )}
     </section>

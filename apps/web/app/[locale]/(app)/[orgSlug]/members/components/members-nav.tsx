@@ -7,20 +7,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { orgRoutes } from "@/lib/routes";
 
-type MembersNavProps = {
+interface MembersNavProps {
   orgSlug: string;
   memberCount: number;
   pendingInvitationCount: number;
   activeInviteLinkCount: number;
-};
+}
 
-type NavItem = {
+interface NavItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   count: number;
   showZeroCount: boolean;
-};
+}
 
 export function MembersNav({
   orgSlug,

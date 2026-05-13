@@ -24,14 +24,14 @@ import {
   revalidateOrgSettingsAction,
 } from "../actions";
 
-type LogoUploadProps = {
+interface LogoUploadProps {
   organizationId: string;
   organizationName: string;
   orgSlug: string;
   currentLogo: string | null;
   canEdit: boolean;
   errors: ActionErrorMessages;
-};
+}
 
 // File size constants
 const BYTES_PER_KILOBYTE = 1024;

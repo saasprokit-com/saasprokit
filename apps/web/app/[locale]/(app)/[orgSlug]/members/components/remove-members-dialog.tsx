@@ -19,12 +19,12 @@ import { toast } from "sonner";
 import { removeMembersAction } from "../actions";
 import type { Member } from "./columns";
 
-type RemoveMembersDialogProps = {
+interface RemoveMembersDialogProps {
   errors: ActionErrorMessages;
   organizationId: string;
   selectedMembers: Member[];
   onSuccess: () => void;
-};
+}
 
 export function RemoveMembersDialog({
   errors,

@@ -31,10 +31,10 @@ const TRAILING_SLASH_REGEX = /\/$/;
 /**
  * Local storage configuration type
  */
-type LocalConfig = {
+interface LocalConfig {
   basePath: string;
   baseUrl: string;
-};
+}
 
 const env = keys();
 

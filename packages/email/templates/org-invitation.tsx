@@ -11,7 +11,7 @@ import {
   Text,
 } from "@react-email/components";
 
-type OrgInvitationProps = {
+interface OrgInvitationProps {
   inviteeEmail?: string;
   inviterName?: string;
   organizationName?: string;
@@ -19,7 +19,7 @@ type OrgInvitationProps = {
   inviteUrl?: string;
   expiresAt?: string;
   message?: string;
-};
+}
 
 export default function OrgInvitation({
   inviteeEmail = "user@example.com",

@@ -1,9 +1,9 @@
 import { getDictionary } from "@repo/internationalization";
 import { SignUpClient } from "./sign-up-client";
 
-type SignUpPageProps = {
+interface SignUpPageProps {
   params: Promise<{ locale: string }>;
-};
+}
 
 export default async function SignUpPage({ params }: SignUpPageProps) {
   const { locale } = await params;

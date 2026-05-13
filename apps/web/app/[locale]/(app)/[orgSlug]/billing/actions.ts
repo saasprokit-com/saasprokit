@@ -5,10 +5,10 @@ import { createRequestLogger } from "@repo/logger/server";
 import { guardDowngrade } from "@repo/payment/guards";
 import { comparePlans } from "@repo/payment/plans";
 import {
-  type PlanName,
-  type StripePriceIds,
   getStripePriceMap,
   PLAN_NAMES,
+  type PlanName,
+  type StripePriceIds,
   type StripePriceKey,
 } from "@repo/utils/payment";
 import { redirect } from "next/navigation";
@@ -244,10 +244,10 @@ export async function openBillingPortalAction(
 // Change Plan (Downgrade)
 // =============================================================================
 
-export type ChangePlanResult = {
+export interface ChangePlanResult {
   action: "cancel" | "changed";
   blockReason?: string;
-};
+}
 
 export async function changePlanAction(
   input: ChangePlanRequest,

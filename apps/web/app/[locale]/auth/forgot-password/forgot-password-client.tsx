@@ -10,9 +10,9 @@ import { useState } from "react";
 import { PAGE_ROUTES } from "@/lib/routes";
 import { logResetRequestAction } from "./actions";
 
-type ForgotPasswordClientProps = {
+interface ForgotPasswordClientProps {
   errors: ActionErrorMessages;
-};
+}
 
 export function ForgotPasswordClient({ errors }: ForgotPasswordClientProps) {
   const [success, setSuccess] = useState(false);

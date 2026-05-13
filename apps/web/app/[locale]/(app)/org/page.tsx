@@ -2,9 +2,9 @@ import { redirect } from "next/navigation";
 import { PAGE_ROUTES } from "@/lib/routes";
 import { getDefaultOrganization } from "@/servers/organization/queries";
 
-type OrgRedirectPageProps = {
+interface OrgRedirectPageProps {
   params: Promise<{ locale: string }>;
-};
+}
 
 /**
  * Post-auth trampoline — redirects to the user's default workspace.

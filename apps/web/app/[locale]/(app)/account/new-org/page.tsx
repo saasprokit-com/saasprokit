@@ -12,9 +12,9 @@ export const metadata = {
   description: "Create a new workspace for your team",
 };
 
-type NewOrgPageProps = {
+interface NewOrgPageProps {
   params: Promise<{ locale: string }>;
-};
+}
 
 export default async function NewOrgPage({ params }: NewOrgPageProps) {
   const { locale } = await params;

@@ -16,14 +16,14 @@ export const BILLING_INTERVALS = {
 export type BillingInterval =
   (typeof BILLING_INTERVALS)[keyof typeof BILLING_INTERVALS];
 
-export type PlanLimits = {
+export interface PlanLimits {
   maxMembers: number;
   maxStorageMB: number;
   prioritySupport: boolean;
   advancedAnalytics: boolean;
-};
+}
 
-export type PlanConfig = {
+export interface PlanConfig {
   name: PlanName;
   displayName: string;
   description: string;
@@ -33,7 +33,7 @@ export type PlanConfig = {
   features: string[];
   highlighted?: boolean;
   badge?: string;
-};
+}
 
 export const SUBSCRIPTION_STATUS = {
   INCOMPLETE: "incomplete",
@@ -48,9 +48,7 @@ export const SUBSCRIPTION_STATUS = {
 export type SubscriptionStatus =
   (typeof SUBSCRIPTION_STATUS)[keyof typeof SUBSCRIPTION_STATUS];
 
-export const ACTIVE_STATUSES = [
-  SUBSCRIPTION_STATUS.ACTIVE,
-] as const;
+export const ACTIVE_STATUSES = [SUBSCRIPTION_STATUS.ACTIVE] as const;
 
 export const UNLIMITED = -1;
 
@@ -165,12 +163,12 @@ export const PLANS: Record<PlanName, PlanConfig> = {
   },
 };
 
-export type StripePriceIds = {
+export interface StripePriceIds {
   proMonthly?: string;
   proAnnual?: string;
   enterpriseMonthly?: string;
   enterpriseAnnual?: string;
-};
+}
 
 export const getStripePriceMap = (prices: StripePriceIds) => ({
   pro_monthly: prices.proMonthly ?? "",
@@ -201,11 +199,11 @@ export function getPlanNameFromPriceId(
 
 export type OrgCreationDenialCode = "max_reached" | "upgrade_required";
 
-export type OrgCreationCheck = {
+export interface OrgCreationCheck {
   allowed: boolean;
   reason?: string;
   code?: OrgCreationDenialCode;
-};
+}
 
 /**
  * Pure business-logic check for org creation eligibility.

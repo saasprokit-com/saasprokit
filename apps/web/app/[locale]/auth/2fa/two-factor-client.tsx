@@ -9,9 +9,9 @@ import type { ActionErrorMessages } from "@repo/internationalization";
 import { useRouter } from "next/navigation";
 import { PAGE_ROUTES } from "@/lib/routes";
 
-type TwoFactorClientProps = {
+interface TwoFactorClientProps {
   errors: ActionErrorMessages;
-};
+}
 
 export function TwoFactorClient({ errors }: TwoFactorClientProps) {
   const router = useRouter();

@@ -20,13 +20,13 @@ import {
 } from "@repo/design-system/components/ui/form";
 import { Input } from "@repo/design-system/components/ui/input";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { type ProfileFormValues, profileSchema } from "../schemas";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateProfileAction } from "../actions";
+import { type ProfileFormValues, profileSchema } from "../schemas";
 
-type ProfileFormProps = {
+interface ProfileFormProps {
   errors: ActionErrorMessages;
   user: {
     id: string;
@@ -35,7 +35,7 @@ type ProfileFormProps = {
     emailVerified: boolean;
     image?: string | null;
   };
-};
+}
 
 export function ProfileForm({ errors, user }: ProfileFormProps) {
   const form = useForm<ProfileFormValues>({

@@ -37,10 +37,10 @@ import {
 
 const TWO_FACTOR_CODE_LENGTH = 6;
 
-type TwoFactorManagerProps = {
+interface TwoFactorManagerProps {
   enabled: boolean;
   errors: ActionErrorMessages;
-};
+}
 
 type SetupStep = "password" | "verify" | "success";
 

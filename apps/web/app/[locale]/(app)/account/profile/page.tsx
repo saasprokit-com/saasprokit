@@ -10,9 +10,9 @@ export const metadata = {
   description: "Update your profile information",
 };
 
-type ProfilePageProps = {
+interface ProfilePageProps {
   params: Promise<{ locale: string }>;
-};
+}
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const { locale } = await params;

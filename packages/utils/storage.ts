@@ -6,4 +6,3 @@ export const ATTACHABLE_TYPE = {
 
 export type AttachableType =
   (typeof ATTACHABLE_TYPE)[keyof typeof ATTACHABLE_TYPE];
-

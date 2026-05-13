@@ -43,7 +43,7 @@ import { deleteOrganizationAction, updateOrganizationAction } from "../actions";
 import { type UpdateOrgFormValues, updateOrgSchema } from "../schemas";
 import { LogoUpload } from "./logo-upload";
 
-type OrgSettingsFormProps = {
+interface OrgSettingsFormProps {
   organization: {
     id: string;
     name: string;
@@ -54,7 +54,7 @@ type OrgSettingsFormProps = {
   canEdit: boolean;
   errors: ActionErrorMessages;
   userRole: OrgRoleName;
-};
+}
 
 export function OrgSettingsForm({
   organization,

@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { ErrorContent } from "@/components/error-content";
 
-type ErrorPageProps = {
+interface ErrorPageProps {
   error: Error & { digest?: string };
   reset: () => void;
-};
+}
 
 export default function ErrorPage({ error, reset }: ErrorPageProps) {
   const router = useRouter();

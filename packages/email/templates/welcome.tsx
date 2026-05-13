@@ -6,10 +6,10 @@ import {
   Heading,
 } from "../components";
 
-type WelcomeEmailProps = {
+interface WelcomeEmailProps {
   name?: string;
   dashboardUrl?: string;
-};
+}
 
 export default function WelcomeEmail({
   name = "there",

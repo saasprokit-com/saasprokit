@@ -22,9 +22,9 @@ import { getServerSession } from "@/lib/auth/auth";
 import { getInviteLinkDetails } from "../queries";
 import { JoinButton } from "./join-button";
 
-type InviteLinkPageProps = {
+interface InviteLinkPageProps {
   params: Promise<{ locale: string; token: string }>;
-};
+}
 
 export default async function InviteLinkPage({ params }: InviteLinkPageProps) {
   const { locale, token } = await params;
@@ -151,9 +151,9 @@ export default async function InviteLinkPage({ params }: InviteLinkPageProps) {
 
   // Calculate remaining uses
   const remainingUses =
-    inviteLink.maxUses !== null
-      ? inviteLink.maxUses - inviteLink.usedCount
-      : null;
+    inviteLink.maxUses === null
+      ? null
+      : inviteLink.maxUses - inviteLink.usedCount;
 
   // Show the invite link details
   return (
@@ -213,7 +213,7 @@ export default async function InviteLinkPage({ params }: InviteLinkPageProps) {
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   <span>
-                    {remainingUses} spot{remainingUses !== 1 ? "s" : ""}{" "}
+                    {remainingUses} spot{remainingUses === 1 ? "" : "s"}{" "}
                     remaining
                   </span>
                 </div>

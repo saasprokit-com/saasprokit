@@ -18,7 +18,7 @@ import type { Member } from "./columns";
 import { InviteMemberDialog } from "./invite-member-dialog";
 import { RemoveMembersDialog } from "./remove-members-dialog";
 
-type MembersToolbarProps = {
+interface MembersToolbarProps {
   table: Table<Member>;
   errors: ActionErrorMessages;
   organizationId: string;
@@ -33,7 +33,7 @@ type MembersToolbarProps = {
       icon?: ComponentType<{ className?: string }>;
     }[];
   }[];
-};
+}
 
 export function MembersToolbar({
   table,
