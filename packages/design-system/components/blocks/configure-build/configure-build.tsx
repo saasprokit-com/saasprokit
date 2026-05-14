@@ -10,9 +10,7 @@ export function ConfigureBuild() {
       id="customize"
     >
       <div className="mx-auto max-w-7xl">
-        <SectionHeading subtitle="preview updates live · applies to this page">
-          Configure your styles based on your flavor
-        </SectionHeading>
+        <SectionHeading>Configure your styles</SectionHeading>
 
         <StyleConfigurator className="border border-border bg-card p-8" />
       </div>

@@ -257,9 +257,6 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,node,nextjs,vercel,turbo,storybookjs,react
 
-# Sentry Config File
-.env.sentry-build-plugin
-
 # AI Rules
 .cursorrules
 .github/copilot-instructions.md
@@ -269,9 +266,6 @@ packages/database/generated
 
 # react.email
 .react-email
-
-# Sentry
-.sentryclirc
 
 # Documentation
 .contentlayer
