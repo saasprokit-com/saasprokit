@@ -20,7 +20,7 @@ export function Cta({ pretext, headline, subtitle }: CtaProps) {
         <div className="mb-4 font-mono text-background/50 text-xs">
           {pretext}
         </div>
-        <h2 className="font-medium text-[clamp(32px,6vw,72px)] tracking-[-0.04em]">
+        <h2 className="mx-auto max-w-4xl font-bold text-4xl leading-tight tracking-tight sm:text-5xl lg:text-6xl">
           {headline}
         </h2>
         {subtitle && (

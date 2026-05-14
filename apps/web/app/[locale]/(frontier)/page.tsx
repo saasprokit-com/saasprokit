@@ -1,5 +1,5 @@
 import { ConfigureBuild } from "@repo/design-system/components/blocks/configure-build/configure-build";
-import { Cta } from "@repo/design-system/components/blocks/cta/cta";
+import { CTABanner } from "@repo/design-system/components/blocks/cta-banner/cta-banner";
 import { FeaturesTerminal } from "@repo/design-system/components/blocks/features-terminal/features-terminal";
 import { Hero } from "@repo/design-system/components/blocks/hero/hero";
 import { Pricing } from "@repo/design-system/components/blocks/pricing/pricing";
@@ -34,7 +34,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       <Hero
-        badge={APP_VERSION}
+        badge={`${APP_VERSION} - ready for ship`}
         benefits={[
           "Auth & 2FA",
           "Stripe billing",
@@ -114,7 +114,12 @@ export default function HomePage() {
         title="Your price here"
       />
 
-      <Cta headline="Build your own today" pretext="" subtitle="" />
+      <CTABanner
+        primaryCta={{ label: "Clone & ship", href: SAAS_PRO_KIT }}
+        // secondaryCta={{ label: "View pricing", href: "#pricing" }}
+        subtitle="Get the full kit and ship in a week, not a month."
+        title="Ready to ship your product?"
+      />
     </div>
   );
 }

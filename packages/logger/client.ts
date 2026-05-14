@@ -42,7 +42,6 @@ function formatLogEntry(
 function log(level: LogLevel, message: string, data?: LogData) {
   const entry = formatLogEntry(level, message, data);
 
-  // Always include the entry as structured object for tools like Sentry (if added later)
   // biome-ignore lint/suspicious/noConsole: Intentional logging via console
   const consoleMethod = console[
     level as keyof typeof console
