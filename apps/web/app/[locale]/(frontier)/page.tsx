@@ -26,6 +26,8 @@ export const metadata: Metadata = {
   },
 };
 
+const SAAS_PRO_KIT = "https://saasprokit.com";
+
 export default function HomePage() {
   const plans = getAllPlans();
 
@@ -34,15 +36,16 @@ export default function HomePage() {
       <Hero
         badge={APP_VERSION}
         benefits={[
-          "MIT for your app code",
-          "private repo mirror",
-          "deploy anywhere",
+          "Auth & 2FA",
+          "Stripe billing",
+          "Teams & RBAC",
+          "shadcn UI kit",
         ]}
-        highlightedText="and your highlighted text here"
-        primaryCta={{ label: "clone & ship", href: "/auth/sign-up" }}
-        secondaryCta={{ label: "source", href: "https://github.com" }}
+        highlightedText=" in a week"
+        primaryCta={{ label: "Clone & ship", href: SAAS_PRO_KIT }}
+        secondaryCta={{ label: "Dashboard", href: "/org" }}
         subtitle="Full-stack SaaS boilerplate. Next.js · React · better-auth. Auth, billing, teams, email, jobs - every wire already run."
-        title="Your title here "
+        title="Install custom ship"
       />
 
       <FeaturesTerminal
@@ -90,7 +93,7 @@ export default function HomePage() {
               "shadcn-style primitives, dark mode, keyboard nav, a11y audited. Drop in, rename, adjust tokens.",
           },
         ]}
-        heading="the boring parts, already done."
+        heading="The boring parts, already done"
       />
 
       <ConfigureBuild />
@@ -111,11 +114,7 @@ export default function HomePage() {
         title="Your price here"
       />
 
-      <Cta
-        headline="Build your own today"
-        pretext="with saasprokit"
-        subtitle="in a week"
-      />
+      <Cta headline="Build your own today" pretext="" subtitle="" />
     </div>
   );
 }
