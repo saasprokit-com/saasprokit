@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@repo/design-system/lib/utils";
 import { MONTHS_PER_YEAR } from "@repo/utils/date";
 import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
@@ -105,7 +106,10 @@ export function Pricing({
                 : tier.annualPrice;
             return (
               <Card
-                className={`relative flex flex-col ${tier.popular ? "shadow-lg ring-2 ring-primary" : ""}`}
+                className={cn(
+                  "relative flex flex-col rounded-lg",
+                  tier.popular && "shadow-lg ring-2 ring-primary"
+                )}
                 key={tier.name}
               >
                 {tier.popular && (
