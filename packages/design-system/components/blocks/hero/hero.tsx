@@ -50,8 +50,8 @@ export function Hero({
               {badge}
             </Badge>
           )}
-          <h1 className="mx-auto max-w-4xl font-bold text-4xl tracking-tight sm:text-5xl lg:text-6xl">
-            {title}{" "}
+          <h1 className="mx-auto max-w-4xl font-bold text-4xl leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+            {title}
             {highlightedText && (
               <span className="text-primary">{highlightedText}</span>
             )}

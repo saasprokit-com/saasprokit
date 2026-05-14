@@ -12,7 +12,7 @@ interface FooterTerminalProps {
   copyright: string;
 }
 
-export function FooterTerminal({
+export function Footer({
   brand,
   taglines = [],
   columns,
@@ -22,7 +22,6 @@ export function FooterTerminal({
     <footer className="border-border border-t px-6 sm:px-10">
       <div className="mx-auto max-w-7xl">
         <div className="grid grid-cols-2 gap-8 border-border border-b py-16 sm:grid-cols-3 lg:grid-cols-5">
-          {/* Brand */}
           <div className="col-span-2 sm:col-span-1">
             <span className="font-bold font-mono text-lg">{brand}</span>
             {taglines.length > 0 && (
@@ -60,7 +59,6 @@ export function FooterTerminal({
 
         <div className="flex items-center justify-between py-6 font-mono text-muted-foreground text-xs">
           <span>{copyright}</span>
-          <span>$ exit 0</span>
         </div>
       </div>
     </footer>

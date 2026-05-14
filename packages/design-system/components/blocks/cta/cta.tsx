@@ -1,14 +1,10 @@
-interface CtaTerminalProps {
+interface CtaProps {
   pretext?: string;
   headline: string;
   subtitle?: string;
 }
 
-export function CtaTerminal({
-  pretext = "$ whoami",
-  headline,
-  subtitle,
-}: CtaTerminalProps) {
+export function Cta({ pretext, headline, subtitle }: CtaProps) {
   return (
     <section className="bg-foreground px-6 py-24 text-background sm:px-10">
       <div className="mx-auto max-w-7xl text-center">
