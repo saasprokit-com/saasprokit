@@ -46,6 +46,16 @@ npx prisma studio             # Open Prisma Studio
 npx prisma migrate dev        # Create and apply migrations
 ```
 
+### Local Infrastructure (Docker Compose)
+
+```bash
+docker compose up postgres maildev   # DB + mail catcher only (recommended for app dev)
+docker compose up                    # Full stack: web/docs/email/storybook/studio + deps
+docker compose -f docker-compose.e2e.yml up    # E2E test environment
+```
+
+MailDev catches outbound mail locally so flows like password reset and magic links work without Resend.
+
 ## Architecture
 
 ### Route Structure
@@ -67,6 +77,9 @@ The Next.js app uses grouped routes (parentheses in directory names) to organize
 - `stripe/webhook/` — Stripe event handling
 - `upload/` — File uploads
 - `user/activity/` — User activity tracking
+
+**Edge middleware** (`apps/web/proxy.ts` — Next.js 16 renamed `middleware.ts` → `proxy.ts`):
+Single entry point that does three things in order: strips locale prefix for route matching, gates auth/public routes via `AUTH_ROUTE_PREFIXES` and `PUBLIC_ROUTE_PREFIXES` from `@/lib/routes`, then composes with `internationalizationMiddleware`. It also generates a per-request CSP nonce and sets `x-nonce` on the response so Server Components can read it via `headers()`. Touch this file whenever you add a new top-level route group or need to adjust CSP.
 
 ### Monorepo Structure
 
@@ -172,7 +185,15 @@ Server-side queries and actions are organized by domain under `servers/`:
 - `servers/organization/actions.ts` — Org mutations (server actions)
 - `servers/files/queries.ts` — File storage queries
 
-This is separate from `apps/web/lib/` which holds utilities, auth helpers, and infrastructure.
+The split with `apps/web/lib/` is intentional: `servers/` holds anything that touches the database or Better Auth API (callable from Server Components and Server Actions), while `lib/` holds environment-pure helpers and infrastructure code. Notable `lib/` subdirectories:
+
+- `lib/auth/` — `auth.ts` (cached session helpers), `action-auth.ts`, `action-error.ts`
+- `lib/billing/` — Stripe checkout, portal, subscription helpers tied to the web app
+- `lib/organization/` — Web-side org helpers (slug parsing, etc.)
+- `lib/files/` — Upload/path helpers used by API routes
+- `lib/infrastructure/` — Cross-cutting concerns (logger wiring, instrumentation)
+- `lib/validation/` — Shared Zod schemas
+- `lib/env.ts`, `lib/routes.ts`, `lib/parsers.ts`, `lib/seo-config.ts`, `lib/version.ts` — Root utilities
 
 ### Centralized Route Definitions
 
@@ -277,6 +298,13 @@ Workflow: Modify schema → `pnpm migrate` → Import via `import { database } f
 - Unit test runner: Vitest (v4.x) with configs in `vitest.config.mts`
 - Packages with test configs: `web`, `auth`, `payment`, `storage`
 - E2E tests: Playwright (`apps/web/playwright.config.ts`)
+
+### CI (`.github/workflows/`)
+
+- `ci.yml` — Lint, typecheck, unit tests
+- `e2e.yml` — Playwright E2E run
+
+**CI must be self-contained.** Always provision Postgres (and any other service dependencies) via GitHub Actions service containers — never wire CI jobs to external databases or pass production-style secrets. The Docker Compose files (`docker-compose.yml`, `docker-compose.e2e.yml`) are the source of truth for which services CI needs.
 
 ### Environment Setup
 
