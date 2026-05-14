@@ -75,4 +75,4 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for guidelines.
 
 ## License
 
-MIT
+Commercial license — see [LICENSE.md](LICENSE.md). All rights reserved.
