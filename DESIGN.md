@@ -5,7 +5,7 @@
 **shadcn/ui new-york neutral** is the single source of truth. All CSS variables, component styles, and defaults come from shadcn. The design system extends shadcn, never fights it.
 
 - Style: `new-york`
-- Base color: `neutral` (configurable via granular controls)
+- Base color: `neutral`
 - CSS variables: OKLCH color space, defined in `globals.css`
 - Components: shadcn/ui primitives from `packages/design-system/components/ui/`
 
@@ -22,9 +22,9 @@
 - **Reference:** HTML landing page reference (Variant B: Terminal)
 
 ## Typography
-- **Display/Hero:** `var(--heading-font)` — defaults to Geist Mono, configurable. `clamp(36px, 5vw, 64px)`, weight 500, tracking `-0.04em`
-- **Section headings:** `var(--heading-font)` — `clamp(28px, 4vw, 44px)`, weight 500, tracking `-0.03em`
-- **Body:** `var(--font-sans)` — defaults to Geist Sans. 15-16px, weight 400
+- **Display/Hero:** Geist Mono. `clamp(36px, 5vw, 64px)`, weight 500, tracking `-0.04em`
+- **Section headings:** Geist Mono. `clamp(28px, 4vw, 44px)`, weight 500, tracking `-0.03em`
+- **Body:** `var(--font-sans)` — Geist Sans. 15-16px, weight 400
 - **Labels/Meta:** Geist Mono — 11px, uppercase, tracking `0.15em`
 - **Code:** Geist Mono — 13px
 - **Loading:** Built into Next.js via `next/font/local` (already configured)
@@ -37,7 +37,6 @@
 - **Primary:** `oklch(0.205 0 0)` — near-black in light, near-white in dark (same as foreground inverted)
 - **Border:** `oklch(0.922 0 0)` / `oklch(0.269 0 0)`
 - **Muted foreground:** `oklch(0.556 0 0)` / `oklch(0.708 0 0)`
-- **Base color families:** neutral (default), slate, stone, zinc, gray — configurable via `data-base-color` attribute
 - **Code syntax:** `--code-keyword` (purple), `--code-string` (green), `--code-function` (blue), `--code-type` (orange)
 - **Dark mode:** `.dark` class via next-themes. All colors invert via CSS custom properties.
 
@@ -51,27 +50,9 @@
 ## Layout
 - **Approach:** Border-disciplined sections
 - **Max content width:** 1280px (`max-w-7xl`)
-- **Border radius:** `0.625rem` (shadcn default, configurable 0-1.0)
+- **Border radius:** `0.625rem` (shadcn default)
 - **Borders:** `1px solid border` used as visual structure between sections, cards, and rows
 - **Grid system:** `GridSection`, `GridBlock`, `GridSeparator` still available in `packages/design-system/components/ui/grid.tsx`
-
-## Design Configurator
-
-Granular controls replacing the old preset system. Each control updates the page live.
-
-- **Base Color:** neutral, slate, stone, zinc, gray
-- **Theme:** light / dark
-- **Heading Font:** Geist Mono, Geist Sans, Inter, DM Sans, Plus Jakarta
-- **Body Font:** Geist Sans, Inter, DM Sans, Plus Jakarta
-- **Radius:** 0, 0.3, 0.5, 0.625 (default), 0.75, 1.0
-
-Config persists to `localStorage` key `"design-config"`. Flash-prevention inline script applies config before React hydrates.
-
-Files:
-- Provider: `packages/design-system/providers/design-config.tsx`
-- Script: `packages/design-system/providers/design-config-script.tsx`
-- CSS: `packages/design-system/styles/design-config.css`
-- UI: `packages/design-system/components/blocks/style-configurator/style-configurator.tsx`
 
 ## Homepage Sections
 
@@ -80,10 +61,9 @@ Files:
 3. **Features** — 6 cards numbered 01-06, 3-column grid
 4. **Dependencies** — package.json-style table showing all tech deps
 5. **Testimonials** — 3 cards with quotes, avatars, social links
-6. **Configure** — Live preview panel + granular configurator controls
-7. **Pricing** — DB-driven plans in terminal-style cards
-8. **CTA** — Dark bg, "you — shipping by Sunday." terminal-style
-9. **Footer** — 5-column grid (/product, /docs, /resources, /legal), "$ exit 0"
+6. **Pricing** — DB-driven plans in terminal-style cards
+7. **CTA** — Dark bg, "you — shipping by Sunday." terminal-style
+8. **Footer** — 5-column grid (/product, /docs, /resources, /legal), "$ exit 0"
 
 ## Motion
 - **No animations on page load**
@@ -95,7 +75,6 @@ Files:
 - Card shadows (use borders instead)
 - Inline styles (use Tailwind classes)
 - Decorative blobs, waves, or SVG dividers
-- Overriding shadcn defaults without configurator support
 - Custom color values outside the token system
 
 ## Decisions Log

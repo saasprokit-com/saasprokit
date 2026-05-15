@@ -1,4 +1,3 @@
-import { ConfigureBuild } from "@repo/design-system/components/blocks/configure-build/configure-build";
 import { CTABanner } from "@repo/design-system/components/blocks/cta-banner/cta-banner";
 import { FeaturesTerminal } from "@repo/design-system/components/blocks/features-terminal/features-terminal";
 import { Hero } from "@repo/design-system/components/blocks/hero/hero";
@@ -95,8 +94,6 @@ export default function HomePage() {
         ]}
         heading="The boring parts, already done"
       />
-
-      <ConfigureBuild />
 
       <Pricing
         id="pricing"

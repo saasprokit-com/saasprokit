@@ -1,3 +1,4 @@
+import { cn } from "@repo/design-system/lib/utils";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "../../ui/badge";
@@ -40,7 +41,12 @@ export function Hero({
 }: HeroProps) {
   return (
     <section
-      className={`relative overflow-hidden ${showGradientBackground ? "bg-gradient-to-b from-primary/5 via-background to-background" : ""} ${className ?? ""}`}
+      className={cn(
+        "relative overflow-hidden",
+        showGradientBackground &&
+          "bg-linear-to-b from-primary/5 via-background to-background",
+        className
+      )}
       id={id}
     >
       <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 lg:py-32">

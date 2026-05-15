@@ -1,5 +1,4 @@
 import { Toaster } from "@repo/design-system/components/ui/sonner";
-import { DesignConfigScript } from "@repo/design-system/providers/design-config-script";
 import { ThemeProvider } from "@repo/design-system/providers/theme";
 import { locales } from "@repo/internationalization";
 import {
@@ -46,7 +45,6 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
 
   return (
     <>
-      <DesignConfigScript nonce={nonce} />
       <JsonLd code={generateOrganizationSchema()} />
       <JsonLd code={generateWebSiteSchema()} />
       <ThemeProvider nonce={nonce}>
