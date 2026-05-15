@@ -16,7 +16,7 @@ const Frontier = async ({ children }: RootLayoutProperties) => {
   return (
     <main>
       <Header
-        className="absolute w-full border-none bg-none"
+        className="fixed top-0 z-40 w-full border-none bg-transparent transition-shadow data-[scrolled=true]:bg-background/80 data-[scrolled=true]:shadow-sm data-[scrolled=true]:backdrop-blur"
         left={
           <nav className="hidden items-center gap-6 sm:flex">
             <Link
@@ -45,7 +45,6 @@ const Frontier = async ({ children }: RootLayoutProperties) => {
           </span>
         }
         right={<HeaderUserMenu user={session?.user} />}
-        sticky
         transparent
       />
 

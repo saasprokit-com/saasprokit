@@ -2,13 +2,13 @@
 
 import { cn } from "@repo/design-system/lib/utils";
 import Link from "next/link";
-import type * as React from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 export interface HeaderProps {
-  logo?: React.ReactNode;
+  logo?: ReactNode;
   logoHref?: string;
-  left?: React.ReactNode;
-  right?: React.ReactNode;
+  left?: ReactNode;
+  right?: ReactNode;
   transparent?: boolean;
   sticky?: boolean;
   className?: string;
@@ -23,6 +23,15 @@ export function Header({
   sticky = false,
   className,
 }: HeaderProps) {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 0);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
     <header
       className={cn(
@@ -34,6 +43,7 @@ export function Header({
           "backdrop-blur supports-backdrop-filter:bg-background/80",
         className
       )}
+      data-scrolled={scrolled}
     >
       <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
