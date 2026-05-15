@@ -1,5 +1,6 @@
-import { Footer } from "@repo/design-system/components/blocks/footer/footer";
+import { Footer } from "@repo/design-system/components/molecules/footer/footer";
 import { Header } from "@repo/design-system/components/molecules/header/header";
+import { Github, Linkedin, Twitter, Youtube } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { getServerSession } from "@/lib/auth/auth";
@@ -51,8 +52,19 @@ const Frontier = async ({ children }: RootLayoutProperties) => {
       <div className="flex flex-col">{children}</div>
 
       <Footer
-        brand="SAAS"
-        columns={[
+        bottomLinks={[
+          { label: "Privacy", href: "#" },
+          { label: "Terms", href: "#" },
+          { label: "Security", href: "#" },
+        ]}
+        copyright={`© ${new Date().getFullYear()} SAAS Labs · MIT`}
+        description="A SaaS boilerplate for people who ship."
+        logo={
+          <span className="font-bold font-mono text-lg tracking-tight">
+            SAAS
+          </span>
+        }
+        sections={[
           {
             title: "Products",
             links: [
@@ -77,21 +89,32 @@ const Frontier = async ({ children }: RootLayoutProperties) => {
               { label: "Blog", href: "#" },
               { label: "Templates", href: "#" },
               { label: "Discord", href: "#" },
-              { label: "Github", href: "#" },
-            ],
-          },
-          {
-            title: "Legal",
-            links: [
               { label: "License", href: "#" },
-              { label: "Privacy", href: "#" },
-              { label: "Terms", href: "#" },
-              { label: "Security", href: "#" },
             ],
           },
         ]}
-        copyright={`© ${new Date().getFullYear()} SAAS Labs · MIT`}
-        taglines={["/* a SaaS boilerplate */", "/* for people who ship */"]}
+        socialLinks={[
+          {
+            label: "GitHub",
+            href: "https://github.com",
+            icon: <Github size={20} />,
+          },
+          {
+            label: "Twitter",
+            href: "https://twitter.com",
+            icon: <Twitter size={20} />,
+          },
+          {
+            label: "LinkedIn",
+            href: "https://linkedin.com",
+            icon: <Linkedin size={20} />,
+          },
+          {
+            label: "YouTube",
+            href: "https://youtube.com",
+            icon: <Youtube size={20} />,
+          },
+        ]}
       />
     </main>
   );
