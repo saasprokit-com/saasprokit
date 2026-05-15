@@ -49,7 +49,7 @@ export function Hero({
       )}
       id={id}
     >
-      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 lg:py-32">
+      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 lg:py-32 lg:pt-40">
         <div className="text-center">
           {badge && (
             <Badge className="mb-4" variant="outline">
