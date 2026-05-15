@@ -26,7 +26,7 @@ export function CTABanner({
   return (
     <section className={cn("py-24", className)}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-lg bg-primary px-8 py-16 text-center text-primary-foreground sm:px-16">
+        <div className="rounded-lg bg-linear-to-br from-primary/70 to-primary px-8 py-16 text-center text-primary-foreground sm:px-16">
           <h2 className="font-bold text-3xl tracking-tight sm:text-4xl">
             {title}
           </h2>
