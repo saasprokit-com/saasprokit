@@ -1,7 +1,7 @@
 import { Footer } from "@repo/design-system/components/molecules/footer/footer";
 import { Header } from "@repo/design-system/components/molecules/header/header";
+import { Logo } from "@repo/design-system/components/molecules/logo/logo";
 import { Github, Linkedin, Twitter, Youtube } from "lucide-react";
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { getServerSession } from "@/lib/auth/auth";
 import { HeaderUserMenu } from "./components/header-user-menu";
@@ -17,33 +17,12 @@ const Frontier = async ({ children }: RootLayoutProperties) => {
     <main>
       <Header
         className="fixed top-0 z-40 w-full border-none bg-transparent transition-shadow data-[scrolled=true]:bg-background/80 data-[scrolled=true]:shadow-sm data-[scrolled=true]:backdrop-blur"
-        left={
-          <nav className="hidden items-center gap-6 sm:flex">
-            <Link
-              className="font-mono text-muted-foreground text-xs transition-colors hover:text-foreground"
-              href="/docs"
-            >
-              docs
-            </Link>
-            <Link
-              className="font-mono text-muted-foreground text-xs transition-colors hover:text-foreground"
-              href="#features"
-            >
-              features
-            </Link>
-            <Link
-              className="font-mono text-muted-foreground text-xs transition-colors hover:text-foreground"
-              href="#pricing"
-            >
-              pricing
-            </Link>
-          </nav>
-        }
-        logo={
-          <span className="font-bold font-mono text-lg tracking-tight">
-            LOGO
-          </span>
-        }
+        items={[
+          { href: "/docs", label: "Docs" },
+          { href: "#features", label: "Features" },
+          { href: "#pricing", label: "Pricing" },
+        ]}
+        logo={<Logo text="LOGO" />}
         right={<HeaderUserMenu user={session?.user} />}
         transparent
       />
