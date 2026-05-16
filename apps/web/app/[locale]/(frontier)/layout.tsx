@@ -37,11 +37,7 @@ const Frontier = async ({ children }: RootLayoutProperties) => {
         ]}
         copyright={`© ${new Date().getFullYear()} SAAS Labs · MIT`}
         description="A SaaS boilerplate for people who ship."
-        logo={
-          <span className="font-bold font-mono text-lg tracking-tight">
-            SAAS
-          </span>
-        }
+        logo={<Logo text="LOGO" />}
         sections={[
           {
             title: "Products",

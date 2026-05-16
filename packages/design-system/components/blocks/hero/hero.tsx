@@ -1,6 +1,7 @@
 import { cn } from "@repo/design-system/lib/utils";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { Stamp } from "../../molecules/stamp/stamp";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 
@@ -56,10 +57,10 @@ export function Hero({
               {badge}
             </Badge>
           )}
-          <h1 className="mx-auto max-w-4xl font-bold text-4xl leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+          <h1 className="mx-auto max-w-4xl self-center font-bold text-4xl leading-tight tracking-tight sm:text-5xl lg:text-6xl">
             {title}
             {highlightedText && (
-              <span className="text-primary">{highlightedText}</span>
+              <Stamp className="mr-2 leading-none">{highlightedText}</Stamp>
             )}
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
