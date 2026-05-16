@@ -69,7 +69,7 @@ export function Header({
   }, []);
 
   const isActive = (item: HeaderNavItem) => {
-    if (item.external || !item.href.startsWith("/")) {
+    if (!pathname || item.external || !item.href.startsWith("/")) {
       return false;
     }
     if (item.href === "/") {
@@ -94,11 +94,7 @@ export function Header({
       <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-8">
-            {logo && (
-              <Link className="font-bold text-2xl" href={logoHref}>
-                {logo}
-              </Link>
-            )}
+            {logo && <Link href={logoHref}>{logo}</Link>}
             {items.length > 0 && (
               <NavigationMenu className={bp.desktopNav} viewport={false}>
                 <NavigationMenuList>
@@ -107,7 +103,10 @@ export function Header({
                       <NavigationMenuLink
                         active={isActive(item)}
                         asChild
-                        className={navigationMenuTriggerStyle()}
+                        className={cn(
+                          navigationMenuTriggerStyle(),
+                          "bg-transparent underline-offset-4 hover:bg-transparent hover:underline focus:bg-transparent"
+                        )}
                       >
                         {item.external ? (
                           <a

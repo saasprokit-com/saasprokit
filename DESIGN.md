@@ -56,14 +56,12 @@
 
 ## Homepage Sections
 
-1. **Header** — SAAS wordmark, nav links (docs/features/pricing), demo CTA
-2. **Hero** — Split layout: text left (version badge, mono heading, CTAs) + code preview right (tabbed: auth.ts, billing.ts, schema.prisma)
-3. **Features** — 6 cards numbered 01-06, 3-column grid
-4. **Dependencies** — package.json-style table showing all tech deps
-5. **Testimonials** — 3 cards with quotes, avatars, social links
-6. **Pricing** — DB-driven plans in terminal-style cards
-7. **CTA** — Dark bg, "you — shipping by Sunday." terminal-style
-8. **Footer** — 5-column grid (/product, /docs, /resources, /legal), "$ exit 0"
+1. **Header** — `molecules/header`: SAAS logo, nav links (Docs/Features/Pricing), user menu in right slot. Fixed overlay with scroll-aware bg via `data-scrolled`.
+2. **Hero** — Centered single-column: version badge, mono heading, subtitle, primary CTA, benefits list. Subtle `bg-linear-to-b` gradient from `primary/5`.
+3. **Features** — `FeaturesTerminal`: numbered feature cards, 3-column grid on `lg`.
+4. **Pricing** — Plan cards driven by `getAllPlans()` from `@repo/payment`.
+5. **CTA** — `CTABanner`: headline + subtitle + primary CTA. Used as the page closer.
+6. **Footer** — `molecules/footer`: brand + description + 3 link sections (Products/Docs/Resources) + bottom legal links + 4 social icons (GitHub, Twitter, LinkedIn, YouTube).
 
 ## Motion
 - **No animations on page load**
@@ -82,7 +80,8 @@
 |------|----------|-----------|
 | 2026-04-14 | Initial design system created | Based on vercel.com/home analysis. Geist font, 12-col grid, visible guides. |
 | 2026-04-14 | Grid system: DOM elements, not CSS bg | Guide lines are real divs with border-right. |
-| 2026-04-21 | Switched to shadcn defaults as foundation | shadcn new-york neutral is the baseline. All customization flows through the granular configurator, not hardcoded presets. |
+| 2026-04-21 | Switched to shadcn defaults as foundation | shadcn new-york neutral is the baseline. Design tokens live in `globals.css` as static CSS variables. |
 | 2026-04-21 | Terminal aesthetic for homepage | Geist Mono headings, terminal metaphors, code-first hero. Based on HTML reference Variant B. |
-| 2026-04-21 | Replaced 4-preset system with granular controls | Presets (minimal/warm/crisp/bold) replaced by individual settings: base color, fonts, radius. More flexible, aligns with shadcn's own theming approach. |
-| 2026-04-21 | Radius default: 0.625rem (shadcn default) | Was 0rem. Now follows shadcn out of the box, configurable via controls. |
+| 2026-04-21 | Replaced 4-preset system with granular controls | Presets (minimal/warm/crisp/bold) replaced by individual settings: base color, fonts, radius. Superseded 2026-05-16 — runtime configurator was removed entirely. |
+| 2026-04-21 | Radius default: 0.625rem (shadcn default) | Was 0rem. Now follows shadcn out of the box. |
+| 2026-05-16 | Removed runtime style configurator | The configurator block, design-config provider, color presets, demo-showcase, and configure-build blocks were dropped. Tokens are now static. Removed ~600 lines of provider/CSS/components; no consumers were depending on runtime theming. |

@@ -52,7 +52,7 @@ export function Hero({
       <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 lg:py-32 lg:pt-40">
         <div className="text-center">
           {badge && (
-            <Badge className="mb-4" variant="destructive">
+            <Badge className="mb-4" variant="outline">
               {badge}
             </Badge>
           )}
