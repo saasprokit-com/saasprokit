@@ -1,4 +1,3 @@
-import { cn } from "@repo/design-system/lib/utils";
 import type { ReactNode } from "react";
 import { Stamp } from "../stamp/stamp";
 
@@ -13,16 +12,11 @@ export const Logo = ({ className, text, icon }: LogoProps) => {
     return null;
   }
   return (
-    <Stamp>
-      <div
-        className={cn(
-          "inline-flex items-center gap-2 font-bold text-2xl text-white",
-          className
-        )}
-      >
+    <Stamp className={className}>
+      <span className="inline-flex items-center gap-2 font-bold text-2xl">
         {icon}
         {text}
-      </div>
+      </span>
     </Stamp>
   );
 };

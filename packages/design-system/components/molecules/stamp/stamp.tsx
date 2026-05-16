@@ -34,7 +34,7 @@ export const Stamp = ({
       <div className="border-t-(length:--stamp-bracket-width) border-e-(length:--stamp-bracket-width) border-(--stamp-color) [grid-area:1/3/2/4]" />
       <div className="border-b-(length:--stamp-bracket-width) border-s-(length:--stamp-bracket-width) border-(--stamp-color) [grid-area:3/1/4/2]" />
       <div className="border-b-(length:--stamp-bracket-width) border-e-(length:--stamp-bracket-width) border-(--stamp-color) [grid-area:3/3/4/4]" />
-      <div className="m-[calc(var(--stamp-bracket-size)/2)] bg-(--stamp-color) px-1 font-semibold font-title text-white [grid-area:1/1/4/4]">
+      <div className="m-[calc(var(--stamp-bracket-size)/2)] bg-(--stamp-color) px-1 font-semibold text-white [grid-area:1/1/4/4]">
         {children}
       </div>
     </div>

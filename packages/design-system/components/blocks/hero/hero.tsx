@@ -57,12 +57,10 @@ export function Hero({
               {badge}
             </Badge>
           )}
-          <h1 className="mx-auto max-w-4xl self-center font-bold text-4xl leading-none leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+          <h1 className="mx-auto max-w-4xl self-center font-bold text-4xl leading-tight tracking-tight sm:text-5xl lg:text-6xl">
             {title}
             {highlightedText && (
-              <Stamp className="mr-2 leading-none">
-                <span className="text-white">{highlightedText}</span>
-              </Stamp>
+              <Stamp className="mr-2 leading-none">{highlightedText}</Stamp>
             )}
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
