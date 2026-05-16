@@ -1,4 +1,4 @@
-import { SectionHeading } from "@repo/design-system/components/blocks/section-heading/section-heading";
+import { SectionHeading } from "@repo/design-system/components/molecules/section-heading/section-heading";
 import type { LucideIcon } from "lucide-react";
 
 interface Feature {

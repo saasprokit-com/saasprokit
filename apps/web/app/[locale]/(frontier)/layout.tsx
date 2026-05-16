@@ -1,6 +1,7 @@
-import { Footer } from "@repo/design-system/components/blocks/footer/footer";
+import { Footer } from "@repo/design-system/components/molecules/footer/footer";
 import { Header } from "@repo/design-system/components/molecules/header/header";
-import Link from "next/link";
+import { Logo } from "@repo/design-system/components/molecules/logo/logo";
+import { Github, Linkedin, Twitter, Youtube } from "lucide-react";
 import type { ReactNode } from "react";
 import { getServerSession } from "@/lib/auth/auth";
 import { HeaderUserMenu } from "./components/header-user-menu";
@@ -15,41 +16,33 @@ const Frontier = async ({ children }: RootLayoutProperties) => {
   return (
     <main>
       <Header
-        left={
-          <nav className="hidden items-center gap-6 sm:flex">
-            <Link
-              className="font-mono text-muted-foreground text-xs transition-colors hover:text-foreground"
-              href="/docs"
-            >
-              docs
-            </Link>
-            <Link
-              className="font-mono text-muted-foreground text-xs transition-colors hover:text-foreground"
-              href="#features"
-            >
-              features
-            </Link>
-            <Link
-              className="font-mono text-muted-foreground text-xs transition-colors hover:text-foreground"
-              href="#pricing"
-            >
-              pricing
-            </Link>
-          </nav>
-        }
-        logo={
-          <span className="font-bold font-mono text-lg tracking-tight">
-            SAAS
-          </span>
-        }
+        className="fixed top-0 z-40 w-full border-none bg-transparent transition-shadow data-[scrolled=true]:bg-background/80 data-[scrolled=true]:shadow-sm data-[scrolled=true]:backdrop-blur"
+        items={[
+          { href: "/docs", label: "Docs" },
+          { href: "#features", label: "Features" },
+          { href: "#pricing", label: "Pricing" },
+        ]}
+        logo={<Logo text="LOGO" />}
         right={<HeaderUserMenu user={session?.user} />}
+        transparent
       />
 
       <div className="flex flex-col">{children}</div>
 
       <Footer
-        brand="SAAS"
-        columns={[
+        bottomLinks={[
+          { label: "Privacy", href: "#" },
+          { label: "Terms", href: "#" },
+          { label: "Security", href: "#" },
+        ]}
+        copyright={`© ${new Date().getFullYear()} SAAS Labs · MIT`}
+        description="A SaaS boilerplate for people who ship."
+        logo={
+          <span className="font-bold font-mono text-lg tracking-tight">
+            SAAS
+          </span>
+        }
+        sections={[
           {
             title: "Products",
             links: [
@@ -74,21 +67,32 @@ const Frontier = async ({ children }: RootLayoutProperties) => {
               { label: "Blog", href: "#" },
               { label: "Templates", href: "#" },
               { label: "Discord", href: "#" },
-              { label: "Github", href: "#" },
-            ],
-          },
-          {
-            title: "Legal",
-            links: [
               { label: "License", href: "#" },
-              { label: "Privacy", href: "#" },
-              { label: "Terms", href: "#" },
-              { label: "Security", href: "#" },
             ],
           },
         ]}
-        copyright={`© ${new Date().getFullYear()} SAAS Labs · MIT`}
-        taglines={["/* a SaaS boilerplate */", "/* for people who ship */"]}
+        socialLinks={[
+          {
+            label: "GitHub",
+            href: "https://github.com",
+            icon: <Github size={20} />,
+          },
+          {
+            label: "Twitter",
+            href: "https://twitter.com",
+            icon: <Twitter size={20} />,
+          },
+          {
+            label: "LinkedIn",
+            href: "https://linkedin.com",
+            icon: <Linkedin size={20} />,
+          },
+          {
+            label: "YouTube",
+            href: "https://youtube.com",
+            icon: <Youtube size={20} />,
+          },
+        ]}
       />
     </main>
   );

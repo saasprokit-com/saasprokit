@@ -21,28 +21,11 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     logo: "Acme",
-    left: (
-      <nav className="hidden gap-6 md:flex">
-        <Link
-          className="font-medium text-muted-foreground text-sm hover:text-foreground"
-          href="/"
-        >
-          Home
-        </Link>
-        <Link
-          className="font-medium text-muted-foreground text-sm hover:text-foreground"
-          href="/about"
-        >
-          About
-        </Link>
-        <Link
-          className="font-medium text-muted-foreground text-sm hover:text-foreground"
-          href="/blog"
-        >
-          Blog
-        </Link>
-      </nav>
-    ),
+    items: [
+      { href: "/", label: "Home" },
+      { href: "/about", label: "About" },
+      { href: "/blog", label: "Blog" },
+    ],
     right: (
       <div className="flex items-center gap-3">
         <Button asChild variant="ghost">
@@ -67,22 +50,10 @@ export const WithLogoComponent: Story = {
         <span>Brand</span>
       </div>
     ),
-    left: (
-      <nav className="hidden gap-6 md:flex">
-        <Link
-          className="font-medium text-muted-foreground text-sm hover:text-foreground"
-          href="/products"
-        >
-          Products
-        </Link>
-        <Link
-          className="font-medium text-muted-foreground text-sm hover:text-foreground"
-          href="/pricing"
-        >
-          Pricing
-        </Link>
-      </nav>
-    ),
+    items: [
+      { href: "/products", label: "Products" },
+      { href: "/pricing", label: "Pricing" },
+    ],
     right: (
       <Button asChild>
         <Link href="/start">Get Started</Link>
@@ -92,33 +63,16 @@ export const WithLogoComponent: Story = {
 };
 
 /**
- * Header with only left section.
+ * Header with only nav items, no right section.
  */
 export const LeftOnly: Story = {
   args: {
     logo: "Blog",
-    left: (
-      <nav className="hidden gap-6 md:flex">
-        <Link
-          className="font-medium text-muted-foreground text-sm hover:text-foreground"
-          href="/"
-        >
-          Home
-        </Link>
-        <Link
-          className="font-medium text-muted-foreground text-sm hover:text-foreground"
-          href="/articles"
-        >
-          Articles
-        </Link>
-        <Link
-          className="font-medium text-muted-foreground text-sm hover:text-foreground"
-          href="/categories"
-        >
-          Categories
-        </Link>
-      </nav>
-    ),
+    items: [
+      { href: "/", label: "Home" },
+      { href: "/articles", label: "Articles" },
+      { href: "/categories", label: "Categories" },
+    ],
   },
 };
 
@@ -156,24 +110,10 @@ export const LogoOnly: Story = {
 export const WithSearchAndUser: Story = {
   args: {
     logo: "App",
-    left: (
-      <div className="hidden items-center gap-4 md:flex">
-        <nav className="flex gap-6">
-          <Link
-            className="font-medium text-muted-foreground text-sm hover:text-foreground"
-            href="/dashboard"
-          >
-            Dashboard
-          </Link>
-          <Link
-            className="font-medium text-muted-foreground text-sm hover:text-foreground"
-            href="/projects"
-          >
-            Projects
-          </Link>
-        </nav>
-      </div>
-    ),
+    items: [
+      { href: "/dashboard", label: "Dashboard" },
+      { href: "/projects", label: "Projects" },
+    ],
     right: (
       <div className="flex items-center gap-4">
         <input
@@ -184,5 +124,41 @@ export const WithSearchAndUser: Story = {
         <div className="h-8 w-8 rounded-full bg-muted" />
       </div>
     ),
+  },
+};
+
+/**
+ * Header with mobile menu using larger breakpoint (lg).
+ * Hamburger appears below lg (1024px); desktop nav above.
+ */
+export const MobileLargeBreakpoint: Story = {
+  args: {
+    logo: "App",
+    mobileBreakpoint: "lg",
+    items: [
+      { href: "/features", label: "Features" },
+      { href: "/pricing", label: "Pricing" },
+      { href: "/docs", label: "Docs" },
+      { href: "/blog", label: "Blog" },
+    ],
+    right: (
+      <Button asChild>
+        <Link href="/start">Get Started</Link>
+      </Button>
+    ),
+  },
+};
+
+/**
+ * Header with an external link in the nav.
+ */
+export const WithExternalLink: Story = {
+  args: {
+    logo: "Acme",
+    items: [
+      { href: "/", label: "Home" },
+      { href: "/docs", label: "Docs" },
+      { href: "https://github.com/acme", label: "GitHub", external: true },
+    ],
   },
 };

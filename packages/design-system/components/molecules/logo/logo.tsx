@@ -12,14 +12,14 @@ export const Logo = ({ className, text, icon }: LogoProps) => {
     return null;
   }
   return (
-    <span
+    <div
       className={cn(
-        "inline-flex items-center gap-2 font-bold text-2xl text-primary",
+        "inline-flex items-center gap-2 border-primary font-bold text-2xl text-primary",
         className
       )}
     >
       {icon}
       {text}
-    </span>
+    </div>
   );
 };
