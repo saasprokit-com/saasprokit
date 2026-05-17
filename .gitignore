@@ -261,6 +261,11 @@ $RECYCLE.BIN/
 .cursorrules
 .github/copilot-instructions.md
 
+# AI Skill folders — regenerated from .agents/skills/ via `skills` CLI on pnpm install
+.claude/skills/
+.continue/skills/
+.windsurf/skills/
+
 # Database
 packages/database/generated
 

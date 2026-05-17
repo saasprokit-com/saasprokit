@@ -8,6 +8,7 @@
     "dist/index.js"
   ],
   "scripts": {
+    "postinstall": "npx --yes skills experimental_install",
     "build": "turbo build",
     "dev": "turbo dev",
     "check": "npx ultracite@6.5.1 check && turbo check",
