@@ -8,7 +8,7 @@
     "dist/index.js"
   ],
   "scripts": {
-    "postinstall": "npx --yes skills experimental_install && (npx --yes @playwright/cli@latest install --skills || echo 'warning: Playwright skills install failed; run manually with: npx --yes @playwright/cli@latest install --skills')",
+    "postinstall": "npx --yes skills experimental_install",
     "build": "turbo build",
     "dev": "turbo dev",
     "check": "npx ultracite@6.5.1 check && turbo check",
