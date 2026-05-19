@@ -396,14 +396,6 @@ export const auth = betterAuth({
                 });
                 return [
                   {
-                    name: PLAN_NAMES.FREE,
-                    priceId: env.STRIPE_FREE_PRICE_ID ?? "",
-                    limits: {
-                      maxMembers: PLANS.free.limits.maxMembers,
-                      maxStorageMB: PLANS.free.limits.maxStorageMB,
-                    },
-                  },
-                  {
                     name: PLAN_NAMES.PRO,
                     priceId: priceMap.pro_monthly,
                     annualDiscountPriceId: priceMap.pro_yearly,
