@@ -1,15 +1,20 @@
 import { CTABanner } from "@repo/design-system/components/blocks/cta-banner/cta-banner";
-import { FeaturesTerminal } from "@repo/design-system/components/blocks/features-terminal/features-terminal";
+import { FeatureShowcase } from "@repo/design-system/components/blocks/feature-showcase/feature-showcase";
+import { FeaturesGrid } from "@repo/design-system/components/blocks/features-grid/features-grid";
 import { Hero } from "@repo/design-system/components/blocks/hero/hero";
 import { Pricing } from "@repo/design-system/components/blocks/pricing/pricing";
 import { getAllPlans, getMonthlyFromAnnual } from "@repo/payment/plans";
 import {
+  Boxes,
+  Braces,
+  Building2,
   CreditCard,
-  FileCode2,
-  Lock,
-  Mail,
-  Palette,
-  Shield,
+  Database,
+  KeyRound,
+  Languages,
+  Rocket,
+  ShieldCheck,
+  Workflow,
 } from "lucide-react";
 import type { Metadata } from "next";
 import { siteConfig } from "@/lib/seo-config";
@@ -47,52 +52,106 @@ export default function HomePage() {
         title="Install custom ship"
       />
 
-      <FeaturesTerminal
+      <FeaturesGrid
+        badge="The stack"
+        columns={3}
         features={[
           {
-            num: "01",
-            icon: Lock,
-            title: "Auth, from day one",
+            icon: Rocket,
+            title: "Next.js 16 + App Router",
             description:
-              "better-auth with email/password, magic links, OAuth, 2FA, org & team tenancy, RBAC. No rolling your own.",
+              "Server Components, Server Actions, async params, route groups. The new model, used the right way.",
           },
           {
-            num: "02",
-            icon: CreditCard,
-            title: "Billing wired up",
+            icon: Database,
+            title: "Postgres + Prisma",
             description:
-              "Stripe subscriptions, metered usage, customer portal, webhooks verified. Plans in one config file.",
+              "Schema-first models, typed client, migrations checked in. Neon-ready for serverless deploys.",
           },
           {
-            num: "03",
-            icon: FileCode2,
-            title: "Typed end to end",
+            icon: Workflow,
+            title: "Turborepo + pnpm",
             description:
-              "Next.js App Router, Prisma ORM, Postgres, Server Actions. Types flow from schema to UI with zero glue.",
+              "Tuned task graph with remote cache. Apps and packages share types across the whole monorepo.",
           },
           {
-            num: "04",
-            icon: Mail,
-            title: "Transactional mail",
+            icon: Braces,
+            title: "TypeScript end-to-end",
             description:
-              "React Email templates, Resend adapter, preview server. Swap provider without touching send sites.",
+              "Strict mode everywhere, Zod for boundaries, inferred types from Prisma to the form field.",
           },
           {
-            num: "05",
-            icon: Shield,
-            title: "Admin dashboard",
+            icon: Boxes,
+            title: "shadcn/ui + Tailwind v4",
             description:
-              "User & org management, impersonation, plan overrides, audit log. Gate routes by role with a single check.",
+              "Themeable primitives, dark mode, design tokens. Storybook included so designers can review live.",
           },
           {
-            num: "06",
-            icon: Palette,
-            title: "UI that ships",
+            icon: Languages,
+            title: "i18n + edge proxy",
             description:
-              "shadcn-style primitives, dark mode, keyboard nav, a11y audited. Drop in, rename, adjust tokens.",
+              "Locale-prefixed routes, message catalogs, CSP nonces. Production middleware patterns, not toys.",
           },
         ]}
-        heading="The boring parts, already done"
+        subtitle="The pieces are picked, wired, and tested. Swap any of them, but you won't need to on day one."
+        title="Built on what works"
+      />
+
+      <FeatureShowcase
+        items={[
+          {
+            badge: "Multi-tenant",
+            title: "Orgs and personal accounts",
+            description:
+              "Every user gets a personal workspace and can join any number of organizations. Billing, members, roles, and invites are scoped per-org — no leaks, no foot-guns.",
+            bullets: [
+              "Org-scoped subscriptions with one Stripe customer per org",
+              "Owner / admin / member roles with route-level guards",
+              "Invite flows with email confirmation and seat handling",
+              "Slug-based URLs validated at the proxy layer",
+            ],
+            icon: Building2,
+          },
+          {
+            badge: "Authentication",
+            title: "Auth flows you'll ever need",
+            description:
+              "Better Auth handles cryptography, sessions, and account lifecycle. You just plug providers in. Email, magic links, OAuth, OTP, and 2FA — already tested end-to-end.",
+            bullets: [
+              "Email + password with verification and recovery flows",
+              "Magic link sign-in and one-time code fallback",
+              "Google and GitHub OAuth out of the box",
+              "TOTP-based 2FA with backup codes and recovery",
+            ],
+            icon: KeyRound,
+          },
+          {
+            badge: "Billing",
+            title: "Stripe, wired the right way",
+            description:
+              "Subscriptions per organization, prorated upgrades, verified webhooks, customer portal for cards and invoices. Plans declared in one config, surfaced in pricing and checkout.",
+            bullets: [
+              "Per-org customer with subscription scoping and seat limits",
+              "Self-serve portal for cards, invoices, and cancellation",
+              "Idempotent webhook handling with replay-safe events",
+              "Tiered plans (free / pro / enterprise) in one config file",
+            ],
+            icon: CreditCard,
+          },
+          {
+            badge: "Hardened",
+            title: "Production security from day one",
+            description:
+              "Edge protection, content security policy, rate limits, and audit trails. The hard parts of running a real product — already done, already tuned.",
+            bullets: [
+              "Per-request CSP nonces set by the edge proxy",
+              "Rate-limited sign-in attempts to deter brute force",
+              "Audit-ready session and account event tracking",
+              "Strict TypeScript and Zod validation at every boundary",
+            ],
+            icon: ShieldCheck,
+          },
+        ]}
       />
 
       <Pricing
