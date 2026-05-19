@@ -19,8 +19,10 @@ import {
   PLAN_ORDER,
   type StripePriceIds,
 } from "@repo/utils/payment";
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { STRIPE_PRICES_CACHE_TAG } from "@/lib/billing/prices";
 import {
   ALLOWED_STRIPE_EVENT_TYPES,
   getStripeClient,
@@ -669,6 +671,16 @@ export async function processStripeEvent(event: Stripe.Event): Promise<void> {
       await handleInvoicePaid(invoice);
       break;
     }
+
+    case "price.created":
+    case "price.updated":
+    case "product.updated":
+      revalidateTag(STRIPE_PRICES_CACHE_TAG, "max");
+      logger.info(
+        { eventType: event.type, eventId: event.id },
+        "Invalidated pricing cache"
+      );
+      break;
 
     default:
       // Other Stripe events are handled by Better Auth's Stripe plugin

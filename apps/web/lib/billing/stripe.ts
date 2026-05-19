@@ -42,6 +42,9 @@ export function getStripeClient(): Stripe {
  * - customer.subscription.deleted: Sends cancellation email with access-until date
  * - invoice.payment_failed: Sends payment failure email with retry date
  * - invoice.paid: Sends subscription renewed email on billing cycle payment
+ * - price.created: Invalidates pricing cache when a new Price is added in Stripe
+ * - price.updated: Invalidates pricing cache when amount/active/lookup_key changes
+ * - product.updated: Invalidates pricing cache when product metadata changes
  *
  * To add new event types:
  * 1. Add event type to ALLOWED_STRIPE_EVENT_TYPES
@@ -56,6 +59,9 @@ const ALLOWED_EVENT_TYPES_ARRAY = [
   "customer.subscription.deleted",
   "invoice.payment_failed",
   "invoice.paid",
+  "price.created",
+  "price.updated",
+  "product.updated",
 ] as const;
 
 export const ALLOWED_STRIPE_EVENT_TYPES = new Set<string>(
