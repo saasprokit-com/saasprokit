@@ -133,24 +133,6 @@ async function canUserCreateOrg(userId: string): Promise<boolean> {
   ).allowed;
 }
 
-// =============================================================================
-// Stripe Client
-// =============================================================================
-
-// CRITICAL: Fail explicitly if Stripe secret is not configured in production
-if (!env.STRIPE_SECRET_KEY && process.env.NODE_ENV === "production") {
-  throw new Error(
-    "STRIPE_SECRET_KEY environment variable is not configured. This is required for production deployments."
-  );
-}
-
-if (!env.STRIPE_SECRET_KEY) {
-  // biome-ignore lint/suspicious/noConsole: startup warning
-  console.warn(
-    "[auth] STRIPE_SECRET_KEY not set — Stripe features disabled in development"
-  );
-}
-
 const stripeClient = env.STRIPE_SECRET_KEY
   ? new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: STRIPE_API_VERSION })
   : null;
