@@ -41,6 +41,12 @@ import {
   orgOwnerRole,
   userRole,
 } from "./permissions";
+import {
+  handleStripeInvoiceEvent,
+  handleSubscriptionComplete,
+  handleSubscriptionDeleted,
+  handleSubscriptionUpdate,
+} from "./stripe-hooks";
 
 // Validated environment variables — throws on startup if BETTER_AUTH_SECRET
 // is missing or < 32 chars, or if any other env var fails its Zod schema.
@@ -367,8 +373,12 @@ export const auth = betterAuth({
             stripeClient,
             stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
             createCustomerOnSignUp: false,
+            onEvent: handleStripeInvoiceEvent,
             subscription: {
               enabled: true,
+              onSubscriptionComplete: handleSubscriptionComplete,
+              onSubscriptionUpdate: handleSubscriptionUpdate,
+              onSubscriptionDeleted: handleSubscriptionDeleted,
               plans: (() => {
                 const priceMap = getStripePriceMap({
                   proMonthly: env.STRIPE_PRO_PRICE_ID_MONTHLY,

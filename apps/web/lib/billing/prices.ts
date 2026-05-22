@@ -3,6 +3,7 @@ import "server-only";
 import { createRequestLogger } from "@repo/logger/server";
 import { PLAN_NAMES, type PlanName, PRICING } from "@repo/utils/payment";
 import { unstable_cache } from "next/cache";
+import type Stripe from "stripe";
 import { getStripeClient } from "@/lib/billing/stripe";
 import { env } from "@/lib/env";
 
@@ -48,6 +49,28 @@ const logger = createRequestLogger({
   method: "GET",
 });
 
+const SUPPORTED_CURRENCY = "usd";
+
+/**
+ * Convert a Stripe Price into a major-unit number safe to display.
+ *
+ * Returns null when the price can't be safely rendered as a static amount:
+ *   - unit_amount is null (tiered, metered, or custom pricing)
+ *   - currency is not the SUPPORTED_CURRENCY (zero-decimal currencies like JPY
+ *     would otherwise be 100x-too-small after dividing by CENTS_PER_DOLLAR)
+ *
+ * The caller decides what to do with null (per-plan fallback vs full-table fallback).
+ */
+function toMajorUnits(price: Stripe.Price): number | null {
+  if (price.currency !== SUPPORTED_CURRENCY) {
+    return null;
+  }
+  if (price.unit_amount === null) {
+    return null;
+  }
+  return price.unit_amount / CENTS_PER_DOLLAR;
+}
+
 async function fetchPricesFromStripe(): Promise<PlanDisplayPrices> {
   if (!env.STRIPE_SECRET_KEY) {
     return FALLBACK_PRICES;
@@ -73,18 +96,57 @@ async function fetchPricesFromStripe(): Promise<PlanDisplayPrices> {
       stripe.prices.retrieve(enterpriseAnnualId),
     ]);
 
+    const proMonthlyAmount = toMajorUnits(proMonthly);
+    const proYearlyAmount = toMajorUnits(proYearly);
+    const entMonthlyAmount = toMajorUnits(entMonthly);
+    const entYearlyAmount = toMajorUnits(entYearly);
+
+    if (
+      proMonthlyAmount === null ||
+      proYearlyAmount === null ||
+      entMonthlyAmount === null ||
+      entYearlyAmount === null
+    ) {
+      logger.warn(
+        {
+          proMonthly: {
+            id: proMonthly.id,
+            currency: proMonthly.currency,
+            unit_amount: proMonthly.unit_amount,
+          },
+          proYearly: {
+            id: proYearly.id,
+            currency: proYearly.currency,
+            unit_amount: proYearly.unit_amount,
+          },
+          entMonthly: {
+            id: entMonthly.id,
+            currency: entMonthly.currency,
+            unit_amount: entMonthly.unit_amount,
+          },
+          entYearly: {
+            id: entYearly.id,
+            currency: entYearly.currency,
+            unit_amount: entYearly.unit_amount,
+          },
+        },
+        "Stripe returned an unsupported currency or null unit_amount, using fallback"
+      );
+      return FALLBACK_PRICES;
+    }
+
     return {
       [PLAN_NAMES.FREE]: FALLBACK_PRICES[PLAN_NAMES.FREE],
       [PLAN_NAMES.PRO]: {
-        monthly: (proMonthly.unit_amount ?? 0) / CENTS_PER_DOLLAR,
-        yearly: (proYearly.unit_amount ?? 0) / CENTS_PER_DOLLAR,
-        currency: proMonthly.currency,
+        monthly: proMonthlyAmount,
+        yearly: proYearlyAmount,
+        currency: SUPPORTED_CURRENCY,
         source: "stripe",
       },
       [PLAN_NAMES.ENTERPRISE]: {
-        monthly: (entMonthly.unit_amount ?? 0) / CENTS_PER_DOLLAR,
-        yearly: (entYearly.unit_amount ?? 0) / CENTS_PER_DOLLAR,
-        currency: entMonthly.currency,
+        monthly: entMonthlyAmount,
+        yearly: entYearlyAmount,
+        currency: SUPPORTED_CURRENCY,
         source: "stripe",
       },
     };
