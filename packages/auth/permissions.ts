@@ -3,10 +3,6 @@ import { createAccessControl } from "better-auth/plugins/access";
 import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
 import { defaultStatements as orgDefaultStatements } from "better-auth/plugins/organization/access";
 
-// =============================================================================
-// Admin Roles (Better Auth admin plugin — platform-wide)
-// =============================================================================
-
 /**
  * Admin role name constants - used for platform-level role assignments
  */
@@ -18,10 +14,6 @@ export const ADMIN_ROLES = {
 
 export type AdminRoleName = (typeof ADMIN_ROLES)[keyof typeof ADMIN_ROLES];
 
-// =============================================================================
-// Organization Roles (Better Auth organization plugin — org-scoped)
-// =============================================================================
-
 /**
  * Organization role constants - used for org membership role checks
  */
@@ -32,10 +24,6 @@ export const ORG_ROLES = {
 } as const;
 
 export type OrgRoleName = (typeof ORG_ROLES)[keyof typeof ORG_ROLES];
-
-// =============================================================================
-// Shared Permission & Resource Constants
-// =============================================================================
 
 /**
  * Permission action constants - use these for permission checks
@@ -73,10 +61,6 @@ export const RESOURCES = {
 } as const;
 
 export type ResourceName = (typeof RESOURCES)[keyof typeof RESOURCES];
-
-// =============================================================================
-// Admin Access Control (Better Auth admin plugin)
-// =============================================================================
 
 /**
  * Define permission statements for the admin plugin.
@@ -139,10 +123,6 @@ export const adminRoleDefinitions = {
   [ADMIN_ROLES.MODERATOR]: moderatorRole,
   [ADMIN_ROLES.USER]: userRole,
 } as const;
-
-// =============================================================================
-// Organization Access Control (Better Auth organization plugin)
-// =============================================================================
 
 /**
  * Create the org access control instance from the plugin's default statements.

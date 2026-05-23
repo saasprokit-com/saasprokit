@@ -52,10 +52,6 @@ import {
 // is missing or < 32 chars, or if any other env var fails its Zod schema.
 const env = keys();
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 // Invitation configuration
 const INVITATION_EXPIRES_IN_DAYS = 7;
 
@@ -74,10 +70,6 @@ const OTP_EXPIRES_IN_MINUTES = 5;
 // Two-factor authentication
 const TWO_FACTOR_OTP_PERIOD_MINUTES = 5;
 const TWO_FACTOR_DIGITS = 6;
-
-// =============================================================================
-// Billing Helpers
-// =============================================================================
 
 const MAX_ORGS_PER_USER = env.MAX_ORGS_PER_USER;
 
@@ -363,9 +355,6 @@ export const auth = betterAuth({
       },
     }),
 
-    // Next.js cookie handling
-    nextCookies(),
-
     // Stripe subscription — only included when both keys are configured
     ...(stripeClient && env.STRIPE_WEBHOOK_SECRET
       ? [
@@ -423,6 +412,9 @@ export const auth = betterAuth({
           }),
         ]
       : []),
+
+    // Next.js cookie handling
+    nextCookies(),
   ],
 });
 
