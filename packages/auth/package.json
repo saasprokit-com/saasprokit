@@ -12,7 +12,8 @@
     "./server": "./server.ts",
     "./client": "./client.ts",
     "./permissions": "./permissions.ts",
-    "./keys": "./keys.ts"
+    "./keys": "./keys.ts",
+    "./stripe-client": "./stripe-client.ts"
   },
   "dependencies": {
     "@better-auth/stripe": "^1.6.11",

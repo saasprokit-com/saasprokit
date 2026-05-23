@@ -17,7 +17,6 @@ import {
   Workflow,
 } from "lucide-react";
 import type { Metadata } from "next";
-import { getDisplayPrices } from "@/lib/billing/prices";
 import { siteConfig } from "@/lib/seo-config";
 import { APP_VERSION } from "@/lib/version";
 
@@ -33,9 +32,8 @@ export const metadata: Metadata = {
 
 const SAAS_PRO_KIT = "https://saasprokit.com";
 
-export default async function HomePage() {
+export default function HomePage() {
   const plans = getAllPlans();
-  const prices = await getDisplayPrices();
 
   return (
     <div className="min-h-screen">
@@ -159,19 +157,16 @@ export default async function HomePage() {
       <Pricing
         id="pricing"
         subtitle="One source, three tiers. Start free, upgrade when you outgrow it."
-        tiers={plans.map((plan) => {
-          const price = prices[plan.name];
-          return {
-            name: plan.displayName,
-            description: plan.description,
-            monthlyPrice: price.monthly,
-            annualPrice: getMonthlyFromAnnual(price.yearly),
-            features: plan.features,
-            popular: plan.highlighted,
-            cta: price.monthly === 0 ? "Start free" : "Get started",
-            ctaHref: `/auth/sign-up${plan.name === "free" ? "" : `?plan=${plan.name}`}`,
-          };
-        })}
+        tiers={plans.map((plan) => ({
+          name: plan.displayName,
+          description: plan.description,
+          monthlyPrice: plan.monthlyPrice,
+          annualPrice: getMonthlyFromAnnual(plan.yearlyPrice),
+          features: plan.features,
+          popular: plan.highlighted,
+          cta: plan.monthlyPrice === 0 ? "Start free" : "Get started",
+          ctaHref: `/auth/sign-up${plan.name === "free" ? "" : `?plan=${plan.name}`}`,
+        }))}
         title="Your price here"
       />
 

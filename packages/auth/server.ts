@@ -16,7 +16,6 @@ import {
   getStripePriceMap,
   PLAN_NAMES,
   PLANS,
-  STRIPE_API_VERSION,
 } from "@repo/utils/payment";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
@@ -27,7 +26,6 @@ import { magicLink } from "better-auth/plugins/magic-link";
 import { multiSession } from "better-auth/plugins/multi-session";
 import { organization } from "better-auth/plugins/organization";
 import { twoFactor } from "better-auth/plugins/two-factor";
-import Stripe from "stripe";
 import { keys } from "./keys";
 import {
   ADMIN_ROLES,
@@ -41,6 +39,7 @@ import {
   orgOwnerRole,
   userRole,
 } from "./permissions";
+import { stripeClient } from "./stripe-client";
 import {
   handleStripeInvoiceEvent,
   handleSubscriptionComplete,
@@ -130,10 +129,6 @@ async function canUserCreateOrg(userId: string): Promise<boolean> {
     MAX_ORGS_PER_USER
   ).allowed;
 }
-
-const stripeClient = env.STRIPE_SECRET_KEY
-  ? new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: STRIPE_API_VERSION })
-  : null;
 
 export const auth = betterAuth({
   appName: env.NEXT_PUBLIC_APP_NAME,

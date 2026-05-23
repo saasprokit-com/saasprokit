@@ -1,5 +1,6 @@
 "use server";
 
+import { requireStripeClient } from "@repo/auth/stripe-client";
 import { database } from "@repo/database";
 import { createRequestLogger } from "@repo/logger/server";
 import { guardDowngrade } from "@repo/payment/guards";
@@ -14,7 +15,6 @@ import {
 import { redirect } from "next/navigation";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import { type ActionResult, checkOrgPermission } from "@/lib/auth/auth";
-import { getStripeClient } from "@/lib/billing/stripe";
 import {
   getActiveSubscription,
   getOrgMemberCount,
@@ -47,7 +47,7 @@ async function resolveStripeCustomerId(
     return { customerId: user.stripeCustomerId, created: false };
   }
 
-  const stripeCustomer = await getStripeClient().customers.create({
+  const stripeCustomer = await requireStripeClient().customers.create({
     email: user.email,
     name: user.name,
     metadata: {
@@ -134,31 +134,32 @@ export async function startCheckoutAction(
       return actionError("startCheckout");
     }
 
-    const checkoutSession = await getStripeClient().checkout.sessions.create({
-      customer: customerResult.customerId,
-      mode: "subscription",
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${env.NEXT_PUBLIC_APP_URL}/${validated.locale}/${organization.slug}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${env.NEXT_PUBLIC_APP_URL}/${validated.locale}/${organization.slug}/checkout/canceled`,
-      metadata: {
-        organizationId: validated.organizationId,
-        organizationSlug: organization.slug,
-        organizationName: organization.name,
-        userId,
-        planName: validated.planName,
-        billingInterval: validated.billingInterval,
-      },
-      subscription_data: {
+    const checkoutSession =
+      await requireStripeClient().checkout.sessions.create({
+        customer: customerResult.customerId,
+        mode: "subscription",
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: `${env.NEXT_PUBLIC_APP_URL}/${validated.locale}/${organization.slug}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${env.NEXT_PUBLIC_APP_URL}/${validated.locale}/${organization.slug}/checkout/canceled`,
         metadata: {
           organizationId: validated.organizationId,
           organizationSlug: organization.slug,
+          organizationName: organization.name,
+          userId,
           planName: validated.planName,
           billingInterval: validated.billingInterval,
         },
-      },
-      allow_promotion_codes: true,
-      billing_address_collection: "required",
-    });
+        subscription_data: {
+          metadata: {
+            organizationId: validated.organizationId,
+            organizationSlug: organization.slug,
+            planName: validated.planName,
+            billingInterval: validated.billingInterval,
+          },
+        },
+        allow_promotion_codes: true,
+        billing_address_collection: "required",
+      });
 
     userLogger.info(
       {
@@ -220,12 +221,11 @@ export async function openBillingPortalAction(
       return actionError("openBillingPortal");
     }
 
-    const portalSession = await getStripeClient().billingPortal.sessions.create(
-      {
+    const portalSession =
+      await requireStripeClient().billingPortal.sessions.create({
         customer: sub.stripeCustomerId,
         return_url: `${env.NEXT_PUBLIC_APP_URL}/${validated.locale}/${validated.organizationSlug}/billing`,
-      }
-    );
+      });
 
     userLogger.info(
       { portalSessionId: portalSession.id },
@@ -345,7 +345,7 @@ export async function changePlanAction(
       return actionError("changePlan");
     }
 
-    const stripeSub = await getStripeClient().subscriptions.retrieve(
+    const stripeSub = await requireStripeClient().subscriptions.retrieve(
       currentSubscription.stripeSubscriptionId
     );
 
@@ -360,7 +360,7 @@ export async function changePlanAction(
 
     const previousPriceId = currentItem.price.id;
 
-    await getStripeClient().subscriptions.update(
+    await requireStripeClient().subscriptions.update(
       currentSubscription.stripeSubscriptionId,
       {
         items: [{ id: currentItem.id, price: priceId }],
@@ -385,7 +385,7 @@ export async function changePlanAction(
         },
         "DB update failed after Stripe update — rolling back Stripe"
       );
-      await getStripeClient().subscriptions.update(
+      await requireStripeClient().subscriptions.update(
         currentSubscription.stripeSubscriptionId,
         {
           items: [{ id: currentItem.id, price: previousPriceId }],
