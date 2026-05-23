@@ -1,4 +1,4 @@
-export const STRIPE_API_VERSION = "2025-11-17.clover";
+export const STRIPE_API_VERSION = "2026-04-22.dahlia";
 
 export const PLAN_NAMES = {
   FREE: "free",

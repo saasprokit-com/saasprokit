@@ -15,14 +15,13 @@
     "./keys": "./keys.ts"
   },
   "dependencies": {
-    "@better-auth/stripe": "^1.4.5",
+    "@better-auth/stripe": "^1.6.11",
     "@repo/database": "workspace:*",
     "@repo/email": "workspace:*",
     "@repo/utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.10",
-    "better-auth": "^1.4.5",
-    "stripe": "^20.0.0",
+    "better-auth": "^1.6.11",
+    "stripe": "^22.1.1",
     "zod": "^4.2.1"
-  },
-  "devDependencies": {}
+  }
 }
