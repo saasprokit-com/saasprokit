@@ -21,7 +21,6 @@ export const keys = () =>
       // Stripe integration
       STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
       STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
-      STRIPE_FREE_PRICE_ID: z.string().optional(),
       STRIPE_PRO_PRICE_ID_MONTHLY: z.string().optional(),
       STRIPE_PRO_PRICE_ID_ANNUAL: z.string().optional(),
       STRIPE_ENTERPRISE_PRICE_ID_MONTHLY: z.string().optional(),
@@ -48,7 +47,6 @@ export const keys = () =>
       GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
       STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
       STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
-      STRIPE_FREE_PRICE_ID: process.env.STRIPE_FREE_PRICE_ID,
       STRIPE_PRO_PRICE_ID_MONTHLY: process.env.STRIPE_PRO_PRICE_ID_MONTHLY,
       STRIPE_PRO_PRICE_ID_ANNUAL: process.env.STRIPE_PRO_PRICE_ID_ANNUAL,
       STRIPE_ENTERPRISE_PRICE_ID_MONTHLY:

@@ -5,10 +5,6 @@ import {
 } from "@repo/auth/permissions";
 import type { InvitationStatusValue } from "@repo/utils/organization";
 
-// ============================================================================
-// Types
-// ============================================================================
-
 export interface Invitation {
   id: string;
   email: string;
@@ -46,14 +42,12 @@ export interface MemberPermissions {
   isOwner: boolean;
 }
 
-// ============================================================================
-// Helper to get permissions
-// ============================================================================
-
 export function getMemberPermissions(role: OrgRoleName): MemberPermissions {
   const { statements } = orgRoleDefinitions[role];
-  const memberPerms = statements.member ?? [];
-  const invitationPerms = statements.invitation ?? [];
+  // better-auth narrows default statements to ["read"]; @repo/auth/permissions
+  // extends them with create/update/delete at runtime.
+  const memberPerms = (statements.member ?? []) as readonly string[];
+  const invitationPerms = (statements.invitation ?? []) as readonly string[];
 
   return {
     canInvite: memberPerms.includes("create"),
@@ -67,16 +61,8 @@ export function getMemberPermissions(role: OrgRoleName): MemberPermissions {
   };
 }
 
-// ============================================================================
-// Shared Constants
-// ============================================================================
-
 export const TOKEN_PREVIEW_LENGTH = 8;
 export const SEARCH_DEBOUNCE_MS = 300;
-
-// ============================================================================
-// Shared Utilities
-// ============================================================================
 
 export function isInviteLinkExpired(expiresAt: Date | null): boolean {
   return expiresAt !== null && new Date(expiresAt) < new Date();
@@ -91,10 +77,6 @@ export function isInviteLinkMaxedOut(
 export function isInvitationExpired(expiresAt: Date): boolean {
   return new Date(expiresAt) < new Date();
 }
-
-// ============================================================================
-// Shared Role Descriptions
-// ============================================================================
 
 export const ROLE_DESCRIPTIONS: Record<string, string> = {
   [ORG_ROLES.ADMIN]:

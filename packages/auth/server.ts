@@ -16,7 +16,6 @@ import {
   getStripePriceMap,
   PLAN_NAMES,
   PLANS,
-  STRIPE_API_VERSION,
 } from "@repo/utils/payment";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
@@ -27,7 +26,6 @@ import { magicLink } from "better-auth/plugins/magic-link";
 import { multiSession } from "better-auth/plugins/multi-session";
 import { organization } from "better-auth/plugins/organization";
 import { twoFactor } from "better-auth/plugins/two-factor";
-import Stripe from "stripe";
 import { keys } from "./keys";
 import {
   ADMIN_ROLES,
@@ -41,14 +39,17 @@ import {
   orgOwnerRole,
   userRole,
 } from "./permissions";
+import { stripeClient } from "./stripe-client";
+import {
+  handleStripeInvoiceEvent,
+  handleSubscriptionComplete,
+  handleSubscriptionDeleted,
+  handleSubscriptionUpdate,
+} from "./stripe-hooks";
 
 // Validated environment variables — throws on startup if BETTER_AUTH_SECRET
 // is missing or < 32 chars, or if any other env var fails its Zod schema.
 const env = keys();
-
-// =============================================================================
-// Constants
-// =============================================================================
 
 // Invitation configuration
 const INVITATION_EXPIRES_IN_DAYS = 7;
@@ -68,10 +69,6 @@ const OTP_EXPIRES_IN_MINUTES = 5;
 // Two-factor authentication
 const TWO_FACTOR_OTP_PERIOD_MINUTES = 5;
 const TWO_FACTOR_DIGITS = 6;
-
-// =============================================================================
-// Billing Helpers
-// =============================================================================
 
 const MAX_ORGS_PER_USER = env.MAX_ORGS_PER_USER;
 
@@ -132,28 +129,6 @@ async function canUserCreateOrg(userId: string): Promise<boolean> {
     MAX_ORGS_PER_USER
   ).allowed;
 }
-
-// =============================================================================
-// Stripe Client
-// =============================================================================
-
-// CRITICAL: Fail explicitly if Stripe secret is not configured in production
-if (!env.STRIPE_SECRET_KEY && process.env.NODE_ENV === "production") {
-  throw new Error(
-    "STRIPE_SECRET_KEY environment variable is not configured. This is required for production deployments."
-  );
-}
-
-if (!env.STRIPE_SECRET_KEY) {
-  // biome-ignore lint/suspicious/noConsole: startup warning
-  console.warn(
-    "[auth] STRIPE_SECRET_KEY not set — Stripe features disabled in development"
-  );
-}
-
-const stripeClient = env.STRIPE_SECRET_KEY
-  ? new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: STRIPE_API_VERSION })
-  : null;
 
 export const auth = betterAuth({
   appName: env.NEXT_PUBLIC_APP_NAME,
@@ -375,9 +350,6 @@ export const auth = betterAuth({
       },
     }),
 
-    // Next.js cookie handling
-    nextCookies(),
-
     // Stripe subscription — only included when both keys are configured
     ...(stripeClient && env.STRIPE_WEBHOOK_SECRET
       ? [
@@ -385,8 +357,12 @@ export const auth = betterAuth({
             stripeClient,
             stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
             createCustomerOnSignUp: false,
+            onEvent: handleStripeInvoiceEvent,
             subscription: {
               enabled: true,
+              onSubscriptionComplete: handleSubscriptionComplete,
+              onSubscriptionUpdate: handleSubscriptionUpdate,
+              onSubscriptionDeleted: handleSubscriptionDeleted,
               plans: (() => {
                 const priceMap = getStripePriceMap({
                   proMonthly: env.STRIPE_PRO_PRICE_ID_MONTHLY,
@@ -395,14 +371,6 @@ export const auth = betterAuth({
                   enterpriseAnnual: env.STRIPE_ENTERPRISE_PRICE_ID_ANNUAL,
                 });
                 return [
-                  {
-                    name: PLAN_NAMES.FREE,
-                    priceId: env.STRIPE_FREE_PRICE_ID ?? "",
-                    limits: {
-                      maxMembers: PLANS.free.limits.maxMembers,
-                      maxStorageMB: PLANS.free.limits.maxStorageMB,
-                    },
-                  },
                   {
                     name: PLAN_NAMES.PRO,
                     priceId: priceMap.pro_monthly,
@@ -439,6 +407,9 @@ export const auth = betterAuth({
           }),
         ]
       : []),
+
+    // Next.js cookie handling
+    nextCookies(),
   ],
 });
 
