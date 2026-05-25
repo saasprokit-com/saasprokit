@@ -4,6 +4,12 @@ import { z } from "zod";
 // Default SMTP port for Maildev development
 const DEFAULT_SMTP_PORT = 1025;
 
+// Env vars are strings; z.coerce.boolean() uses Boolean() which is truthy for
+// any non-empty string (Boolean("false") === true). Use this instead.
+const stringBool = z
+  .union([z.boolean(), z.string()])
+  .transform((v) => (typeof v === "boolean" ? v : v.toLowerCase() === "true"));
+
 export const keys = () =>
   createEnv({
     server: {
@@ -31,14 +37,12 @@ export const keys = () =>
         .number()
         .default(DEFAULT_SMTP_PORT)
         .describe("SMTP server port (1025 for Maildev)"),
-      SMTP_SECURE: z.coerce
-        .boolean()
+      SMTP_SECURE: stringBool
         .default(false)
         .describe("Use TLS (true for port 465)"),
       SMTP_USER: z.string().optional().describe("SMTP authentication username"),
       SMTP_PASS: z.string().optional().describe("SMTP authentication password"),
-      SMTP_POOL: z.coerce
-        .boolean()
+      SMTP_POOL: stringBool
         .default(false)
         .describe("Enable connection pooling"),
     },
