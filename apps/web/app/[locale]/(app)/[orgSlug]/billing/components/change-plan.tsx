@@ -39,7 +39,10 @@ interface ChangePlanProps {
 }
 
 export function ChangePlan({ errors, organizationId }: ChangePlanProps) {
-  const { locale } = useParams<{ locale: string }>();
+  const { locale, orgSlug } = useParams<{
+    locale: string;
+    orgSlug: string;
+  }>();
   const { planName: currentPlan, refetch } = useSubscription();
   const [billingPeriod, setBillingPeriod] =
     useState<BillingInterval>("monthly");
@@ -176,6 +179,7 @@ export function ChangePlan({ errors, organizationId }: ChangePlanProps) {
                         errors={errors}
                         locale={locale || "en"}
                         organizationId={organizationId}
+                        organizationSlug={orgSlug}
                         planName={plan.name}
                       />
                     )}
