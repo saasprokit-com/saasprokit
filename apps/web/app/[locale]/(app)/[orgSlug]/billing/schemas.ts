@@ -1,20 +1,5 @@
-import languine from "@repo/internationalization/languine.json" with {
-  type: "json",
-};
 import { BILLING_INTERVALS, PLAN_NAMES } from "@repo/utils/payment";
 import { z } from "zod";
-
-const locales = [languine.locale.source, ...languine.locale.targets] as const;
-
-export const billingPortalRequestSchema = z
-  .object({
-    organizationId: z.string().min(1),
-    organizationSlug: z.string().min(1),
-    locale: z.enum(locales).optional().default("en"),
-  })
-  .strict();
-
-export type BillingPortalRequest = z.infer<typeof billingPortalRequestSchema>;
 
 export const changePlanRequestSchema = z
   .object({

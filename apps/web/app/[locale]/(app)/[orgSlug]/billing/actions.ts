@@ -12,7 +12,6 @@ import {
   type StripePriceIds,
   type StripePriceKey,
 } from "@repo/utils/payment";
-import { redirect } from "next/navigation";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import { type ActionResult, checkOrgPermission } from "@/lib/auth/auth";
 import {
@@ -21,70 +20,7 @@ import {
   getOrgStorageUsage,
 } from "@/lib/billing/subscription-queries";
 import { env } from "@/lib/env";
-import {
-  type BillingPortalRequest,
-  billingPortalRequestSchema,
-  type ChangePlanRequest,
-  changePlanRequestSchema,
-} from "./schemas";
-
-export async function openBillingPortalAction(
-  input: BillingPortalRequest,
-  _prevState: ActionResult | null,
-  _formData: FormData
-): Promise<ActionResult> {
-  const logger = createRequestLogger({ action: "openBillingPortal" });
-
-  let portalUrl: string;
-
-  try {
-    const validated = billingPortalRequestSchema.parse(input);
-
-    const caller = await checkOrgPermission(validated.organizationId, {
-      organization: ["update"],
-    });
-    if (!caller) {
-      return actionError("unauthorized");
-    }
-
-    const userId = caller.userId;
-    const userLogger = logger.child({ userId });
-
-    const sub = await database.subscription.findFirst({
-      where: { referenceId: validated.organizationId },
-      select: { stripeCustomerId: true },
-    });
-
-    if (!sub?.stripeCustomerId) {
-      userLogger.error(
-        { organizationId: validated.organizationId },
-        "No Stripe customer found for organization"
-      );
-      return actionError("openBillingPortal");
-    }
-
-    const portalSession =
-      await requireStripeClient().billingPortal.sessions.create({
-        customer: sub.stripeCustomerId,
-        return_url: `${env.NEXT_PUBLIC_APP_URL}/${validated.locale}/${validated.organizationSlug}/billing`,
-      });
-
-    userLogger.info(
-      { portalSessionId: portalSession.id },
-      "Billing portal session created"
-    );
-
-    portalUrl = portalSession.url;
-  } catch (error) {
-    return toActionError(error, { fallback: "openBillingPortal", logger });
-  }
-
-  redirect(portalUrl);
-}
-
-// =============================================================================
-// Change Plan (Downgrade)
-// =============================================================================
+import { type ChangePlanRequest, changePlanRequestSchema } from "./schemas";
 
 export interface ChangePlanResult {
   action: "cancel" | "changed";
