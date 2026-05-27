@@ -1,17 +1,15 @@
 "use server";
 
-import { requireStripeClient } from "@repo/auth/stripe-client";
-import { database } from "@repo/database";
+import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { guardDowngrade } from "@repo/payment/guards";
 import { comparePlans } from "@repo/payment/plans";
 import {
-  getStripePriceMap,
+  BILLING_INTERVALS,
   PLAN_NAMES,
   type PlanName,
-  type StripePriceIds,
-  type StripePriceKey,
 } from "@repo/utils/payment";
+import { headers } from "next/headers";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import { type ActionResult, checkOrgPermission } from "@/lib/auth/auth";
 import {
@@ -19,7 +17,6 @@ import {
   getOrgMemberCount,
   getOrgStorageUsage,
 } from "@/lib/billing/subscription-queries";
-import { env } from "@/lib/env";
 import { type ChangePlanRequest, changePlanRequestSchema } from "./schemas";
 
 export interface ChangePlanResult {
@@ -44,8 +41,7 @@ export async function changePlanAction(
       return actionError("unauthorized");
     }
 
-    const userId = caller.userId;
-    const userLogger = logger.child({ userId });
+    const userLogger = logger.child({ userId: caller.userId });
 
     const currentSubscription = await getActiveSubscription(
       validated.organizationId
@@ -93,86 +89,15 @@ export async function changePlanAction(
       return { success: true, data: { action: "cancel" } };
     }
 
-    if (!currentSubscription.stripeSubscriptionId) {
-      userLogger.error(
-        { organizationId: validated.organizationId },
-        "No Stripe subscription found"
-      );
-      return actionError("changePlan");
-    }
-
-    const stripePrices: StripePriceIds = {
-      proMonthly: env.STRIPE_PRO_PRICE_ID_MONTHLY,
-      proAnnual: env.STRIPE_PRO_PRICE_ID_ANNUAL,
-      enterpriseMonthly: env.STRIPE_ENTERPRISE_PRICE_ID_MONTHLY,
-      enterpriseAnnual: env.STRIPE_ENTERPRISE_PRICE_ID_ANNUAL,
-    };
-    const priceMap = getStripePriceMap(stripePrices);
-    const priceKey =
-      `${validated.targetPlan}_${validated.billingInterval}` as StripePriceKey;
-    const priceId = priceMap[priceKey];
-
-    if (!priceId) {
-      userLogger.error(
-        {
-          targetPlan: validated.targetPlan,
-          billingInterval: validated.billingInterval,
-        },
-        "Price ID not configured for plan/interval"
-      );
-      return actionError("changePlan");
-    }
-
-    const stripeSub = await requireStripeClient().subscriptions.retrieve(
-      currentSubscription.stripeSubscriptionId
-    );
-
-    const currentItem = stripeSub.items.data[0];
-    if (!currentItem) {
-      userLogger.error(
-        { stripeSubscriptionId: currentSubscription.stripeSubscriptionId },
-        "No subscription items found"
-      );
-      return actionError("changePlan");
-    }
-
-    const previousPriceId = currentItem.price.id;
-
-    await requireStripeClient().subscriptions.update(
-      currentSubscription.stripeSubscriptionId,
-      {
-        items: [{ id: currentItem.id, price: priceId }],
-        proration_behavior: "create_prorations",
-        metadata: {
-          ...stripeSub.metadata,
-          planName: validated.targetPlan,
-          billingInterval: validated.billingInterval,
-        },
-      }
-    );
-
-    try {
-      await database.subscription.update({
-        where: { id: currentSubscription.id },
-        data: { plan: validated.targetPlan },
-      });
-    } catch (dbError) {
-      userLogger.error(
-        {
-          err: dbError instanceof Error ? dbError : new Error(String(dbError)),
-        },
-        "DB update failed after Stripe update — rolling back Stripe"
-      );
-      await requireStripeClient().subscriptions.update(
-        currentSubscription.stripeSubscriptionId,
-        {
-          items: [{ id: currentItem.id, price: previousPriceId }],
-          proration_behavior: "none",
-          metadata: stripeSub.metadata,
-        }
-      );
-      throw dbError;
-    }
+    await auth.api.upgradeSubscription({
+      headers: await headers(),
+      body: {
+        plan: validated.targetPlan,
+        annual: validated.billingInterval === BILLING_INTERVALS.YEARLY,
+        referenceId: validated.organizationId,
+        scheduleAtPeriodEnd: true,
+      },
+    });
 
     userLogger.info(
       {
@@ -180,7 +105,7 @@ export async function changePlanAction(
         targetPlan: validated.targetPlan,
         billingInterval: validated.billingInterval,
       },
-      "Plan downgraded successfully"
+      "Plan downgrade scheduled at period end"
     );
 
     return { success: true, data: { action: "changed" } };

@@ -1,4 +1,8 @@
-import { type PlanName, UNLIMITED } from "@repo/utils/payment";
+import {
+  type PlanName,
+  SUBSCRIPTION_STATUS,
+  UNLIMITED,
+} from "@repo/utils/payment";
 import { getCurrentPlan } from "./helpers";
 import { comparePlans, getPlanLimits } from "./plans";
 import type { Subscription } from "./types";
@@ -11,7 +15,9 @@ export interface GuardResult {
 }
 
 /**
- * Guard: Check if downgrade is safe based on current resource usage
+ * Guard: Check if downgrade is safe based on current subscription status
+ * and resource usage. Blocks past_due / incomplete subscriptions because
+ * Stripe's retry logic doesn't compose cleanly with mid-flight plan changes.
  */
 export function guardDowngrade(
   subscription: Subscription | null | undefined,
@@ -26,6 +32,17 @@ export function guardDowngrade(
     return {
       allowed: false,
       reason: `${targetPlan} is not a downgrade from ${currentPlan}`,
+    };
+  }
+
+  if (
+    subscription?.status === SUBSCRIPTION_STATUS.PAST_DUE ||
+    subscription?.status === SUBSCRIPTION_STATUS.INCOMPLETE
+  ) {
+    return {
+      allowed: false,
+      reason:
+        "Resolve the outstanding payment on your current plan before changing tiers.",
     };
   }
 

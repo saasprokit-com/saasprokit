@@ -62,7 +62,9 @@ export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
           <CurrentPlan />
           <ChangePlan
             errors={dict.errors.action}
+            memberCount={usageData.usageStats.members.current}
             organizationId={orgContext.organizationId}
+            storageMB={usageData.usageStats.storage.currentMB}
           />
           <UsageStats {...usageData} />
           <BillingActions

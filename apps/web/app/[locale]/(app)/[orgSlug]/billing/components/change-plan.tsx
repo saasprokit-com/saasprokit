@@ -11,6 +11,7 @@ import {
 } from "@repo/design-system/components/ui/card";
 import { Switch } from "@repo/design-system/components/ui/switch";
 import type { ActionErrorMessages } from "@repo/internationalization";
+import { guardDowngrade } from "@repo/payment/guards";
 import { useSubscription } from "@repo/payment/hooks";
 import {
   comparePlans,
@@ -36,14 +37,21 @@ import { UpgradeForm } from "./upgrade-form";
 interface ChangePlanProps {
   errors: ActionErrorMessages;
   organizationId: string;
+  memberCount: number;
+  storageMB: number;
 }
 
-export function ChangePlan({ errors, organizationId }: ChangePlanProps) {
+export function ChangePlan({
+  errors,
+  organizationId,
+  memberCount,
+  storageMB,
+}: ChangePlanProps) {
   const { locale, orgSlug } = useParams<{
     locale: string;
     orgSlug: string;
   }>();
-  const { planName: currentPlan, refetch } = useSubscription();
+  const { planName: currentPlan, subscription, refetch } = useSubscription();
   const [billingPeriod, setBillingPeriod] =
     useState<BillingInterval>("monthly");
 
@@ -124,6 +132,10 @@ export function ChangePlan({ errors, organizationId }: ChangePlanProps) {
             const isUpgrade = direction === "upgrade";
             const isDowngrade = direction === "downgrade";
             const price = getPrice(plan.name);
+            const downgradeBlockReason = isDowngrade
+              ? guardDowngrade(subscription, plan.name, memberCount, storageMB)
+                  .reason
+              : undefined;
 
             return (
               <Card
@@ -187,6 +199,7 @@ export function ChangePlan({ errors, organizationId }: ChangePlanProps) {
                   {isDowngrade && (
                     <DowngradeButton
                       billingInterval={billingPeriod}
+                      blockReason={downgradeBlockReason}
                       currentPlan={currentPlan}
                       errors={errors}
                       onSuccess={handleDowngradeSuccess}
