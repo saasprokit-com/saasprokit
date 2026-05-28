@@ -344,10 +344,6 @@ export const auth = betterAuth({
             stripeClient,
             stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
             createCustomerOnSignUp: false,
-            // Subscriptions are scoped to organizations, not users.
-            // This makes the plugin's findReferenceByStripeCustomerId look up
-            // the organization table first (by stripeCustomerId), so webhook
-            // events resolve to referenceId = organizationId.
             organization: { enabled: true },
             onEvent: handleStripeInvoiceEvent,
             subscription: {
