@@ -81,6 +81,21 @@ async function canManageBilling(
   return member.role === ORG_ROLES.OWNER || member.role === ORG_ROLES.ADMIN;
 }
 
+/**
+ * Check if a user is a member of an organization (any role).
+ * Used for read-only subscription access (list-subscription).
+ */
+async function isOrgMember(
+  userId: string,
+  organizationId: string
+): Promise<boolean> {
+  const member = await database.member.findFirst({
+    where: { userId, organizationId },
+    select: { id: true },
+  });
+  return member !== null;
+}
+
 async function canUserCreateOrg(userId: string): Promise<boolean> {
   const memberships = await database.member.findMany({
     where: { userId, role: ORG_ROLES.OWNER },
@@ -372,11 +387,15 @@ export const auth = betterAuth({
                 ];
               })(),
               authorizeReference: async ({ user, referenceId, action }) => {
-                // Authorize organization subscription management
-                // Only org owners and admins can manage billing
+                // Read-only: any org member can view subscription state.
+                if (action === "list-subscription") {
+                  return await isOrgMember(user.id, referenceId);
+                }
+                // Mutations + portal: only org owners and admins.
                 if (
                   action === "upgrade-subscription" ||
                   action === "cancel-subscription" ||
+                  action === "restore-subscription" ||
                   action === "billing-portal"
                 ) {
                   return await canManageBilling(user.id, referenceId);

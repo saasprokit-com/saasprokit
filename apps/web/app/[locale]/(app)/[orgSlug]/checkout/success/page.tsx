@@ -1,15 +1,11 @@
-import { Button } from "@repo/design-system/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@repo/design-system/components/ui/card";
-import { CheckCircle } from "lucide-react";
-import Link from "next/link";
+import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
+import { ORG_PAGES, orgRoutes } from "@/lib/routes";
+import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
+import { CheckoutErrorCard } from "./components/checkout-error-card";
+import { CheckoutSuccessCard } from "./components/checkout-success-card";
+import { verifyCheckoutSession } from "./verify-session";
 
-interface Props {
+interface CheckoutSuccessPageProps {
   params: Promise<{ locale: string; orgSlug: string }>;
   searchParams: Promise<{ session_id?: string }>;
 }
@@ -17,53 +13,39 @@ interface Props {
 export default async function CheckoutSuccessPage({
   params,
   searchParams,
-}: Props) {
+}: CheckoutSuccessPageProps) {
   const { locale, orgSlug } = await params;
-  const resolvedSearchParams = await searchParams;
-  const sessionId = resolvedSearchParams.session_id;
+  const { session_id: sessionId } = await searchParams;
+
+  const orgContext = await validateOrgMembershipBySlug(orgSlug);
+  const billingHref = `/${locale}${orgRoutes.billing(orgSlug)}`;
+  const dashboardHref = `/${locale}/${orgSlug}`;
+
+  const result = await verifyCheckoutSession(
+    sessionId,
+    orgContext.organizationId
+  );
+
+  if (result.ok) {
+    // Subscription is paid and belongs to this org — refresh the billing
+    // page cache so the new plan is visible immediately.
+    await revalidateOrgPage(orgSlug, ORG_PAGES.BILLING);
+  }
 
   return (
     <div className="container mx-auto px-4 py-16">
       <div className="mx-auto max-w-2xl">
-        <Card>
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle className="h-10 w-10 text-green-600" />
-            </div>
-            <CardTitle className="text-2xl">Subscription Activated!</CardTitle>
-            <CardDescription>
-              Your payment was successful and your subscription is now active.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {sessionId && (
-              <div className="rounded-lg bg-muted p-4">
-                <p className="text-muted-foreground text-sm">
-                  Session ID:{" "}
-                  <code className="font-mono text-xs">{sessionId}</code>
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <p className="text-muted-foreground text-sm">
-                You'll receive a confirmation email shortly. Your subscription
-                includes:
-              </p>
-              <ul className="list-inside list-disc space-y-1 text-muted-foreground text-sm">
-                <li>Access to all premium features</li>
-                <li>Priority support</li>
-                <li>Cancel anytime</li>
-              </ul>
-            </div>
-
-            <div className="flex gap-3">
-              <Button asChild className="flex-1">
-                <Link href={`/${locale}/${orgSlug}`}>Go to Dashboard</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {result.ok ? (
+          <CheckoutSuccessCard
+            billingHref={billingHref}
+            dashboardHref={dashboardHref}
+          />
+        ) : (
+          <CheckoutErrorCard
+            billingHref={billingHref}
+            reason={result.reason}
+          />
+        )}
       </div>
     </div>
   );
