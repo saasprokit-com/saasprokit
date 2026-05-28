@@ -9,6 +9,17 @@ import {
   sendTwoFactorOTPEmail,
   sendVerificationOTPEmail,
 } from "@repo/email";
+import {
+  COOKIE_CACHE_MAX_AGE_MINUTES,
+  INVITATION_EXPIRES_IN_DAYS,
+  MAGIC_LINK_EXPIRES_IN_MINUTES,
+  OTP_EXPIRES_IN_MINUTES,
+  OTP_LENGTH,
+  SESSION_EXPIRES_IN_DAYS,
+  SESSION_UPDATE_AGE_DAYS,
+  TWO_FACTOR_DIGITS,
+  TWO_FACTOR_OTP_PERIOD_MINUTES,
+} from "@repo/utils/auth";
 import { SECONDS_PER_DAY, SECONDS_PER_MINUTE } from "@repo/utils/date";
 import {
   ACTIVE_STATUSES,
@@ -50,25 +61,6 @@ import {
 // Validated environment variables — throws on startup if BETTER_AUTH_SECRET
 // is missing or < 32 chars, or if any other env var fails its Zod schema.
 const env = keys();
-
-// Invitation configuration
-const INVITATION_EXPIRES_IN_DAYS = 7;
-
-// Session configuration
-const SESSION_EXPIRES_IN_DAYS = 7;
-const SESSION_UPDATE_AGE_DAYS = 1;
-const COOKIE_CACHE_MAX_AGE_MINUTES = 5;
-
-// Magic link configuration
-const MAGIC_LINK_EXPIRES_IN_MINUTES = 10;
-
-// OTP configuration
-const OTP_LENGTH = 6;
-const OTP_EXPIRES_IN_MINUTES = 5;
-
-// Two-factor authentication
-const TWO_FACTOR_OTP_PERIOD_MINUTES = 5;
-const TWO_FACTOR_DIGITS = 6;
 
 const MAX_ORGS_PER_USER = env.MAX_ORGS_PER_USER;
 

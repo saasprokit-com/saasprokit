@@ -9,7 +9,7 @@ export const keys = () =>
     server: {
       // Better Auth core
       BETTER_AUTH_SECRET: z.string().min(BETTER_AUTH_SECRET_LENGTH),
-      BETTER_AUTH_URL: z.string().url().optional(),
+      BETTER_AUTH_URL: z.url().optional(),
       BETTER_AUTH_TRUSTED_ORIGINS: z.string().optional(),
 
       // OAuth providers
@@ -34,7 +34,7 @@ export const keys = () =>
         .default(MAX_ORGS_PER_USER),
     },
     client: {
-      NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+      NEXT_PUBLIC_APP_URL: z.url().optional(),
       NEXT_PUBLIC_APP_NAME: z.string().min(1).optional(),
     },
     runtimeEnv: {

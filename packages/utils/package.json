@@ -4,6 +4,7 @@
   "private": true,
   "exports": {
     "./slug": "./slug.ts",
+    "./auth": "./auth.ts",
     "./date": "./date.ts",
     "./organization": "./organization.ts",
     "./payment": "./payment.ts",
