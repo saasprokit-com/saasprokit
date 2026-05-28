@@ -72,9 +72,8 @@ The Next.js app uses grouped routes (parentheses in directory names) to organize
 - `auth` — Authentication flows: sign-in, sign-up, magic links, password reset, 2FA
 
 **API routes** (`/api/`):
-- `auth/[...all]/` — Better Auth handler
+- `auth/[...all]/` — Better Auth handler (incl. Stripe webhooks via `@better-auth/stripe`)
 - `health/` — Health check endpoint (database + auth validation)
-- `stripe/webhook/` — Stripe event handling
 - `upload/` — File uploads
 - `user/activity/` — User activity tracking
 
@@ -325,6 +324,8 @@ RESEND_API_KEY=...
 EMAIL_FROM=noreply@yourdomain.com
 STORAGE_PROVIDER=local
 ```
+
+**Stripe Dashboard webhook URL**: point the webhook endpoint at `${NEXT_PUBLIC_APP_URL}/api/auth/stripe/webhook`. Signature verification and event dispatch are handled by `@better-auth/stripe`; custom handlers live in `packages/auth/stripe-hooks.ts`.
 
 ## Common Developer Workflows
 

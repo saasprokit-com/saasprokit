@@ -26,7 +26,6 @@ export default async function DangerZonePage({ params }: DangerZonePageProps) {
         ]}
       />
       <ContentSection
-        contentClassName="lg:max-w-2xl"
         description="Permanently delete your account and all associated data"
         title="Danger Zone"
       >

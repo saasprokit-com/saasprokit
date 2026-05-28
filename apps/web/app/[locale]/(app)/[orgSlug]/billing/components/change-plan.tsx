@@ -1,7 +1,6 @@
 "use client";
 
 import { Badge } from "@repo/design-system/components/ui/badge";
-import { Button } from "@repo/design-system/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,35 +11,31 @@ import {
 import { Switch } from "@repo/design-system/components/ui/switch";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useSubscription } from "@repo/payment/hooks";
-import {
-  comparePlans,
-  getAllPlans,
-  getAnnualSavingsPercent,
-  getMonthlyFromAnnual,
-} from "@repo/payment/plans";
-import { MONTHS_PER_YEAR } from "@repo/utils/date";
-import {
-  type BillingInterval,
-  PLAN_DISPLAY_NAMES,
-  PLAN_NAMES,
-  type PlanName,
-  PRICING,
-} from "@repo/utils/payment";
-import { CheckCircle2 } from "lucide-react";
+import { getAllPlans, getAnnualSavingsPercent } from "@repo/payment/plans";
+import { type BillingInterval, PLAN_NAMES } from "@repo/utils/payment";
 import { useParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { DowngradeButton } from "./downgrade-button";
-import { UpgradeForm } from "./upgrade-form";
+import { PlanCard } from "./plan-card";
 
 interface ChangePlanProps {
   errors: ActionErrorMessages;
   organizationId: string;
+  memberCount: number;
+  storageMB: number;
 }
 
-export function ChangePlan({ errors, organizationId }: ChangePlanProps) {
-  const { locale } = useParams<{ locale: string }>();
-  const { planName: currentPlan, refetch } = useSubscription();
+export function ChangePlan({
+  errors,
+  organizationId,
+  memberCount,
+  storageMB,
+}: ChangePlanProps) {
+  const { locale, orgSlug } = useParams<{
+    locale: string;
+    orgSlug: string;
+  }>();
+  const { planName: currentPlan, subscription, refetch } = useSubscription();
   const [billingPeriod, setBillingPeriod] =
     useState<BillingInterval>("monthly");
 
@@ -58,19 +53,6 @@ export function ChangePlan({ errors, organizationId }: ChangePlanProps) {
 
   const plans = getAllPlans();
   const savingsPercent = getAnnualSavingsPercent(PLAN_NAMES.PRO);
-
-  const getPrice = (planName: PlanName) => {
-    const key = planName.toUpperCase();
-    const pricing =
-      key in PRICING ? PRICING[key as keyof typeof PRICING] : null;
-    if (!pricing) {
-      return 0;
-    }
-    if (billingPeriod === "yearly") {
-      return getMonthlyFromAnnual(pricing.YEARLY);
-    }
-    return pricing.MONTHLY;
-  };
 
   return (
     <Card>
@@ -115,85 +97,22 @@ export function ChangePlan({ errors, organizationId }: ChangePlanProps) {
       </CardHeader>
       <CardContent>
         <div className="grid gap-4 md:grid-cols-3">
-          {plans.map((plan) => {
-            const direction = comparePlans(currentPlan, plan.name);
-            const isCurrent = direction === "same";
-            const isUpgrade = direction === "upgrade";
-            const isDowngrade = direction === "downgrade";
-            const price = getPrice(plan.name);
-
-            return (
-              <Card
-                className={
-                  isCurrent ? "border-primary bg-primary/5" : undefined
-                }
-                key={plan.name}
-              >
-                <CardContent className="p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <h3 className="font-semibold text-lg">
-                      {PLAN_DISPLAY_NAMES[plan.name]}
-                    </h3>
-                    {isCurrent && <Badge variant="default">Current Plan</Badge>}
-                  </div>
-
-                  <p className="mb-2 text-muted-foreground text-sm">
-                    {plan.description}
-                  </p>
-
-                  <div className="mb-4">
-                    <span className="font-bold text-2xl">
-                      {price === 0 ? "Free" : `$${price}/mo`}
-                    </span>
-                    {billingPeriod === "yearly" && price > 0 && (
-                      <p className="mt-1 text-muted-foreground text-xs">
-                        Billed annually ($
-                        {(price * MONTHS_PER_YEAR).toFixed(0)}
-                        /year)
-                      </p>
-                    )}
-                  </div>
-
-                  <ul className="mb-4 space-y-1 text-sm">
-                    {plan.features.map((feature) => (
-                      <li className="flex items-center gap-2" key={feature}>
-                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />
-                        <span className="text-muted-foreground">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {isCurrent && (
-                    <Button className="w-full" disabled variant="outline">
-                      Current Plan
-                    </Button>
-                  )}
-
-                  {isUpgrade &&
-                    (plan.name === "pro" || plan.name === "enterprise") && (
-                      <UpgradeForm
-                        billingInterval={billingPeriod}
-                        errors={errors}
-                        locale={locale || "en"}
-                        organizationId={organizationId}
-                        planName={plan.name}
-                      />
-                    )}
-
-                  {isDowngrade && (
-                    <DowngradeButton
-                      billingInterval={billingPeriod}
-                      currentPlan={currentPlan}
-                      errors={errors}
-                      onSuccess={handleDowngradeSuccess}
-                      organizationId={organizationId}
-                      planName={plan.name}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+          {plans.map((plan) => (
+            <PlanCard
+              billingPeriod={billingPeriod}
+              currentPlan={currentPlan}
+              errors={errors}
+              key={plan.name}
+              locale={locale || "en"}
+              memberCount={memberCount}
+              onDowngradeSuccess={handleDowngradeSuccess}
+              organizationId={organizationId}
+              organizationSlug={orgSlug}
+              plan={plan}
+              storageMB={storageMB}
+              subscription={subscription}
+            />
+          ))}
         </div>
       </CardContent>
     </Card>

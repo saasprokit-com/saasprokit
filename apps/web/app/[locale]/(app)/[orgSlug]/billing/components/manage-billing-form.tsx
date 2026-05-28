@@ -1,12 +1,11 @@
 "use client";
 
+import { subscription } from "@repo/auth/client";
 import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { CreditCard, Loader2 } from "lucide-react";
-import { useActionState, useEffect } from "react";
+import { useTransition } from "react";
 import { toast } from "sonner";
-import type { ActionResult } from "@/lib/auth/auth";
-import { openBillingPortalAction } from "../actions";
 
 interface ManageBillingFormProps {
   errors: ActionErrorMessages;
@@ -21,40 +20,40 @@ export function ManageBillingForm({
   organizationSlug,
   locale,
 }: ManageBillingFormProps) {
-  const boundAction = openBillingPortalAction.bind(null, {
-    organizationId,
-    organizationSlug,
-    locale,
-  });
+  const [isPending, startTransition] = useTransition();
 
-  const [state, formAction, isPending] = useActionState<
-    ActionResult | null,
-    FormData
-  >(boundAction, null);
-
-  useEffect(() => {
-    if (state && !state.success && state.error) {
-      toast.error(errors.openBillingPortal, {
-        description: state.error,
+  const handleOpenPortal = () => {
+    startTransition(async () => {
+      const { error } = await subscription.billingPortal({
+        referenceId: organizationId,
+        returnUrl: `${window.location.origin}/${locale}/${organizationSlug}/billing`,
       });
-    }
-  }, [state, errors.openBillingPortal]);
+
+      if (error) {
+        toast.error(errors.openBillingPortal, { description: error.message });
+      }
+      // On success, subscription.billingPortal redirects the browser to Stripe.
+    });
+  };
 
   return (
-    <form action={formAction}>
-      <Button disabled={isPending} type="submit" variant="outline">
-        {isPending ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Opening...
-          </>
-        ) : (
-          <>
-            <CreditCard className="mr-2 h-4 w-4" />
-            Manage Billing
-          </>
-        )}
-      </Button>
-    </form>
+    <Button
+      disabled={isPending}
+      onClick={handleOpenPortal}
+      type="button"
+      variant="outline"
+    >
+      {isPending ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Opening...
+        </>
+      ) : (
+        <>
+          <CreditCard className="mr-2 h-4 w-4" />
+          Manage Billing
+        </>
+      )}
+    </Button>
   );
 }

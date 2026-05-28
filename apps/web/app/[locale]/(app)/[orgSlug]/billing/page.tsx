@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@repo/design-system/components/ui/card";
 import { getDictionary } from "@repo/internationalization";
-import { checkOrgPermission } from "@/lib/auth/auth";
+import { PermissionGate } from "@/components/permission-gate";
 import { orgRoutes } from "@/lib/routes";
 import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
 import { BillingActions } from "./components/billing-actions";
@@ -27,12 +27,7 @@ export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
     getDictionary(locale),
   ]);
 
-  const [canManage, usageData] = await Promise.all([
-    checkOrgPermission(orgContext.organizationId, {
-      organization: ["update"],
-    }).then(Boolean),
-    getBillingUsageData(orgContext.organizationId),
-  ]);
+  const usageData = await getBillingUsageData(orgContext.organizationId);
 
   return (
     <>
@@ -46,33 +41,38 @@ export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
         description="Manage your organization's subscription and billing"
         title="Billing"
       >
-        {canManage ? (
-          <>
-            <CurrentPlan />
-            <ChangePlan
-              errors={dict.errors.action}
-              organizationId={orgContext.organizationId}
-            />
-            <UsageStats {...usageData} />
-            <BillingActions
-              errors={dict.errors.action}
-              organizationId={orgContext.organizationId}
-              organizationSlug={orgSlug}
-            />
-          </>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Access Restricted</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm">
-                Only organization owners and admins can manage billing. Please
-                contact your organization administrator for billing changes.
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        <PermissionGate
+          fallback={
+            <Card>
+              <CardHeader>
+                <CardTitle>Access Restricted</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm">
+                  Only organization owners and admins can manage billing.
+                  Please contact your organization administrator for billing
+                  changes.
+                </p>
+              </CardContent>
+            </Card>
+          }
+          organizationId={orgContext.organizationId}
+          permissions={{ organization: ["update"] }}
+        >
+          <CurrentPlan />
+          <ChangePlan
+            errors={dict.errors.action}
+            memberCount={usageData.usageStats.members.current}
+            organizationId={orgContext.organizationId}
+            storageMB={usageData.usageStats.storage.currentMB}
+          />
+          <UsageStats {...usageData} />
+          <BillingActions
+            errors={dict.errors.action}
+            organizationId={orgContext.organizationId}
+            organizationSlug={orgSlug}
+          />
+        </PermissionGate>
       </ContentSection>
     </>
   );

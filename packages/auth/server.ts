@@ -89,19 +89,6 @@ async function canManageBilling(
   return member.role === ORG_ROLES.OWNER || member.role === ORG_ROLES.ADMIN;
 }
 
-/**
- * Check if a user can create another organization.
- * NOTE: Simplified version for auth plugin callback (avoids circular dep with @repo/payment).
- * Canonical version with user-facing error messages: apps/web/lib/billing/subscription-queries.ts
- *
- * Subscription plans are per-organization, not per-user.
- *
- * Rules:
- * 1. Every user gets 1 free organization on signup (no payment required)
- * 2. To create additional organizations, all existing orgs must have
- *    paid subscriptions (only 1 free org allowed at a time)
- * 3. Hard cap of 10 organizations per user
- */
 async function canUserCreateOrg(userId: string): Promise<boolean> {
   const memberships = await database.member.findMany({
     where: { userId, role: ORG_ROLES.OWNER },
@@ -357,6 +344,7 @@ export const auth = betterAuth({
             stripeClient,
             stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
             createCustomerOnSignUp: false,
+            organization: { enabled: true },
             onEvent: handleStripeInvoiceEvent,
             subscription: {
               enabled: true,

@@ -1,63 +1,73 @@
 "use client";
 
+import { subscription } from "@repo/auth/client";
 import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { PLAN_DISPLAY_NAMES } from "@repo/utils/payment";
+import {
+  BILLING_INTERVALS,
+  type BillingInterval,
+  PLAN_DISPLAY_NAMES,
+  type PlanName,
+} from "@repo/utils/payment";
 import { ArrowUp, Loader2 } from "lucide-react";
-import { useActionState, useEffect } from "react";
+import { useTransition } from "react";
 import { toast } from "sonner";
-import type { ActionResult } from "@/lib/auth/auth";
-import { startCheckoutAction } from "../actions";
-import type { CheckoutRequest } from "../schemas";
 
-type UpgradeFormProps = Pick<
-  CheckoutRequest,
-  "organizationId" | "planName" | "billingInterval"
-> & {
+interface UpgradeFormProps {
+  organizationId: string;
+  organizationSlug: string;
+  planName: PlanName;
+  billingInterval: BillingInterval;
   locale: string;
   errors: ActionErrorMessages;
-};
+}
 
 export function UpgradeForm({
   planName,
   organizationId,
+  organizationSlug,
   billingInterval,
   locale,
   errors,
 }: UpgradeFormProps) {
-  const boundAction = startCheckoutAction.bind(null, {
-    organizationId,
-    planName,
-    billingInterval,
-    locale,
-  });
+  const [isPending, startTransition] = useTransition();
 
-  const [state, formAction, isPending] = useActionState<
-    ActionResult | null,
-    FormData
-  >(boundAction, null);
+  const handleUpgrade = () => {
+    startTransition(async () => {
+      const checkoutBase = `${window.location.origin}/${locale}/${organizationSlug}/checkout`;
+      const { error } = await subscription.upgrade({
+        plan: planName,
+        annual: billingInterval === BILLING_INTERVALS.YEARLY,
+        referenceId: organizationId,
+        successUrl: `${checkoutBase}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${checkoutBase}/canceled`,
+      });
 
-  useEffect(() => {
-    if (state && !state.success && state.error) {
-      toast.error(errors.startCheckout, { description: state.error });
-    }
-  }, [state, errors.startCheckout]);
+      if (error) {
+        toast.error(errors.startCheckout, { description: error.message });
+      }
+      // On success, subscription.upgrade redirects the browser to Stripe Checkout.
+    });
+  };
 
   return (
-    <form action={formAction}>
-      <Button className="w-full" disabled={isPending} type="submit">
-        {isPending ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Processing...
-          </>
-        ) : (
-          <>
-            <ArrowUp className="mr-2 h-4 w-4" />
-            Upgrade to {PLAN_DISPLAY_NAMES[planName]}
-          </>
-        )}
-      </Button>
-    </form>
+    <Button
+      className="w-full"
+      disabled={isPending}
+      onClick={handleUpgrade}
+      type="button"
+    >
+      {isPending ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Processing...
+        </>
+      ) : (
+        <>
+          <ArrowUp className="mr-2 h-4 w-4" />
+          Upgrade to {PLAN_DISPLAY_NAMES[planName]}
+        </>
+      )}
+    </Button>
   );
 }

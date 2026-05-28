@@ -33,6 +33,7 @@ interface DowngradeButtonProps {
   organizationId: string;
   billingInterval: BillingInterval;
   errors: ActionErrorMessages;
+  blockReason?: string;
   onSuccess?: (action: "cancel" | "changed") => void;
 }
 
@@ -42,6 +43,7 @@ export function DowngradeButton({
   organizationId,
   billingInterval,
   errors,
+  blockReason,
   onSuccess,
 }: DowngradeButtonProps) {
   const [open, setOpen] = useState(false);
@@ -57,7 +59,7 @@ export function DowngradeButton({
     FormData
   >(boundAction, null);
 
-  const blockReason = state?.success ? state.data?.blockReason : undefined;
+  const serverBlockReason = state?.success ? state.data?.blockReason : undefined;
 
   useEffect(() => {
     if (!state) {
@@ -80,6 +82,21 @@ export function DowngradeButton({
     }
   }, [state, errors.changePlan, onSuccess]);
 
+  if (blockReason) {
+    return (
+      <div className="space-y-2">
+        <Button className="w-full" disabled variant="outline">
+          <ArrowDown className="mr-2 h-4 w-4" />
+          Downgrade to {PLAN_DISPLAY_NAMES[planName]}
+        </Button>
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{blockReason}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <AlertDialog onOpenChange={setOpen} open={open}>
       <AlertDialogTrigger asChild>
@@ -100,10 +117,10 @@ export function DowngradeButton({
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        {blockReason && (
+        {serverBlockReason && (
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>{blockReason}</AlertDescription>
+            <AlertDescription>{serverBlockReason}</AlertDescription>
           </Alert>
         )}
 
@@ -114,7 +131,7 @@ export function DowngradeButton({
           <form action={formAction}>
             <Button
               className="w-full"
-              disabled={isPending || !!blockReason}
+              disabled={isPending || !!serverBlockReason}
               type="submit"
             >
               {isPending ? (
