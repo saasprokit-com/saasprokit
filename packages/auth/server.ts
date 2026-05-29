@@ -37,6 +37,7 @@ import { magicLink } from "better-auth/plugins/magic-link";
 import { multiSession } from "better-auth/plugins/multi-session";
 import { organization } from "better-auth/plugins/organization";
 import { twoFactor } from "better-auth/plugins/two-factor";
+import { authorizeBillingAction } from "./billing-authorize";
 import { keys } from "./keys";
 import {
   ADMIN_ROLES,
@@ -63,38 +64,6 @@ import {
 const env = keys();
 
 const MAX_ORGS_PER_USER = env.MAX_ORGS_PER_USER;
-
-/**
- * Check if a user can manage billing for an organization.
- * Only org owners and admins are allowed.
- */
-async function canManageBilling(
-  userId: string,
-  organizationId: string
-): Promise<boolean> {
-  const member = await database.member.findFirst({
-    where: { userId, organizationId },
-  });
-  if (!member) {
-    return false;
-  }
-  return member.role === ORG_ROLES.OWNER || member.role === ORG_ROLES.ADMIN;
-}
-
-/**
- * Check if a user is a member of an organization (any role).
- * Used for read-only subscription access (list-subscription).
- */
-async function isOrgMember(
-  userId: string,
-  organizationId: string
-): Promise<boolean> {
-  const member = await database.member.findFirst({
-    where: { userId, organizationId },
-    select: { id: true },
-  });
-  return member !== null;
-}
 
 async function canUserCreateOrg(userId: string): Promise<boolean> {
   const memberships = await database.member.findMany({
@@ -386,22 +355,12 @@ export const auth = betterAuth({
                   },
                 ];
               })(),
-              authorizeReference: async ({ user, referenceId, action }) => {
-                // Read-only: any org member can view subscription state.
-                if (action === "list-subscription") {
-                  return await isOrgMember(user.id, referenceId);
-                }
-                // Mutations + portal: only org owners and admins.
-                if (
-                  action === "upgrade-subscription" ||
-                  action === "cancel-subscription" ||
-                  action === "restore-subscription" ||
-                  action === "billing-portal"
-                ) {
-                  return await canManageBilling(user.id, referenceId);
-                }
-                return false;
-              },
+              authorizeReference: ({ user, referenceId, action }) =>
+                authorizeBillingAction({
+                  userId: user.id,
+                  referenceId,
+                  action,
+                }),
             },
           }),
         ]

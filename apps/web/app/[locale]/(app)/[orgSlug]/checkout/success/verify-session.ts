@@ -2,6 +2,7 @@ import "server-only";
 
 import { requireStripeClient } from "@repo/auth/stripe-client";
 import { database } from "@repo/database";
+import { PLAN_NAMES, type PlanName } from "@repo/utils/payment";
 import type Stripe from "stripe";
 
 export type VerificationFailureReason =
@@ -17,10 +18,10 @@ interface VerificationFailure {
 
 interface VerificationSuccess {
   ok: true;
-  session: Stripe.Checkout.Session;
+  planName: PlanName;
 }
 
-export type VerificationResult = VerificationFailure | VerificationSuccess;
+type VerificationResult = VerificationFailure | VerificationSuccess;
 
 function extractId(
   value: string | { id?: string } | null | undefined
@@ -31,17 +32,17 @@ function extractId(
   return value?.id;
 }
 
-async function sessionBelongsToOrg(
+function findOwningSubscription(
   session: Stripe.Checkout.Session,
   organizationId: string
-): Promise<boolean> {
+): Promise<{ plan: string } | null> {
   const subscriptionId = extractId(session.subscription);
   const customerId = extractId(session.customer);
 
   // Look up the BA-managed Subscription row to confirm Stripe's session
   // resolves back to a subscription owned by this org. Defends against
   // bookmarked or shared success URLs from another org.
-  const match = await database.subscription.findFirst({
+  return database.subscription.findFirst({
     where: {
       referenceId: organizationId,
       OR: [
@@ -49,10 +50,19 @@ async function sessionBelongsToOrg(
         ...(customerId ? [{ stripeCustomerId: customerId }] : []),
       ],
     },
-    select: { id: true },
+    select: { plan: true },
   });
+}
 
-  return match !== null;
+function asPlanName(value: string): PlanName {
+  if (
+    value === PLAN_NAMES.PRO ||
+    value === PLAN_NAMES.ENTERPRISE ||
+    value === PLAN_NAMES.FREE
+  ) {
+    return value;
+  }
+  return PLAN_NAMES.PRO;
 }
 
 export async function verifyCheckoutSession(
@@ -63,10 +73,9 @@ export async function verifyCheckoutSession(
     return { ok: false, reason: "missing_session" };
   }
 
-  const stripe = requireStripeClient();
-
   let session: Stripe.Checkout.Session;
   try {
+    const stripe = requireStripeClient();
     session = await stripe.checkout.sessions.retrieve(sessionId);
   } catch {
     return { ok: false, reason: "stripe_error" };
@@ -79,9 +88,10 @@ export async function verifyCheckoutSession(
     return { ok: false, reason: "not_paid" };
   }
 
-  if (!(await sessionBelongsToOrg(session, organizationId))) {
+  const owningSub = await findOwningSubscription(session, organizationId);
+  if (!owningSub) {
     return { ok: false, reason: "wrong_org" };
   }
 
-  return { ok: true, session };
+  return { ok: true, planName: asPlanName(owningSub.plan) };
 }
