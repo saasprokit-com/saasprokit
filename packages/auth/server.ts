@@ -24,9 +24,7 @@ import { SECONDS_PER_DAY, SECONDS_PER_MINUTE } from "@repo/utils/date";
 import {
   ACTIVE_STATUSES,
   checkOrgCreationEligibility,
-  getStripePriceMap,
   PLAN_NAMES,
-  PLANS,
 } from "@repo/utils/payment";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
@@ -58,6 +56,7 @@ import {
   handleSubscriptionDeleted,
   handleSubscriptionUpdate,
 } from "./stripe-hooks";
+import { buildStripePlans } from "./stripe-plans";
 
 // Validated environment variables — throws on startup if BETTER_AUTH_SECRET
 // is missing or < 32 chars, or if any other env var fails its Zod schema.
@@ -327,34 +326,12 @@ export const auth = betterAuth({
               onSubscriptionComplete: handleSubscriptionComplete,
               onSubscriptionUpdate: handleSubscriptionUpdate,
               onSubscriptionDeleted: handleSubscriptionDeleted,
-              plans: (() => {
-                const priceMap = getStripePriceMap({
-                  proMonthly: env.STRIPE_PRO_PRICE_ID_MONTHLY,
-                  proAnnual: env.STRIPE_PRO_PRICE_ID_ANNUAL,
-                  enterpriseMonthly: env.STRIPE_ENTERPRISE_PRICE_ID_MONTHLY,
-                  enterpriseAnnual: env.STRIPE_ENTERPRISE_PRICE_ID_ANNUAL,
-                });
-                return [
-                  {
-                    name: PLAN_NAMES.PRO,
-                    priceId: priceMap.pro_monthly,
-                    annualDiscountPriceId: priceMap.pro_yearly,
-                    limits: {
-                      maxMembers: PLANS.pro.limits.maxMembers,
-                      maxStorageMB: PLANS.pro.limits.maxStorageMB,
-                    },
-                  },
-                  {
-                    name: PLAN_NAMES.ENTERPRISE,
-                    priceId: priceMap.enterprise_monthly,
-                    annualDiscountPriceId: priceMap.enterprise_yearly,
-                    limits: {
-                      maxMembers: PLANS.enterprise.limits.maxMembers,
-                      maxStorageMB: PLANS.enterprise.limits.maxStorageMB,
-                    },
-                  },
-                ];
-              })(),
+              plans: buildStripePlans({
+                proMonthly: env.STRIPE_PRO_PRICE_ID_MONTHLY,
+                proAnnual: env.STRIPE_PRO_PRICE_ID_ANNUAL,
+                enterpriseMonthly: env.STRIPE_ENTERPRISE_PRICE_ID_MONTHLY,
+                enterpriseAnnual: env.STRIPE_ENTERPRISE_PRICE_ID_ANNUAL,
+              }),
               authorizeReference: ({ user, referenceId, action }) =>
                 authorizeBillingAction({
                   userId: user.id,
