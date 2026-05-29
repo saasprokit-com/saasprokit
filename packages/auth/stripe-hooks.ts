@@ -9,7 +9,6 @@ import {
 } from "@repo/email";
 import { MILLISECONDS_PER_SECOND } from "@repo/utils/date";
 import {
-  getPlanNameFromPriceId,
   PLAN_DISPLAY_NAMES,
   PLAN_ORDER,
   type PlanName,
@@ -17,6 +16,7 @@ import {
 import type Stripe from "stripe";
 import { keys } from "./keys";
 import { ORG_ROLES } from "./permissions";
+import { getPlanNameFromPriceId } from "./plans";
 
 const env = keys();
 

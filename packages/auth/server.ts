@@ -49,6 +49,7 @@ import {
   orgOwnerRole,
   userRole,
 } from "./permissions";
+import { buildStripePlans } from "./plans";
 import { stripeClient } from "./stripe-client";
 import {
   handleStripeInvoiceEvent,
@@ -56,7 +57,6 @@ import {
   handleSubscriptionDeleted,
   handleSubscriptionUpdate,
 } from "./stripe-hooks";
-import { buildStripePlans } from "./stripe-plans";
 
 // Validated environment variables — throws on startup if BETTER_AUTH_SECRET
 // is missing or < 32 chars, or if any other env var fails its Zod schema.

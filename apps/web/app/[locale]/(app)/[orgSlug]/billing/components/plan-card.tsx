@@ -5,13 +5,16 @@ import { Button } from "@repo/design-system/components/ui/button";
 import { Card, CardContent } from "@repo/design-system/components/ui/card";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { guardDowngrade } from "@repo/payment/guards";
-import { comparePlans, getMonthlyFromAnnual } from "@repo/payment/plans";
+import {
+  comparePlans,
+  getMonthlyFromAnnual,
+  type PlanConfig,
+} from "@repo/payment/plans";
 import type { Subscription } from "@repo/payment/types";
 import { MONTHS_PER_YEAR } from "@repo/utils/date";
 import {
   type BillingInterval,
   PLAN_DISPLAY_NAMES,
-  type PlanConfig,
   type PlanName,
   PRICING,
 } from "@repo/utils/payment";

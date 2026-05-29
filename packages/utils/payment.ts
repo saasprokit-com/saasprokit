@@ -17,22 +17,14 @@ export type BillingInterval =
   (typeof BILLING_INTERVALS)[keyof typeof BILLING_INTERVALS];
 
 export interface PlanLimits {
+  // Index signature is required so PlanLimits is assignable to BA's
+  // `StripePlan.limits: Record<string, unknown>`. Named keys below stay
+  // strongly typed; consumers should use them rather than dynamic lookups.
+  [key: string]: number | boolean;
   maxMembers: number;
   maxStorageMB: number;
   prioritySupport: boolean;
   advancedAnalytics: boolean;
-}
-
-export interface PlanConfig {
-  name: PlanName;
-  displayName: string;
-  description: string;
-  monthlyPrice: number;
-  yearlyPrice: number;
-  limits: PlanLimits;
-  features: string[];
-  highlighted?: boolean;
-  badge?: string;
 }
 
 export const SUBSCRIPTION_STATUS = {
@@ -98,104 +90,6 @@ export const PRICING = {
     YEARLY: 490, // $490/year (save ~17%)
   },
 } as const;
-
-export const PLANS: Record<PlanName, PlanConfig> = {
-  free: {
-    name: PLAN_NAMES.FREE,
-    displayName: PLAN_DISPLAY_NAMES.free,
-    description: "Perfect for getting started",
-    monthlyPrice: PRICING.FREE.MONTHLY,
-    yearlyPrice: PRICING.FREE.YEARLY,
-    limits: {
-      maxMembers: LIMITS.FREE.MAX_MEMBERS,
-      maxStorageMB: LIMITS.FREE.MAX_STORAGE_MB,
-      prioritySupport: false,
-      advancedAnalytics: false,
-    },
-    features: [
-      "1 team member",
-      "100 MB storage",
-      "Basic features",
-      "Community support",
-    ],
-  },
-
-  pro: {
-    name: PLAN_NAMES.PRO,
-    displayName: PLAN_DISPLAY_NAMES.pro,
-    description: "For growing teams",
-    monthlyPrice: PRICING.PRO.MONTHLY,
-    yearlyPrice: PRICING.PRO.YEARLY,
-    limits: {
-      maxMembers: LIMITS.PRO.MAX_MEMBERS,
-      maxStorageMB: LIMITS.PRO.MAX_STORAGE_MB,
-      prioritySupport: true,
-      advancedAnalytics: true,
-    },
-    features: [
-      "Up to 10 team members",
-      "5 GB storage",
-      "Priority support",
-      "Advanced analytics",
-    ],
-    highlighted: true,
-    badge: "Most Popular",
-  },
-
-  enterprise: {
-    name: PLAN_NAMES.ENTERPRISE,
-    displayName: PLAN_DISPLAY_NAMES.enterprise,
-    description: "For large organizations",
-    monthlyPrice: PRICING.ENTERPRISE.MONTHLY,
-    yearlyPrice: PRICING.ENTERPRISE.YEARLY,
-    limits: {
-      maxMembers: LIMITS.ENTERPRISE.MAX_MEMBERS,
-      maxStorageMB: LIMITS.ENTERPRISE.MAX_STORAGE_MB,
-      prioritySupport: true,
-      advancedAnalytics: true,
-    },
-    features: [
-      "Up to 50 team members",
-      "50 GB storage",
-      "24/7 priority support",
-      "Advanced analytics",
-    ],
-  },
-};
-
-export interface StripePriceIds {
-  proMonthly?: string;
-  proAnnual?: string;
-  enterpriseMonthly?: string;
-  enterpriseAnnual?: string;
-}
-
-export const getStripePriceMap = (prices: StripePriceIds) => ({
-  pro_monthly: prices.proMonthly ?? "",
-  pro_yearly: prices.proAnnual ?? "",
-  enterprise_monthly: prices.enterpriseMonthly ?? "",
-  enterprise_yearly: prices.enterpriseAnnual ?? "",
-});
-
-export type StripePriceKey = keyof ReturnType<typeof getStripePriceMap>;
-
-/**
- * Resolve a Stripe price ID to a plan name.
- * Used by webhook handlers and BA plan resolution.
- */
-export function getPlanNameFromPriceId(
-  priceId: string,
-  prices: StripePriceIds
-): PlanName | null {
-  const map = getStripePriceMap(prices);
-  if (priceId === map.enterprise_monthly || priceId === map.enterprise_yearly) {
-    return "enterprise";
-  }
-  if (priceId === map.pro_monthly || priceId === map.pro_yearly) {
-    return "pro";
-  }
-  return null;
-}
 
 export type OrgCreationDenialCode = "max_reached" | "upgrade_required";
 

@@ -84,6 +84,7 @@ export async function verifyCheckoutSession(
   const isPaid =
     session.payment_status === "paid" ||
     session.payment_status === "no_payment_required";
+
   if (!(isPaid && session.status === "complete")) {
     return { ok: false, reason: "not_paid" };
   }

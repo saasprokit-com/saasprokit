@@ -13,6 +13,7 @@
     "./client": "./client.ts",
     "./permissions": "./permissions.ts",
     "./keys": "./keys.ts",
+    "./plans": "./plans.ts",
     "./stripe-client": "./stripe-client.ts"
   },
   "dependencies": {
