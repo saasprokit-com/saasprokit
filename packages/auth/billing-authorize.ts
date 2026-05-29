@@ -1,18 +1,6 @@
+import type { AuthorizeReferenceAction } from "@better-auth/stripe";
 import { database } from "@repo/database";
 import { ORG_ROLES } from "./permissions";
-
-/**
- * Subscription action strings emitted by @better-auth/stripe's
- * `authorizeReference` callback. Kept here (rather than imported from BA's
- * private types) so we can lock the contract explicitly and surface unknown
- * actions in logs if BA adds new ones in a future version.
- */
-export type SubscriptionAction =
-  | "list-subscription"
-  | "upgrade-subscription"
-  | "cancel-subscription"
-  | "restore-subscription"
-  | "billing-portal";
 
 /**
  * Check if a user is an active (non-suspended) member of an organization.
@@ -52,8 +40,13 @@ export async function canManageBilling(
  *
  * - `list-subscription` (read) is allowed for any active member.
  * - All other actions (mutations + portal) require an active owner or admin.
- * - Unknown actions are denied and logged so an upstream BA Stripe plugin
- *   version bump that adds new actions doesn't silently lock users out.
+ *
+ * The exhaustive `switch` is type-checked against `AuthorizeReferenceAction`,
+ * so a future BA Stripe plugin release that adds a new action will cause a
+ * TypeScript error in the `default` branch and force the codebase to decide
+ * which role can use it before shipping. The runtime `console.warn` is a
+ * belt-and-braces safety net for the case where types drift from runtime
+ * (e.g. mixed versions in a pnpm hoist).
  */
 export async function authorizeBillingAction({
   userId,
@@ -62,19 +55,22 @@ export async function authorizeBillingAction({
 }: {
   userId: string;
   referenceId: string;
-  action: string;
+  action: AuthorizeReferenceAction;
 }): Promise<boolean> {
-  if (action === "list-subscription") {
-    return isOrgMember(userId, referenceId);
+  switch (action) {
+    case "list-subscription":
+      return await isOrgMember(userId, referenceId);
+    case "upgrade-subscription":
+    case "cancel-subscription":
+    case "restore-subscription":
+    case "billing-portal":
+      return await canManageBilling(userId, referenceId);
+    default: {
+      const _exhaustive: never = action;
+      console.warn(
+        `[auth] Unknown subscription action denied: ${String(_exhaustive)}`
+      );
+      return false;
+    }
   }
-  if (
-    action === "upgrade-subscription" ||
-    action === "cancel-subscription" ||
-    action === "restore-subscription" ||
-    action === "billing-portal"
-  ) {
-    return canManageBilling(userId, referenceId);
-  }
-  console.warn(`[auth] Unknown subscription action denied: ${action}`);
-  return false;
 }

@@ -22,7 +22,7 @@
     "@repo/utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.10",
     "better-auth": "^1.6.11",
-    "stripe": "^22.1.1",
+    "stripe": "^22.2.0",
     "zod": "^4.2.1"
   }
 }

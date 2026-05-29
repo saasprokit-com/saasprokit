@@ -77,7 +77,7 @@
       "source": "stripe/ai",
       "sourceType": "github",
       "skillPath": "skills/stripe-best-practices/SKILL.md",
-      "computedHash": "ebb2e9db3019ae01a8e5f77f7e71c05d3ecdfd9f72dc714542453ae31741aade"
+      "computedHash": "966d0ce005fb82e1a63ead1ec8c5546a9088c0d8f103f88c382c4cda810857cc"
     },
     "turborepo": {
       "source": "vercel/turborepo",
@@ -95,7 +95,7 @@
       "source": "stripe/ai",
       "sourceType": "github",
       "skillPath": "skills/upgrade-stripe/SKILL.md",
-      "computedHash": "df1c52c17aff54490e81e98979f302564988fbddaaf59e74c2d1bd4b103a7d2e"
+      "computedHash": "a0f0bf709f65ba8d7aa8d55322d030e6b3f16756cb6f0be80463395306305ef3"
     },
     "vercel-cli-with-tokens": {
       "source": "vercel-labs/agent-skills",

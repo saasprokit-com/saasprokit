@@ -132,14 +132,19 @@ describe("authorizeBillingAction", () => {
     ).resolves.toBe(true);
   });
 
-  it("denies unknown actions and logs a warning", async () => {
+  it("denies unknown actions and logs a warning (simulates BA action set drift)", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     try {
       await expect(
         authorizeBillingAction({
           userId: USER_ID,
           referenceId: ORG_ID,
-          action: "trial-extend",
+          // Cast: at compile time AuthorizeReferenceAction never includes
+          // "trial-extend", but we still test the runtime safety net for the
+          // case where BA's runtime contract drifts from its types.
+          action: "trial-extend" as unknown as Parameters<
+            typeof authorizeBillingAction
+          >[0]["action"],
         })
       ).resolves.toBe(false);
       expect(warn).toHaveBeenCalledWith(

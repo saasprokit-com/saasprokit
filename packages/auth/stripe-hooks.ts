@@ -77,8 +77,10 @@ function getStripePriceEnvMap() {
 }
 
 function extractSubscriptionId(invoice: Stripe.Invoice): string | undefined {
-  const raw = (invoice as unknown as Record<string, unknown>).subscription;
-  return typeof raw === "string" ? raw : (raw as { id?: string } | null)?.id;
+  // Stripe v22.2+ removed `subscription` from the top-level Invoice; it now
+  // lives on each InvoiceLineItem. Read from the first line item.
+  const raw = invoice.lines.data[0]?.subscription;
+  return typeof raw === "string" ? raw : raw?.id;
 }
 
 export async function handleSubscriptionComplete(args: {
@@ -160,9 +162,10 @@ export async function handleSubscriptionDeleted(args: {
     return;
   }
 
-  const periodEnd = (
-    args.stripeSubscription as unknown as { current_period_end?: number }
-  ).current_period_end;
+  // Stripe v22.2+ moved `current_period_end` from the Subscription root onto
+  // each SubscriptionItem. Use the first item's period as the access cutoff.
+  const periodEnd =
+    args.stripeSubscription.items.data[0]?.current_period_end;
   const accessUntil = periodEnd
     ? new Date(periodEnd * MILLISECONDS_PER_SECOND).toLocaleDateString()
     : "unknown";
@@ -259,17 +262,16 @@ async function handleInvoiceRenewal(invoice: Stripe.Invoice): Promise<void> {
   const amountPaid = invoice.amount_paid
     ? `$${(invoice.amount_paid / CENTS_PER_DOLLAR).toFixed(2)}`
     : undefined;
-  const periodEnd = (invoice as unknown as { period_end?: number }).period_end;
-  const renewalDate = periodEnd
-    ? new Date(periodEnd * MILLISECONDS_PER_SECOND).toLocaleDateString()
+  const renewalDate = invoice.period_end
+    ? new Date(invoice.period_end * MILLISECONDS_PER_SECOND).toLocaleDateString()
     : undefined;
 
-  // Derive billing interval from the invoice's price ID
-  const invoicePriceId = (
-    invoice as unknown as {
-      lines?: { data?: Array<{ price?: { id?: string } }> };
-    }
-  ).lines?.data?.[0]?.price?.id;
+  // Derive billing interval from the invoice's price ID. Stripe v22.2+ moved
+  // the price reference from `lines.data[N].price` to
+  // `lines.data[N].pricing.price_details.price` (which is `string | Price`).
+  const priceRef = invoice.lines.data[0]?.pricing?.price_details?.price;
+  const invoicePriceId =
+    typeof priceRef === "string" ? priceRef : priceRef?.id;
   const isAnnual =
     invoicePriceId === env.STRIPE_PRO_PRICE_ID_ANNUAL ||
     invoicePriceId === env.STRIPE_ENTERPRISE_PRICE_ID_ANNUAL;
