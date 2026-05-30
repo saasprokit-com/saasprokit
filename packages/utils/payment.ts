@@ -27,6 +27,10 @@ export interface PlanLimits {
   advancedAnalytics: boolean;
 }
 
+// Mirrors `Stripe.Subscription.Status` from the Stripe SDK — these strings are
+// the exact wire values Stripe returns on `subscription.status`, not labels we
+// invented. Keep this in sync with stripe/resources/Subscriptions.d.ts when
+// bumping the SDK; new statuses Stripe adds must be added here too.
 export const SUBSCRIPTION_STATUS = {
   INCOMPLETE: "incomplete",
   INCOMPLETE_EXPIRED: "incomplete_expired",
