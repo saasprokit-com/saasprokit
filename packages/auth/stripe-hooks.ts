@@ -9,6 +9,7 @@ import {
 } from "@repo/email";
 import { MILLISECONDS_PER_SECOND } from "@repo/utils/date";
 import {
+  CENTS_PER_DOLLAR,
   PLAN_DISPLAY_NAMES,
   PLAN_ORDER,
   type PlanName,
@@ -19,8 +20,6 @@ import { ORG_ROLES } from "./permissions";
 import { getPlanNameFromPriceId } from "./plans";
 
 const env = keys();
-
-const CENTS_PER_DOLLAR = 100;
 
 interface OrgEmailContext {
   ownerEmail: string;
@@ -164,8 +163,7 @@ export async function handleSubscriptionDeleted(args: {
 
   // Stripe v22.2+ moved `current_period_end` from the Subscription root onto
   // each SubscriptionItem. Use the first item's period as the access cutoff.
-  const periodEnd =
-    args.stripeSubscription.items.data[0]?.current_period_end;
+  const periodEnd = args.stripeSubscription.items.data[0]?.current_period_end;
   const accessUntil = periodEnd
     ? new Date(periodEnd * MILLISECONDS_PER_SECOND).toLocaleDateString()
     : "unknown";
@@ -263,15 +261,16 @@ async function handleInvoiceRenewal(invoice: Stripe.Invoice): Promise<void> {
     ? `$${(invoice.amount_paid / CENTS_PER_DOLLAR).toFixed(2)}`
     : undefined;
   const renewalDate = invoice.period_end
-    ? new Date(invoice.period_end * MILLISECONDS_PER_SECOND).toLocaleDateString()
+    ? new Date(
+        invoice.period_end * MILLISECONDS_PER_SECOND
+      ).toLocaleDateString()
     : undefined;
 
   // Derive billing interval from the invoice's price ID. Stripe v22.2+ moved
   // the price reference from `lines.data[N].price` to
   // `lines.data[N].pricing.price_details.price` (which is `string | Price`).
   const priceRef = invoice.lines.data[0]?.pricing?.price_details?.price;
-  const invoicePriceId =
-    typeof priceRef === "string" ? priceRef : priceRef?.id;
+  const invoicePriceId = typeof priceRef === "string" ? priceRef : priceRef?.id;
   const isAnnual =
     invoicePriceId === env.STRIPE_PRO_PRICE_ID_ANNUAL ||
     invoicePriceId === env.STRIPE_ENTERPRISE_PRICE_ID_ANNUAL;

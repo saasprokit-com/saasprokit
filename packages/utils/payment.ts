@@ -17,9 +17,6 @@ export type BillingInterval =
   (typeof BILLING_INTERVALS)[keyof typeof BILLING_INTERVALS];
 
 export interface PlanLimits {
-  // Index signature is required so PlanLimits is assignable to BA's
-  // `StripePlan.limits: Record<string, unknown>`. Named keys below stay
-  // strongly typed; consumers should use them rather than dynamic lookups.
   [key: string]: number | boolean;
   maxMembers: number;
   maxStorageMB: number;
@@ -27,10 +24,7 @@ export interface PlanLimits {
   advancedAnalytics: boolean;
 }
 
-// Mirrors `Stripe.Subscription.Status` from the Stripe SDK — these strings are
-// the exact wire values Stripe returns on `subscription.status`, not labels we
-// invented. Keep this in sync with stripe/resources/Subscriptions.d.ts when
-// bumping the SDK; new statuses Stripe adds must be added here too.
+// Mirrors `Stripe.Subscription.Status` from the Stripe SDK
 export const SUBSCRIPTION_STATUS = {
   INCOMPLETE: "incomplete",
   INCOMPLETE_EXPIRED: "incomplete_expired",
@@ -79,6 +73,12 @@ export const FEATURE_KEYS = {
   PRIORITY_SUPPORT: "priority_support",
   ADVANCED_ANALYTICS: "advanced_analytics",
 } as const;
+
+// Stripe sends all monetary values in the smallest currency unit. For USD
+// that's cents — divide by 100 to render dollars. Zero-decimal currencies
+// (JPY, KRW, VND, …) skip this scaling entirely; revisit when we expand
+// beyond USD pricing.
+export const CENTS_PER_DOLLAR = 100;
 
 export const PRICING = {
   FREE: {
