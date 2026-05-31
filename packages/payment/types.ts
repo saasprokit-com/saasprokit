@@ -1,7 +1,7 @@
+import type { PlanConfig } from "@repo/auth/plans";
 import {
   type FEATURE_KEYS,
   PLAN_NAMES,
-  type PlanConfig,
   type PlanName,
   type SubscriptionStatus,
 } from "@repo/utils/payment";

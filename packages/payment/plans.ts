@@ -1,16 +1,13 @@
+import { PLANS, type PlanConfig } from "@repo/auth/plans";
 import { MONTHS_PER_YEAR } from "@repo/utils/date";
 import {
   PLAN_ORDER,
-  type PlanConfig,
   type PlanLimits,
   type PlanName,
 } from "@repo/utils/payment";
 
-// Re-export PLANS from utils (single source of truth)
-export { PLANS } from "@repo/utils/payment";
-
-// Import PLANS for local use in utility functions
-import { PLANS } from "@repo/utils/payment";
+// Re-export PLANS + PlanConfig from @repo/auth/plans (single source of truth)
+export { PLANS, type PlanConfig } from "@repo/auth/plans";
 
 const PERCENTAGE_MULTIPLIER = 100;
 

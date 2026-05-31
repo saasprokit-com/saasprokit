@@ -7,6 +7,7 @@ import {
 } from "@repo/design-system/components/ui/sidebar";
 import type { ReactNode } from "react";
 import { ActivityTracker } from "@/components/activity-tracker";
+import { SyncActiveOrganization } from "@/components/sync-active-organization";
 import { checkOrgPermission, requireAuth } from "@/lib/auth/auth";
 import {
   getUserOrganizations,
@@ -44,6 +45,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   return (
     <SidebarProvider>
       <ActivityTracker />
+      <SyncActiveOrganization organizationId={org.organizationId} />
       <OrgSidebar
         activeOrganization={{
           id: org.organizationId,

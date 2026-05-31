@@ -9,13 +9,22 @@ import {
   sendTwoFactorOTPEmail,
   sendVerificationOTPEmail,
 } from "@repo/email";
+import {
+  COOKIE_CACHE_MAX_AGE_MINUTES,
+  INVITATION_EXPIRES_IN_DAYS,
+  MAGIC_LINK_EXPIRES_IN_MINUTES,
+  OTP_EXPIRES_IN_MINUTES,
+  OTP_LENGTH,
+  SESSION_EXPIRES_IN_DAYS,
+  SESSION_UPDATE_AGE_DAYS,
+  TWO_FACTOR_DIGITS,
+  TWO_FACTOR_OTP_PERIOD_MINUTES,
+} from "@repo/utils/auth";
 import { SECONDS_PER_DAY, SECONDS_PER_MINUTE } from "@repo/utils/date";
 import {
   ACTIVE_STATUSES,
   checkOrgCreationEligibility,
-  getStripePriceMap,
   PLAN_NAMES,
-  PLANS,
 } from "@repo/utils/payment";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
@@ -26,6 +35,7 @@ import { magicLink } from "better-auth/plugins/magic-link";
 import { multiSession } from "better-auth/plugins/multi-session";
 import { organization } from "better-auth/plugins/organization";
 import { twoFactor } from "better-auth/plugins/two-factor";
+import { authorizeBillingAction } from "./billing-authorize";
 import { keys } from "./keys";
 import {
   ADMIN_ROLES,
@@ -39,6 +49,7 @@ import {
   orgOwnerRole,
   userRole,
 } from "./permissions";
+import { buildStripePlans } from "./plans";
 import { stripeClient } from "./stripe-client";
 import {
   handleStripeInvoiceEvent,
@@ -51,43 +62,7 @@ import {
 // is missing or < 32 chars, or if any other env var fails its Zod schema.
 const env = keys();
 
-// Invitation configuration
-const INVITATION_EXPIRES_IN_DAYS = 7;
-
-// Session configuration
-const SESSION_EXPIRES_IN_DAYS = 7;
-const SESSION_UPDATE_AGE_DAYS = 1;
-const COOKIE_CACHE_MAX_AGE_MINUTES = 5;
-
-// Magic link configuration
-const MAGIC_LINK_EXPIRES_IN_MINUTES = 10;
-
-// OTP configuration
-const OTP_LENGTH = 6;
-const OTP_EXPIRES_IN_MINUTES = 5;
-
-// Two-factor authentication
-const TWO_FACTOR_OTP_PERIOD_MINUTES = 5;
-const TWO_FACTOR_DIGITS = 6;
-
 const MAX_ORGS_PER_USER = env.MAX_ORGS_PER_USER;
-
-/**
- * Check if a user can manage billing for an organization.
- * Only org owners and admins are allowed.
- */
-async function canManageBilling(
-  userId: string,
-  organizationId: string
-): Promise<boolean> {
-  const member = await database.member.findFirst({
-    where: { userId, organizationId },
-  });
-  if (!member) {
-    return false;
-  }
-  return member.role === ORG_ROLES.OWNER || member.role === ORG_ROLES.ADMIN;
-}
 
 async function canUserCreateOrg(userId: string): Promise<boolean> {
   const memberships = await database.member.findMany({
@@ -351,46 +326,18 @@ export const auth = betterAuth({
               onSubscriptionComplete: handleSubscriptionComplete,
               onSubscriptionUpdate: handleSubscriptionUpdate,
               onSubscriptionDeleted: handleSubscriptionDeleted,
-              plans: (() => {
-                const priceMap = getStripePriceMap({
-                  proMonthly: env.STRIPE_PRO_PRICE_ID_MONTHLY,
-                  proAnnual: env.STRIPE_PRO_PRICE_ID_ANNUAL,
-                  enterpriseMonthly: env.STRIPE_ENTERPRISE_PRICE_ID_MONTHLY,
-                  enterpriseAnnual: env.STRIPE_ENTERPRISE_PRICE_ID_ANNUAL,
-                });
-                return [
-                  {
-                    name: PLAN_NAMES.PRO,
-                    priceId: priceMap.pro_monthly,
-                    annualDiscountPriceId: priceMap.pro_yearly,
-                    limits: {
-                      maxMembers: PLANS.pro.limits.maxMembers,
-                      maxStorageMB: PLANS.pro.limits.maxStorageMB,
-                    },
-                  },
-                  {
-                    name: PLAN_NAMES.ENTERPRISE,
-                    priceId: priceMap.enterprise_monthly,
-                    annualDiscountPriceId: priceMap.enterprise_yearly,
-                    limits: {
-                      maxMembers: PLANS.enterprise.limits.maxMembers,
-                      maxStorageMB: PLANS.enterprise.limits.maxStorageMB,
-                    },
-                  },
-                ];
-              })(),
-              authorizeReference: async ({ user, referenceId, action }) => {
-                // Authorize organization subscription management
-                // Only org owners and admins can manage billing
-                if (
-                  action === "upgrade-subscription" ||
-                  action === "cancel-subscription" ||
-                  action === "billing-portal"
-                ) {
-                  return await canManageBilling(user.id, referenceId);
-                }
-                return false;
-              },
+              plans: buildStripePlans({
+                proMonthly: env.STRIPE_PRO_PRICE_ID_MONTHLY,
+                proAnnual: env.STRIPE_PRO_PRICE_ID_ANNUAL,
+                enterpriseMonthly: env.STRIPE_ENTERPRISE_PRICE_ID_MONTHLY,
+                enterpriseAnnual: env.STRIPE_ENTERPRISE_PRICE_ID_ANNUAL,
+              }),
+              authorizeReference: ({ user, referenceId, action }) =>
+                authorizeBillingAction({
+                  userId: user.id,
+                  referenceId,
+                  action,
+                }),
             },
           }),
         ]

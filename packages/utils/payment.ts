@@ -1,4 +1,4 @@
-export const STRIPE_API_VERSION = "2026-04-22.dahlia";
+export const STRIPE_API_VERSION = "2026-05-27.dahlia";
 
 export const PLAN_NAMES = {
   FREE: "free",
@@ -17,24 +17,14 @@ export type BillingInterval =
   (typeof BILLING_INTERVALS)[keyof typeof BILLING_INTERVALS];
 
 export interface PlanLimits {
+  [key: string]: number | boolean;
   maxMembers: number;
   maxStorageMB: number;
   prioritySupport: boolean;
   advancedAnalytics: boolean;
 }
 
-export interface PlanConfig {
-  name: PlanName;
-  displayName: string;
-  description: string;
-  monthlyPrice: number;
-  yearlyPrice: number;
-  limits: PlanLimits;
-  features: string[];
-  highlighted?: boolean;
-  badge?: string;
-}
-
+// Mirrors `Stripe.Subscription.Status` from the Stripe SDK
 export const SUBSCRIPTION_STATUS = {
   INCOMPLETE: "incomplete",
   INCOMPLETE_EXPIRED: "incomplete_expired",
@@ -84,6 +74,12 @@ export const FEATURE_KEYS = {
   ADVANCED_ANALYTICS: "advanced_analytics",
 } as const;
 
+// Stripe sends all monetary values in the smallest currency unit. For USD
+// that's cents — divide by 100 to render dollars. Zero-decimal currencies
+// (JPY, KRW, VND, …) skip this scaling entirely; revisit when we expand
+// beyond USD pricing.
+export const CENTS_PER_DOLLAR = 100;
+
 export const PRICING = {
   FREE: {
     MONTHLY: 0,
@@ -98,104 +94,6 @@ export const PRICING = {
     YEARLY: 490, // $490/year (save ~17%)
   },
 } as const;
-
-export const PLANS: Record<PlanName, PlanConfig> = {
-  free: {
-    name: PLAN_NAMES.FREE,
-    displayName: PLAN_DISPLAY_NAMES.free,
-    description: "Perfect for getting started",
-    monthlyPrice: PRICING.FREE.MONTHLY,
-    yearlyPrice: PRICING.FREE.YEARLY,
-    limits: {
-      maxMembers: LIMITS.FREE.MAX_MEMBERS,
-      maxStorageMB: LIMITS.FREE.MAX_STORAGE_MB,
-      prioritySupport: false,
-      advancedAnalytics: false,
-    },
-    features: [
-      "1 team member",
-      "100 MB storage",
-      "Basic features",
-      "Community support",
-    ],
-  },
-
-  pro: {
-    name: PLAN_NAMES.PRO,
-    displayName: PLAN_DISPLAY_NAMES.pro,
-    description: "For growing teams",
-    monthlyPrice: PRICING.PRO.MONTHLY,
-    yearlyPrice: PRICING.PRO.YEARLY,
-    limits: {
-      maxMembers: LIMITS.PRO.MAX_MEMBERS,
-      maxStorageMB: LIMITS.PRO.MAX_STORAGE_MB,
-      prioritySupport: true,
-      advancedAnalytics: true,
-    },
-    features: [
-      "Up to 10 team members",
-      "5 GB storage",
-      "Priority support",
-      "Advanced analytics",
-    ],
-    highlighted: true,
-    badge: "Most Popular",
-  },
-
-  enterprise: {
-    name: PLAN_NAMES.ENTERPRISE,
-    displayName: PLAN_DISPLAY_NAMES.enterprise,
-    description: "For large organizations",
-    monthlyPrice: PRICING.ENTERPRISE.MONTHLY,
-    yearlyPrice: PRICING.ENTERPRISE.YEARLY,
-    limits: {
-      maxMembers: LIMITS.ENTERPRISE.MAX_MEMBERS,
-      maxStorageMB: LIMITS.ENTERPRISE.MAX_STORAGE_MB,
-      prioritySupport: true,
-      advancedAnalytics: true,
-    },
-    features: [
-      "Up to 50 team members",
-      "50 GB storage",
-      "24/7 priority support",
-      "Advanced analytics",
-    ],
-  },
-};
-
-export interface StripePriceIds {
-  proMonthly?: string;
-  proAnnual?: string;
-  enterpriseMonthly?: string;
-  enterpriseAnnual?: string;
-}
-
-export const getStripePriceMap = (prices: StripePriceIds) => ({
-  pro_monthly: prices.proMonthly ?? "",
-  pro_yearly: prices.proAnnual ?? "",
-  enterprise_monthly: prices.enterpriseMonthly ?? "",
-  enterprise_yearly: prices.enterpriseAnnual ?? "",
-});
-
-export type StripePriceKey = keyof ReturnType<typeof getStripePriceMap>;
-
-/**
- * Resolve a Stripe price ID to a plan name.
- * Used by webhook handlers and BA plan resolution.
- */
-export function getPlanNameFromPriceId(
-  priceId: string,
-  prices: StripePriceIds
-): PlanName | null {
-  const map = getStripePriceMap(prices);
-  if (priceId === map.enterprise_monthly || priceId === map.enterprise_yearly) {
-    return "enterprise";
-  }
-  if (priceId === map.pro_monthly || priceId === map.pro_yearly) {
-    return "pro";
-  }
-  return null;
-}
 
 export type OrgCreationDenialCode = "max_reached" | "upgrade_required";
 
