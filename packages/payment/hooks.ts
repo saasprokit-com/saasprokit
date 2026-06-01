@@ -7,6 +7,10 @@ import {
   SUBSCRIPTION_STATUS,
 } from "@repo/utils/payment";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  isAlreadyCancelingError,
+  isSubscriptionPendingCancel,
+} from "./helpers";
 import { PLANS } from "./plans";
 import type { Subscription, SubscriptionWithPlan } from "./types";
 
@@ -168,7 +172,7 @@ export function useSubscription(
   );
 
   const isCanceled = useMemo(
-    () => isActive && subscriptionData?.cancelAtPeriodEnd === true,
+    () => isActive && isSubscriptionPendingCancel(subscriptionData),
     [isActive, subscriptionData]
   );
 
@@ -227,11 +231,20 @@ export function useCancel(options: UseCancelOptions = {}): UseCancelReturn {
       const localePrefix = optionsRef.current.locale
         ? `/${optionsRef.current.locale}`
         : "";
-      await subscription.cancel({
+      const { error: cancelError } = await subscription.cancel({
         referenceId: activeOrg.id,
         subscriptionId: currentSubscription?.stripeSubscriptionId || undefined,
         returnUrl: `${window.location.origin}${localePrefix}/${activeOrg.slug}/billing`,
       });
+
+      // Better Auth client methods resolve with { error } rather than throwing,
+      // so an unchecked call always looked successful. Surface real failures —
+      // except the benign "already set to be canceled" 400, which means Stripe
+      // has already scheduled the cancellation (local state had drifted). For
+      // that case we fall through to onSuccess so the UI reloads and settles.
+      if (cancelError && !isAlreadyCancelingError(cancelError.message)) {
+        throw new Error(cancelError.message || "Failed to cancel subscription");
+      }
 
       optionsRef.current.onSuccess?.();
     } catch (err) {

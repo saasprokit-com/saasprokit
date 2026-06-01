@@ -28,6 +28,32 @@ export function isSubscriptionActive(
 }
 
 /**
+ * Whether a subscription is scheduled to cancel. Stripe expresses this via the
+ * legacy `cancelAtPeriodEnd` boolean OR the newer `cancelAt` timestamp; either
+ * one means pending cancellation. This matches Better Auth's own isPendingCancel
+ * — checking only the boolean misses subs canceled via `cancelAt`.
+ */
+export function isSubscriptionPendingCancel(
+  subscription: Subscription | null | undefined
+): boolean {
+  return (
+    subscription?.cancelAtPeriodEnd === true || subscription?.cancelAt != null
+  );
+}
+
+const ALREADY_CANCELING_MESSAGE = "already set to be canceled";
+
+/**
+ * Detect Better Auth's benign "already scheduled to cancel" error. Stripe
+ * rejects cancelling a subscription that is already set to cancel; when local
+ * state has drifted from Stripe this surfaces as an error even though the
+ * user's intent is already satisfied, so callers treat it as a no-op success.
+ */
+export function isAlreadyCancelingError(message: string | undefined): boolean {
+  return message?.includes(ALREADY_CANCELING_MESSAGE) ?? false;
+}
+
+/**
  * Get the current plan name (defaults to free if no active subscription)
  */
 export function getCurrentPlan(
