@@ -10,14 +10,12 @@ import MagicLinkEmail from "./templates/magic-link";
 import OrgInvitationEmail from "./templates/org-invitation";
 import PasswordChangedEmail from "./templates/password-changed";
 import PasswordResetEmail from "./templates/password-reset";
-import PaymentFailedEmail from "./templates/payment-failed";
 import PaymentReceiptEmail from "./templates/payment-receipt";
 import RemovedFromOrgEmail from "./templates/removed-from-org";
 import RoleChangedEmail from "./templates/role-changed";
 import SignInOTPEmail from "./templates/sign-in-otp";
 import SubscriptionCancelledEmail from "./templates/subscription-cancelled";
 import SubscriptionDowngradedEmail from "./templates/subscription-downgraded";
-import SubscriptionRenewedEmail from "./templates/subscription-renewed";
 import SubscriptionStartedEmail from "./templates/subscription-started";
 import SubscriptionUpgradedEmail from "./templates/subscription-upgraded";
 import TwoFactorOTPEmail from "./templates/two-factor-otp";
@@ -42,14 +40,12 @@ export { default as OrgInvitationEmail } from "./templates/org-invitation";
 export { default as PasswordChangedEmail } from "./templates/password-changed";
 // Auth & Security Templates
 export { default as PasswordResetEmail } from "./templates/password-reset";
-export { default as PaymentFailedEmail } from "./templates/payment-failed";
 export { default as PaymentReceiptEmail } from "./templates/payment-receipt";
 export { default as RemovedFromOrgEmail } from "./templates/removed-from-org";
 export { default as RoleChangedEmail } from "./templates/role-changed";
 export { default as SignInOTPEmail } from "./templates/sign-in-otp";
 export { default as SubscriptionCancelledEmail } from "./templates/subscription-cancelled";
 export { default as SubscriptionDowngradedEmail } from "./templates/subscription-downgraded";
-export { default as SubscriptionRenewedEmail } from "./templates/subscription-renewed";
 // Subscription & Billing Templates
 export { default as SubscriptionStartedEmail } from "./templates/subscription-started";
 export { default as SubscriptionUpgradedEmail } from "./templates/subscription-upgraded";
@@ -694,46 +690,6 @@ export async function sendPaymentReceiptEmail({
 }
 
 /**
- * Send payment failed email
- */
-export async function sendPaymentFailedEmail({
-  email,
-  userName,
-  planName,
-  amount,
-  failureReason,
-  retryDate,
-  updatePaymentUrl,
-}: {
-  email: string;
-  userName?: string;
-  planName?: string;
-  amount?: string;
-  failureReason?: string;
-  retryDate?: string;
-  updatePaymentUrl?: string;
-}) {
-  const result = await sendEmail({
-    to: email,
-    subject: "Action required: Payment failed for your subscription",
-    react: PaymentFailedEmail({
-      userName,
-      planName,
-      amount,
-      failureReason,
-      retryDate,
-      updatePaymentUrl,
-    }),
-  });
-
-  if (!result.success) {
-    throw result.error || new Error("Failed to send email");
-  }
-
-  return { success: true, messageId: result.messageId };
-}
-
-/**
  * Send subscription upgraded email
  */
 export async function sendSubscriptionUpgradedEmail({
@@ -852,49 +808,6 @@ export async function sendSubscriptionCancelledEmail({
       cancellationReason,
       reactivateUrl,
       feedbackUrl,
-    }),
-  });
-
-  if (!result.success) {
-    throw result.error || new Error("Failed to send email");
-  }
-
-  return { success: true, messageId: result.messageId };
-}
-
-/**
- * Send subscription renewed email
- */
-export async function sendSubscriptionRenewedEmail({
-  email,
-  userName,
-  planName,
-  amount,
-  billingInterval,
-  renewalDate,
-  nextBillingDate,
-  dashboardUrl,
-}: {
-  email: string;
-  userName?: string;
-  planName?: string;
-  amount?: string;
-  billingInterval?: string;
-  renewalDate?: string;
-  nextBillingDate?: string;
-  dashboardUrl?: string;
-}) {
-  const result = await sendEmail({
-    to: email,
-    subject: `Your ${planName || ""} subscription has been renewed`,
-    react: SubscriptionRenewedEmail({
-      userName,
-      planName,
-      amount,
-      billingInterval,
-      renewalDate,
-      nextBillingDate,
-      dashboardUrl,
     }),
   });
 

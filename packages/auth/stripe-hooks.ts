@@ -1,15 +1,12 @@
 import { database } from "@repo/database";
 import {
-  sendPaymentFailedEmail,
   sendSubscriptionCancelledEmail,
   sendSubscriptionDowngradedEmail,
-  sendSubscriptionRenewedEmail,
   sendSubscriptionStartedEmail,
   sendSubscriptionUpgradedEmail,
 } from "@repo/email";
 import { MILLISECONDS_PER_SECOND } from "@repo/utils/date";
 import {
-  CENTS_PER_DOLLAR,
   PLAN_DISPLAY_NAMES,
   PLAN_ORDER,
   type PlanName,
@@ -73,13 +70,6 @@ function getStripePriceEnvMap() {
     enterpriseMonthly: env.STRIPE_ENTERPRISE_PRICE_ID_MONTHLY,
     enterpriseAnnual: env.STRIPE_ENTERPRISE_PRICE_ID_ANNUAL,
   };
-}
-
-function extractSubscriptionId(invoice: Stripe.Invoice): string | undefined {
-  // Stripe v22.2+ removed `subscription` from the top-level Invoice; it now
-  // lives on each InvoiceLineItem. Read from the first line item.
-  const raw = invoice.lines.data[0]?.subscription;
-  return typeof raw === "string" ? raw : raw?.id;
 }
 
 export async function handleSubscriptionComplete(args: {
@@ -174,115 +164,5 @@ export async function handleSubscriptionDeleted(args: {
     planName: displayPlanName(args.subscription.plan),
     accessUntil,
     reactivateUrl: ctx.dashboardUrl,
-  });
-}
-
-export async function handleStripeInvoiceEvent(
-  event: Stripe.Event
-): Promise<void> {
-  if (event.type === "invoice.payment_failed") {
-    await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
-    return;
-  }
-  if (event.type === "invoice.paid") {
-    await handleInvoiceRenewal(event.data.object as Stripe.Invoice);
-  }
-}
-
-async function handleInvoicePaymentFailed(
-  invoice: Stripe.Invoice
-): Promise<void> {
-  const subscriptionId = extractSubscriptionId(invoice);
-  if (!subscriptionId) {
-    return;
-  }
-
-  const subscription = await database.subscription.findFirst({
-    where: { stripeSubscriptionId: subscriptionId },
-    select: { referenceId: true, plan: true },
-  });
-  if (!subscription) {
-    return;
-  }
-
-  const ctx = await getOrgEmailContext(subscription.referenceId);
-  if (!ctx) {
-    return;
-  }
-
-  const amountDue = invoice.amount_due
-    ? `$${(invoice.amount_due / CENTS_PER_DOLLAR).toFixed(2)}`
-    : undefined;
-  const retryDate = invoice.next_payment_attempt
-    ? new Date(
-        invoice.next_payment_attempt * MILLISECONDS_PER_SECOND
-      ).toLocaleDateString()
-    : undefined;
-  const failureReason =
-    (invoice.last_finalization_error as { message?: string } | null)?.message ||
-    "Payment method declined";
-
-  await sendPaymentFailedEmail({
-    email: ctx.ownerEmail,
-    userName: ctx.ownerName,
-    planName: displayPlanName(subscription.plan),
-    amount: amountDue,
-    failureReason,
-    retryDate,
-    updatePaymentUrl: ctx.dashboardUrl,
-  });
-}
-
-async function handleInvoiceRenewal(invoice: Stripe.Invoice): Promise<void> {
-  // Skip first payment — welcome email is sent via onSubscriptionComplete
-  if (invoice.billing_reason !== "subscription_cycle") {
-    return;
-  }
-
-  const subscriptionId = extractSubscriptionId(invoice);
-  if (!subscriptionId) {
-    return;
-  }
-
-  const dbSubscription = await database.subscription.findFirst({
-    where: { stripeSubscriptionId: subscriptionId },
-    select: { referenceId: true, plan: true },
-  });
-  if (!dbSubscription) {
-    return;
-  }
-
-  const ctx = await getOrgEmailContext(dbSubscription.referenceId);
-  if (!ctx) {
-    return;
-  }
-
-  const amountPaid = invoice.amount_paid
-    ? `$${(invoice.amount_paid / CENTS_PER_DOLLAR).toFixed(2)}`
-    : undefined;
-  const renewalDate = invoice.period_end
-    ? new Date(
-        invoice.period_end * MILLISECONDS_PER_SECOND
-      ).toLocaleDateString()
-    : undefined;
-
-  // Derive billing interval from the invoice's price ID. Stripe v22.2+ moved
-  // the price reference from `lines.data[N].price` to
-  // `lines.data[N].pricing.price_details.price` (which is `string | Price`).
-  const priceRef = invoice.lines.data[0]?.pricing?.price_details?.price;
-  const invoicePriceId = typeof priceRef === "string" ? priceRef : priceRef?.id;
-  const isAnnual =
-    invoicePriceId === env.STRIPE_PRO_PRICE_ID_ANNUAL ||
-    invoicePriceId === env.STRIPE_ENTERPRISE_PRICE_ID_ANNUAL;
-
-  await sendSubscriptionRenewedEmail({
-    email: ctx.ownerEmail,
-    userName: ctx.ownerName,
-    planName: displayPlanName(dbSubscription.plan),
-    amount: amountPaid,
-    billingInterval: isAnnual ? "Annually" : "Monthly",
-    renewalDate,
-    nextBillingDate: renewalDate,
-    dashboardUrl: ctx.dashboardUrl,
   });
 }
