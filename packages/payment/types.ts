@@ -19,6 +19,7 @@ export interface Subscription {
   trialStart: Date | null;
   trialEnd: Date | null;
   cancelAtPeriodEnd: boolean | null;
+  cancelAt: Date | null;
   seats: number | null;
   createdAt: Date;
   updatedAt: Date;
@@ -37,6 +38,7 @@ export const SubscriptionSchema = z.object({
   trialStart: z.date().nullable(),
   trialEnd: z.date().nullable(),
   cancelAtPeriodEnd: z.boolean().nullable(),
+  cancelAt: z.date().nullable(),
   seats: z.number().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),

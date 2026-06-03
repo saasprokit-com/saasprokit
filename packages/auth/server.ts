@@ -52,7 +52,6 @@ import {
 import { buildStripePlans } from "./plans";
 import { stripeClient } from "./stripe-client";
 import {
-  handleStripeInvoiceEvent,
   handleSubscriptionComplete,
   handleSubscriptionDeleted,
   handleSubscriptionUpdate,
@@ -320,7 +319,6 @@ export const auth = betterAuth({
             stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
             createCustomerOnSignUp: false,
             organization: { enabled: true },
-            onEvent: handleStripeInvoiceEvent,
             subscription: {
               enabled: true,
               onSubscriptionComplete: handleSubscriptionComplete,
