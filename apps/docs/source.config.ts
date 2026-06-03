@@ -1,3 +1,4 @@
+import { remarkMdxMermaid } from "fumadocs-core/mdx-plugins";
 import {
   defineConfig,
   defineDocs,
@@ -22,6 +23,7 @@ export const docs = defineDocs({
 
 export default defineConfig({
   mdxOptions: {
-    // MDX options
+    // Rewrites fenced ```mermaid blocks into <Mermaid /> components at build time.
+    remarkPlugins: [remarkMdxMermaid],
   },
 });
