@@ -3,9 +3,11 @@
   "icon": "CreditCard",
   "pages": [
     "index",
-    "plans",
-    "checkout-flow",
+    "subscribe-and-checkout",
+    "subscription-lifecycle",
+    "plan-changes-and-cancellation",
+    "billing-portal",
     "webhooks",
-    "billing-page"
+    "billing-authorization"
   ]
 }

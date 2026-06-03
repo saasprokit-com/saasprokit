@@ -1,176 +1,104 @@
 ---
-title: Webhooks
-description: Stripe webhook handling, event processing, and idempotency
+title: Stripe Webhooks
+description: How Stripe webhook events are received, verified by the @better-auth/stripe plugin, and synced into the database and notification emails
 ---
 
-## Webhook Endpoint
+Billing webhooks are **not** handled by a hand-rolled API route. The `@better-auth/stripe` plugin mounts the webhook endpoint, verifies the Stripe signature, persists subscription state, and then dispatches into the project's own hook functions defined in `packages/auth/stripe-hooks.ts`.
 
-The webhook handler is at `apps/web/app/api/stripe/webhook/route.ts`. It processes incoming Stripe events with signature verification and idempotency.
+## Endpoint & Signature Verification
 
-### Processing Flow
+The webhook handler is mounted by the Better Auth catch-all route. Point the Stripe Dashboard webhook at:
 
 ```
-Stripe sends POST to /api/stripe/webhook
-  ↓
-1. Verify signature using STRIPE_WEBHOOK_SECRET
-  ↓
-2. Check idempotency (WebhookEvent table)
-   - Skip if already processed or max retries exceeded
-  ↓
-3. Store webhook event data in database
-  ↓
-4. Run custom handlers (emails, business logic)
-  ↓
-5. Pass to Better Auth Stripe plugin (subscription sync)
-  ↓
-6. Mark event as processed (or failed)
-  ↓
-7. Return 200 to Stripe (always, regardless of processing result)
+${NEXT_PUBLIC_APP_URL}/api/auth/stripe/webhook
 ```
 
-## Handled Events
+Signature verification is performed entirely by the plugin using `stripeWebhookSecret`. In `packages/auth/server.ts` the Stripe plugin is only added when **both** a Stripe client and a webhook secret are present:
 
-Only whitelisted event types are processed by custom handlers:
-
-| Event | Handler | Action |
-|-------|---------|--------|
-| `checkout.session.completed` | `handleCheckoutSessionCompleted` | Sends "subscription started" email |
-| `customer.subscription.updated` | `handleCustomerSubscriptionUpdated` | Sends upgrade or downgrade email |
-| `customer.subscription.deleted` | `handleCustomerSubscriptionDeleted` | Sends cancellation email with access-until date |
-| `invoice.payment_failed` | `handleInvoicePaymentFailed` | Sends payment failure email with retry date |
-| `invoice.paid` | `handleInvoicePaid` | Sends renewal email (only for `subscription_cycle` billing reason) |
-
-New event types must be explicitly added to the whitelist in `apps/web/lib/billing/stripe.ts`.
-
-## Idempotency
-
-The `WebhookEvent` model ensures each Stripe event is processed exactly once:
-
-```typescript
-// 1. Check if event was already processed
-const existing = await checkWebhookIdempotency(eventId, provider);
-if (existing.alreadyProcessed) return; // Skip
-
-// 2. Store event data
-await storeWebhookEventData({ provider, eventId, eventType, data });
-
-// 3. Process event...
-
-// 4. Mark as processed or failed
-await markEventProcessed(eventId, provider);
-// or
-await markEventFailed(eventId, provider, error);
+```ts
+...(stripeClient && env.STRIPE_WEBHOOK_SECRET
+  ? [
+      stripe({
+        stripeClient,
+        stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
+        createCustomerOnSignUp: false,
+        organization: { enabled: true },
+        onEvent: handleStripeInvoiceEvent,
+        subscription: {
+          enabled: true,
+          onSubscriptionComplete: handleSubscriptionComplete,
+          onSubscriptionUpdate: handleSubscriptionUpdate,
+          onSubscriptionDeleted: handleSubscriptionDeleted,
+          plans: buildStripePlans({ /* price IDs */ }),
+          authorizeReference: ({ user, referenceId, action }) => /* ... */,
+        },
+      }),
+    ]
+  : []),
 ```
 
-This prevents duplicate email sends when Stripe retries failed deliveries.
+`STRIPE_WEBHOOK_SECRET` is declared in `packages/auth/keys.ts` as an optional `z.string().startsWith("whsec_")`. If it is unset, the plugin is omitted and no webhook endpoint is registered.
+
+The plugin exposes two dispatch surfaces, both wired in `server.ts`:
+
+- **`subscription.onSubscriptionComplete` / `onSubscriptionUpdate` / `onSubscriptionDeleted`** — typed subscription lifecycle callbacks. The plugin has already upserted the local `subscription` record (status, plan, `stripeSubscriptionId`, `referenceId`) before invoking these; our handlers run as **side effects**, primarily sending notification email.
+- **`onEvent`** — a raw `Stripe.Event` catch-all, used here for invoice events (`handleStripeInvoiceEvent`).
+
+## Flow
+
+```mermaid
+sequenceDiagram
+    participant Stripe
+    participant Endpoint as POST /api/auth/stripe/webhook
+    participant Plugin as @better-auth/stripe
+    participant DB as Prisma (subscription table)
+    participant Hooks as stripe-hooks.ts
+    participant Email as @repo/email
+
+    Stripe->>Endpoint: webhook event (signed)
+    Endpoint->>Plugin: forward raw body + signature
+    Plugin->>Plugin: verify signature with STRIPE_WEBHOOK_SECRET
+    alt invalid signature
+        Plugin-->>Stripe: 400 (rejected)
+    else valid
+        Plugin->>DB: upsert subscription (status/plan/ids)
+        alt subscription.* event
+            Plugin->>Hooks: onSubscriptionComplete / Update / Deleted
+        else other event (e.g. invoice.*)
+            Plugin->>Hooks: onEvent(event) -> handleStripeInvoiceEvent
+        end
+        Hooks->>DB: lookup org owner / subscription (read)
+        Hooks->>Email: send lifecycle email
+        Plugin-->>Stripe: 200 OK
+    end
+```
 
 ## Event Handlers
 
-### checkout.session.completed
+The dispatch handlers all resolve an **org email context** via `getOrgEmailContext(referenceId)`, which loads the `organization` and its `OWNER` `member` (using `ORG_ROLES.OWNER`) and builds a `dashboardUrl` of `${NEXT_PUBLIC_APP_URL}/${org.slug}/billing`. If the org or owner email is missing, the handler returns early and sends nothing.
 
-Triggered when a user completes the Stripe checkout page.
+| Dispatch source | Stripe trigger | Handler in `stripe-hooks.ts` | What it does |
+| --- | --- | --- | --- |
+| `subscription.onSubscriptionComplete` | First successful subscription checkout | `handleSubscriptionComplete` | Sends `sendSubscriptionStartedEmail` with the plan display name and billing interval (`getBillingInterval` compares the price ID against `STRIPE_*_PRICE_ID_ANNUAL`). |
+| `subscription.onSubscriptionUpdate` | `customer.subscription.updated` | `handleSubscriptionUpdate` | Reads `event.data.previous_attributes.items`. If no item change, returns (skips status-only updates / period rollovers). Otherwise resolves the previous plan from the previous price ID via `getPlanNameFromPriceId`, compares plan positions using `PLAN_ORDER`, and sends `sendSubscriptionDowngradedEmail` when `previousIndex > newIndex`, else `sendSubscriptionUpgradedEmail`. |
+| `subscription.onSubscriptionDeleted` | `customer.subscription.deleted` | `handleSubscriptionDeleted` | Computes the access cutoff from the first subscription item's `current_period_end` (Stripe v22.2+ moved this onto each `SubscriptionItem`) and sends `sendSubscriptionCancelledEmail` with `accessUntil` and a `reactivateUrl`. |
+| `onEvent` (raw) | `invoice.payment_failed` | `handleStripeInvoiceEvent` → `handleInvoicePaymentFailed` | Extracts the subscription ID via `extractSubscriptionId` (reads `invoice.lines.data[0].subscription`), looks up the local `subscription` by `stripeSubscriptionId`, then sends `sendPaymentFailedEmail` with `amount_due` (formatted via `CENTS_PER_DOLLAR`), the `next_payment_attempt` retry date, and a `failureReason` derived from `last_finalization_error`. |
+| `onEvent` (raw) | `invoice.paid` | `handleStripeInvoiceEvent` → `handleInvoiceRenewal` | Returns unless `invoice.billing_reason === "subscription_cycle"` (skips the first payment, which is covered by `onSubscriptionComplete`). Looks up the local subscription, derives the billing interval from `invoice.lines.data[0].pricing.price_details.price`, and sends `sendSubscriptionRenewedEmail` with `amount_paid` and the `period_end` renewal date. |
 
-```typescript
-async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  // 1. Validate metadata with Zod schema
-  // 2. Verify user and organization exist in database
-  // 3. Send "subscription started" email with:
-  //    - Plan name, billing interval
-  //    - Dashboard URL
-}
-```
+### Notes on the handler implementations
 
-### customer.subscription.updated
+- **Plan naming.** `displayPlanName` maps internal plan keys to `PLAN_DISPLAY_NAMES[PlanName]`, falling back to the raw value.
+- **Stripe v22.2+ field moves.** Several helpers exist purely to read fields that Stripe relocated: `extractSubscriptionId` (subscription now on the line item), `handleSubscriptionDeleted` (`current_period_end` now on each `SubscriptionItem`), and `handleInvoiceRenewal` (price now at `lines.data[N].pricing.price_details.price`).
+- **Idempotency / safety.** Every handler returns early when its lookup (`getOrgEmailContext`, `database.subscription.findFirst`, or `extractSubscriptionId`) yields nothing, so missing data never throws inside the webhook path.
+- **Database writes.** The handlers in `stripe-hooks.ts` only **read** the `subscription`, `organization`, and `member` tables. The authoritative subscription row write (status/plan/`stripeSubscriptionId`) is done by the `@better-auth/stripe` plugin itself before our hooks fire.
 
-Triggered when a subscription's plan or status changes.
+### Not a webhook handler
 
-```typescript
-async function handleCustomerSubscriptionUpdated(
-  subscription: Stripe.Subscription,
-  previousAttributes: Partial<Stripe.Subscription>
-) {
-  // 1. Compare previous vs new plan tier
-  // 2. Determine if upgrade or downgrade
-  // 3. Send appropriate email
-}
-```
+`packages/payment/hooks.ts` is a `"use client"` module exporting React hooks (`useSubscription`, `useCancel`) that call the Better Auth client (`subscription.list`, `subscription.cancel`). Despite the filename, it is unrelated to webhook ingestion and runs in the browser.
 
-### customer.subscription.deleted
+## Source files
 
-Triggered when a subscription is fully canceled (after the billing period ends).
-
-```typescript
-async function handleCustomerSubscriptionDeleted(subscription: Stripe.Subscription) {
-  // 1. Extract access-until date from current_period_end
-  // 2. Send cancellation email with:
-  //    - Access-until date
-  //    - Link to billing page for reactivation
-}
-```
-
-### invoice.payment_failed
-
-Triggered when an automatic payment attempt fails.
-
-```typescript
-async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  // 1. Retrieve subscription from invoice
-  // 2. Send payment failure email with:
-  //    - Amount due
-  //    - Failure reason
-  //    - Next retry date
-}
-```
-
-### invoice.paid
-
-Triggered when an invoice is successfully paid.
-
-```typescript
-async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  // Only process "subscription_cycle" billing reason
-  // (Skip initial payment — handled by checkout.session.completed)
-  // Send renewal email with:
-  //   - Amount paid, billing interval
-  //   - Next billing date
-}
-```
-
-## Metadata Validation
-
-All Stripe metadata is validated with Zod schemas before use:
-
-```typescript
-// Checkout session metadata
-const metadata = validateStripeCheckoutSessionMetadata(session.metadata);
-// { organizationId, organizationSlug, userId, planName, billingInterval }
-
-// Subscription metadata
-const metadata = validateStripeSubscriptionMetadata(subscription.metadata);
-```
-
-This prevents type confusion and ensures data integrity across the webhook pipeline.
-
-## Stripe Setup
-
-### Create Webhook Endpoint
-
-1. Go to [Stripe Dashboard](https://dashboard.stripe.com) > Developers > Webhooks
-2. Add endpoint: `{NEXT_PUBLIC_APP_URL}/api/stripe/webhook`
-3. Subscribe to these events:
-   - `checkout.session.completed`
-   - `customer.subscription.updated`
-   - `customer.subscription.deleted`
-   - `invoice.payment_failed`
-   - `invoice.paid`
-4. Copy the signing secret to `STRIPE_WEBHOOK_SECRET`
-
-### Local Development
-
-Use the Stripe CLI to forward webhooks locally:
-
-```bash
-stripe listen --forward-to localhost:3000/api/stripe/webhook
-```
-
-The CLI prints a webhook signing secret — use it as `STRIPE_WEBHOOK_SECRET` in `.env.local`.
+- `packages/auth/stripe-hooks.ts` — all webhook event handlers (`handleSubscriptionComplete`, `handleSubscriptionUpdate`, `handleSubscriptionDeleted`, `handleStripeInvoiceEvent`, plus `handleInvoicePaymentFailed` / `handleInvoiceRenewal`) and helpers (`getOrgEmailContext`, `getBillingInterval`, `extractSubscriptionId`).
+- `packages/auth/server.ts` — wires `stripeWebhookSecret`, `onEvent`, and the `subscription.*` callbacks into the `stripe()` plugin.
+- `packages/auth/keys.ts` — declares `STRIPE_WEBHOOK_SECRET` and the `STRIPE_*_PRICE_ID_*` env vars.
+- `packages/payment/hooks.ts` — client-side subscription React hooks (not webhook handling).
