@@ -1,0 +1,192 @@
+---
+title: Configuration
+description: The betterAuth() instance — providers, plugins, sessions, rate limiting, email delivery, and the validated env schema
+---
+
+The entire auth surface is declared in one place: the `betterAuth({...})` call in `packages/auth/server.ts`. This page walks through that configuration option by option. The values that control timing (session length, OTP/magic-link expiry) live as named constants in `packages/utils/auth.ts` so the server config reads declaratively.
+
+## Environment & startup validation
+
+Before the instance is built, `keys()` (`packages/auth/keys.ts`) validates the environment with Zod via `@t3-oss/env-nextjs`. This **throws at startup** rather than failing lazily at request time:
+
+```ts
+const env = keys(); // throws if BETTER_AUTH_SECRET is missing / < 32 chars, etc.
+```
+
+| Var | Schema | Notes |
+| --- | --- | --- |
+| `BETTER_AUTH_SECRET` | `string().min(32)` | **Required.** Signs cookies/tokens. |
+| `BETTER_AUTH_URL` | `url().optional()` | Base URL; falls back to `NEXT_PUBLIC_APP_URL`. |
+| `BETTER_AUTH_TRUSTED_ORIGINS` | `string().optional()` | Comma-separated; split into `trustedOrigins`. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional | Google OAuth. |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | optional | GitHub OAuth. |
+| `STRIPE_*` | optional | Billing — see [Payment](../payment). |
+| `MAX_ORGS_PER_USER` | `coerce.number().int().positive()` | Defaults to the `@repo/utils` constant. |
+| `NEXT_PUBLIC_APP_URL` / `NEXT_PUBLIC_APP_NAME` | optional | Client-visible app identity. |
+
+Note that OAuth and Stripe keys are **optional** — the app boots without them, and providers simply stay inert (social buttons fail gracefully, the Stripe plugin is omitted entirely; see below).
+
+## Core instance options
+
+```ts
+export const auth = betterAuth({
+  appName: env.NEXT_PUBLIC_APP_NAME,
+  baseURL: env.BETTER_AUTH_URL || env.NEXT_PUBLIC_APP_URL,
+  secret: env.BETTER_AUTH_SECRET,
+  trustedOrigins: env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",") ?? [],
+  database: prismaAdapter(database, { provider: "postgresql" }),
+  advanced: { useSecureCookies: process.env.NODE_ENV === "production" },
+  // ...
+});
+```
+
+- **`database`** — the Prisma adapter against PostgreSQL. All auth tables are part of the shared `@repo/database` schema.
+- **`advanced.useSecureCookies`** — `true` only in production, so cookies work over plain `http://localhost` in dev.
+- **`user.additionalFields`** — extends the user with optional `firstName` / `lastName`.
+- **`account.accountLinking`** — enabled with `trustedProviders: ["google", "github"]`, so signing in with a social provider that matches an existing verified email links to that account instead of creating a duplicate.
+
+## Email & password
+
+```ts
+emailAndPassword: {
+  enabled: true,
+  requireEmailVerification: true,
+  revokeSessionsOnPasswordReset: true,
+  sendResetPassword: async ({ user, url }) => { /* @repo/email */ },
+},
+```
+
+- **`requireEmailVerification: true`** is the key gate — a freshly registered user cannot sign in until they verify (see [Sign Up & Email Verification](./sign-up-and-verification)).
+- **`revokeSessionsOnPasswordReset: true`** invalidates all existing sessions when the password is reset, so a stolen session can't outlive a reset (see [Password Reset](./password-reset)).
+
+## Social providers
+
+```ts
+socialProviders: {
+  google: { clientId: env.GOOGLE_CLIENT_ID || "", clientSecret: env.GOOGLE_CLIENT_SECRET || "" },
+  github: { clientId: env.GITHUB_CLIENT_ID || "", clientSecret: env.GITHUB_CLIENT_SECRET || "" },
+},
+```
+
+Both are always declared; absent keys collapse to empty strings, so the provider exists but cannot complete a real OAuth round-trip until configured.
+
+## Sessions
+
+```ts
+session: {
+  expiresIn: SESSION_EXPIRES_IN_DAYS * SECONDS_PER_DAY,   // 7 days
+  updateAge: SESSION_UPDATE_AGE_DAYS * SECONDS_PER_DAY,   // 1 day
+  cookieCache: { enabled: true, maxAge: COOKIE_CACHE_MAX_AGE_MINUTES * SECONDS_PER_MINUTE }, // 5 min
+},
+```
+
+Sessions live **7 days** and slide forward when used (`updateAge` 1 day). The **cookie cache** (5 minutes) lets the proxy and Server Components read the session from a signed cookie without a DB round-trip most of the time. Details in [Sessions & Route Protection](./sessions-and-routing).
+
+## Rate limiting
+
+```ts
+rateLimit: {
+  storage: "database",
+  customRules: {
+    "/sign-in/email":     { window: 60, max: 5 },
+    "/sign-up/email":     { window: 60, max: 3 },
+    "/forgot-password":   { window: 60, max: 3 },
+    "/reset-password":    { window: 60, max: 3 },
+    "/change-password":   { window: 60, max: 3 },
+    "/two-factor/*":      { window: 60, max: 5 },
+  },
+},
+```
+
+Rate limit state is stored in the database (the `RateLimit` model) rather than memory — **this matters on serverless/Vercel**, where in-memory counters wouldn't survive between invocations or be shared across instances. The custom rules throttle the abuse-prone endpoints (credential stuffing on sign-in, reset-email flooding, OTP brute-forcing).
+
+## Plugins
+
+The `plugins` array *is* the feature set. Server plugins and their client counterparts (`packages/auth/client.ts`) must stay in sync.
+
+```ts
+plugins: [
+  admin({ ac, roles, defaultRole: ADMIN_ROLES.USER }),
+  magicLink({ sendMagicLink, expiresIn: MAGIC_LINK_EXPIRES_IN_MINUTES * SECONDS_PER_MINUTE }),
+  emailOTP({ sendVerificationOTP, otpLength: OTP_LENGTH, expiresIn: OTP_EXPIRES_IN_MINUTES * SECONDS_PER_MINUTE }),
+  twoFactor({ issuer: env.NEXT_PUBLIC_APP_NAME, otpOptions: { sendOTP, period, digits } }),
+  multiSession(),
+  organization({ ac: orgAc, roles, creatorRole, memberRole, organizationLimit, allowUserToCreateOrganization, ... }),
+  ...(stripeClient && env.STRIPE_WEBHOOK_SECRET ? [stripe({ ... })] : []),
+  nextCookies(),
+],
+```
+
+| Plugin | Purpose | Timing constant |
+| --- | --- | --- |
+| `admin` | Platform RBAC; assigns `defaultRole: "user"` at signup | — |
+| `magicLink` | Passwordless email links | `MAGIC_LINK_EXPIRES_IN_MINUTES` (10) |
+| `emailOTP` | One-time codes for sign-in, email verification, and forget-password | `OTP_EXPIRES_IN_MINUTES` (5), `OTP_LENGTH` (6) |
+| `twoFactor` | TOTP + email-OTP second factor | `TWO_FACTOR_OTP_PERIOD_MINUTES` (5), `TWO_FACTOR_DIGITS` (6) |
+| `multiSession` | Multiple concurrent device sessions | — |
+| `organization` | Orgs, members, teams, invitations | `INVITATION_EXPIRES_IN_DAYS` (7) |
+| `stripe` | Billing (conditional) | — |
+| `nextCookies` | Wires Better Auth cookie handling into Next.js | — |
+
+### Email delivery is dependency-injected
+
+Better Auth never sends email itself — each plugin receives a `send*` callback that delegates to `@repo/email`. This keeps the auth package transport-agnostic (Resend in production, MailDev locally):
+
+```ts
+emailOTP({
+  async sendVerificationOTP({ email, otp, type }) {
+    if (type === "sign-in")            await sendSignInOTPEmail({ email, otp, ... });
+    else if (type === "email-verification") await sendVerificationOTPEmail({ email, otp, ... });
+    else /* forget-password */         await sendSignInOTPEmail({ email, otp, ... });
+  },
+  ...
+})
+```
+
+The full set of injected senders: `sendPasswordResetEmail`, `sendEmailVerificationEmail`, `sendMagicLinkEmail`, `sendSignInOTPEmail`, `sendVerificationOTPEmail`, `sendTwoFactorOTPEmail`, and `sendOrgInvitationEmail`.
+
+### The Stripe plugin is conditional
+
+```ts
+...(stripeClient && env.STRIPE_WEBHOOK_SECRET ? [stripe({ ... })] : [])
+```
+
+The billing plugin is only added when **both** a Stripe client and a webhook secret are configured. Without them, the auth instance runs identically minus billing — useful for local dev and CI. See the [Payment](../payment) section.
+
+### `organization` and self-serve org creation
+
+The organization plugin gates new-org creation behind `allowUserToCreateOrganization: (user) => canUserCreateOrg(user.id)`. That helper counts the user's owned orgs and their active free-plan subscriptions, then defers to `checkOrgCreationEligibility(...)` against `MAX_ORGS_PER_USER`. Role assignment (`creatorRole: "owner"`, `memberRole: "member"`) and the access-control matrix are defined in `packages/auth/permissions.ts`.
+
+## Client instance
+
+The browser side (`packages/auth/client.ts`) is a `"use client"` module that registers the matching plugins and re-exports bound methods, so components import ready-to-call functions:
+
+```ts
+export const { signIn, signUp, signOut, useSession, getSession, changePassword,
+  twoFactor, organization, useActiveOrganization, subscription, emailOtp, admin } = authClient;
+```
+
+The `twoFactorClient` is configured with an `onTwoFactorRedirect` hook that sends the browser to `/auth/2fa` whenever a sign-in needs a second factor — covered in [Two-Factor Authentication](./two-factor).
+
+## The Next.js handler
+
+All of this is exposed through a single catch-all route:
+
+```ts
+// apps/web/app/api/auth/[...all]/route.ts
+import { auth } from "@repo/auth/server";
+import { toNextJsHandler } from "better-auth/next-js";
+
+const { GET, POST } = toNextJsHandler(auth);
+export { GET, POST };
+```
+
+`toNextJsHandler` maps every Better Auth endpoint (and every plugin's endpoints, including the Stripe webhook) onto `/api/auth/*`. There are no per-flow API routes to maintain.
+
+## Source files
+
+- `packages/auth/server.ts` — the `betterAuth({...})` instance
+- `packages/auth/client.ts` — `createAuthClient({...})` and method exports
+- `packages/auth/keys.ts` — Zod env schema
+- `packages/utils/auth.ts` — timing constants
+- `apps/web/app/api/auth/[...all]/route.ts` — the mounted handler

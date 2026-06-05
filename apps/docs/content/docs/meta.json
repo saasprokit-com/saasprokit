@@ -2,6 +2,7 @@
   "pages": [
     "getting-started",
     "database",
+    "authentication",
     "payment",
     "testing",
     "email",
