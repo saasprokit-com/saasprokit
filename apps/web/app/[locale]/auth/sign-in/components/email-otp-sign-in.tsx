@@ -2,10 +2,13 @@
 
 import { authClient } from "@repo/auth/client";
 import {
-  EmailOtpForm,
+  EmailOtpRequestForm,
   type SendOtpFormValues,
+} from "@repo/design-system/components/molecules/auth/email-otp-request-form";
+import {
+  EmailOtpVerifyForm,
   type VerifyOtpFormValues,
-} from "@repo/design-system/components/molecules/auth/email-otp-form";
+} from "@repo/design-system/components/molecules/auth/email-otp-verify-form";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -18,7 +21,6 @@ interface EmailOtpSignInProps {
 export function EmailOtpSignIn({ errors }: EmailOtpSignInProps) {
   const router = useRouter();
   const [otpSent, setOtpSent] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [email, setEmail] = useState("");
 
   async function handleSendOtp(data: SendOtpFormValues) {
@@ -34,7 +36,6 @@ export function EmailOtpSignIn({ errors }: EmailOtpSignInProps) {
     }
 
     setEmail(normalizedEmail);
-    setSuccess(true);
     setOtpSent(true);
   }
 
@@ -54,17 +55,17 @@ export function EmailOtpSignIn({ errors }: EmailOtpSignInProps) {
 
   function handleUseDifferentEmail() {
     setOtpSent(false);
-    setSuccess(false);
     setEmail("");
   }
 
-  return (
-    <EmailOtpForm
-      onSendOtp={handleSendOtp}
-      onUseDifferentEmail={handleUseDifferentEmail}
-      onVerifyOtp={handleVerifyOtp}
-      otpSent={otpSent}
-      success={success}
-    />
-  );
+  if (otpSent) {
+    return (
+      <EmailOtpVerifyForm
+        onSubmit={handleVerifyOtp}
+        onUseDifferentEmail={handleUseDifferentEmail}
+      />
+    );
+  }
+
+  return <EmailOtpRequestForm onSubmit={handleSendOtp} />;
 }
