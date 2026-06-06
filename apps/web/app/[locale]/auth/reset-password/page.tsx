@@ -14,5 +14,6 @@ export default async function ResetPasswordPage({
 }: PageProps) {
   const [{ locale }, { token }] = await Promise.all([params, searchParams]);
   const dict = await getDictionary(locale);
+
   return <ResetPasswordClient errors={dict.errors.action} token={token} />;
 }

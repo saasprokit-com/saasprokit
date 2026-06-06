@@ -11,35 +11,12 @@ import {
   FormMessage,
 } from "@repo/design-system/components/ui/form";
 import { Input } from "@repo/design-system/components/ui/input";
-import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from "@repo/utils/user";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { AuthCard } from "./auth-card";
+import { type ResetPasswordFormValues, resetPasswordSchema } from "./schemas";
 
-const resetPasswordSchema = z
-  .object({
-    password: z
-      .string()
-      .min(
-        MIN_PASSWORD_LENGTH,
-        `Password must be at least ${MIN_PASSWORD_LENGTH} characters`
-      )
-      .max(
-        MAX_PASSWORD_LENGTH,
-        `Password cannot exceed ${MAX_PASSWORD_LENGTH} characters`
-      )
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
-
-export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+export type { ResetPasswordFormValues } from "./schemas";
 
 export interface ResetPasswordFormProps {
   onSubmit: (data: ResetPasswordFormValues) => Promise<void>;

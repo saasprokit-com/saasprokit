@@ -5,9 +5,11 @@ import {
   ResetPasswordForm,
   type ResetPasswordFormValues,
 } from "@repo/design-system/components/molecules/auth/reset-password-form";
+import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
+import { PAGE_ROUTES } from "@/lib/routes";
 
 interface ResetPasswordClientProps {
   token?: string;
@@ -19,7 +21,6 @@ export function ResetPasswordClient({
   errors,
 }: ResetPasswordClientProps) {
   const [success, setSuccess] = useState(false);
-  const router = useRouter();
 
   async function handleSubmit(data: ResetPasswordFormValues) {
     if (!token) {
@@ -46,13 +47,11 @@ export function ResetPasswordClient({
           <p className="mt-2 text-muted-foreground">
             This password reset link is invalid or has expired.
           </p>
-          <button
-            className="mt-4 text-primary hover:underline"
-            onClick={() => router.push("/auth/forgot-password")}
-            type="button"
-          >
-            Request a new reset link
-          </button>
+          <Button asChild className="mt-4">
+            <Link href={PAGE_ROUTES.FORGOT_PASSWORD}>
+              Request a new reset link
+            </Link>
+          </Button>
         </div>
       </main>
     );

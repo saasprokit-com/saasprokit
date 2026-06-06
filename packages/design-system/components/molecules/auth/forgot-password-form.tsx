@@ -13,14 +13,10 @@ import {
 import { Input } from "@repo/design-system/components/ui/input";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { AuthCard } from "./auth-card";
+import { type ForgotPasswordFormValues, forgotPasswordSchema } from "./schemas";
 
-const forgotPasswordSchema = z.object({
-  email: z.email("Please enter a valid email address"),
-});
-
-export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
+export type { ForgotPasswordFormValues } from "./schemas";
 
 export interface ForgotPasswordFormProps {
   onSubmit: (data: ForgotPasswordFormValues) => Promise<void>;
@@ -31,11 +27,11 @@ export interface ForgotPasswordFormProps {
 }
 
 export function ForgotPasswordForm({
-  onSubmit,
   signInUrl = "/auth/sign-in",
   error,
   success = false,
   className,
+  onSubmit,
 }: ForgotPasswordFormProps) {
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),

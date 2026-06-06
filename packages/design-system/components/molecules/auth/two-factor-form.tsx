@@ -15,19 +15,10 @@ import { Input } from "@repo/design-system/components/ui/input";
 import Link from "next/link";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { AuthCard } from "./auth-card";
+import { type TwoFactorFormValues, twoFactorSchema } from "./schemas";
 
-const TWO_FA_CODE_LENGTH = 6;
-
-const twoFactorSchema = z.object({
-  code: z
-    .string()
-    .length(TWO_FA_CODE_LENGTH, "Code must be 6 digits")
-    .regex(/^\d+$/, "Code must only contain numbers"),
-});
-
-export type TwoFactorFormValues = z.infer<typeof twoFactorSchema>;
+export type { TwoFactorFormValues } from "./schemas";
 
 export interface TwoFactorFormProps {
   onSubmit: (data: TwoFactorFormValues) => Promise<void>;

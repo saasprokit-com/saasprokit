@@ -14,17 +14,11 @@ import {
 import { Input } from "@repo/design-system/components/ui/input";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { AuthCard } from "./auth-card";
+import { type SignInFormValues, signInSchema } from "./schemas";
 import { type SocialProvider, SocialProviders } from "./social-providers";
 
-const signInSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
-  rememberMe: z.boolean().optional(),
-});
-
-export type SignInFormValues = z.infer<typeof signInSchema>;
+export type { SignInFormValues } from "./schemas";
 
 export interface SignInFormProps {
   onSubmit: (data: SignInFormValues) => Promise<void>;
