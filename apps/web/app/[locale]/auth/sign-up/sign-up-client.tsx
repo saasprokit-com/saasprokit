@@ -40,12 +40,10 @@ export function SignUpClient({ errors }: SignUpClientProps) {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-900">
-      <SignUpForm
-        onSocialLogin={handleSocialLogin}
-        onSubmit={handleSubmit}
-        socialProviders={["google", "github"]}
-      />
-    </main>
+    <SignUpForm
+      onSocialLogin={handleSocialLogin}
+      onSubmit={handleSubmit}
+      socialProviders={["google", "github"]}
+    />
   );
 }

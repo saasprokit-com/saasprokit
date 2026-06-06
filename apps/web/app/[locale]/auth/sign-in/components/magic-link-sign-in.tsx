@@ -5,6 +5,7 @@ import {
   MagicLinkForm,
   type MagicLinkFormValues,
 } from "@repo/design-system/components/molecules/auth/magic-link-form";
+import { MagicLinkSuccess } from "@repo/design-system/components/molecules/auth/magic-link-success";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useState } from "react";
 import { PAGE_ROUTES } from "@/lib/routes";
@@ -31,5 +32,9 @@ export function MagicLinkSignIn({ errors }: MagicLinkSignInProps) {
     setSuccess(true);
   }
 
-  return <MagicLinkForm onSubmit={handleSubmit} success={success} />;
+  if (success) {
+    return <MagicLinkSuccess />;
+  }
+
+  return <MagicLinkForm onSubmit={handleSubmit} />;
 }

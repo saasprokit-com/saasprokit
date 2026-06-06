@@ -22,7 +22,6 @@ export interface MagicLinkFormProps {
   onSubmit: (data: MagicLinkFormValues) => Promise<void>;
   signUpUrl?: string;
   error?: string;
-  success?: boolean;
   className?: string;
 }
 
@@ -30,7 +29,6 @@ export function MagicLinkForm({
   onSubmit,
   signUpUrl = "/auth/sign-up",
   error,
-  success = false,
   className,
 }: MagicLinkFormProps) {
   const form = useForm<MagicLinkFormValues>({
@@ -52,36 +50,18 @@ export function MagicLinkForm({
     }
   }
 
-  const footer = (
-    <p className="text-center text-muted-foreground text-sm">
-      Don&apos;t have an account?{" "}
-      <Link className="text-primary hover:underline" href={signUpUrl}>
-        Sign up
-      </Link>
-    </p>
-  );
-
-  if (success) {
-    return (
-      <AuthCard
-        className={className}
-        description="We've sent you a magic link to sign in"
-        footer={footer}
-        title="Check Your Email"
-      >
-        <div className="text-center text-muted-foreground text-sm">
-          <p>Check your email for the magic link!</p>
-          <p className="mt-2">Please check your email inbox and spam folder.</p>
-        </div>
-      </AuthCard>
-    );
-  }
-
   return (
     <AuthCard
       className={className}
       description="We'll send you a link to sign in instantly"
-      footer={footer}
+      footer={
+        <p className="text-center text-muted-foreground text-sm">
+          Don&apos;t have an account?{" "}
+          <Link className="text-primary hover:underline" href={signUpUrl}>
+            Sign up
+          </Link>
+        </p>
+      }
       title="Magic Link"
     >
       <Form {...form}>

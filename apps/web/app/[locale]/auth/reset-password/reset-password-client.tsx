@@ -5,6 +5,7 @@ import {
   ResetPasswordForm,
   type ResetPasswordFormValues,
 } from "@repo/design-system/components/molecules/auth/reset-password-form";
+import { ResetPasswordSuccess } from "@repo/design-system/components/molecules/auth/reset-password-success";
 import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import Link from "next/link";
@@ -41,25 +42,23 @@ export function ResetPasswordClient({
 
   if (!token) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-900">
-        <div className="text-center">
-          <h1 className="font-semibold text-2xl">Invalid Reset Link</h1>
-          <p className="mt-2 text-muted-foreground">
-            This password reset link is invalid or has expired.
-          </p>
-          <Button asChild className="mt-4">
-            <Link href={PAGE_ROUTES.FORGOT_PASSWORD}>
-              Request a new reset link
-            </Link>
-          </Button>
-        </div>
-      </main>
+      <div className="text-center">
+        <h1 className="font-semibold text-2xl">Invalid Reset Link</h1>
+        <p className="mt-2 text-muted-foreground">
+          This password reset link is invalid or has expired.
+        </p>
+        <Button asChild className="mt-4">
+          <Link href={PAGE_ROUTES.FORGOT_PASSWORD}>
+            Request a new reset link
+          </Link>
+        </Button>
+      </div>
     );
   }
 
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-900">
-      <ResetPasswordForm onSubmit={handleSubmit} success={success} />
-    </main>
-  );
+  if (success) {
+    return <ResetPasswordSuccess />;
+  }
+
+  return <ResetPasswordForm onSubmit={handleSubmit} />;
 }

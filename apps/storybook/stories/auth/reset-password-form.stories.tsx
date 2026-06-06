@@ -28,15 +28,6 @@ export const Default: Story = {
 };
 
 /**
- * Success state after password is reset.
- */
-export const Success: Story = {
-  args: {
-    success: true,
-  },
-};
-
-/**
  * Reset password form with an error message.
  */
 export const WithError: Story = {

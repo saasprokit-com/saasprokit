@@ -22,7 +22,6 @@ export interface ResetPasswordFormProps {
   onSubmit: (data: ResetPasswordFormValues) => Promise<void>;
   signInUrl?: string;
   error?: string;
-  success?: boolean;
   className?: string;
 }
 
@@ -30,7 +29,6 @@ export function ResetPasswordForm({
   onSubmit,
   signInUrl = "/auth/sign-in",
   error,
-  success = false,
   className,
 }: ResetPasswordFormProps) {
   const form = useForm<ResetPasswordFormValues>({
@@ -51,29 +49,6 @@ export function ResetPasswordForm({
         message: err instanceof Error ? err.message : "An error occurred",
       });
     }
-  }
-
-  if (success) {
-    return (
-      <AuthCard
-        className={className}
-        description="Your password has been updated"
-        footer={
-          <Link
-            className="text-primary text-sm hover:underline"
-            href={signInUrl}
-          >
-            Sign in with your new password
-          </Link>
-        }
-        title="Password Reset Successfully"
-      >
-        <div className="text-center text-muted-foreground text-sm">
-          <p>Your password has been successfully reset.</p>
-          <p className="mt-2">You can now sign in with your new password.</p>
-        </div>
-      </AuthCard>
-    );
   }
 
   return (
