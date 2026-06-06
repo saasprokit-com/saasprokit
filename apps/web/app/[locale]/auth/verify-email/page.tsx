@@ -1,7 +1,7 @@
 import { SuspenseFallback } from "@repo/design-system/components/ui/suspense-fallback";
 import { getDictionary } from "@repo/internationalization";
 import { Suspense } from "react";
-import { VerifyEmailClient } from "./verify-email-client";
+import { VerifyEmailClient } from "./components/verify-email-client";
 
 interface VerifyEmailPageProps {
   params: Promise<{ locale: string }>;

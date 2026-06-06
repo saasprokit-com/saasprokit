@@ -1,5 +1,5 @@
 import { getDictionary } from "@repo/internationalization";
-import { TwoFactorClient } from "./two-factor-client";
+import { TwoFactorClient } from "./components/two-factor-client";
 
 interface TwoFactorPageProps {
   params: Promise<{ locale: string }>;

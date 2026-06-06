@@ -1,5 +1,5 @@
 import { getDictionary } from "@repo/internationalization";
-import { ForgotPasswordClient } from "./forgot-password-client";
+import { ForgotPasswordClient } from "./components/forgot-password-client";
 
 interface ForgotPasswordPageProps {
   params: Promise<{ locale: string }>;

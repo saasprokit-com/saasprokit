@@ -9,7 +9,7 @@ import { ForgotPasswordSuccess } from "@repo/design-system/components/molecules/
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useState } from "react";
 import { PAGE_ROUTES } from "@/lib/routes";
-import { logResetRequestAction } from "./actions";
+import { logResetRequestAction } from "../actions";
 
 interface ForgotPasswordClientProps {
   errors: ActionErrorMessages;

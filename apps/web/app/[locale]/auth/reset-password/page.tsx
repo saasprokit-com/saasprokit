@@ -1,5 +1,5 @@
 import { getDictionary } from "@repo/internationalization";
-import { ResetPasswordClient } from "./reset-password-client";
+import { ResetPasswordClient } from "./components/reset-password-client";
 
 export const dynamic = "force-dynamic";
 
