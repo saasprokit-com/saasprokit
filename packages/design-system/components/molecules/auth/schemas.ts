@@ -24,24 +24,15 @@ const strongPasswordSchema = z
   .regex(/[a-z]/, "Password must contain at least one lowercase letter")
   .regex(/[0-9]/, "Password must contain at least one number");
 
-/** Length of the TOTP / email OTP code entered on the two-factor form. */
 export const TWO_FA_CODE_LENGTH = 6;
 
-/**
- * Adds a cross-field "passwords must match" check to any object schema that
- * carries `password` + `confirmPassword`. Shared by sign-up and reset-password
- * so the match rule (and its error placement) lives in exactly one spot.
- *
- * TODO(you): implement this helper — see the request in chat. The body is ~3
- * lines. The placeholder below keeps the file compiling but performs NO match
- * check yet, so both forms currently accept mismatched passwords.
- */
 function withPasswordConfirmation<
   Schema extends z.ZodType<{ password: string; confirmPassword: string }>,
 >(schema: Schema) {
-  // Replace this passthrough with a `.refine(...)` that compares the two
-  // fields and reports the error on `confirmPassword`.
-  return schema;
+  return schema.refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 }
 
 export const signInSchema = z.object({
