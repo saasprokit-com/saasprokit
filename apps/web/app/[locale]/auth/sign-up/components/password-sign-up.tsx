@@ -9,11 +9,11 @@ import type { SocialProvider } from "@repo/design-system/components/molecules/au
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useRouter } from "next/navigation";
 
-interface SignUpClientProps {
+interface PasswordSignUpProps {
   errors: ActionErrorMessages;
 }
 
-export function SignUpClient({ errors }: SignUpClientProps) {
+export function PasswordSignUp({ errors }: PasswordSignUpProps) {
   const router = useRouter();
 
   async function handleSubmit(data: SignUpFormValues) {

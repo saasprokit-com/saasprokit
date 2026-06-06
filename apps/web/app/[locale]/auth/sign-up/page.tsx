@@ -1,5 +1,5 @@
 import { getDictionary } from "@repo/internationalization";
-import { SignUpClient } from "./sign-up-client";
+import { PasswordSignUp } from "./components/password-sign-up";
 
 interface SignUpPageProps {
   params: Promise<{ locale: string }>;
@@ -9,5 +9,5 @@ export default async function SignUpPage({ params }: SignUpPageProps) {
   const { locale } = await params;
   const dict = await getDictionary(locale);
 
-  return <SignUpClient errors={dict.errors.action} />;
+  return <PasswordSignUp errors={dict.errors.action} />;
 }
