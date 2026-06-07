@@ -54,6 +54,7 @@ export const AUTH_ROUTE_PREFIXES = [
   PAGE_ROUTES.RESET_PASSWORD,
   PAGE_ROUTES.MAGIC_LINK,
   PAGE_ROUTES.VERIFY_EMAIL,
+  PAGE_ROUTES.TWO_FACTOR,
 ] as const;
 
 // ─── Dynamic route helpers ───────────────────────────────────────────────────
