@@ -10,18 +10,31 @@ import { EmailOtpSignIn } from "./components/email-otp-sign-in";
 import { MagicLinkSignIn } from "./components/magic-link-sign-in";
 import { PasswordSignIn } from "./components/password-sign-in";
 
-interface SignInPageProps {
-  params: Promise<{ locale: string }>;
+type SignInTab = "password" | "magic-link" | "otp";
+
+function resolveTab(tab: string | undefined): SignInTab {
+  if (tab === "magic-link" || tab === "otp") {
+    return tab;
+  }
+  return "password";
 }
 
-export default async function SignInPage({ params }: SignInPageProps) {
-  const { locale } = await params;
+interface SignInPageProps {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function SignInPage({
+  params,
+  searchParams,
+}: SignInPageProps) {
+  const [{ locale }, { tab }] = await Promise.all([params, searchParams]);
   const dict = await getDictionary(locale);
   const errors = dict.errors.action;
 
   return (
     <div className="w-full max-w-md">
-      <Tabs className="w-full" defaultValue="password">
+      <Tabs className="w-full" defaultValue={resolveTab(tab)}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger className="flex items-center gap-2" value="password">
             <KeyRound className="h-4 w-4" />
