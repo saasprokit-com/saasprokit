@@ -79,11 +79,15 @@ const handleResend = useCallback(() => {
   if (!email || cooldown > 0) return;
   startResendTransition(async () => {
     try {
-      await authClient.sendVerificationEmail({ email, callbackURL: PAGE_ROUTES.ORG });
+      const { error } = await authClient.sendVerificationEmail({ email, callbackURL: PAGE_ROUTES.ORG });
+      if (error) {
+        setResendError(error.message || errors.resendVerificationEmail); // API error → surface it, no false success
+        return;
+      }
       setResendSuccess(true);
       setCooldown(RESEND_COOLDOWN_SECONDS); // 60s
     } catch {
-      setResendError(errors.resendVerificationEmail);
+      setResendError(errors.resendVerificationEmail); // network failure
     }
   });
 }, [email, cooldown, errors.resendVerificationEmail]);

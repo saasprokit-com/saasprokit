@@ -41,10 +41,14 @@ export function VerifyEmailClient({ email, errors }: VerifyEmailClientProps) {
 
     startResendTransition(async () => {
       try {
-        await authClient.sendVerificationEmail({
+        const { error } = await authClient.sendVerificationEmail({
           email,
           callbackURL: PAGE_ROUTES.ORG,
         });
+        if (error) {
+          setResendError(error.message || errors.resendVerificationEmail);
+          return;
+        }
         setResendSuccess(true);
         setCooldown(RESEND_COOLDOWN_SECONDS);
       } catch {
