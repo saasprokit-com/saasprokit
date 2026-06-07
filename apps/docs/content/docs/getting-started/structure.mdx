@@ -34,10 +34,8 @@ next-nest-monorepo/
 │   │   ├── content/               # Markdown documentation
 │   │   └── package.json
 │   │
-│   ├── email/                     # Email templates (port 3003)
-│   │   ├── app/                   # Email preview app
-│   │   ├── emails/                # React Email templates
-│   │   └── package.json
+│   ├── email/                     # React Email preview runner (port 3003)
+│   │   └── package.json           # `email dev` against packages/email/templates
 │   │
 │   ├── storybook/                 # Component library (port 6006)
 │   │   ├── stories/               # Component stories
@@ -47,10 +45,14 @@ next-nest-monorepo/
 │       └── package.json
 │
 ├── packages/                      # Shared packages
-│   ├── auth/                      # Authentication & RBAC
+│   ├── auth/                      # Better Auth, dual RBAC & Stripe wiring
 │   │   ├── client.ts              # Client-side auth hooks
 │   │   ├── server.ts              # Server-side auth instance
 │   │   ├── permissions.ts         # RBAC definitions
+│   │   ├── plans.ts, keys.ts      # Subscription plans + constants
+│   │   ├── stripe-hooks.ts        # Stripe webhook/event handlers (@better-auth/stripe)
+│   │   ├── stripe-client.ts       # Stripe client
+│   │   ├── billing-authorize.ts   # Billing permission checks
 │   │   ├── index.ts               # Main exports
 │   │   └── package.json
 │   │
@@ -63,10 +65,16 @@ next-nest-monorepo/
 │   │   ├── prisma.config.ts       # Prisma configuration
 │   │   └── package.json
 │   │
-│   ├── design-system/             # shadcn/ui components
+│   ├── design-system/             # shadcn/ui + app UI components
 │   │   ├── components/
-│   │   │   └── ui/                # Base components
-│   │   ├── providers/             # Theme providers
+│   │   │   ├── ui/                # shadcn base components (vendored)
+│   │   │   ├── molecules/         # Composite components (e.g. molecules/auth/*)
+│   │   │   ├── blocks/            # Page/section blocks
+│   │   │   ├── layout/            # Layout components
+│   │   │   ├── data-table/        # Data table
+│   │   │   └── icons/             # Icons
+│   │   ├── hooks/                 # use-mobile, use-toast
+│   │   ├── providers/             # Theme + design-preset providers
 │   │   ├── lib/
 │   │   │   └── utils.ts           # Utility functions (cn, etc)
 │   │   ├── styles/
@@ -79,19 +87,20 @@ next-nest-monorepo/
 │   │   ├── types.ts               # TypeScript types
 │   │   └── package.json
 │   │
-│   ├── email/                     # React Email templates
-│   │   ├── emails/
+│   ├── email/                     # React Email templates + Resend
+│   │   ├── templates/             # Email templates (.tsx)
+│   │   ├── components/, providers/, i18n/
 │   │   └── package.json
 │   │
 │   ├── utils/                     # Shared utilities
-│   │   ├── date.ts                # Date constants
-│   │   ├── payment.ts             # Payment constants
-│   │   ├── slug.ts                # Slug utilities
+│   │   ├── slug.ts, date.ts       # Slug + date helpers
+│   │   ├── user.ts                # Password constants (MIN/MAX_PASSWORD_LENGTH)
+│   │   ├── organization.ts, payment.ts, storage.ts, auth.ts
 │   │   └── package.json
 │   │
-│   ├── logger/                    # Structured logging
-│   │   ├── server.ts              # Server-side Pino logger
-│   │   ├── index.ts               # Client logger
+│   ├── logger/                    # Structured logging (Pino)
+│   │   ├── server.ts              # @repo/logger/server
+│   │   ├── client.ts              # @repo/logger/client
 │   │   └── package.json
 │   │
 │   ├── seo/                       # SEO utilities
@@ -149,10 +158,7 @@ Fumadocs-powered documentation site with MDX support.
 
 ### Email App (`apps/email`)
 
-React Email template preview and development environment.
-
-**Key directories:**
-- `emails/` — React Email component templates
+A thin React Email **preview runner** (`email dev`). It has no local `app/` or `emails/` — the templates live in `@repo/email` (`packages/email/templates/`), which this app points at.
 
 ### Storybook
 
@@ -205,14 +211,11 @@ Shared utility functions for:
 
 #### `@repo/logger`
 Structured logging with:
-- Server-side Pino logger (`/server` export)
-- Client-side logger (default export)
+- Server-side Pino logger (`@repo/logger/server`)
+- Client-side logger (`@repo/logger/client`)
 
 #### `@repo/email`
-React Email templates for:
-- Welcome emails
-- Password reset
-- Invitations
+React Email templates (in `templates/`) — email verification, password changed, magic link, org invitations, new-device login, account deleted/locked, and more — sent via Resend (prod) or Nodemailer → MailDev (dev).
 
 #### `@repo/seo`
 SEO utilities for:
@@ -259,38 +262,40 @@ Shared TypeScript configuration for type consistency.
 
 ```
 /[locale]/(frontier)/
-├── page.tsx           # Home/landing page
-└── pricing/           # Pricing page
+├── page.tsx           # Home/landing page (Hero, Features, Pricing blocks)
+└── components/        # Home-page section blocks
 ```
+
+> There is no separate `/pricing` route — pricing is a block on the home page.
 
 ### Authentication Routes (`/[locale]/auth/`)
 
+Each route is a Server-Component `page.tsx` plus a `components/` folder of `"use client"` logic; the form UI lives in `@repo/design-system` (`components/molecules/auth/`).
+
 ```
 /[locale]/auth/
-├── sign-in/
-├── sign-up/
-├── forgot-password/
-├── reset-password/
-├── verify-email/
-├── 2fa/
-└── magic-link/
+├── sign-in/          # page.tsx + components/{password,magic-link,email-otp}-sign-in.tsx
+├── sign-up/          # page.tsx + components/password-sign-up.tsx
+├── forgot-password/  # page.tsx + components/
+├── reset-password/   # page.tsx + components/
+├── verify-email/     # page.tsx + components/
+├── 2fa/              # page.tsx + components/
+└── magic-link/       # page.tsx + components/
 ```
 
 ### API Routes (`/api/`)
 
 ```
 /api/
-├── auth/                          # Better Auth endpoints
-├── health/                        # Health check
-├── upload/                        # File uploads
-├── stripe/webhook/                # Stripe webhook handler
-├── organizations/[organizationId]/
-│   ├── checkout/                  # Stripe checkout session
-│   ├── change-plan/               # Plan change
-│   └── usage/                     # Usage data
-├── invitations/                   # Invitation management
-└── user/                          # User activity
+├── auth/[...all]/    # Better Auth handler (incl. Stripe webhooks via @better-auth/stripe)
+├── health/           # Health check (database + auth)
+├── upload/           # File uploads
+└── user/activity/    # User activity tracking
 ```
+
+> Billing (checkout / change-plan) and invitations are handled by **server actions**
+> (`(app)/[orgSlug]/.../actions.ts`), not REST routes. Stripe webhooks arrive at
+> `/api/auth/stripe/webhook` through the `@better-auth/stripe` plugin.
 
 ## Import Path Aliases
 

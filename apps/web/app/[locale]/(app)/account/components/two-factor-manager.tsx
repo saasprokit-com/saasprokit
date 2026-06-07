@@ -228,7 +228,7 @@ export function TwoFactorManager({ enabled, errors }: TwoFactorManagerProps) {
               </DialogHeader>
 
               <div className="space-y-4">
-                <div>
+                <div className="grid gap-4">
                   <Label htmlFor="enable-password">Password</Label>
                   <Input
                     autoComplete="current-password"
@@ -292,7 +292,7 @@ export function TwoFactorManager({ enabled, errors }: TwoFactorManagerProps) {
                   </p>
                 </div>
 
-                <div>
+                <div className="grid gap-4">
                   <Label htmlFor="totp-code">Authentication Code</Label>
                   <Input
                     autoComplete="off"
@@ -413,7 +413,7 @@ export function TwoFactorManager({ enabled, errors }: TwoFactorManagerProps) {
             </DialogDescription>
           </DialogHeader>
 
-          <div>
+          <div className="grid gap-4">
             <Label htmlFor="disable-password">Password</Label>
             <Input
               autoComplete="current-password"

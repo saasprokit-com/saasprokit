@@ -9,11 +9,11 @@ import type { SocialProvider } from "@repo/design-system/components/molecules/au
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useRouter } from "next/navigation";
 
-interface SignUpClientProps {
+interface PasswordSignUpProps {
   errors: ActionErrorMessages;
 }
 
-export function SignUpClient({ errors }: SignUpClientProps) {
+export function PasswordSignUp({ errors }: PasswordSignUpProps) {
   const router = useRouter();
 
   async function handleSubmit(data: SignUpFormValues) {
@@ -40,12 +40,10 @@ export function SignUpClient({ errors }: SignUpClientProps) {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-900">
-      <SignUpForm
-        onSocialLogin={handleSocialLogin}
-        onSubmit={handleSubmit}
-        socialProviders={["google", "github"]}
-      />
-    </main>
+    <SignUpForm
+      onSocialLogin={handleSocialLogin}
+      onSubmit={handleSubmit}
+      socialProviders={["google", "github"]}
+    />
   );
 }

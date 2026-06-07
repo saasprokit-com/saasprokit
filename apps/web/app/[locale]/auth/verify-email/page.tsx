@@ -1,20 +1,19 @@
-import { SuspenseFallback } from "@repo/design-system/components/ui/suspense-fallback";
 import { getDictionary } from "@repo/internationalization";
-import { Suspense } from "react";
-import { VerifyEmailClient } from "./verify-email-client";
+import { VerifyEmailClient } from "./components/verify-email-client";
 
 interface VerifyEmailPageProps {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ email?: string }>;
 }
 
 export default async function VerifyEmailPage({
   params,
+  searchParams,
 }: VerifyEmailPageProps) {
-  const { locale } = await params;
+  const [{ locale }, { email }] = await Promise.all([params, searchParams]);
   const dict = await getDictionary(locale);
+
   return (
-    <Suspense fallback={<SuspenseFallback className="min-h-screen" />}>
-      <VerifyEmailClient errors={dict.errors.action} />
-    </Suspense>
+    <VerifyEmailClient email={email ?? null} errors={dict.errors.action} />
   );
 }

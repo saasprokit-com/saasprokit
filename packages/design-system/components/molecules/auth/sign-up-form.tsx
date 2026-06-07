@@ -11,34 +11,13 @@ import {
   FormMessage,
 } from "@repo/design-system/components/ui/form";
 import { Input } from "@repo/design-system/components/ui/input";
-import { MIN_PASSWORD_LENGTH } from "@repo/utils/user";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { AuthCard } from "./auth-card";
+import { type SignUpFormValues, signUpSchema } from "./schemas";
 import { type SocialProvider, SocialProviders } from "./social-providers";
 
-const signUpSchema = z
-  .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Please enter a valid email address"),
-    password: z
-      .string()
-      .min(
-        MIN_PASSWORD_LENGTH,
-        `Password must be at least ${MIN_PASSWORD_LENGTH} characters`
-      )
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
-
-export type SignUpFormValues = z.infer<typeof signUpSchema>;
+export type { SignUpFormValues } from "./schemas";
 
 export interface SignUpFormProps {
   onSubmit: (data: SignUpFormValues) => Promise<void>;

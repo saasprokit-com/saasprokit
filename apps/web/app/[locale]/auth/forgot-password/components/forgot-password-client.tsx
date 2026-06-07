@@ -5,10 +5,10 @@ import {
   ForgotPasswordForm,
   type ForgotPasswordFormValues,
 } from "@repo/design-system/components/molecules/auth/forgot-password-form";
+import { ForgotPasswordSuccess } from "@repo/design-system/components/molecules/auth/forgot-password-success";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useState } from "react";
 import { PAGE_ROUTES } from "@/lib/routes";
-import { logResetRequestAction } from "./actions";
 
 interface ForgotPasswordClientProps {
   errors: ActionErrorMessages;
@@ -27,14 +27,12 @@ export function ForgotPasswordClient({ errors }: ForgotPasswordClientProps) {
       throw new Error(error.message || errors.sendResetEmail);
     }
 
-    await logResetRequestAction(data.email);
-
     setSuccess(true);
   }
 
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 dark:bg-gray-900">
-      <ForgotPasswordForm onSubmit={handleSubmit} success={success} />
-    </main>
-  );
+  if (success) {
+    return <ForgotPasswordSuccess />;
+  }
+
+  return <ForgotPasswordForm onSubmit={handleSubmit} />;
 }

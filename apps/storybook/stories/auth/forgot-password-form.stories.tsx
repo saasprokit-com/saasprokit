@@ -28,15 +28,6 @@ export const Default: Story = {
 };
 
 /**
- * Success state after email is sent.
- */
-export const Success: Story = {
-  args: {
-    success: true,
-  },
-};
-
-/**
  * Forgot password form with an error message.
  */
 export const WithError: Story = {

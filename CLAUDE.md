@@ -30,12 +30,16 @@ pnpm --filter app typecheck   # Type check web app
 
 ### Testing
 ```bash
-pnpm test                     # Run all tests (vitest)
-pnpm --filter app test        # Run tests for web app only
-pnpm --filter [package] test  # Run tests for specific package
+pnpm test                     # Run all unit tests via turbo (only auth + payment have a test script)
+pnpm --filter @repo/auth test    # Unit tests for a specific package
+pnpm --filter @repo/payment test # Unit tests for a specific package
 pnpm --filter app test:e2e    # Run Playwright E2E tests
 pnpm --filter app test:e2e:ui # Run E2E tests with UI
+pnpm --filter app test:e2e:auth  # E2E "no-auth" project only
+pnpm --filter app test:e2e:app   # E2E "authenticated" project only
 ```
+
+> Note: the `app` package has a `vitest.config.mts` (jsdom) wired up but **no `test` script and no unit test files yet** — `pnpm --filter app test` is a no-op. Add a `"test": "vitest run"` script there before relying on it.
 
 ### Database (Prisma)
 ```bash
@@ -64,12 +68,12 @@ The Next.js app uses grouped routes (parentheses in directory names) to organize
 
 **Locale-level routes** (`/[locale]/`):
 - `(app)` — Authenticated app pages
-  - `[orgSlug]` — Organization-scoped pages: billing, members, settings
-  - `account` — Personal account management: profile, security, danger zone, new-org
-  - `invite` — Organization invitation handling
-  - `org` — Organization selection/management
-- `(frontier)` — Public/marketing pages: home, pricing, etc.
-- `auth` — Authentication flows: sign-in, sign-up, magic links, password reset, 2FA
+  - `[orgSlug]` — Organization-scoped pages: `billing`, `members`, `settings`, and `checkout` (Stripe return URLs: `checkout/success`, `checkout/canceled`)
+  - `account` — Personal account management: `profile`, `security`, `danger` (delete account), `new-org`
+  - `invite` — Organization invitation handling (`invite/[token]`, `invite/accept`)
+  - `org` — Organization selection landing (post-login redirect target)
+- `(frontier)` — Public marketing home page (Hero, Features, Pricing blocks live on the single home route — there is no separate `/pricing` page)
+- `auth` — Authentication flows: `sign-in`, `sign-up`, `magic-link`, `forgot-password`, `reset-password`, `verify-email`, `2fa`
 
 **API routes** (`/api/`):
 - `auth/[...all]/` — Better Auth handler (incl. Stripe webhooks via `@better-auth/stripe`)
@@ -78,7 +82,15 @@ The Next.js app uses grouped routes (parentheses in directory names) to organize
 - `user/activity/` — User activity tracking
 
 **Edge middleware** (`apps/web/proxy.ts` — Next.js 16 renamed `middleware.ts` → `proxy.ts`):
-Single entry point that does three things in order: strips locale prefix for route matching, gates auth/public routes via `AUTH_ROUTE_PREFIXES` and `PUBLIC_ROUTE_PREFIXES` from `@/lib/routes`, then composes with `internationalizationMiddleware`. It also generates a per-request CSP nonce and sets `x-nonce` on the response so Server Components can read it via `headers()`. Touch this file whenever you add a new top-level route group or need to adjust CSP.
+Single entry point, executed in this order:
+
+1. **Skip** `/api`, `/_next`, and any path containing a `.` (static files) — these bypass the proxy entirely (no CSP applied).
+2. **i18n first** — runs `internationalizationMiddleware` and returns immediately if it produces a non-200 (locale detection/redirect). Everything below only runs once the locale is settled.
+3. **Strip locale** — `stripLocale()` normalizes `/vi/org`, `/fr/org`, etc. to `/org` so route checks are locale-agnostic.
+4. **Gate routes** — matches the normalized path against `AUTH_ROUTE_PREFIXES` (`startsWith`) and `PUBLIC_ROUTE_PREFIXES` (exact `===`, currently just `HOME`) from `@/lib/routes`. Unauthenticated users on protected routes redirect to sign-in (with `callbackUrl`); authenticated users on auth routes redirect to `/org`.
+5. **Fail closed** — if the session check throws, protected routes still redirect to sign-in; only public/auth routes are allowed through.
+
+It also generates a per-request CSP nonce and sets `x-nonce` on the response (via `applyNonceCsp`) so Server Components can read it via `headers()`. Touch this file whenever you add a new top-level route group, change the public/auth allowlists, or need to adjust CSP.
 
 ### Monorepo Structure
 
@@ -280,9 +292,9 @@ Notable config:
 
 ### Turbo Build Graph
 
-- `build` depends on `^build` (dependencies) + `test`
-- `dev` is uncached and persistent
+- `build` depends on `^build` (dependency builds) — `test` is a **sibling** task, not a build prerequisite
 - `test` depends on `^test`
+- `dev` is uncached and persistent; `check`, `fix`, `translate`, `clean` are uncached
 - Additional tasks: `analyze`, `translate`, `clean`, `boundaries`
 
 ### Database (Prisma)
@@ -293,10 +305,9 @@ Workflow: Modify schema → `pnpm migrate` → Import via `import { database } f
 
 ### Testing
 
-- Unit tests: `**/*.test.ts` or `**/*.spec.ts` (co-located with source files)
-- Unit test runner: Vitest (v4.x) with configs in `vitest.config.mts`
-- Packages with test configs: `web`, `auth`, `payment`, `storage`
-- E2E tests: Playwright (`apps/web/playwright.config.ts`)
+- Unit tests: `**/*.test.ts` (co-located with source). Runner: Vitest (v4.x), config in each package's `vitest.config.mts`
+- Vitest configs exist in `app`, `auth`, `payment`, but only `auth` and `payment` define a runnable `test` script (`vitest run`). Current unit tests live in `packages/auth/*.test.ts` and `packages/payment/*.test.ts`
+- E2E tests: Playwright (`apps/web/playwright.config.ts`). All `apps/web/e2e/**/*.spec.ts` files are Playwright specs (not Vitest), split into `no-auth` and `authenticated` projects
 
 ### CI (`.github/workflows/`)
 
