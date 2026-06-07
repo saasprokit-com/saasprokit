@@ -48,7 +48,7 @@ Anything that is **neither public nor an auth route requires a session**. This i
 - **Authenticated → auth route**: redirect to `/org` (a signed-in user can't see sign-in/sign-up).
 
 <Callout type="warn">
-`/auth/2fa` (`PAGE_ROUTES.TWO_FACTOR`) is **not** in `AUTH_ROUTE_PREFIXES`, so it is gated as a protected route rather than an auth route — see [Two-Factor Authentication](./two-factor). Also note the post-login redirect param is inconsistent: the proxy sets `callbackUrl`, `requireAuth` sets `returnTo`, and the sign-in client currently honors **neither** (it always routes to `/org`).
+`/auth/2fa` (`PAGE_ROUTES.TWO_FACTOR`) is **not** in `AUTH_ROUTE_PREFIXES`, so it is gated as a protected route rather than an auth route — see [Two-Factor Authentication](./two-factor). Also note the post-login redirect param is inconsistent: the proxy sets `callbackUrl`, `requireAuth` sets `returnTo`, and the sign-in tab components currently honor **neither** (they always route to `/org`).
 </Callout>
 
 ### Decision flow
@@ -99,7 +99,7 @@ The proxy is a coarse gate (is there *a* session?); these helpers are the fine-g
 
 - The proxy uses `auth.api.getSession` directly (it runs at the edge, outside React), while server components use the `React.cache`-wrapped `getServerSession` — same source, different call sites.
 - **Fail-closed** means an auth outage degrades to "everyone is logged out of protected routes," never "everyone is let in."
-- The `callbackUrl` / `returnTo` params are captured but not yet consumed by the sign-in client — a known gap if you want "return to intended page" behavior.
+- The `callbackUrl` / `returnTo` params are captured but not yet consumed by the sign-in tab components — a known gap if you want "return to intended page" behavior.
 
 ## Source files
 

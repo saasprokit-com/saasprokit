@@ -31,26 +31,28 @@ Package exports (`package.json`):
 
 ### The auth pages (`apps/web/app/[locale]/auth/`)
 
-Every page follows the same **"thin page, fat client"** shape: a Server Component awaits `params`, loads the localized error dictionary, and renders a `"use client"` component that does the real work through `authClient`.
+Most pages follow the same **"thin page, fat client"** shape: a Server Component (`page.tsx`) awaits `params`, loads the localized error dictionary, and renders a `"use client"` logic component that does the real work through `authClient`. The split is consistent: the **presentational UI** (the forms, success/error cards) lives in the design system (`packages/design-system/components/molecules/auth/`), while the **client logic** (the `authClient` calls + routing) lives in a `components/` subdir next to the page.
 
 ```tsx
-// page.tsx — the pattern, repeated for every flow
-export default async function SignInPage({ params }: SignInPageProps) {
+// page.tsx — the pattern, repeated for most flows
+export default async function ForgotPasswordPage({ params }: ForgotPasswordPageProps) {
   const { locale } = await params;
   const dict = await getDictionary(locale);
-  return <SignInClient errors={dict.errors.action} />;
+  return <ForgotPasswordClient errors={dict.errors.action} />;
 }
 ```
 
+Sign-in is the one exception: its `page.tsx` is a Server Component that hosts the `<Tabs>` shell directly (reading the `?tab=` searchParam to pre-select a tab) and renders three per-method client components rather than a single client.
+
 | Route | Page → Client | Flow |
 | --- | --- | --- |
-| `/auth/sign-in` | `sign-in/page.tsx` → `sign-in-client.tsx` | Password, social, magic link, email OTP (tabbed) |
-| `/auth/sign-up` | `sign-up/page.tsx` → `sign-up-client.tsx` | Register with email/password or social |
-| `/auth/verify-email` | `verify-email/page.tsx` → `verify-email-client.tsx` | "Check your email" + resend |
-| `/auth/magic-link` | `magic-link/page.tsx` | Landing page for magic-link request/error states |
-| `/auth/forgot-password` | `forgot-password/page.tsx` → `forgot-password-client.tsx` | Request a reset email |
-| `/auth/reset-password` | `reset-password/page.tsx` → `reset-password-client.tsx` | Set a new password from a token |
-| `/auth/2fa` | `2fa/page.tsx` → `two-factor-client.tsx` | Enter the TOTP second factor |
+| `/auth/sign-in` | `sign-in/page.tsx` → `components/{password,magic-link,email-otp}-sign-in.tsx` | Password, social, magic link, email OTP (page hosts the tabs) |
+| `/auth/sign-up` | `sign-up/page.tsx` → `components/password-sign-up.tsx` | Register with email/password or social |
+| `/auth/verify-email` | `verify-email/page.tsx` → `components/verify-email-client.tsx` | "Check your email" + resend |
+| `/auth/magic-link` | `magic-link/page.tsx` → `components/magic-link-content.tsx` | Landing page for magic-link request/error states |
+| `/auth/forgot-password` | `forgot-password/page.tsx` → `components/forgot-password-client.tsx` | Request a reset email |
+| `/auth/reset-password` | `reset-password/page.tsx` → `components/reset-password-client.tsx` | Set a new password from a token |
+| `/auth/2fa` | `2fa/page.tsx` → `components/two-factor-client.tsx` | Enter the TOTP second factor |
 
 ## Enabled methods & plugins
 

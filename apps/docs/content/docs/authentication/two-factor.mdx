@@ -71,7 +71,7 @@ Unlike the other auth pages, **`/auth/2fa` is not in `AUTH_ROUTE_PREFIXES`** (`a
 ```mermaid
 sequenceDiagram
     actor User
-    participant SignIn as SignInClient
+    participant SignIn as PasswordSignIn
     participant BA as Better Auth<br/>/api/auth/*
     participant Client as twoFactorClient
     participant TFA as /auth/2fa
@@ -91,7 +91,7 @@ sequenceDiagram
 ## Source files
 
 - `apps/web/app/[locale]/auth/2fa/page.tsx` — server page
-- `apps/web/app/[locale]/auth/2fa/two-factor-client.tsx` — `twoFactor.verifyTotp`
+- `apps/web/app/[locale]/auth/2fa/components/two-factor-client.tsx` — `twoFactor.verifyTotp`
 - `packages/auth/server.ts` — `twoFactor()` plugin config
 - `packages/auth/client.ts` — `twoFactorClient({ onTwoFactorRedirect })`
 - `apps/web/lib/routes.ts` — `AUTH_ROUTE_PREFIXES` (note: excludes `/auth/2fa`)

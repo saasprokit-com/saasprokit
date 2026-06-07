@@ -3,10 +3,11 @@ title: Sign In
 description: The tabbed sign-in page — password, social, magic link, and email OTP — plus the two-factor hand-off
 ---
 
-`/auth/sign-in` is the busiest auth page: a single `Tabs` UI hosts **four** ways in. `sign-in-client.tsx` manages all of them in one client component, each calling a different `authClient` method but converging on the same destination — `/org` — once a session exists.
+`/auth/sign-in` is the busiest auth page: a single `Tabs` UI hosts **four** ways in. `sign-in/page.tsx` is a Server Component that hosts the `Tabs` shell, and three per-tab client components (`components/{password,magic-link,email-otp}-sign-in.tsx`) each call a different `authClient` method but converge on the same destination — `/org` — once a session exists.
 
 ```tsx
-<Tabs defaultValue="password">
+// page.tsx reads ?tab= and resolves it to the initial tab
+<Tabs defaultValue={resolveTab(tab)}>
   <TabsTrigger value="password">…</TabsTrigger>
   <TabsTrigger value="magic-link">…</TabsTrigger>
   <TabsTrigger value="otp">…</TabsTrigger>
@@ -40,7 +41,7 @@ function handleSocialLogin(provider: SocialProvider) {
 - Social sign-in delegates the redirect to `callbackURL`; control never returns to the form.
 
 <Callout type="warn">
-The `proxy.ts` gate appends `?callbackUrl=<original path>` when it bounces an unauthenticated user to sign-in, and `requireAuth` appends `?returnTo=...`. The sign-in client reads **neither** — it always routes to `/org` after a successful sign-in. If you want post-login to return the user to where they were headed, read the `callbackUrl` param in `sign-in-client.tsx` and pass it to `router.push`. See [Sessions & Route Protection](./sessions-and-routing).
+The `proxy.ts` gate appends `?callbackUrl=<original path>` when it bounces an unauthenticated user to sign-in, and `requireAuth` appends `?returnTo=...`. The sign-in tab components read **neither** — they always route to `/org` after a successful sign-in. If you want post-login to return the user to where they were headed, read the `callbackUrl` param in `components/password-sign-in.tsx` (and the other tab components) and pass it to `router.push`. See [Sessions & Route Protection](./sessions-and-routing).
 </Callout>
 
 ## Magic link
@@ -123,13 +124,14 @@ flowchart LR
 ## Notes
 
 - **The email-based methods normalize identically** — password, magic link, and email OTP all apply `toLowerCase().trim()` before the call, so casing or whitespace can't fork an account across methods. Social sign-in delegates identity to the provider, so there's no email field to normalize.
-- **Tab deep-links don't work yet** — links elsewhere in the app to `/auth/sign-in?tab=magic-link` / `?tab=otp` land on the default password tab because the client ignores the `tab` param (see the [verification page](./sign-up-and-verification) note).
+- **Tab deep-links work** — `page.tsx` reads the `?tab=` searchParam through `resolveTab()` and passes it to `<Tabs defaultValue>`, so links to `/auth/sign-in?tab=magic-link` / `?tab=otp` open directly on that tab (an unknown value falls back to `password`). The verify-email page's alternative-method buttons rely on this.
 - The `proxy.ts` gate redirects already-signed-in users away from `/auth/sign-in` to `/org`, so a logged-in user can't see this page.
 
 ## Source files
 
-- `apps/web/app/[locale]/auth/sign-in/page.tsx` — server page
-- `apps/web/app/[locale]/auth/sign-in/sign-in-client.tsx` — tabbed UI, all four methods
-- `apps/web/app/[locale]/auth/magic-link/page.tsx` — magic-link landing / error states
+- `apps/web/app/[locale]/auth/sign-in/page.tsx` — server page; hosts the Tabs and resolves `?tab=`
+- `apps/web/app/[locale]/auth/sign-in/components/{password,magic-link,email-otp}-sign-in.tsx` — the three per-tab client components
+- `packages/design-system/components/molecules/auth/{sign-in,magic-link,email-otp-request,email-otp-verify}-form.tsx` — the presentational forms
+- `apps/web/app/[locale]/auth/magic-link/page.tsx` → `components/magic-link-content.tsx` — magic-link landing / error states
 - `packages/auth/server.ts` — `magicLink` and `emailOTP` plugin config
 - `packages/auth/client.ts` — `magicLinkClient`, `emailOTPClient`, `twoFactorClient`
