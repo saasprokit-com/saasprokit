@@ -3,7 +3,6 @@
 import { authClient } from "@repo/auth/client";
 import { VerifyEmailCard } from "@repo/design-system/components/molecules/auth/verify-email-card";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { PAGE_ROUTES } from "@/lib/routes";
 
@@ -11,13 +10,11 @@ const RESEND_COOLDOWN_SECONDS = 60;
 const COUNTDOWN_INTERVAL_MS = 1000;
 
 interface VerifyEmailClientProps {
+  email: string | null;
   errors: ActionErrorMessages;
 }
 
-export function VerifyEmailClient({ errors }: VerifyEmailClientProps) {
-  const searchParams = useSearchParams();
-  const email = searchParams.get("email");
-
+export function VerifyEmailClient({ email, errors }: VerifyEmailClientProps) {
   const [isResending, startResendTransition] = useTransition();
   const [resendSuccess, setResendSuccess] = useState(false);
   const [resendError, setResendError] = useState<string | null>(null);
