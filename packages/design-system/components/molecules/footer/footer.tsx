@@ -29,6 +29,7 @@ export interface FooterProps {
   socialLinks?: SocialLink[];
   copyright?: string;
   bottomLinks?: FooterLink[];
+  bottomRight?: React.ReactNode;
   className?: string;
 }
 
@@ -39,6 +40,7 @@ export function Footer({
   socialLinks = [],
   copyright,
   bottomLinks = [],
+  bottomRight,
   className,
 }: FooterProps) {
   const currentYear = new Date().getFullYear();
@@ -119,18 +121,23 @@ export function Footer({
           <p className="text-muted-foreground text-sm">
             {copyright || defaultCopyright}
           </p>
-          {bottomLinks.length > 0 && (
-            <nav className="flex items-center gap-4">
-              {bottomLinks.map((link) => (
-                <Link
-                  className="text-muted-foreground text-sm transition-colors hover:text-foreground"
-                  href={link.href}
-                  key={link.href}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
+          {(bottomLinks.length > 0 || bottomRight) && (
+            <div className="flex items-center gap-4">
+              {bottomLinks.length > 0 && (
+                <nav className="flex items-center gap-4">
+                  {bottomLinks.map((link) => (
+                    <Link
+                      className="text-muted-foreground text-sm transition-colors hover:text-foreground"
+                      href={link.href}
+                      key={link.href}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </nav>
+              )}
+              {bottomRight}
+            </div>
           )}
         </div>
       </div>

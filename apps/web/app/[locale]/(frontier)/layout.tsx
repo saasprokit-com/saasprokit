@@ -1,5 +1,6 @@
 import { Footer } from "@repo/design-system/components/molecules/footer/footer";
 import { Header } from "@repo/design-system/components/molecules/header/header";
+import { ModeToggle } from "@repo/design-system/components/molecules/header/mode-toggle";
 import { Logo } from "@repo/design-system/components/molecules/logo/logo";
 import { Github, Linkedin, Twitter, Youtube } from "lucide-react";
 import type { ReactNode } from "react";
@@ -23,18 +24,19 @@ const Frontier = async ({ children }: RootLayoutProperties) => {
           { href: "#pricing", label: "Pricing" },
         ]}
         logo={<Logo text="LOGO" />}
-        right={<HeaderUserMenu user={session?.user} />}
+        right={
+          <>
+            <ModeToggle />
+            <HeaderUserMenu user={session?.user} />
+          </>
+        }
         transparent
       />
 
       <div className="flex flex-col">{children}</div>
 
       <Footer
-        bottomLinks={[
-          { label: "Privacy", href: "#" },
-          { label: "Terms", href: "#" },
-          { label: "Security", href: "#" },
-        ]}
+        bottomRight={<ModeToggle />}
         copyright={`© ${new Date().getFullYear()} SAAS Labs · MIT`}
         description="A SaaS boilerplate for people who ship."
         logo={<Logo text="LOGO" />}
@@ -64,6 +66,14 @@ const Frontier = async ({ children }: RootLayoutProperties) => {
               { label: "Templates", href: "#" },
               { label: "Discord", href: "#" },
               { label: "License", href: "#" },
+            ],
+          },
+          {
+            title: "Legal",
+            links: [
+              { label: "Privacy", href: "#" },
+              { label: "Terms", href: "#" },
+              { label: "Security", href: "#" },
             ],
           },
         ]}
