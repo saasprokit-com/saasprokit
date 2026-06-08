@@ -16,6 +16,112 @@
       "contact": "Kontakt",
       "signIn": "Anmelden",
       "signUp": "Loslegen"
+    },
+    "home": {
+      "hero": {
+        "badgeSuffix": "bereit zum Ausliefern",
+        "title": "Installieren, anpassen, ausliefern",
+        "highlightedText": " in einer Woche",
+        "subtitle": "Full-Stack-SaaS-Boilerplate. Next.js · React · better-auth. Auth, Abrechnung, Teams, E-Mail, Jobs – jede Leitung ist bereits verlegt.",
+        "benefits": [
+          "Auth & 2FA",
+          "Stripe-Abrechnung",
+          "Teams & RBAC",
+          "shadcn-UI-Kit"
+        ],
+        "primaryCta": "Klonen & ausliefern",
+        "secondaryCta": "Dashboard"
+      },
+      "featuresGrid": {
+        "badge": "Der Stack",
+        "title": "Auf Bewährtem gebaut",
+        "subtitle": "Die Teile sind ausgewählt, verdrahtet und getestet. Tausch sie aus, wenn du willst – am ersten Tag brauchst du es nicht.",
+        "features": [
+          {
+            "title": "Next.js 16 + App Router",
+            "description": "Server Components, Server Actions, asynchrone Params und Route Groups. Das neue Modell, richtig eingesetzt."
+          },
+          {
+            "title": "Postgres + Prisma",
+            "description": "Schema-first-Modelle, typisierter Client, eingecheckte Migrationen. Neon-ready für Serverless-Deployments."
+          },
+          {
+            "title": "Turborepo + pnpm",
+            "description": "Optimierter Task-Graph mit Remote-Cache. Apps und Pakete teilen Typen im gesamten Monorepo."
+          },
+          {
+            "title": "TypeScript von Anfang bis Ende",
+            "description": "Überall Strict Mode, Zod an den Grenzen und abgeleitete Typen von Prisma bis zum Formularfeld."
+          },
+          {
+            "title": "shadcn/ui + Tailwind v4",
+            "description": "Anpassbare Primitive, Dark Mode und Design Tokens. Storybook inklusive, damit Designer live prüfen können."
+          },
+          {
+            "title": "i18n + Edge-Proxy",
+            "description": "Routen mit Sprach-Präfix, Nachrichtenkataloge und CSP-Nonces. Produktionsreife Middleware-Patterns, kein Spielzeug."
+          }
+        ]
+      },
+      "showcase": {
+        "items": [
+          {
+            "badge": "Mandantenfähig",
+            "title": "Organisationen und persönliche Konten",
+            "description": "Jeder Nutzer erhält einen persönlichen Workspace und kann beliebig vielen Organisationen beitreten. Abrechnung, Mitglieder, Rollen und Einladungen sind pro Organisation getrennt – keine Lecks, keine Fallstricke.",
+            "bullets": [
+              "Abos pro Organisation mit einem Stripe-Kunden je Org",
+              "Owner-/Admin-/Member-Rollen mit Schutz auf Routenebene",
+              "Einladungs-Flows mit E-Mail-Bestätigung und Platzverwaltung",
+              "Slug-basierte URLs, validiert in der Proxy-Schicht"
+            ]
+          },
+          {
+            "badge": "Authentifizierung",
+            "title": "Alle Auth-Flows, die du je brauchst",
+            "description": "Better Auth übernimmt Kryptografie, Sessions und den Konto-Lebenszyklus. Du steckst nur die Provider ein. E-Mail, Magic Links, OAuth, OTP und 2FA – durchgängig getestet.",
+            "bullets": [
+              "E-Mail und Passwort mit Verifizierung und Wiederherstellung",
+              "Magic-Link-Anmeldung und Einmalcode als Fallback",
+              "Google- und GitHub-OAuth out of the box",
+              "TOTP-basierte 2FA mit Backup-Codes und Wiederherstellung"
+            ]
+          },
+          {
+            "badge": "Abrechnung",
+            "title": "Stripe, richtig verdrahtet",
+            "description": "Abos pro Organisation, anteilige Upgrades, verifizierte Webhooks und Kundenportal für Karten und Rechnungen. Pläne in einer Konfiguration deklariert, in Preisen und Checkout sichtbar.",
+            "bullets": [
+              "Kunde pro Organisation mit Abo-Zuordnung und Platzlimits",
+              "Self-Service-Portal für Karten, Rechnungen und Kündigung",
+              "Idempotente Webhook-Verarbeitung mit Replay-sicheren Events",
+              "Gestufte Pläne (free / pro / enterprise) in einer Konfigurationsdatei"
+            ]
+          },
+          {
+            "badge": "Gehärtet",
+            "title": "Produktionssicherheit ab dem ersten Tag",
+            "description": "Edge-Schutz, Content Security Policy, Rate-Limits und Audit-Trails. Die schweren Teile eines echten Produkts – schon erledigt, schon abgestimmt.",
+            "bullets": [
+              "CSP-Nonces pro Anfrage, gesetzt vom Edge-Proxy",
+              "Rate-limitierte Anmeldeversuche gegen Brute Force",
+              "Audit-fähiges Tracking von Session- und Konto-Ereignissen",
+              "Striktes TypeScript und Zod-Validierung an jeder Grenze"
+            ]
+          }
+        ]
+      },
+      "pricing": {
+        "title": "Dein Preis hier",
+        "subtitle": "Eine Quelle, drei Stufen. Kostenlos starten und upgraden, wenn du herauswächst.",
+        "ctaFree": "Kostenlos starten",
+        "ctaPaid": "Loslegen"
+      },
+      "cta": {
+        "title": "Bereit, dein Produkt auszuliefern?",
+        "subtitle": "Hol dir das komplette Kit und liefere in einer Woche, nicht in einem Monat.",
+        "primaryCta": "Klonen & ausliefern"
+      }
     }
   },
   "errors": {

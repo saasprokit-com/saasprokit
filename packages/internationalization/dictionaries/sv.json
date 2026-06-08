@@ -16,6 +16,112 @@
       "contact": "Contact",
       "signIn": "Sign in",
       "signUp": "Get started"
+    },
+    "home": {
+      "hero": {
+        "badgeSuffix": "redo att leverera",
+        "title": "Installera, anpassa, leverera",
+        "highlightedText": " på en vecka",
+        "subtitle": "Fullstack-SaaS-boilerplate. Next.js · React · better-auth. Autentisering, fakturering, team, e-post, jobb – all kabeldragning är redan klar.",
+        "benefits": [
+          "Auth & 2FA",
+          "Stripe-fakturering",
+          "Team & RBAC",
+          "shadcn UI-kit"
+        ],
+        "primaryCta": "Klona & leverera",
+        "secondaryCta": "Instrumentpanel"
+      },
+      "featuresGrid": {
+        "badge": "Stacken",
+        "title": "Byggd på det som fungerar",
+        "subtitle": "Delarna är valda, kopplade och testade. Byt ut vilken du vill – men du behöver inte göra det första dagen.",
+        "features": [
+          {
+            "title": "Next.js 16 + App Router",
+            "description": "Server Components, Server Actions, asynkrona params och route groups. Den nya modellen, använd på rätt sätt."
+          },
+          {
+            "title": "Postgres + Prisma",
+            "description": "Schema-first-modeller, typad klient, incheckade migreringar. Neon-redo för serverless-distributioner."
+          },
+          {
+            "title": "Turborepo + pnpm",
+            "description": "Optimerad uppgiftsgraf med fjärrcache. Appar och paket delar typer i hela monorepot."
+          },
+          {
+            "title": "TypeScript hela vägen",
+            "description": "Strict-läge överallt, Zod vid gränserna och härledda typer från Prisma till formulärfältet."
+          },
+          {
+            "title": "shadcn/ui + Tailwind v4",
+            "description": "Anpassningsbara primitiver, mörkt läge och design tokens. Storybook ingår så att designers kan granska live."
+          },
+          {
+            "title": "i18n + edge-proxy",
+            "description": "Språkprefixade rutter, meddelandekataloger och CSP-nonces. Middleware-mönster för produktion, inga leksaker."
+          }
+        ]
+      },
+      "showcase": {
+        "items": [
+          {
+            "badge": "Multi-tenant",
+            "title": "Organisationer och personliga konton",
+            "description": "Varje användare får en personlig arbetsyta och kan gå med i hur många organisationer som helst. Fakturering, medlemmar, roller och inbjudningar är avgränsade per organisation – inga läckor, inga fallgropar.",
+            "bullets": [
+              "Prenumerationer per organisation med en Stripe-kund per org",
+              "Rollerna owner / admin / member med skydd på ruttnivå",
+              "Inbjudningsflöden med e-postbekräftelse och platshantering",
+              "Slug-baserade URL:er som valideras i proxylagret"
+            ]
+          },
+          {
+            "badge": "Autentisering",
+            "title": "Alla auth-flöden du någonsin behöver",
+            "description": "Better Auth sköter kryptografi, sessioner och kontolivscykeln. Du kopplar bara in leverantörerna. E-post, magic links, OAuth, OTP och 2FA – testade från början till slut.",
+            "bullets": [
+              "E-post och lösenord med verifiering och återställning",
+              "Inloggning med magic link och engångskod som reserv",
+              "Google- och GitHub-OAuth direkt ur lådan",
+              "TOTP-baserad 2FA med reservkoder och återställning"
+            ]
+          },
+          {
+            "badge": "Fakturering",
+            "title": "Stripe, kopplat på rätt sätt",
+            "description": "Prenumerationer per organisation, proportionerliga uppgraderingar, verifierade webhooks och kundportal för kort och fakturor. Planer deklareras i en konfiguration och visas i pris och kassa.",
+            "bullets": [
+              "Kund per organisation med prenumerationsavgränsning och platsgränser",
+              "Självbetjäningsportal för kort, fakturor och uppsägning",
+              "Idempotent webhook-hantering med återspelningssäkra händelser",
+              "Nivåindelade planer (free / pro / enterprise) i en enda konfigurationsfil"
+            ]
+          },
+          {
+            "badge": "Härdad",
+            "title": "Produktionssäkerhet från dag ett",
+            "description": "Edge-skydd, content security policy, hastighetsgränser och revisionsspår. De svåra delarna av att driva en riktig produkt – redan gjorda, redan finjusterade.",
+            "bullets": [
+              "CSP-nonces per förfrågan som sätts av edge-proxyn",
+              "Hastighetsbegränsade inloggningsförsök för att avskräcka brute force",
+              "Revisionsklar spårning av sessions- och kontohändelser",
+              "Strikt TypeScript och Zod-validering vid varje gräns"
+            ]
+          }
+        ]
+      },
+      "pricing": {
+        "title": "Ditt pris här",
+        "subtitle": "En källa, tre nivåer. Börja gratis, uppgradera när du växer ur den.",
+        "ctaFree": "Börja gratis",
+        "ctaPaid": "Kom igång"
+      },
+      "cta": {
+        "title": "Redo att leverera din produkt?",
+        "subtitle": "Skaffa hela kitet och leverera på en vecka, inte en månad.",
+        "primaryCta": "Klona & leverera"
+      }
     }
   },
   "errors": {

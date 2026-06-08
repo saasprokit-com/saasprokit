@@ -16,6 +16,112 @@
       "contact": "Contact",
       "signIn": "Sign in",
       "signUp": "Get started"
+    },
+    "home": {
+      "hero": {
+        "badgeSuffix": "出荷準備完了",
+        "title": "インストール、カスタマイズ、出荷",
+        "highlightedText": "を1週間で",
+        "subtitle": "フルスタック SaaS ボイラープレート。Next.js · React · better-auth。認証、課金、チーム、メール、ジョブ——配線はすべて完了済み。",
+        "benefits": [
+          "認証と 2FA",
+          "Stripe 課金",
+          "チームと RBAC",
+          "shadcn UI キット"
+        ],
+        "primaryCta": "クローンして出荷",
+        "secondaryCta": "ダッシュボード"
+      },
+      "featuresGrid": {
+        "badge": "スタック",
+        "title": "実績ある技術の上に構築",
+        "subtitle": "各パーツは選定・配線・テスト済み。差し替えも自由ですが、初日に必要になることはありません。",
+        "features": [
+          {
+            "title": "Next.js 16 + App Router",
+            "description": "Server Components、Server Actions、非同期 params、route groups。新しいモデルを正しく使う。"
+          },
+          {
+            "title": "Postgres + Prisma",
+            "description": "スキーマファーストのモデル、型付きクライアント、コミット済みのマイグレーション。サーバーレス展開向けに Neon 対応。"
+          },
+          {
+            "title": "Turborepo + pnpm",
+            "description": "リモートキャッシュ付きの最適化タスクグラフ。アプリとパッケージが monorepo 全体で型を共有。"
+          },
+          {
+            "title": "エンドツーエンドの TypeScript",
+            "description": "どこでも strict モード、境界には Zod、Prisma からフォームフィールドまで型を推論。"
+          },
+          {
+            "title": "shadcn/ui + Tailwind v4",
+            "description": "カスタマイズ可能なプリミティブ、ダークモード、design tokens。Storybook 同梱でデザイナーがライブ確認可能。"
+          },
+          {
+            "title": "i18n + エッジプロキシ",
+            "description": "ロケール接頭辞付きルート、メッセージカタログ、CSP nonce。おもちゃではなく本番のミドルウェアパターン。"
+          }
+        ]
+      },
+      "showcase": {
+        "items": [
+          {
+            "badge": "マルチテナント",
+            "title": "組織と個人アカウント",
+            "description": "すべてのユーザーが個人ワークスペースを持ち、いくつでも組織に参加できます。課金・メンバー・ロール・招待は組織ごとに分離——漏れもなく、落とし穴もなし。",
+            "bullets": [
+              "組織ごとのサブスクリプション、組織ごとに 1 つの Stripe 顧客",
+              "owner / admin / member ロールとルートレベルのガード",
+              "メール確認と席数管理を伴う招待フロー",
+              "プロキシ層で検証される slug ベースの URL"
+            ]
+          },
+          {
+            "badge": "認証",
+            "title": "必要な認証フローのすべて",
+            "description": "Better Auth が暗号化・セッション・アカウントのライフサイクルを担当。あなたはプロバイダーを差し込むだけ。メール、magic link、OAuth、OTP、2FA——すべてエンドツーエンドでテスト済み。",
+            "bullets": [
+              "検証と復旧フロー付きのメール＋パスワード",
+              "magic link サインインと、フォールバックのワンタイムコード",
+              "Google と GitHub の OAuth をそのまま利用",
+              "バックアップコードと復旧を備えた TOTP ベースの 2FA"
+            ]
+          },
+          {
+            "badge": "課金",
+            "title": "Stripe を正しく配線",
+            "description": "組織ごとのサブスクリプション、日割りアップグレード、検証済み webhook、カードと請求書のための顧客ポータル。プランは 1 つの設定で宣言し、価格とチェックアウトに反映。",
+            "bullets": [
+              "サブスクリプション範囲と席数上限を持つ組織ごとの顧客",
+              "カード・請求書・解約のためのセルフサービスポータル",
+              "再送に強い冪等な webhook 処理",
+              "階層プラン（free / pro / enterprise）を 1 つの設定ファイルに"
+            ]
+          },
+          {
+            "badge": "堅牢化",
+            "title": "初日から本番レベルのセキュリティ",
+            "description": "エッジ保護、content security policy、レート制限、監査証跡。実プロダクト運用の難所——すでに実装・調整済み。",
+            "bullets": [
+              "エッジプロキシがリクエストごとに設定する CSP nonce",
+              "総当たりを抑止するレート制限付きサインイン試行",
+              "監査対応のセッション・アカウントイベント追跡",
+              "厳格な TypeScript と、あらゆる境界での Zod 検証"
+            ]
+          }
+        ]
+      },
+      "pricing": {
+        "title": "あなたの価格をここに",
+        "subtitle": "1 つのソース、3 つの階層。無料で始め、必要になったらアップグレード。",
+        "ctaFree": "無料で始める",
+        "ctaPaid": "始める"
+      },
+      "cta": {
+        "title": "プロダクトを出荷する準備はできましたか？",
+        "subtitle": "フルキットを手に入れ、1 か月ではなく 1 週間で出荷。",
+        "primaryCta": "クローンして出荷"
+      }
     }
   },
   "errors": {

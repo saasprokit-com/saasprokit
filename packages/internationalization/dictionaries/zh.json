@@ -16,6 +16,112 @@
       "contact": "联系",
       "signIn": "登录",
       "signUp": "开始使用"
+    },
+    "home": {
+      "hero": {
+        "badgeSuffix": "可随时上线",
+        "title": "安装、定制、上线",
+        "highlightedText": "，一周搞定",
+        "subtitle": "全栈 SaaS 脚手架。Next.js · React · better-auth。认证、计费、团队、邮件、任务——所有底层都已接好。",
+        "benefits": [
+          "认证与 2FA",
+          "Stripe 计费",
+          "团队与 RBAC",
+          "shadcn UI 套件"
+        ],
+        "primaryCta": "克隆并上线",
+        "secondaryCta": "控制台"
+      },
+      "featuresGrid": {
+        "badge": "技术栈",
+        "title": "构建于久经验证的技术之上",
+        "subtitle": "组件均已选型、接好并测试。你可以替换任意一个，但第一天用不上。",
+        "features": [
+          {
+            "title": "Next.js 16 + App Router",
+            "description": "Server Components、Server Actions、异步 params 和 route groups。用对方式驾驭全新模型。"
+          },
+          {
+            "title": "Postgres + Prisma",
+            "description": "Schema 优先的模型、类型化客户端、随仓提交的迁移。面向 Serverless 部署，开箱适配 Neon。"
+          },
+          {
+            "title": "Turborepo + pnpm",
+            "description": "带远程缓存的优化任务图。应用与包在整个 monorepo 中共享类型。"
+          },
+          {
+            "title": "端到端 TypeScript",
+            "description": "处处严格模式，边界处用 Zod，类型从 Prisma 一路推导到表单字段。"
+          },
+          {
+            "title": "shadcn/ui + Tailwind v4",
+            "description": "可定制的基础组件、暗色模式与 design tokens。内置 Storybook，设计师可实时审阅。"
+          },
+          {
+            "title": "i18n + 边缘代理",
+            "description": "带语言前缀的路由、消息目录与 CSP nonce。生产级中间件实践，绝非玩具。"
+          }
+        ]
+      },
+      "showcase": {
+        "items": [
+          {
+            "badge": "多租户",
+            "title": "组织与个人账户",
+            "description": "每位用户都有个人工作区，并可加入任意数量的组织。计费、成员、角色和邀请均按组织隔离——不泄露，不踩坑。",
+            "bullets": [
+              "按组织隔离的订阅，每个组织一个 Stripe 客户",
+              "owner / admin / member 角色，配合路由级别的守卫",
+              "带邮件确认与席位管理的邀请流程",
+              "基于 slug 的 URL，在代理层完成校验"
+            ]
+          },
+          {
+            "badge": "身份认证",
+            "title": "你需要的所有认证流程",
+            "description": "Better Auth 负责加密、会话与账户生命周期。你只需接入提供商。邮箱、magic link、OAuth、OTP 与 2FA——均已端到端测试。",
+            "bullets": [
+              "邮箱 + 密码，含验证与找回流程",
+              "magic link 登录，并以一次性验证码兜底",
+              "开箱即用的 Google 与 GitHub OAuth",
+              "基于 TOTP 的 2FA，含备份码与恢复"
+            ]
+          },
+          {
+            "badge": "计费",
+            "title": "Stripe，接法地道",
+            "description": "按组织订阅、按比例升级、已验证的 webhook，以及管理卡片与发票的客户门户。套餐在单一配置中声明，并呈现于定价与结账。",
+            "bullets": [
+              "按组织的客户，含订阅范围与席位上限",
+              "自助门户，管理卡片、发票与取消",
+              "幂等的 webhook 处理，事件可安全重放",
+              "分层套餐（free / pro / enterprise）集中于单个配置文件"
+            ]
+          },
+          {
+            "badge": "已加固",
+            "title": "上线第一天即具备生产级安全",
+            "description": "边缘防护、内容安全策略、限流与审计日志。运营真实产品的硬骨头——已经做好、已经调好。",
+            "bullets": [
+              "由边缘代理为每个请求设置的 CSP nonce",
+              "对登录尝试限流，遏制暴力破解",
+              "可用于审计的会话与账户事件跟踪",
+              "严格的 TypeScript，并在每个边界用 Zod 校验"
+            ]
+          }
+        ]
+      },
+      "pricing": {
+        "title": "你的定价区",
+        "subtitle": "一处来源，三档套餐。免费起步，超出后再升级。",
+        "ctaFree": "免费开始",
+        "ctaPaid": "开始使用"
+      },
+      "cta": {
+        "title": "准备好上线你的产品了吗？",
+        "subtitle": "获取完整套件，一周上线，而非一个月。",
+        "primaryCta": "克隆并上线"
+      }
     }
   },
   "errors": {

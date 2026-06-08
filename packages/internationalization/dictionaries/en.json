@@ -16,6 +16,112 @@
       "contact": "Contact",
       "signIn": "Sign in",
       "signUp": "Get started"
+    },
+    "home": {
+      "hero": {
+        "badgeSuffix": "ready for ship",
+        "title": "Install custom ship",
+        "highlightedText": " in a week",
+        "subtitle": "Full-stack SaaS boilerplate. Next.js · React · better-auth. Auth, billing, teams, email, jobs - every wire already run.",
+        "benefits": [
+          "Auth & 2FA",
+          "Stripe billing",
+          "Teams & RBAC",
+          "shadcn UI kit"
+        ],
+        "primaryCta": "Clone & ship",
+        "secondaryCta": "Dashboard"
+      },
+      "featuresGrid": {
+        "badge": "The stack",
+        "title": "Built on what works",
+        "subtitle": "The pieces are picked, wired, and tested. Swap any of them, but you won't need to on day one.",
+        "features": [
+          {
+            "title": "Next.js 16 + App Router",
+            "description": "Server Components, Server Actions, async params, route groups. The new model, used the right way."
+          },
+          {
+            "title": "Postgres + Prisma",
+            "description": "Schema-first models, typed client, migrations checked in. Neon-ready for serverless deploys."
+          },
+          {
+            "title": "Turborepo + pnpm",
+            "description": "Tuned task graph with remote cache. Apps and packages share types across the whole monorepo."
+          },
+          {
+            "title": "TypeScript end-to-end",
+            "description": "Strict mode everywhere, Zod for boundaries, inferred types from Prisma to the form field."
+          },
+          {
+            "title": "shadcn/ui + Tailwind v4",
+            "description": "Themeable primitives, dark mode, design tokens. Storybook included so designers can review live."
+          },
+          {
+            "title": "i18n + edge proxy",
+            "description": "Locale-prefixed routes, message catalogs, CSP nonces. Production middleware patterns, not toys."
+          }
+        ]
+      },
+      "showcase": {
+        "items": [
+          {
+            "badge": "Multi-tenant",
+            "title": "Orgs and personal accounts",
+            "description": "Every user gets a personal workspace and can join any number of organizations. Billing, members, roles, and invites are scoped per-org — no leaks, no foot-guns.",
+            "bullets": [
+              "Org-scoped subscriptions with one Stripe customer per org",
+              "Owner / admin / member roles with route-level guards",
+              "Invite flows with email confirmation and seat handling",
+              "Slug-based URLs validated at the proxy layer"
+            ]
+          },
+          {
+            "badge": "Authentication",
+            "title": "Auth flows you'll ever need",
+            "description": "Better Auth handles cryptography, sessions, and account lifecycle. You just plug providers in. Email, magic links, OAuth, OTP, and 2FA — already tested end-to-end.",
+            "bullets": [
+              "Email + password with verification and recovery flows",
+              "Magic link sign-in and one-time code fallback",
+              "Google and GitHub OAuth out of the box",
+              "TOTP-based 2FA with backup codes and recovery"
+            ]
+          },
+          {
+            "badge": "Billing",
+            "title": "Stripe, wired the right way",
+            "description": "Subscriptions per organization, prorated upgrades, verified webhooks, customer portal for cards and invoices. Plans declared in one config, surfaced in pricing and checkout.",
+            "bullets": [
+              "Per-org customer with subscription scoping and seat limits",
+              "Self-serve portal for cards, invoices, and cancellation",
+              "Idempotent webhook handling with replay-safe events",
+              "Tiered plans (free / pro / enterprise) in one config file"
+            ]
+          },
+          {
+            "badge": "Hardened",
+            "title": "Production security from day one",
+            "description": "Edge protection, content security policy, rate limits, and audit trails. The hard parts of running a real product — already done, already tuned.",
+            "bullets": [
+              "Per-request CSP nonces set by the edge proxy",
+              "Rate-limited sign-in attempts to deter brute force",
+              "Audit-ready session and account event tracking",
+              "Strict TypeScript and Zod validation at every boundary"
+            ]
+          }
+        ]
+      },
+      "pricing": {
+        "title": "Your price here",
+        "subtitle": "One source, three tiers. Start free, upgrade when you outgrow it.",
+        "ctaFree": "Start free",
+        "ctaPaid": "Get started"
+      },
+      "cta": {
+        "title": "Ready to ship your product?",
+        "subtitle": "Get the full kit and ship in a week, not a month.",
+        "primaryCta": "Clone & ship"
+      }
     }
   },
   "errors": {

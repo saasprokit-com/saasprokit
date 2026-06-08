@@ -16,6 +16,112 @@
       "contact": "Contact",
       "signIn": "Sign in",
       "signUp": "Get started"
+    },
+    "home": {
+      "hero": {
+        "badgeSuffix": "출시 준비 완료",
+        "title": "설치하고, 맞춤화하고, 출시하세요",
+        "highlightedText": " 일주일이면 충분",
+        "subtitle": "풀스택 SaaS 보일러플레이트. Next.js · React · better-auth. 인증, 결제, 팀, 이메일, 작업—모든 배선이 이미 완료되어 있습니다.",
+        "benefits": [
+          "인증 & 2FA",
+          "Stripe 결제",
+          "팀 & RBAC",
+          "shadcn UI 키트"
+        ],
+        "primaryCta": "클론 후 출시",
+        "secondaryCta": "대시보드"
+      },
+      "featuresGrid": {
+        "badge": "스택",
+        "title": "검증된 기술 위에 구축",
+        "subtitle": "각 요소는 선정·연결·테스트를 마쳤습니다. 무엇이든 교체할 수 있지만, 첫날엔 그럴 필요가 없습니다.",
+        "features": [
+          {
+            "title": "Next.js 16 + App Router",
+            "description": "Server Components, Server Actions, 비동기 params, route groups. 새 모델을 제대로 활용합니다."
+          },
+          {
+            "title": "Postgres + Prisma",
+            "description": "스키마 우선 모델, 타입이 적용된 클라이언트, 커밋된 마이그레이션. 서버리스 배포를 위한 Neon 지원."
+          },
+          {
+            "title": "Turborepo + pnpm",
+            "description": "원격 캐시를 갖춘 최적화된 작업 그래프. 앱과 패키지가 모노레포 전반에서 타입을 공유합니다."
+          },
+          {
+            "title": "엔드 투 엔드 TypeScript",
+            "description": "어디서나 strict 모드, 경계에는 Zod, Prisma부터 폼 필드까지 추론된 타입."
+          },
+          {
+            "title": "shadcn/ui + Tailwind v4",
+            "description": "맞춤 가능한 프리미티브, 다크 모드, design tokens. 디자이너가 실시간으로 검토할 수 있도록 Storybook 포함."
+          },
+          {
+            "title": "i18n + 엣지 프록시",
+            "description": "로케일 접두사 라우트, 메시지 카탈로그, CSP nonce. 장난감이 아닌 프로덕션 미들웨어 패턴."
+          }
+        ]
+      },
+      "showcase": {
+        "items": [
+          {
+            "badge": "멀티테넌트",
+            "title": "조직과 개인 계정",
+            "description": "모든 사용자는 개인 워크스페이스를 가지며 원하는 만큼 조직에 참여할 수 있습니다. 결제, 멤버, 역할, 초대는 조직별로 분리됩니다—유출도, 함정도 없습니다.",
+            "bullets": [
+              "조직별 구독, 조직마다 하나의 Stripe 고객",
+              "라우트 수준 가드를 갖춘 owner / admin / member 역할",
+              "이메일 확인과 좌석 관리를 포함한 초대 플로우",
+              "프록시 계층에서 검증되는 slug 기반 URL"
+            ]
+          },
+          {
+            "badge": "인증",
+            "title": "필요한 모든 인증 플로우",
+            "description": "Better Auth가 암호화, 세션, 계정 수명 주기를 처리합니다. 당신은 공급자만 연결하면 됩니다. 이메일, magic link, OAuth, OTP, 2FA—모두 엔드 투 엔드로 테스트되었습니다.",
+            "bullets": [
+              "검증 및 복구 플로우를 갖춘 이메일 + 비밀번호",
+              "magic link 로그인과 폴백용 일회용 코드",
+              "기본 제공되는 Google 및 GitHub OAuth",
+              "백업 코드와 복구를 갖춘 TOTP 기반 2FA"
+            ]
+          },
+          {
+            "badge": "결제",
+            "title": "제대로 연결된 Stripe",
+            "description": "조직별 구독, 일할 계산 업그레이드, 검증된 webhook, 카드와 인보이스를 위한 고객 포털. 플랜은 하나의 설정에 선언되어 가격과 결제에 노출됩니다.",
+            "bullets": [
+              "구독 범위와 좌석 한도를 갖춘 조직별 고객",
+              "카드, 인보이스, 해지를 위한 셀프서비스 포털",
+              "재전송에 안전한 이벤트의 멱등 webhook 처리",
+              "계층형 플랜(free / pro / enterprise)을 하나의 설정 파일에"
+            ]
+          },
+          {
+            "badge": "강화됨",
+            "title": "첫날부터 프로덕션 보안",
+            "description": "엣지 보호, content security policy, 속도 제한, 감사 로그. 실제 제품 운영의 어려운 부분—이미 완료되어 조정되어 있습니다.",
+            "bullets": [
+              "엣지 프록시가 요청마다 설정하는 CSP nonce",
+              "무차별 대입을 막는 속도 제한 로그인 시도",
+              "감사에 대비한 세션 및 계정 이벤트 추적",
+              "엄격한 TypeScript와 모든 경계에서의 Zod 검증"
+            ]
+          }
+        ]
+      },
+      "pricing": {
+        "title": "여기에 가격을",
+        "subtitle": "하나의 소스, 세 가지 등급. 무료로 시작하고 필요할 때 업그레이드하세요.",
+        "ctaFree": "무료로 시작",
+        "ctaPaid": "시작하기"
+      },
+      "cta": {
+        "title": "제품을 출시할 준비가 되셨나요?",
+        "subtitle": "전체 키트를 받아 한 달이 아닌 일주일 만에 출시하세요.",
+        "primaryCta": "클론 후 출시"
+      }
     }
   },
   "errors": {

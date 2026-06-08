@@ -38,14 +38,18 @@ export function LanguageToggle({
     if (next === current) {
       return;
     }
-    // Non-default locales carry a leading /{locale} segment; the default has none.
+    // Strip any existing locale prefix to get the bare path.
     const segments = pathname.split("/");
     const hasLocalePrefix = languages.some((lang) => lang.value === segments[1]);
     const rest = hasLocalePrefix ? `/${segments.slice(2).join("/")}` : pathname;
-    const target =
-      next === defaultLocale ? rest : `/${next}${rest === "/" ? "" : rest}`;
 
-    router.push(target);
+    // Always navigate to the explicitly-prefixed path, even for the default locale.
+    // Under next-international's rewriteDefault, the middleware strips the default
+    // prefix back to "/" and updates the Next-Locale cookie in that same redirect.
+    // Pushing a bare "/" would instead be resolved from the stale cookie and bounce
+    // back to the previous locale.
+    router.push(`/${next}${rest === "/" ? "" : rest}`);
+    router.refresh();
   };
 
   return (

@@ -16,6 +16,112 @@
       "contact": "Contact",
       "signIn": "Connectez-vous",
       "signUp": "Commencez"
+    },
+    "home": {
+      "hero": {
+        "badgeSuffix": "prêt à livrer",
+        "title": "Installez, personnalisez, livrez",
+        "highlightedText": " en une semaine",
+        "subtitle": "Boilerplate SaaS full-stack. Next.js · React · better-auth. Auth, facturation, équipes, e-mail, jobs — tout est déjà câblé.",
+        "benefits": [
+          "Auth & 2FA",
+          "Facturation Stripe",
+          "Équipes & RBAC",
+          "Kit UI shadcn"
+        ],
+        "primaryCta": "Cloner & livrer",
+        "secondaryCta": "Tableau de bord"
+      },
+      "featuresGrid": {
+        "badge": "La stack",
+        "title": "Bâti sur ce qui marche",
+        "subtitle": "Les pièces sont choisies, câblées et testées. Remplacez-en une, mais vous n'en aurez pas besoin dès le premier jour.",
+        "features": [
+          {
+            "title": "Next.js 16 + App Router",
+            "description": "Server Components, Server Actions, params asynchrones et route groups. Le nouveau modèle, utilisé correctement."
+          },
+          {
+            "title": "Postgres + Prisma",
+            "description": "Modèles schema-first, client typé, migrations versionnées. Prêt pour Neon en déploiement serverless."
+          },
+          {
+            "title": "Turborepo + pnpm",
+            "description": "Graphe de tâches optimisé avec cache distant. Apps et packages partagent les types dans tout le monorepo."
+          },
+          {
+            "title": "TypeScript de bout en bout",
+            "description": "Mode strict partout, Zod aux frontières et types inférés de Prisma jusqu'au champ de formulaire."
+          },
+          {
+            "title": "shadcn/ui + Tailwind v4",
+            "description": "Primitives personnalisables, mode sombre et design tokens. Storybook inclus pour que les designers vérifient en direct."
+          },
+          {
+            "title": "i18n + proxy edge",
+            "description": "Routes préfixées par langue, catalogues de messages et nonces CSP. Des patterns de middleware de production, pas des gadgets."
+          }
+        ]
+      },
+      "showcase": {
+        "items": [
+          {
+            "badge": "Multi-tenant",
+            "title": "Organisations et comptes personnels",
+            "description": "Chaque utilisateur dispose d'un espace personnel et peut rejoindre autant d'organisations qu'il le souhaite. Facturation, membres, rôles et invitations sont cloisonnés par organisation — aucune fuite, aucun piège.",
+            "bullets": [
+              "Abonnements par organisation avec un client Stripe par org",
+              "Rôles owner / admin / member avec garde au niveau des routes",
+              "Flux d'invitation avec confirmation par e-mail et gestion des sièges",
+              "URLs basées sur le slug, validées au niveau du proxy"
+            ]
+          },
+          {
+            "badge": "Authentification",
+            "title": "Tous les flux d'auth dont vous aurez besoin",
+            "description": "Better Auth gère la cryptographie, les sessions et le cycle de vie des comptes. Vous n'avez qu'à brancher les fournisseurs. E-mail, magic links, OAuth, OTP et 2FA — testés de bout en bout.",
+            "bullets": [
+              "E-mail et mot de passe avec vérification et récupération",
+              "Connexion par magic link et code à usage unique en repli",
+              "OAuth Google et GitHub prêts à l'emploi",
+              "2FA basé sur TOTP avec codes de secours et récupération"
+            ]
+          },
+          {
+            "badge": "Facturation",
+            "title": "Stripe, câblé comme il faut",
+            "description": "Abonnements par organisation, mises à niveau au prorata, webhooks vérifiés et portail client pour cartes et factures. Les plans sont déclarés dans une seule config et affichés dans les prix et le checkout.",
+            "bullets": [
+              "Client par organisation avec cloisonnement des abonnements et limites de sièges",
+              "Portail en self-service pour cartes, factures et résiliation",
+              "Gestion idempotente des webhooks avec événements rejouables en toute sécurité",
+              "Plans par paliers (free / pro / enterprise) dans un seul fichier de config"
+            ]
+          },
+          {
+            "badge": "Durci",
+            "title": "Sécurité de production dès le premier jour",
+            "description": "Protection à l'edge, content security policy, limites de débit et journaux d'audit. Les parties difficiles d'un vrai produit — déjà faites, déjà réglées.",
+            "bullets": [
+              "Nonces CSP par requête, posés par le proxy edge",
+              "Tentatives de connexion limitées en débit pour dissuader la force brute",
+              "Suivi des événements de session et de compte prêt pour l'audit",
+              "TypeScript strict et validation Zod à chaque frontière"
+            ]
+          }
+        ]
+      },
+      "pricing": {
+        "title": "Votre prix ici",
+        "subtitle": "Une source, trois paliers. Commencez gratuitement, passez au niveau supérieur quand vous le dépassez.",
+        "ctaFree": "Commencer gratuitement",
+        "ctaPaid": "Commencer"
+      },
+      "cta": {
+        "title": "Prêt à livrer votre produit ?",
+        "subtitle": "Prenez le kit complet et livrez en une semaine, pas en un mois.",
+        "primaryCta": "Cloner & livrer"
+      }
     }
   },
   "errors": {

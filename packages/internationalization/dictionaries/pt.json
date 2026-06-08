@@ -16,6 +16,112 @@
       "contact": "Contato",
       "signIn": "Entrar",
       "signUp": "Comece agora"
+    },
+    "home": {
+      "hero": {
+        "badgeSuffix": "pronto para lançar",
+        "title": "Instale, personalize, lance",
+        "highlightedText": " em uma semana",
+        "subtitle": "Boilerplate SaaS full-stack. Next.js · React · better-auth. Autenticação, cobrança, equipes, e-mail e jobs — toda a fiação já feita.",
+        "benefits": [
+          "Auth e 2FA",
+          "Cobrança com Stripe",
+          "Equipes e RBAC",
+          "Kit de UI shadcn"
+        ],
+        "primaryCta": "Clonar e lançar",
+        "secondaryCta": "Painel"
+      },
+      "featuresGrid": {
+        "badge": "A stack",
+        "title": "Construído sobre o que funciona",
+        "subtitle": "As peças estão escolhidas, conectadas e testadas. Troque qualquer uma, mas você não vai precisar no primeiro dia.",
+        "features": [
+          {
+            "title": "Next.js 16 + App Router",
+            "description": "Server Components, Server Actions, params assíncronos e route groups. O novo modelo, usado do jeito certo."
+          },
+          {
+            "title": "Postgres + Prisma",
+            "description": "Modelos schema-first, cliente tipado e migrações versionadas. Pronto para Neon em deploys serverless."
+          },
+          {
+            "title": "Turborepo + pnpm",
+            "description": "Grafo de tarefas otimizado com cache remoto. Apps e pacotes compartilham tipos por todo o monorepo."
+          },
+          {
+            "title": "TypeScript de ponta a ponta",
+            "description": "Modo estrito em todo lugar, Zod nas fronteiras e tipos inferidos do Prisma até o campo do formulário."
+          },
+          {
+            "title": "shadcn/ui + Tailwind v4",
+            "description": "Primitivos personalizáveis, modo escuro e design tokens. Storybook incluído para os designers revisarem ao vivo."
+          },
+          {
+            "title": "i18n + proxy no edge",
+            "description": "Rotas com prefixo de idioma, catálogos de mensagens e nonces de CSP. Padrões de middleware de produção, não de brinquedo."
+          }
+        ]
+      },
+      "showcase": {
+        "items": [
+          {
+            "badge": "Multi-tenant",
+            "title": "Organizações e contas pessoais",
+            "description": "Cada usuário ganha um espaço pessoal e pode entrar em quantas organizações quiser. Cobrança, membros, papéis e convites têm escopo por organização — sem vazamentos, sem armadilhas.",
+            "bullets": [
+              "Assinaturas por organização com um cliente Stripe por org",
+              "Papéis owner / admin / member com proteção no nível das rotas",
+              "Fluxos de convite com confirmação por e-mail e controle de assentos",
+              "URLs baseadas em slug, validadas na camada do proxy"
+            ]
+          },
+          {
+            "badge": "Autenticação",
+            "title": "Todos os fluxos de auth que você vai precisar",
+            "description": "O Better Auth cuida da criptografia, das sessões e do ciclo de vida da conta. Você só conecta os provedores. E-mail, magic links, OAuth, OTP e 2FA — testados de ponta a ponta.",
+            "bullets": [
+              "E-mail e senha com verificação e recuperação",
+              "Login por magic link e código de uso único como alternativa",
+              "OAuth do Google e do GitHub prontos para uso",
+              "2FA baseado em TOTP com códigos de backup e recuperação"
+            ]
+          },
+          {
+            "badge": "Cobrança",
+            "title": "Stripe, conectado do jeito certo",
+            "description": "Assinaturas por organização, upgrades proporcionais, webhooks verificados e portal do cliente para cartões e faturas. Planos declarados em uma única config e exibidos nos preços e no checkout.",
+            "bullets": [
+              "Cliente por organização com escopo de assinatura e limites de assentos",
+              "Portal self-service para cartões, faturas e cancelamento",
+              "Tratamento idempotente de webhooks com eventos seguros a reenvios",
+              "Planos em níveis (free / pro / enterprise) em um único arquivo de config"
+            ]
+          },
+          {
+            "badge": "Reforçado",
+            "title": "Segurança de produção desde o primeiro dia",
+            "description": "Proteção no edge, content security policy, limites de taxa e trilhas de auditoria. As partes difíceis de operar um produto real — já feitas, já ajustadas.",
+            "bullets": [
+              "Nonces de CSP por requisição definidos pelo proxy do edge",
+              "Tentativas de login com limite de taxa para conter força bruta",
+              "Rastreamento de eventos de sessão e conta pronto para auditoria",
+              "TypeScript estrito e validação com Zod em cada fronteira"
+            ]
+          }
+        ]
+      },
+      "pricing": {
+        "title": "Seu preço aqui",
+        "subtitle": "Uma fonte, três níveis. Comece grátis e faça upgrade quando crescer.",
+        "ctaFree": "Começar grátis",
+        "ctaPaid": "Começar"
+      },
+      "cta": {
+        "title": "Pronto para lançar seu produto?",
+        "subtitle": "Pegue o kit completo e lance em uma semana, não em um mês.",
+        "primaryCta": "Clonar e lançar"
+      }
     }
   },
   "errors": {
