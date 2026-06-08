@@ -6,6 +6,7 @@ import { Github, Linkedin, Twitter, Youtube } from "lucide-react";
 import type { ReactNode } from "react";
 import { getServerSession } from "@/lib/auth/auth";
 import { HeaderUserMenu } from "./components/header-user-menu";
+import { LanguageToggle } from "./components/language-toggle";
 
 interface RootLayoutProperties {
   readonly children: ReactNode;
@@ -26,7 +27,8 @@ const Frontier = async ({ children }: RootLayoutProperties) => {
         logo={<Logo text="LOGO" />}
         right={
           <>
-            <ModeToggle />
+            <LanguageToggle />
+            <ModeToggle className="hidden md:inline-flex" />
             <HeaderUserMenu user={session?.user} />
           </>
         }
@@ -36,7 +38,12 @@ const Frontier = async ({ children }: RootLayoutProperties) => {
       <div className="flex flex-col">{children}</div>
 
       <Footer
-        bottomRight={<ModeToggle />}
+        bottomRight={
+          <>
+            <LanguageToggle />
+            <ModeToggle />
+          </>
+        }
         copyright={`© ${new Date().getFullYear()} SAAS Labs · MIT`}
         description="A SaaS boilerplate for people who ship."
         logo={<Logo text="LOGO" />}
