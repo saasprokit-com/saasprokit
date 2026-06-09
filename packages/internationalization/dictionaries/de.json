@@ -121,6 +121,41 @@
         "title": "Bereit, dein Produkt auszuliefern?",
         "subtitle": "Hol dir das komplette Kit und liefere in einer Woche, nicht in einem Monat.",
         "primaryCta": "Klonen & ausliefern"
+      },
+      "nav": {
+        "docs": "Docs",
+        "features": "Funktionen",
+        "pricing": "Preise"
+      },
+      "footer": {
+        "description": "Ein SaaS-Boilerplate für Leute, die ausliefern.",
+        "products": {
+          "title": "Produkte",
+          "features": "Funktionen",
+          "stack": "Stack",
+          "pricing": "Preise",
+          "changelog": "Changelog"
+        },
+        "docs": {
+          "title": "Docs",
+          "quickstart": "Schnellstart",
+          "auth": "Authentifizierung",
+          "billing": "Abrechnung",
+          "email": "E-Mail"
+        },
+        "resources": {
+          "title": "Ressourcen",
+          "blog": "Blog",
+          "templates": "Vorlagen",
+          "discord": "Discord",
+          "license": "Lizenz"
+        },
+        "legal": {
+          "title": "Rechtliches",
+          "privacy": "Datenschutz",
+          "terms": "Bedingungen",
+          "security": "Sicherheit"
+        }
       }
     }
   },

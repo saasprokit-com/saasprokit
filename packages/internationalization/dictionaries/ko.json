@@ -121,6 +121,41 @@
         "title": "제품을 출시할 준비가 되셨나요?",
         "subtitle": "전체 키트를 받아 한 달이 아닌 일주일 만에 출시하세요.",
         "primaryCta": "클론 후 출시"
+      },
+      "nav": {
+        "docs": "문서",
+        "features": "기능",
+        "pricing": "가격"
+      },
+      "footer": {
+        "description": "출시하는 사람을 위한 SaaS 보일러플레이트.",
+        "products": {
+          "title": "제품",
+          "features": "기능",
+          "stack": "스택",
+          "pricing": "가격",
+          "changelog": "변경 이력"
+        },
+        "docs": {
+          "title": "문서",
+          "quickstart": "빠른 시작",
+          "auth": "인증",
+          "billing": "결제",
+          "email": "이메일"
+        },
+        "resources": {
+          "title": "리소스",
+          "blog": "블로그",
+          "templates": "템플릿",
+          "discord": "Discord",
+          "license": "라이선스"
+        },
+        "legal": {
+          "title": "법적 고지",
+          "privacy": "개인정보",
+          "terms": "약관",
+          "security": "보안"
+        }
       }
     }
   },

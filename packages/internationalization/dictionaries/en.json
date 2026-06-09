@@ -121,6 +121,41 @@
         "title": "Ready to ship your product?",
         "subtitle": "Get the full kit and ship in a week, not a month.",
         "primaryCta": "Clone & ship"
+      },
+      "nav": {
+        "docs": "Docs",
+        "features": "Features",
+        "pricing": "Pricing"
+      },
+      "footer": {
+        "description": "A SaaS boilerplate for people who ship.",
+        "products": {
+          "title": "Products",
+          "features": "Features",
+          "stack": "Stack",
+          "pricing": "Pricing",
+          "changelog": "Changelog"
+        },
+        "docs": {
+          "title": "Docs",
+          "quickstart": "Quickstart",
+          "auth": "Auth",
+          "billing": "Billing",
+          "email": "Email"
+        },
+        "resources": {
+          "title": "Resources",
+          "blog": "Blog",
+          "templates": "Templates",
+          "discord": "Discord",
+          "license": "License"
+        },
+        "legal": {
+          "title": "Legal",
+          "privacy": "Privacy",
+          "terms": "Terms",
+          "security": "Security"
+        }
       }
     }
   },

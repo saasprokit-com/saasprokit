@@ -2,6 +2,7 @@ import { Footer } from "@repo/design-system/components/molecules/footer/footer";
 import { Header } from "@repo/design-system/components/molecules/header/header";
 import { ModeToggle } from "@repo/design-system/components/molecules/header/mode-toggle";
 import { Logo } from "@repo/design-system/components/molecules/logo/logo";
+import { getDictionary } from "@repo/internationalization";
 import { Github, Linkedin, Twitter, Youtube } from "lucide-react";
 import type { ReactNode } from "react";
 import { getServerSession } from "@/lib/auth/auth";
@@ -10,19 +11,25 @@ import { LanguageToggle } from "./components/language-toggle";
 
 interface RootLayoutProperties {
   readonly children: ReactNode;
+  readonly params: Promise<{ locale: string }>;
 }
 
-const Frontier = async ({ children }: RootLayoutProperties) => {
-  const session = await getServerSession();
+const Frontier = async ({ children, params }: RootLayoutProperties) => {
+  const { locale } = await params;
+  const [session, { web }] = await Promise.all([
+    getServerSession(),
+    getDictionary(locale),
+  ]);
+  const { nav, footer } = web.home;
 
   return (
     <main>
       <Header
         className="fixed top-0 z-40 w-full border-none bg-transparent transition-shadow data-[scrolled=true]:bg-background/80 data-[scrolled=true]:shadow-sm data-[scrolled=true]:backdrop-blur"
         items={[
-          { href: "/docs", label: "Docs" },
-          { href: "#features", label: "Features" },
-          { href: "#pricing", label: "Pricing" },
+          { href: "/docs", label: nav.docs },
+          { href: "#features", label: nav.features },
+          { href: "#pricing", label: nav.pricing },
         ]}
         logo={<Logo text="LOGO" />}
         right={
@@ -45,42 +52,42 @@ const Frontier = async ({ children }: RootLayoutProperties) => {
           </>
         }
         copyright={`© ${new Date().getFullYear()} SAAS Labs · MIT`}
-        description="A SaaS boilerplate for people who ship."
+        description={footer.description}
         logo={<Logo text="LOGO" />}
         sections={[
           {
-            title: "Products",
+            title: footer.products.title,
             links: [
-              { label: "Features", href: "#features" },
-              { label: "Stack", href: "#deps" },
-              { label: "Pricing", href: "#pricing" },
-              { label: "Changelog", href: "#" },
+              { label: footer.products.features, href: "#features" },
+              { label: footer.products.stack, href: "#deps" },
+              { label: footer.products.pricing, href: "#pricing" },
+              { label: footer.products.changelog, href: "#" },
             ],
           },
           {
-            title: "Docs",
+            title: footer.docs.title,
             links: [
-              { label: "Quickstart", href: "/docs" },
-              { label: "Auth", href: "/docs" },
-              { label: "Billing", href: "/docs" },
-              { label: "Email", href: "/docs" },
+              { label: footer.docs.quickstart, href: "/docs" },
+              { label: footer.docs.auth, href: "/docs" },
+              { label: footer.docs.billing, href: "/docs" },
+              { label: footer.docs.email, href: "/docs" },
             ],
           },
           {
-            title: "Resources",
+            title: footer.resources.title,
             links: [
-              { label: "Blog", href: "#" },
-              { label: "Templates", href: "#" },
-              { label: "Discord", href: "#" },
-              { label: "License", href: "#" },
+              { label: footer.resources.blog, href: "#" },
+              { label: footer.resources.templates, href: "#" },
+              { label: footer.resources.discord, href: "#" },
+              { label: footer.resources.license, href: "#" },
             ],
           },
           {
-            title: "Legal",
+            title: footer.legal.title,
             links: [
-              { label: "Privacy", href: "#" },
-              { label: "Terms", href: "#" },
-              { label: "Security", href: "#" },
+              { label: footer.legal.privacy, href: "#" },
+              { label: footer.legal.terms, href: "#" },
+              { label: footer.legal.security, href: "#" },
             ],
           },
         ]}

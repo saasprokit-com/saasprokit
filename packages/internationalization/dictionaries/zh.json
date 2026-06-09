@@ -121,6 +121,41 @@
         "title": "准备好上线你的产品了吗？",
         "subtitle": "获取完整套件，一周上线，而非一个月。",
         "primaryCta": "克隆并上线"
+      },
+      "nav": {
+        "docs": "文档",
+        "features": "功能",
+        "pricing": "价格"
+      },
+      "footer": {
+        "description": "为真正交付的人打造的 SaaS 脚手架。",
+        "products": {
+          "title": "产品",
+          "features": "功能",
+          "stack": "技术栈",
+          "pricing": "价格",
+          "changelog": "更新日志"
+        },
+        "docs": {
+          "title": "文档",
+          "quickstart": "快速开始",
+          "auth": "认证",
+          "billing": "计费",
+          "email": "邮件"
+        },
+        "resources": {
+          "title": "资源",
+          "blog": "博客",
+          "templates": "模板",
+          "discord": "Discord",
+          "license": "许可证"
+        },
+        "legal": {
+          "title": "法律",
+          "privacy": "隐私",
+          "terms": "条款",
+          "security": "安全"
+        }
       }
     }
   },

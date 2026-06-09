@@ -121,6 +121,41 @@
         "title": "Redo att leverera din produkt?",
         "subtitle": "Skaffa hela kitet och leverera på en vecka, inte en månad.",
         "primaryCta": "Klona & leverera"
+      },
+      "nav": {
+        "docs": "Dokument",
+        "features": "Funktioner",
+        "pricing": "Priser"
+      },
+      "footer": {
+        "description": "En SaaS-boilerplate för dem som levererar.",
+        "products": {
+          "title": "Produkter",
+          "features": "Funktioner",
+          "stack": "Stack",
+          "pricing": "Priser",
+          "changelog": "Changelog"
+        },
+        "docs": {
+          "title": "Dokument",
+          "quickstart": "Snabbstart",
+          "auth": "Autentisering",
+          "billing": "Fakturering",
+          "email": "E-post"
+        },
+        "resources": {
+          "title": "Resurser",
+          "blog": "Blogg",
+          "templates": "Mallar",
+          "discord": "Discord",
+          "license": "Licens"
+        },
+        "legal": {
+          "title": "Juridik",
+          "privacy": "Integritet",
+          "terms": "Villkor",
+          "security": "Säkerhet"
+        }
       }
     }
   },

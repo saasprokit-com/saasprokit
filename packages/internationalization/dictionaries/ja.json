@@ -121,6 +121,41 @@
         "title": "プロダクトを出荷する準備はできましたか？",
         "subtitle": "フルキットを手に入れ、1 か月ではなく 1 週間で出荷。",
         "primaryCta": "クローンして出荷"
+      },
+      "nav": {
+        "docs": "ドキュメント",
+        "features": "機能",
+        "pricing": "料金"
+      },
+      "footer": {
+        "description": "出荷する人のための SaaS ボイラープレート。",
+        "products": {
+          "title": "プロダクト",
+          "features": "機能",
+          "stack": "スタック",
+          "pricing": "料金",
+          "changelog": "変更履歴"
+        },
+        "docs": {
+          "title": "ドキュメント",
+          "quickstart": "クイックスタート",
+          "auth": "認証",
+          "billing": "課金",
+          "email": "メール"
+        },
+        "resources": {
+          "title": "リソース",
+          "blog": "ブログ",
+          "templates": "テンプレート",
+          "discord": "Discord",
+          "license": "ライセンス"
+        },
+        "legal": {
+          "title": "法的事項",
+          "privacy": "プライバシー",
+          "terms": "利用規約",
+          "security": "セキュリティ"
+        }
       }
     }
   },

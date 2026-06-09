@@ -121,6 +121,41 @@
         "title": "¿Listo para lanzar tu producto?",
         "subtitle": "Consigue el kit completo y lanza en una semana, no en un mes.",
         "primaryCta": "Clonar y lanzar"
+      },
+      "nav": {
+        "docs": "Docs",
+        "features": "Funciones",
+        "pricing": "Precios"
+      },
+      "footer": {
+        "description": "Un boilerplate SaaS para quienes lanzan.",
+        "products": {
+          "title": "Productos",
+          "features": "Funciones",
+          "stack": "Stack",
+          "pricing": "Precios",
+          "changelog": "Changelog"
+        },
+        "docs": {
+          "title": "Docs",
+          "quickstart": "Inicio rápido",
+          "auth": "Autenticación",
+          "billing": "Facturación",
+          "email": "Email"
+        },
+        "resources": {
+          "title": "Recursos",
+          "blog": "Blog",
+          "templates": "Plantillas",
+          "discord": "Discord",
+          "license": "Licencia"
+        },
+        "legal": {
+          "title": "Legal",
+          "privacy": "Privacidad",
+          "terms": "Términos",
+          "security": "Seguridad"
+        }
       }
     }
   },

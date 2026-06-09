@@ -121,6 +121,41 @@
         "title": "Prêt à livrer votre produit ?",
         "subtitle": "Prenez le kit complet et livrez en une semaine, pas en un mois.",
         "primaryCta": "Cloner & livrer"
+      },
+      "nav": {
+        "docs": "Docs",
+        "features": "Fonctionnalités",
+        "pricing": "Tarifs"
+      },
+      "footer": {
+        "description": "Un boilerplate SaaS pour ceux qui livrent.",
+        "products": {
+          "title": "Produits",
+          "features": "Fonctionnalités",
+          "stack": "Stack",
+          "pricing": "Tarifs",
+          "changelog": "Changelog"
+        },
+        "docs": {
+          "title": "Docs",
+          "quickstart": "Démarrage rapide",
+          "auth": "Authentification",
+          "billing": "Facturation",
+          "email": "E-mail"
+        },
+        "resources": {
+          "title": "Ressources",
+          "blog": "Blog",
+          "templates": "Modèles",
+          "discord": "Discord",
+          "license": "Licence"
+        },
+        "legal": {
+          "title": "Légal",
+          "privacy": "Confidentialité",
+          "terms": "Conditions",
+          "security": "Sécurité"
+        }
       }
     }
   },
