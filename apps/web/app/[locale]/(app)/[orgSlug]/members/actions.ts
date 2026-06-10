@@ -133,8 +133,7 @@ export async function inviteMemberAction(
     return { success: true, data: { invitationId: invitation.id } };
   } catch (error) {
     return toActionError(error, {
-      fallback: "invalidInput",
-      baFallback: "inviteMember",
+      fallback: "inviteMember",
     });
   }
 }
@@ -293,8 +292,7 @@ export async function resendInvitationAction(
     return { success: true };
   } catch (error) {
     return toActionError(error, {
-      fallback: "invalidInput",
-      baFallback: "resendInvitation",
+      fallback: "resendInvitation",
     });
   }
 }
@@ -341,8 +339,7 @@ export async function cancelInvitationAction(
     return { success: true };
   } catch (error) {
     return toActionError(error, {
-      fallback: "invalidInput",
-      baFallback: "cancelInvitation",
+      fallback: "cancelInvitation",
     });
   }
 }
@@ -399,7 +396,6 @@ export async function cancelInvitationsAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "cancelInvitations",
-      baFallback: "cancelInvitation",
     });
   }
 }
@@ -458,7 +454,7 @@ async function processBulkInviteEmail(
     });
     return null; // Success
   } catch (error) {
-    const message = await mapBAError(error, "unknownError");
+    const message = await mapBAError(error);
     return `${email} (failed - ${message})`;
   }
 }
@@ -626,8 +622,7 @@ export async function bulkInviteAction(
       return actionError("seatLimitReached");
     }
     return toActionError(error, {
-      fallback: "invalidInput",
-      baFallback: "bulkInvite",
+      fallback: "bulkInvite",
     });
   }
 }

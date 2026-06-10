@@ -30,7 +30,8 @@ pnpm --filter app typecheck   # Type check web app
 
 ### Testing
 ```bash
-pnpm test                     # Run all unit tests via turbo (only auth + payment have a test script)
+pnpm test                     # Run all unit tests via turbo (app, auth, payment)
+pnpm --filter app test        # Unit tests for the web app (Vitest, *.test.ts only)
 pnpm --filter @repo/auth test    # Unit tests for a specific package
 pnpm --filter @repo/payment test # Unit tests for a specific package
 pnpm --filter app test:e2e    # Run Playwright E2E tests
@@ -38,8 +39,6 @@ pnpm --filter app test:e2e:ui # Run E2E tests with UI
 pnpm --filter app test:e2e:auth  # E2E "no-auth" project only
 pnpm --filter app test:e2e:app   # E2E "authenticated" project only
 ```
-
-> Note: the `app` package has a `vitest.config.mts` (jsdom) wired up but **no `test` script and no unit test files yet** — `pnpm --filter app test` is a no-op. Add a `"test": "vitest run"` script there before relying on it.
 
 ### Database (Prisma)
 ```bash
@@ -189,6 +188,27 @@ import { signIn, useSession, authClient } from "@repo/auth/client";
 const { data: session } = useSession();
 ```
 
+**Better Auth error i18n** (official `@better-auth/i18n` plugin + dictionaries):
+
+Error messages are localized at the source: the `i18n()` plugin in
+`packages/auth/server.ts` translates every BA error per request locale (detected
+from the Referer path via `getLocale`, falling back to Accept-Language). Its
+translations are sourced from the dictionaries' `errors.ba` sections
+(`@repo/internationalization/ba-errors`), so languine remains the single copy
+pipeline. Every code in `AUTH_ERROR_CODES` (exported from `@repo/auth/server`,
+163 codes) has a dictionary translation, enforced both directions by a
+compile-time type bridge in `apps/web/lib/auth/ba-error-core.ts` — missing or
+stale keys fail `pnpm --filter app typecheck`.
+
+- Client components: just show `result.error.message` (already localized);
+  keep the `|| errors.X` fallback for code-less failures
+- Server actions: `toActionError` maps BA codes via the dictionary;
+  `mapBAError(error)` returns a bare localized string
+- After a BA upgrade breaks the typecheck: run
+  `NODE_OPTIONS="--conditions=react-server" npx tsx --env-file=.env.local scripts/sync-ba-errors.ts`
+  from `apps/web`, review/translate the new English copy in all 9 dictionaries,
+  then `pnpm translate` (the script is Stripe-env-independent)
+
 ### Data Access Layer (`apps/web/servers/`)
 
 Server-side queries and actions are organized by domain under `servers/`:
@@ -306,7 +326,7 @@ Workflow: Modify schema → `pnpm migrate` → Import via `import { database } f
 ### Testing
 
 - Unit tests: `**/*.test.ts` (co-located with source). Runner: Vitest (v4.x), config in each package's `vitest.config.mts`
-- Vitest configs exist in `app`, `auth`, `payment`, but only `auth` and `payment` define a runnable `test` script (`vitest run`). Current unit tests live in `packages/auth/*.test.ts` and `packages/payment/*.test.ts`
+- Vitest configs exist in `app`, `auth`, `payment`, each with a runnable `test` script (`vitest run`). Unit tests live in `packages/auth/*.test.ts`, `packages/payment/*.test.ts`, and co-located `apps/web/**/*.test.ts` (the app config includes `**/*.test.{ts,tsx}` only, excluding `e2e/`)
 - E2E tests: Playwright (`apps/web/playwright.config.ts`). All `apps/web/e2e/**/*.spec.ts` files are Playwright specs (not Vitest), split into `no-auth` and `authenticated` projects
 
 ### CI (`.github/workflows/`)

@@ -1,4 +1,6 @@
+import { i18n } from "@better-auth/i18n";
 import { stripe } from "@better-auth/stripe";
+import { STRIPE_ERROR_CODES } from "@better-auth/stripe/client";
 import { database } from "@repo/database";
 import {
   sendEmailVerificationEmail,
@@ -9,6 +11,8 @@ import {
   sendTwoFactorOTPEmail,
   sendVerificationOTPEmail,
 } from "@repo/email";
+import type { BATranslationLocale } from "@repo/internationalization/ba-errors";
+import { baErrorTranslations } from "@repo/internationalization/ba-errors";
 import {
   COOKIE_CACHE_MAX_AGE_MINUTES,
   INVITATION_EXPIRES_IN_DAYS,
@@ -341,9 +345,51 @@ export const auth = betterAuth({
         ]
       : []),
 
+    // Localized error messages, sourced from the errors.ba dictionaries.
+    // The app's locale lives in the URL path, so requests reveal it via
+    // the Referer header; paths without a locale prefix are the default
+    // locale (rewriteDefault strategy). Header detection is the fallback
+    // for requests without a Referer (OAuth callbacks, webhooks).
+    i18n({
+      defaultLocale: "en",
+      detection: ["callback", "header"],
+      getLocale: (ctx) => {
+        const referer =
+          ctx.request?.headers.get("referer") ?? ctx.headers?.get("referer");
+        if (!referer) {
+          return null;
+        }
+        try {
+          const segment = new URL(referer).pathname.split("/")[1];
+          return segment && segment in baErrorTranslations
+            ? (segment as BATranslationLocale)
+            : "en";
+        } catch {
+          return null;
+        }
+      },
+      translations: baErrorTranslations,
+    }),
+
     // Next.js cookie handling
     nextCookies(),
   ],
 });
 
 export type Auth = typeof auth;
+
+/**
+ * Every Better Auth error code this instance can produce.
+ *
+ * The stripe plugin is conditionally spread into `plugins`, which erases its
+ * `$ERROR_CODES` from the inferred instance type (and from the runtime object
+ * when Stripe env vars are absent) — merge them back explicitly so consumers
+ * (the errors.ba dictionary type bridge and the sync script) stay exhaustive
+ * regardless of environment.
+ */
+export const AUTH_ERROR_CODES = {
+  ...STRIPE_ERROR_CODES,
+  ...auth.$ERROR_CODES,
+};
+
+export type AuthErrorCode = keyof typeof AUTH_ERROR_CODES;

@@ -113,7 +113,6 @@ export async function acceptInvitationAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "acceptInvitation",
-      baFallback: "unknownError",
     });
   }
 }
