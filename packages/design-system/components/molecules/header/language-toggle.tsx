@@ -40,7 +40,9 @@ export function LanguageToggle({
     }
     // Strip any existing locale prefix to get the bare path.
     const segments = pathname.split("/");
-    const hasLocalePrefix = languages.some((lang) => lang.value === segments[1]);
+    const hasLocalePrefix = languages.some(
+      (lang) => lang.value === segments[1]
+    );
     const rest = hasLocalePrefix ? `/${segments.slice(2).join("/")}` : pathname;
 
     // Always navigate to the explicitly-prefixed path, even for the default locale.

@@ -13,6 +13,7 @@ import {
   Database,
   KeyRound,
   Languages,
+  type LucideIcon,
   Rocket,
   ShieldCheck,
   Workflow,
@@ -34,8 +35,20 @@ export const metadata: Metadata = {
 const SAAS_PRO_KIT = "https://saasprokit.com";
 
 // Icons map by index onto the localized feature/showcase copy in the dictionary.
+// pickIcon fails loudly if a locale's array ever outgrows its icon list, instead of
+// passing an undefined component to the block (which would crash at render).
 const FEATURE_ICONS = [Rocket, Database, Workflow, Braces, Boxes, Languages];
 const SHOWCASE_ICONS = [Building2, KeyRound, CreditCard, ShieldCheck];
+
+function pickIcon(icons: readonly LucideIcon[], index: number, group: string) {
+  const icon = icons[index];
+  if (!icon) {
+    throw new Error(
+      `Missing icon for ${group}[${index}]: dictionary copy has more entries than the icon list.`
+    );
+  }
+  return icon;
+}
 
 interface HomePageProps {
   params: Promise<{ locale: string }>;
@@ -63,7 +76,7 @@ export default async function HomePage({ params }: HomePageProps) {
         badge={home.featuresGrid.badge}
         columns={3}
         features={home.featuresGrid.features.map((feature, index) => ({
-          icon: FEATURE_ICONS[index],
+          icon: pickIcon(FEATURE_ICONS, index, "featuresGrid.features"),
           title: feature.title,
           description: feature.description,
         }))}
@@ -77,7 +90,7 @@ export default async function HomePage({ params }: HomePageProps) {
           title: item.title,
           description: item.description,
           bullets: item.bullets,
-          icon: SHOWCASE_ICONS[index],
+          icon: pickIcon(SHOWCASE_ICONS, index, "showcase.items"),
         }))}
       />
 
