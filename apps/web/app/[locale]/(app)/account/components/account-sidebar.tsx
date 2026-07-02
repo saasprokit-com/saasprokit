@@ -41,8 +41,8 @@ import Link from "next/link";
 import { accountRoutes, PAGE_ROUTES } from "@/lib/routes";
 
 interface AccountSidebarProps {
-  user: User;
   locale: string;
+  user: User;
 }
 
 export function AccountSidebar({ user, locale }: AccountSidebarProps) {

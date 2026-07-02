@@ -46,9 +46,9 @@ import type { MemberPermissions } from "../utils";
 import type { Member } from "./columns";
 
 interface MemberActionsProps {
-  member: Member;
   currentUserId: string;
   errors: ActionErrorMessages;
+  member: Member;
   organizationId: string;
   permissions: MemberPermissions;
 }

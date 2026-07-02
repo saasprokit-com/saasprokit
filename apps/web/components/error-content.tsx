@@ -3,11 +3,11 @@
 import type { ReactNode } from "react";
 
 interface ErrorContentProps {
+  children: ReactNode;
   code: string;
-  title: string;
   description: ReactNode;
   digest?: string;
-  children: ReactNode;
+  title: string;
 }
 
 export function ErrorContent({

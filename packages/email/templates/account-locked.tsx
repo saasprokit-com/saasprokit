@@ -10,14 +10,14 @@ import {
 } from "../components";
 
 interface AccountLockedProps {
-  userEmail?: string;
-  userName?: string;
-  lockReason?: string;
   failedAttempts?: number;
   lockedAt?: string;
-  unlockTime?: string;
+  lockReason?: string;
   resetPasswordUrl?: string;
   supportEmail?: string;
+  unlockTime?: string;
+  userEmail?: string;
+  userName?: string;
 }
 
 export default function AccountLocked({

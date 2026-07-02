@@ -1,6 +1,14 @@
+import {
+  ACTIVE_STATUSES,
+  PLAN_NAMES,
+  SUBSCRIPTION_STATUS,
+} from "@repo/utils/payment";
 import { describe, expect, it } from "vitest";
 import {
+  getCurrentPlan,
+  getStatusDisplayText,
   isAlreadyCancelingError,
+  isSubscriptionActive,
   isSubscriptionPendingCancel,
 } from "./helpers";
 import type { Subscription } from "./types";
@@ -70,5 +78,76 @@ describe("isAlreadyCancelingError", () => {
   it("does not match unrelated errors or missing messages", () => {
     expect(isAlreadyCancelingError("No active subscription")).toBe(false);
     expect(isAlreadyCancelingError(undefined)).toBe(false);
+  });
+});
+
+// Entitlement policy (chosen): access is granted while active, in-trial, or in
+// Stripe's dunning grace window (past_due), and revoked once retries are
+// exhausted (unpaid) or the sub is otherwise not live. These tests pin that
+// policy across all 8 Stripe statuses so a future enum/policy change is caught.
+const GRANTING_STATUSES = [
+  SUBSCRIPTION_STATUS.ACTIVE,
+  SUBSCRIPTION_STATUS.TRIALING,
+  SUBSCRIPTION_STATUS.PAST_DUE,
+];
+const REVOKING_STATUSES = [
+  SUBSCRIPTION_STATUS.INCOMPLETE,
+  SUBSCRIPTION_STATUS.INCOMPLETE_EXPIRED,
+  SUBSCRIPTION_STATUS.CANCELED,
+  SUBSCRIPTION_STATUS.UNPAID,
+  SUBSCRIPTION_STATUS.PAUSED,
+];
+
+describe("isSubscriptionActive — entitlement policy across all 8 Stripe statuses", () => {
+  it.each(GRANTING_STATUSES)("grants access for %s", (status) => {
+    expect(isSubscriptionActive(makeSub({ status }))).toBe(true);
+  });
+
+  it.each(REVOKING_STATUSES)("revokes access for %s", (status) => {
+    expect(isSubscriptionActive(makeSub({ status }))).toBe(false);
+  });
+
+  it("classifies every Stripe status exactly once", () => {
+    const classified = [...GRANTING_STATUSES, ...REVOKING_STATUSES].sort();
+    const enumerated = Object.values(SUBSCRIPTION_STATUS).sort();
+    expect(classified).toEqual(enumerated);
+  });
+
+  it("keeps ACTIVE_STATUSES in sync with the granting set", () => {
+    expect([...ACTIVE_STATUSES].sort()).toEqual([...GRANTING_STATUSES].sort());
+  });
+
+  it("is false when the subscription or status is missing", () => {
+    expect(isSubscriptionActive(makeSub({ status: null }))).toBe(false);
+    expect(isSubscriptionActive(null)).toBe(false);
+    expect(isSubscriptionActive(undefined)).toBe(false);
+  });
+});
+
+describe("getCurrentPlan", () => {
+  it("returns the plan during the past_due grace window", () => {
+    expect(
+      getCurrentPlan(
+        makeSub({ plan: "enterprise", status: SUBSCRIPTION_STATUS.PAST_DUE })
+      )
+    ).toBe("enterprise");
+  });
+
+  it("falls back to free once access is revoked (unpaid)", () => {
+    expect(
+      getCurrentPlan(
+        makeSub({ plan: "enterprise", status: SUBSCRIPTION_STATUS.UNPAID })
+      )
+    ).toBe(PLAN_NAMES.FREE);
+  });
+});
+
+describe("getStatusDisplayText", () => {
+  it("labels the trialing status", () => {
+    expect(getStatusDisplayText(SUBSCRIPTION_STATUS.TRIALING)).toBe("Trial");
+  });
+
+  it("handles a missing status", () => {
+    expect(getStatusDisplayText(null)).toBe("No subscription");
   });
 });

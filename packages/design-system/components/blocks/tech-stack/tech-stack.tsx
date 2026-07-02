@@ -1,16 +1,16 @@
 import { Badge } from "../../ui/badge";
 
 export interface TechStackItemProps {
-  name: string;
   description: string;
+  name: string;
 }
 
 export interface TechStackProps {
   badge?: string;
-  title: string;
+  className?: string;
   subtitle?: string;
   technologies: TechStackItemProps[];
-  className?: string;
+  title: string;
 }
 
 export function TechStack({

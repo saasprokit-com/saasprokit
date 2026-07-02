@@ -30,8 +30,7 @@ import { DataTableToolbar } from "./toolbar";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  searchKey?: string;
-  searchPlaceholder?: string;
+  defaultPageSize?: number;
   filters?: {
     columnId: string;
     title: string;
@@ -42,7 +41,8 @@ interface DataTableProps<TData, TValue> {
     }[];
   }[];
   pageSizeOptions?: number[];
-  defaultPageSize?: number;
+  searchKey?: string;
+  searchPlaceholder?: string;
 }
 
 export function DataTable<TData, TValue>({

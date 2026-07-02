@@ -6,10 +6,10 @@ import { typography } from "../theme/typography";
 interface HeadingProps {
   /** Heading level (1 or 2) */
   as?: "h1" | "h2";
-  /** Heading content */
-  children: ReactNode;
   /** Whether to center the heading */
   centered?: boolean;
+  /** Heading content */
+  children: ReactNode;
 }
 
 /**

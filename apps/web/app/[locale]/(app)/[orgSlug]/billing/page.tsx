@@ -49,9 +49,8 @@ export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground text-sm">
-                  Only organization owners and admins can manage billing.
-                  Please contact your organization administrator for billing
-                  changes.
+                  Only organization owners and admins can manage billing. Please
+                  contact your organization administrator for billing changes.
                 </p>
               </CardContent>
             </Card>

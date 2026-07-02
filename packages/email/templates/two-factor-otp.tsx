@@ -11,9 +11,9 @@ import {
 } from "@react-email/components";
 
 interface TwoFactorOTPEmailProps {
-  userEmail?: string;
-  otp?: string;
   expiresInMinutes?: number;
+  otp?: string;
+  userEmail?: string;
 }
 
 export default function TwoFactorOTPEmail({

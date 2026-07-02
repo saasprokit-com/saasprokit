@@ -4,12 +4,12 @@ import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 
 interface PlanComparisonProps {
-  /** Previous plan name */
-  previousPlan: string;
-  /** New plan name */
-  newPlan: string;
   /** Whether this is an upgrade (true) or downgrade (false) */
   isUpgrade?: boolean;
+  /** New plan name */
+  newPlan: string;
+  /** Previous plan name */
+  previousPlan: string;
 }
 
 /**

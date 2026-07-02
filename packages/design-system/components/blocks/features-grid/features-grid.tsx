@@ -8,19 +8,19 @@ import {
 } from "./features-grid.motion";
 
 export interface FeatureItemProps {
+  description: string;
   icon: LucideIcon;
   title: string;
-  description: string;
 }
 
 export interface FeaturesGridProps {
   badge?: string;
-  title: string;
-  subtitle?: string;
-  features: FeatureItemProps[];
-  columns?: 2 | 3 | 4;
   className?: string;
+  columns?: 2 | 3 | 4;
+  features: FeatureItemProps[];
   id?: string;
+  subtitle?: string;
+  title: string;
 }
 
 export function FeaturesGrid({

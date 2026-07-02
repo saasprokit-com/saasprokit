@@ -20,13 +20,13 @@ import { getColumns, type Member, roleFilterOptions } from "./columns";
 import { MembersToolbar } from "./members-toolbar";
 
 interface MembersTableProps {
+  currentUserId: string;
+  errors: ActionErrorMessages;
   membersPromise: Promise<{
     members: Member[];
     totalCount: number;
     pageCount: number;
   }>;
-  currentUserId: string;
-  errors: ActionErrorMessages;
   organizationId: string;
   permissions: MemberPermissions;
 }

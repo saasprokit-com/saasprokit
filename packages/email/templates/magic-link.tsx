@@ -12,9 +12,9 @@ import {
 } from "@react-email/components";
 
 interface MagicLinkEmailProps {
-  userEmail?: string;
-  magicLinkUrl?: string;
   expiresInMinutes?: number;
+  magicLinkUrl?: string;
+  userEmail?: string;
 }
 
 export default function MagicLinkEmail({

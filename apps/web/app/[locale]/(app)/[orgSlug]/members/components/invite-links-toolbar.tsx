@@ -38,10 +38,8 @@ import { SEARCH_DEBOUNCE_MS } from "../utils";
 import { RevokeInviteLinksDialog } from "./revoke-invite-links-dialog";
 
 interface InviteLinksToolbarProps {
-  table: Table<InviteLink>;
-  errors: ActionErrorMessages;
-  organizationId: string;
   canManage: boolean;
+  errors: ActionErrorMessages;
   filters?: {
     columnId: string;
     title: string;
@@ -51,6 +49,8 @@ interface InviteLinksToolbarProps {
       icon?: ComponentType<{ className?: string }>;
     }[];
   }[];
+  organizationId: string;
+  table: Table<InviteLink>;
 }
 
 export function InviteLinksToolbar({

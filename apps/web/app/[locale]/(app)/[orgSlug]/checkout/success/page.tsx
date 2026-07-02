@@ -84,6 +84,8 @@ function renderCheckoutResult({
   }
   return {
     heading: "Checkout could not be confirmed",
-    body: <CheckoutErrorCard billingHref={billingHref} reason={result.reason} />,
+    body: (
+      <CheckoutErrorCard billingHref={billingHref} reason={result.reason} />
+    ),
   };
 }

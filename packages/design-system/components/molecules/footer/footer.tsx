@@ -6,30 +6,30 @@ import Link from "next/link";
 import type * as React from "react";
 
 export interface FooterLink {
-  label: string;
-  href: string;
   external?: boolean;
+  href: string;
+  label: string;
 }
 
 export interface FooterSection {
-  title: string;
   links: FooterLink[];
+  title: string;
 }
 
 export interface SocialLink {
-  label: string;
   href: string;
   icon: React.ReactNode;
+  label: string;
 }
 
 export interface FooterProps {
-  logo?: React.ReactNode;
-  description?: string;
-  sections?: FooterSection[];
-  socialLinks?: SocialLink[];
-  copyright?: string;
   bottomLinks?: FooterLink[];
   className?: string;
+  copyright?: string;
+  description?: string;
+  logo?: React.ReactNode;
+  sections?: FooterSection[];
+  socialLinks?: SocialLink[];
 }
 
 export function Footer({

@@ -26,17 +26,17 @@ import { logoutAllOtherSessionsAction, logoutSessionAction } from "../actions";
 const MOBILE_DEVICE_PATTERN = /mobile|android|iphone|ipad/i;
 
 interface SessionInfo {
+  createdAt: Date;
   id: string;
   ipAddress: string | null;
-  userAgent: string | null;
-  createdAt: Date;
   updatedAt: Date;
+  userAgent: string | null;
 }
 
 interface SessionsManagerProps {
-  sessions: SessionInfo[];
   currentSessionId: string;
   errors: ActionErrorMessages;
+  sessions: SessionInfo[];
 }
 
 export function SessionsManager({

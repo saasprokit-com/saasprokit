@@ -107,9 +107,6 @@ export function calculateUsageStats(
   };
 }
 
-/**
- * Format storage size for display
- */
 export function formatStorage(mb: number): string {
   if (mb === UNLIMITED) {
     return "Unlimited";
@@ -120,9 +117,6 @@ export function formatStorage(mb: number): string {
   return `${mb} MB`;
 }
 
-/**
- * Format date for display
- */
 export function formatDate(
   date: Date | string | null,
   locale = "en-US"
@@ -137,9 +131,6 @@ export function formatDate(
   });
 }
 
-/**
- * Get status display text
- */
 export function getStatusDisplayText(
   status: SubscriptionStatus | null | undefined
 ): string {
@@ -150,6 +141,7 @@ export function getStatusDisplayText(
   const statusMap: Record<SubscriptionStatus, string> = {
     [SUBSCRIPTION_STATUS.INCOMPLETE]: "Incomplete",
     [SUBSCRIPTION_STATUS.INCOMPLETE_EXPIRED]: "Expired",
+    [SUBSCRIPTION_STATUS.TRIALING]: "Trial",
     [SUBSCRIPTION_STATUS.ACTIVE]: "Active",
     [SUBSCRIPTION_STATUS.PAST_DUE]: "Past Due",
     [SUBSCRIPTION_STATUS.CANCELED]: "Canceled",
@@ -160,9 +152,6 @@ export function getStatusDisplayText(
   return statusMap[status] || status;
 }
 
-/**
- * Get status color class for UI
- */
 export function getStatusColor(
   status: SubscriptionStatus | null | undefined
 ): "green" | "yellow" | "red" | "gray" {
@@ -172,6 +161,7 @@ export function getStatusColor(
 
   switch (status) {
     case SUBSCRIPTION_STATUS.ACTIVE:
+    case SUBSCRIPTION_STATUS.TRIALING:
       return "green";
     case SUBSCRIPTION_STATUS.PAST_DUE:
       return "yellow";

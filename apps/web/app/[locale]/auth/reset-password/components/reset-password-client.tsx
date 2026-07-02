@@ -11,8 +11,8 @@ import type { ActionErrorMessages } from "@repo/internationalization";
 import { useState } from "react";
 
 interface ResetPasswordClientProps {
-  token?: string;
   errors: ActionErrorMessages;
+  token?: string;
 }
 
 export function ResetPasswordClient({

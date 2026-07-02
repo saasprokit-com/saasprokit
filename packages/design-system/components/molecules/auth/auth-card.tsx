@@ -12,11 +12,11 @@ import { cn } from "@repo/design-system/lib/utils";
 import type * as React from "react";
 
 export interface AuthCardProps {
-  title: string;
-  description?: string;
   children: React.ReactNode;
-  footer?: React.ReactNode;
   className?: string;
+  description?: string;
+  footer?: React.ReactNode;
+  title: string;
 }
 
 export function AuthCard({

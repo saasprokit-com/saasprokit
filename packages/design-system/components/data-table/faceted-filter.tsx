@@ -24,12 +24,12 @@ import type * as React from "react";
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
-  title?: string;
   options: {
     label: string;
     value: string;
     icon?: React.ComponentType<{ className?: string }>;
   }[];
+  title?: string;
 }
 
 export function DataTableFacetedFilter<TData, TValue>({

@@ -9,10 +9,10 @@ import {
 } from "@/lib/billing/subscription-queries";
 
 export interface BillingUsageData {
-  usageStats: UsageStats;
-  planName: PlanName;
   hasUnlimitedMembers: boolean;
   hasUnlimitedStorage: boolean;
+  planName: PlanName;
+  usageStats: UsageStats;
 }
 
 export async function getBillingUsageData(

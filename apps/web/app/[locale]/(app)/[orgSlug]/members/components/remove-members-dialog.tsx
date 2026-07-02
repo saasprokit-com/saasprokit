@@ -21,9 +21,9 @@ import type { Member } from "./columns";
 
 interface RemoveMembersDialogProps {
   errors: ActionErrorMessages;
+  onSuccess: () => void;
   organizationId: string;
   selectedMembers: Member[];
-  onSuccess: () => void;
 }
 
 export function RemoveMembersDialog({

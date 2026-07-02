@@ -23,15 +23,15 @@ import {
 import { InviteLinksToolbar } from "./invite-links-toolbar";
 
 interface InviteLinksTableProps {
+  baseUrl: string;
+  canManage: boolean;
+  errors: ActionErrorMessages;
   inviteLinksPromise: Promise<{
     inviteLinks: InviteLink[];
     totalCount: number;
     pageCount: number;
   }>;
-  errors: ActionErrorMessages;
   organizationId: string;
-  baseUrl: string;
-  canManage: boolean;
 }
 
 const filterFields = [

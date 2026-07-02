@@ -1,12 +1,12 @@
 export interface SocialProofItemProps {
-  name: string;
   description: string;
+  name: string;
 }
 
 export interface SocialProofBarProps {
-  label: string;
-  items: SocialProofItemProps[];
   className?: string;
+  items: SocialProofItemProps[];
+  label: string;
 }
 
 export function SocialProofBar({

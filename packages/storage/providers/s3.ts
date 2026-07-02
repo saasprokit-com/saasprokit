@@ -35,10 +35,10 @@ const RANDOM_SUBSTRING_LENGTH = 8; // Length of random suffix (8 chars)
 
 interface S3Config {
   accessKeyId: string;
-  secretAccessKey: string;
-  region: string;
   bucket: string;
   publicUrl?: string;
+  region: string;
+  secretAccessKey: string;
   signedUrlExpires: number;
 }
 
@@ -78,7 +78,7 @@ function generateS3Key(
   const timestamp = Date.now();
   const randomSuffix = Math.random()
     .toString(RANDOM_RADIX)
-    .substring(
+    .slice(
       RANDOM_SUBSTRING_START,
       RANDOM_SUBSTRING_START + RANDOM_SUBSTRING_LENGTH
     );

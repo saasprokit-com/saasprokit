@@ -4,8 +4,8 @@ import Link from "next/link";
 import { AuthCard } from "./auth-card";
 
 export interface MagicLinkSuccessProps {
-  signUpUrl?: string;
   className?: string;
+  signUpUrl?: string;
 }
 
 export function MagicLinkSuccess({

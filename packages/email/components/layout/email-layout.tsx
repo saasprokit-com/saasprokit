@@ -6,14 +6,14 @@ import { typography } from "../theme/typography";
 import { Footer } from "./footer";
 
 interface EmailLayoutProps {
-  /** Preview text shown in inbox */
-  preview: string;
+  /** App name for footer branding */
+  appName?: string;
   /** Email content */
   children: ReactNode;
   /** Footer content (optional) */
   footerContent?: ReactNode;
-  /** App name for footer branding */
-  appName?: string;
+  /** Preview text shown in inbox */
+  preview: string;
   /** Whether to show footer */
   showFooter?: boolean;
   /** Support email for footer */

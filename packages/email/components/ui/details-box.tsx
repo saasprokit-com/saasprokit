@@ -5,12 +5,12 @@ import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 
 interface DetailItemProps {
+  /** Whether this is the last item (removes bottom margin) */
+  isLast?: boolean;
   /** Label text (e.g., "Plan", "Amount", "Date") */
   label: string;
   /** Value to display */
   value: ReactNode;
-  /** Whether this is the last item (removes bottom margin) */
-  isLast?: boolean;
 }
 
 /**

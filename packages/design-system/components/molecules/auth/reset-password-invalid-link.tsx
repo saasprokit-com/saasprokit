@@ -5,8 +5,8 @@ import { cn } from "@repo/design-system/lib/utils";
 import Link from "next/link";
 
 export interface ResetPasswordInvalidLinkProps {
-  forgotPasswordUrl?: string;
   className?: string;
+  forgotPasswordUrl?: string;
 }
 
 export function ResetPasswordInvalidLink({

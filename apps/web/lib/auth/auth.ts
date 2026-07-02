@@ -6,9 +6,9 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 
 export interface ActionResult<T = void> {
-  success: boolean;
-  error?: string;
   data?: T;
+  error?: string;
+  success: boolean;
 }
 
 export const getServerSession = cache(async () => {

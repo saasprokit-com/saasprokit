@@ -8,9 +8,9 @@ import { getServerSession } from "@/lib/auth/auth";
 
 interface OrganizationContext {
   organizationId: string;
-  userId: string;
-  role: OrgRoleName;
   organizationName: string;
+  role: OrgRoleName;
+  userId: string;
 }
 
 /**

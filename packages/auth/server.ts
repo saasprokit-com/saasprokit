@@ -62,6 +62,7 @@ import {
 const env = keys();
 
 const MAX_ORGS_PER_USER = env.MAX_ORGS_PER_USER;
+const baseUrl = env.BETTER_AUTH_URL || "http://localhost:3000";
 
 async function canUserCreateOrg(userId: string): Promise<boolean> {
   const memberships = await database.member.findMany({
@@ -277,7 +278,6 @@ export const auth = betterAuth({
       invitationExpiresIn: INVITATION_EXPIRES_IN_DAYS * SECONDS_PER_DAY,
       cancelPendingInvitationsOnReInvite: false,
       async sendInvitationEmail(data) {
-        const baseUrl = env.BETTER_AUTH_URL || "http://localhost:3000";
         // this url should be fixed
         const inviteUrl = `${baseUrl}/invite/accept?token=${data.id}`;
         const expiresAt = data.invitation.expiresAt;

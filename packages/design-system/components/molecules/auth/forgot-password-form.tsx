@@ -19,10 +19,10 @@ import { type ForgotPasswordFormValues, forgotPasswordSchema } from "./schemas";
 export type { ForgotPasswordFormValues } from "./schemas";
 
 export interface ForgotPasswordFormProps {
+  className?: string;
+  error?: string;
   onSubmit: (data: ForgotPasswordFormValues) => Promise<void>;
   signInUrl?: string;
-  error?: string;
-  className?: string;
 }
 
 export function ForgotPasswordForm({

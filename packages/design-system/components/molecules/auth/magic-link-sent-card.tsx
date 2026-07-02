@@ -5,8 +5,8 @@ import { CheckCircle, Mail } from "lucide-react";
 import Link from "next/link";
 
 export interface MagicLinkSentCardProps {
-  signInUrl?: string;
   className?: string;
+  signInUrl?: string;
 }
 
 export function MagicLinkSentCard({

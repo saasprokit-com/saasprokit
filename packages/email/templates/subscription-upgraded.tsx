@@ -10,13 +10,13 @@ import {
 } from "../components";
 
 interface SubscriptionUpgradedProps {
-  userName?: string;
-  previousPlan?: string;
-  newPlan?: string;
-  newAmount?: string;
   billingInterval?: string;
-  effectiveDate?: string;
   dashboardUrl?: string;
+  effectiveDate?: string;
+  newAmount?: string;
+  newPlan?: string;
+  previousPlan?: string;
+  userName?: string;
 }
 
 export default function SubscriptionUpgraded({

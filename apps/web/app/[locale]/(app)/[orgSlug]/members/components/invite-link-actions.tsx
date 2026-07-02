@@ -18,10 +18,10 @@ import type { InviteLink } from "../utils";
 import { isInviteLinkExpired, isInviteLinkMaxedOut } from "../utils";
 
 interface InviteLinkActionsProps {
+  baseUrl: string;
   errors: ActionErrorMessages;
   inviteLink: InviteLink;
   organizationId: string;
-  baseUrl: string;
 }
 
 export function InviteLinkActions({

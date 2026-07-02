@@ -22,9 +22,9 @@ import { TOKEN_PREVIEW_LENGTH } from "../utils";
 
 interface RevokeInviteLinksDialogProps {
   errors: ActionErrorMessages;
+  onSuccess: () => void;
   organizationId: string;
   selectedLinks: InviteLink[];
-  onSuccess: () => void;
 }
 
 export function RevokeInviteLinksDialog({

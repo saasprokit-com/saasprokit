@@ -15,13 +15,14 @@ import type Stripe from "stripe";
 import { keys } from "./keys";
 import { ORG_ROLES } from "./permissions";
 import { getPlanNameFromPriceId } from "./plans";
+import { claimWebhookEvent } from "./webhook-idempotency";
 
 const env = keys();
 
 interface OrgEmailContext {
+  dashboardUrl: string;
   ownerEmail: string;
   ownerName: string | undefined;
-  dashboardUrl: string;
 }
 
 async function getOrgEmailContext(
@@ -73,10 +74,15 @@ function getStripePriceEnvMap() {
 }
 
 export async function handleSubscriptionComplete(args: {
+  event: Stripe.Event;
   subscription: { referenceId: string };
   stripeSubscription: Stripe.Subscription;
   plan: { name: string };
 }): Promise<void> {
+  if (!(await claimWebhookEvent(args.event))) {
+    return;
+  }
+
   const ctx = await getOrgEmailContext(args.subscription.referenceId);
   if (!ctx) {
     return;
@@ -95,6 +101,10 @@ export async function handleSubscriptionUpdate(args: {
   event: Stripe.Event;
   subscription: { referenceId: string; plan: string };
 }): Promise<void> {
+  if (!(await claimWebhookEvent(args.event))) {
+    return;
+  }
+
   const previousAttributes = (
     args.event.data as { previous_attributes?: Record<string, unknown> }
   ).previous_attributes;
@@ -143,9 +153,14 @@ export async function handleSubscriptionUpdate(args: {
 }
 
 export async function handleSubscriptionDeleted(args: {
+  event: Stripe.Event;
   subscription: { referenceId: string; plan: string };
   stripeSubscription: Stripe.Subscription;
 }): Promise<void> {
+  if (!(await claimWebhookEvent(args.event))) {
+    return;
+  }
+
   const ctx = await getOrgEmailContext(args.subscription.referenceId);
   if (!ctx) {
     return;

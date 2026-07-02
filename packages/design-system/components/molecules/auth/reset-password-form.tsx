@@ -19,10 +19,10 @@ import { type ResetPasswordFormValues, resetPasswordSchema } from "./schemas";
 export type { ResetPasswordFormValues } from "./schemas";
 
 export interface ResetPasswordFormProps {
+  className?: string;
+  error?: string;
   onSubmit: (data: ResetPasswordFormValues) => Promise<void>;
   signInUrl?: string;
-  error?: string;
-  className?: string;
 }
 
 export function ResetPasswordForm({

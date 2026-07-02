@@ -3,12 +3,12 @@ import { cn } from "@repo/design-system/lib/utils";
 import type { ReactNode } from "react";
 
 interface ContentSectionProps {
-  title: string;
-  description: string;
-  children: ReactNode;
   action?: ReactNode;
+  children: ReactNode;
   className?: string;
   contentClassName?: string;
+  description: string;
+  title: string;
 }
 
 export function ContentSection({

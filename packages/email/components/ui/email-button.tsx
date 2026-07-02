@@ -6,14 +6,14 @@ import { typography } from "../theme/typography";
 type ButtonVariant = "primary" | "secondary" | "danger" | "success";
 
 interface EmailButtonProps {
-  /** Button variant determines colors */
-  variant?: ButtonVariant;
-  /** URL the button links to */
-  href: string;
-  /** Button text */
-  children: string;
   /** Whether to center the button */
   centered?: boolean;
+  /** Button text */
+  children: string;
+  /** URL the button links to */
+  href: string;
+  /** Button variant determines colors */
+  variant?: ButtonVariant;
 }
 
 /**

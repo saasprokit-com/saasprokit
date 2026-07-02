@@ -1,23 +1,23 @@
 import type { LucideIcon } from "lucide-react";
 
 export interface User {
-  name: string;
-  email: string;
   avatar?: string;
+  email: string;
+  name: string;
 }
 
 export interface Organization {
   id: string;
-  name: string;
-  slug: string;
   logo?: string | null;
+  name: string;
   plan?: string;
+  slug: string;
 }
 
 export interface BaseNavItem {
-  title: string;
   badge?: string;
   icon?: LucideIcon;
+  title: string;
 }
 
 export type NavLink = BaseNavItem & {
@@ -33,12 +33,12 @@ export type NavCollapsible = BaseNavItem & {
 export type NavItem = NavCollapsible | NavLink;
 
 export interface NavGroup {
-  title: string;
   items: NavItem[];
+  title: string;
 }
 
 export interface SidebarData {
-  user: User;
-  organizations: Organization[];
   navGroups: NavGroup[];
+  organizations: Organization[];
+  user: User;
 }

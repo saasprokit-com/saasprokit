@@ -1,12 +1,12 @@
 export interface StatItemProps {
-  value: string;
-  label: string;
   description: string;
+  label: string;
+  value: string;
 }
 
 export interface StatsSectionProps {
-  stats: StatItemProps[];
   className?: string;
+  stats: StatItemProps[];
 }
 
 export function StatsSection({ stats, className }: StatsSectionProps) {

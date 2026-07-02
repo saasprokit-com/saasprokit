@@ -5,15 +5,15 @@ import { FeatureShowcaseMotionItem } from "./feature-showcase.motion";
 
 export interface FeatureShowcaseItemProps {
   badge: string;
-  title: string;
-  description: string;
   bullets: string[];
+  description: string;
   icon: LucideIcon;
+  title: string;
 }
 
 export interface FeatureShowcaseProps {
-  items: FeatureShowcaseItemProps[];
   className?: string;
+  items: FeatureShowcaseItemProps[];
 }
 
 export function FeatureShowcase({

@@ -8,17 +8,17 @@ import { usePathname } from "next/navigation";
 import { orgRoutes } from "@/lib/routes";
 
 interface MembersNavProps {
-  orgSlug: string;
-  memberCount: number;
-  pendingInvitationCount: number;
   activeInviteLinkCount: number;
+  memberCount: number;
+  orgSlug: string;
+  pendingInvitationCount: number;
 }
 
 interface NavItem {
-  label: string;
+  count: number;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  count: number;
+  label: string;
   showZeroCount: boolean;
 }
 

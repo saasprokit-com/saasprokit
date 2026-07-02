@@ -1,15 +1,15 @@
 import Link from "next/link";
 
 interface FooterColumn {
-  title: string;
   links: { label: string; href: string }[];
+  title: string;
 }
 
 interface FooterTerminalProps {
   brand: string;
-  taglines?: string[];
   columns: FooterColumn[];
   copyright: string;
+  taglines?: string[];
 }
 
 export function Footer({

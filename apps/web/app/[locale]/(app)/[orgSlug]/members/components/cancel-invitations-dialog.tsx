@@ -22,9 +22,9 @@ import type { Invitation } from "../utils";
 
 interface CancelInvitationsDialogProps {
   errors: ActionErrorMessages;
+  onSuccess: () => void;
   organizationId: string;
   selectedInvitations: Invitation[];
-  onSuccess: () => void;
 }
 
 export function CancelInvitationsDialog({

@@ -18,13 +18,13 @@ import { updateMemberRoleAction } from "../actions";
 import type { UpdateRoleInput } from "../schemas";
 
 interface RoleSelectorProps {
-  memberId: string;
-  errors: ActionErrorMessages;
-  organizationId: string;
+  canUpdateRole: boolean;
   currentRole: OrgRoleName;
+  errors: ActionErrorMessages;
   isOwner: boolean;
   isSelf: boolean;
-  canUpdateRole: boolean;
+  memberId: string;
+  organizationId: string;
 }
 
 const roleOptions = [

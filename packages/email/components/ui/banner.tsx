@@ -6,10 +6,10 @@ import { typography } from "../theme/typography";
 type BannerVariant = "success" | "warning" | "error" | "info";
 
 interface BannerProps {
-  /** Banner variant determines colors */
-  variant: BannerVariant;
   /** Text to display in the banner */
   children: string;
+  /** Banner variant determines colors */
+  variant: BannerVariant;
 }
 
 /**

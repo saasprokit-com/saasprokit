@@ -58,7 +58,7 @@ function generateUniqueFilename(
   const timestamp = Date.now();
   const randomSuffix = Math.random()
     .toString(RANDOM_RADIX)
-    .substring(
+    .slice(
       RANDOM_SUBSTRING_START,
       RANDOM_SUBSTRING_START + RANDOM_SUBSTRING_LENGTH
     );

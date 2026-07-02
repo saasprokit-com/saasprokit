@@ -11,11 +11,11 @@ import {
 } from "@react-email/components";
 
 interface RemovedFromOrgProps {
-  userName?: string;
   organizationName?: string;
-  removedBy?: string;
   removedAt?: string;
+  removedBy?: string;
   supportEmail?: string;
+  userName?: string;
 }
 
 export default function RemovedFromOrg({

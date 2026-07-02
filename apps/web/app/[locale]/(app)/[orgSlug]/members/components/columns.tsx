@@ -18,10 +18,9 @@ import { MemberActions } from "./member-actions";
 import { RoleSelector } from "./role-selector";
 
 export interface Member {
+  createdAt: Date;
   id: string;
   role: OrgRoleName;
-  createdAt: Date;
-  userId: string;
   suspendedAt: Date | null;
   suspendedBy: string | null;
   suspendReason: string | null;
@@ -32,6 +31,7 @@ export interface Member {
     image: string | null;
     lastActiveAt: Date | null;
   };
+  userId: string;
 }
 
 export const roleFilterOptions = [

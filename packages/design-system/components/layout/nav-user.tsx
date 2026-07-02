@@ -32,12 +32,12 @@ import Link from "next/link";
 import type { User } from "./types";
 
 interface NavUserProps {
-  user: User;
+  accountUrl?: string;
+  dangerUrl?: string;
   onSignOut?: () => void;
   onUpgrade?: () => void;
-  accountUrl?: string;
   securityUrl?: string;
-  dangerUrl?: string;
+  user: User;
 }
 
 export function NavUser({

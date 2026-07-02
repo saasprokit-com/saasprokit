@@ -9,9 +9,9 @@ import { toast } from "sonner";
 
 interface ManageBillingFormProps {
   errors: ActionErrorMessages;
+  locale: string;
   organizationId: string;
   organizationSlug: string;
-  locale: string;
 }
 
 export function ManageBillingForm({

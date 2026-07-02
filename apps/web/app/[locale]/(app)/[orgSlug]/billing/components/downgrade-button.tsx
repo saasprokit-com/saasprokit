@@ -28,13 +28,13 @@ import type { ActionResult } from "@/lib/auth/auth";
 import { type ChangePlanResult, changePlanAction } from "../actions";
 
 interface DowngradeButtonProps {
-  planName: PlanName;
-  currentPlan: PlanName;
-  organizationId: string;
   billingInterval: BillingInterval;
-  errors: ActionErrorMessages;
   blockReason?: string;
+  currentPlan: PlanName;
+  errors: ActionErrorMessages;
   onSuccess?: (action: "cancel" | "changed") => void;
+  organizationId: string;
+  planName: PlanName;
 }
 
 export function DowngradeButton({
@@ -59,7 +59,9 @@ export function DowngradeButton({
     FormData
   >(boundAction, null);
 
-  const serverBlockReason = state?.success ? state.data?.blockReason : undefined;
+  const serverBlockReason = state?.success
+    ? state.data?.blockReason
+    : undefined;
 
   useEffect(() => {
     if (!state) {

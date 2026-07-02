@@ -5,15 +5,15 @@ import Link from "next/link";
 import type * as React from "react";
 
 export interface SimpleFooterLink {
-  label: string;
   href: string;
+  label: string;
 }
 
 export interface SimpleFooterProps {
-  logo?: React.ReactNode;
-  links?: SimpleFooterLink[];
-  copyright?: string;
   className?: string;
+  copyright?: string;
+  links?: SimpleFooterLink[];
+  logo?: React.ReactNode;
 }
 
 export function SimpleFooter({

@@ -16,9 +16,9 @@ const getErrorMessage = (error: string | null): string => {
 };
 
 export interface MagicLinkErrorCardProps {
+  className?: string;
   error?: string | null;
   signInUrl?: string;
-  className?: string;
 }
 
 export function MagicLinkErrorCard({

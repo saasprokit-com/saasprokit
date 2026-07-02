@@ -20,12 +20,12 @@ import { type SocialProvider, SocialProviders } from "./social-providers";
 export type { SignUpFormValues } from "./schemas";
 
 export interface SignUpFormProps {
-  onSubmit: (data: SignUpFormValues) => Promise<void>;
-  onSocialLogin?: (provider: SocialProvider) => void;
-  socialProviders?: SocialProvider[];
-  signInUrl?: string;
-  error?: string;
   className?: string;
+  error?: string;
+  onSocialLogin?: (provider: SocialProvider) => void;
+  onSubmit: (data: SignUpFormValues) => Promise<void>;
+  signInUrl?: string;
+  socialProviders?: SocialProvider[];
 }
 
 export function SignUpForm({

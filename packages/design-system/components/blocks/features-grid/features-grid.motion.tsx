@@ -39,8 +39,8 @@ export function FeaturesGridHeader({ children }: { children: ReactNode }) {
 }
 
 interface FeaturesGridContainerProps {
-  className?: string;
   children: ReactNode;
+  className?: string;
 }
 
 export function FeaturesGridContainer({

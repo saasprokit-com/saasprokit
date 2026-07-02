@@ -5,9 +5,6 @@ import { generateSlug, slugSchema } from "@repo/utils/slug";
 
 const GENERATE_SLUG_MAX_RETRIES = 100;
 
-/**
- * Ensure the slug is unique and not reserved by appending a number if necessary
- */
 async function ensureUniqueSlug(baseSlug: string): Promise<string> {
   let slug = baseSlug;
   let counter = 1;
@@ -42,10 +39,6 @@ async function ensureUniqueSlug(baseSlug: string): Promise<string> {
   }
 }
 
-/**
- * Create a default workspace for a user
- * This is called on signup or first login if user has no orgs
- */
 export async function createDefaultWorkspace(
   userId: string,
   userName: string,

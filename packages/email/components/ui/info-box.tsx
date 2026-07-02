@@ -7,12 +7,12 @@ import { typography } from "../theme/typography";
 type InfoBoxVariant = "blue" | "yellow" | "red" | "green";
 
 interface InfoBoxProps {
-  /** Variant determines colors */
-  variant?: InfoBoxVariant;
-  /** Optional title/heading */
-  title?: string;
   /** Content - can be string or ReactNode */
   children: ReactNode;
+  /** Optional title/heading */
+  title?: string;
+  /** Variant determines colors */
+  variant?: InfoBoxVariant;
 }
 
 /**

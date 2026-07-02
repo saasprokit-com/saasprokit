@@ -18,25 +18,25 @@ import {
 import { Switch } from "../../ui/switch";
 
 export interface PricingTierProps {
-  name: string;
-  monthlyPrice: number;
   annualPrice: number;
-  description: string;
-  features: string[];
   cta: string;
   ctaHref: string;
-  variant?: "default" | "outline";
+  description: string;
+  features: string[];
+  monthlyPrice: number;
+  name: string;
   popular?: boolean;
+  variant?: "default" | "outline";
 }
 
 export interface PricingProps {
   badge?: string;
-  title: string;
-  subtitle?: string;
-  tiers: PricingTierProps[];
-  showBillingToggle?: boolean;
   className?: string;
   id?: string;
+  showBillingToggle?: boolean;
+  subtitle?: string;
+  tiers: PricingTierProps[];
+  title: string;
 }
 
 export function Pricing({

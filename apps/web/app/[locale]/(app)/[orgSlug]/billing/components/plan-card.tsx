@@ -23,17 +23,17 @@ import { DowngradeButton } from "./downgrade-button";
 import { UpgradeForm } from "./upgrade-form";
 
 interface PlanCardProps {
-  plan: PlanConfig;
-  currentPlan: PlanName;
   billingPeriod: BillingInterval;
+  currentPlan: PlanName;
+  errors: ActionErrorMessages;
+  locale: string;
   memberCount: number;
-  storageMB: number;
-  subscription: Subscription | null | undefined;
+  onDowngradeSuccess: (action: "cancel" | "changed") => void;
   organizationId: string;
   organizationSlug: string;
-  locale: string;
-  errors: ActionErrorMessages;
-  onDowngradeSuccess: (action: "cancel" | "changed") => void;
+  plan: PlanConfig;
+  storageMB: number;
+  subscription: Subscription | null | undefined;
 }
 
 function getMonthlyDisplayPrice(

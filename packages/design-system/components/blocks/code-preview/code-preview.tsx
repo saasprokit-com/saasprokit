@@ -9,15 +9,15 @@ import {
 import { cn } from "@repo/design-system/lib/utils";
 
 export interface CodePreviewTab {
+  html: string;
   id: string;
   label: string;
-  html: string;
 }
 
 interface CodePreviewProps {
-  tabs: CodePreviewTab[];
-  defaultTab?: string;
   className?: string;
+  defaultTab?: string;
+  tabs: CodePreviewTab[];
 }
 
 export function CodePreview({ tabs, defaultTab, className }: CodePreviewProps) {

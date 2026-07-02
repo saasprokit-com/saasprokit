@@ -11,6 +11,7 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import {
+  type ParserBuilder,
   parseAsArrayOf,
   parseAsInteger,
   parseAsString,
@@ -24,21 +25,23 @@ const coreRowModel = getCoreRowModel();
 
 interface FilterField {
   id: string;
-  urlKey: string;
   type: "string" | "array";
+  urlKey: string;
 }
 
 interface UseDataTableProps<TData> {
-  data: TData[];
   columns: ColumnDef<TData, unknown>[];
-  pageCount: number;
-  filterFields?: FilterField[];
+  data: TData[];
   defaultPerPage?: number;
   defaultSort?: SortingState;
   enableRowSelection?: boolean | ((row: TData) => boolean);
+  filterFields?: FilterField[];
+  pageCount: number;
 }
 
 const NUQS_OPTIONS = { shallow: false, clearOnDefault: true } as const;
+
+type FilterParser = ParserBuilder<string> | ParserBuilder<string[]>;
 
 export function useDataTable<TData>({
   data,
@@ -64,8 +67,8 @@ export function useDataTable<TData>({
     sortingStateParser.withDefault(defaultSort).withOptions(NUQS_OPTIONS)
   );
 
-  const filterParsers = useMemo<Record<string, any>>(() => {
-    const parsers: Record<string, unknown> = {};
+  const filterParsers = useMemo<Record<string, FilterParser>>(() => {
+    const parsers: Record<string, FilterParser> = {};
     for (const field of filterFields) {
       if (field.type === "string") {
         parsers[field.urlKey] = parseAsString;

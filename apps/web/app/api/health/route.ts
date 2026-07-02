@@ -16,13 +16,13 @@ const HTTP_SERVICE_UNAVAILABLE = 503;
 const HTTP_INTERNAL_SERVER_ERROR = 500;
 
 interface HealthCheckResponse {
-  status: "healthy" | "degraded" | "unhealthy";
-  timestamp: string;
-  responseTime: number;
   checks: {
     database: { status: "ok" | "error"; responseTime?: number; error?: string };
     auth: { status: "ok" | "error"; error?: string };
   };
+  responseTime: number;
+  status: "healthy" | "degraded" | "unhealthy";
+  timestamp: string;
 }
 
 export async function GET(): Promise<NextResponse<HealthCheckResponse>> {

@@ -4,8 +4,8 @@ import Link from "next/link";
 import { AuthCard } from "./auth-card";
 
 export interface ResetPasswordSuccessProps {
-  signInUrl?: string;
   className?: string;
+  signInUrl?: string;
 }
 
 export function ResetPasswordSuccess({

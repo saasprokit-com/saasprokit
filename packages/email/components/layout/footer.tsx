@@ -4,10 +4,10 @@ import { colors } from "../theme/colors";
 import { typography } from "../theme/typography";
 
 interface FooterProps {
-  /** Main footer message */
-  children?: ReactNode;
   /** App name for branding */
   appName?: string;
+  /** Main footer message */
+  children?: ReactNode;
   /** Whether to show the default branding line */
   showBranding?: boolean;
   /** Support email address */

@@ -10,10 +10,10 @@ export type ActionErrorCode = keyof Dictionary["errors"]["action"];
 type BAFallbackKey = keyof Dictionary["errors"]["fallback"];
 
 interface ActionErrorOptions {
-  /** Error code key from errors.action dictionary */
-  fallback: ActionErrorCode;
   /** If the action calls Better Auth API, provide the BA fallback key */
   baFallback?: BAFallbackKey;
+  /** Error code key from errors.action dictionary */
+  fallback: ActionErrorCode;
   /** Logger instance — if provided, error is logged before returning */
   logger?: { error: (obj: Record<string, unknown>, msg: string) => void };
   /** Custom log message (defaults to the fallback dictionary text) */

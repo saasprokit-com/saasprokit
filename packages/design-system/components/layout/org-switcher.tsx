@@ -20,12 +20,12 @@ import { useEffect, useState } from "react";
 import type { Organization } from "./types";
 
 interface OrgSwitcherProps {
-  organizations: Organization[];
   activeOrganization?: Organization | null;
   defaultOrganizationId?: string | null;
-  onOrganizationChange?: (org: Organization) => void;
   onCreateOrganization?: () => void;
+  onOrganizationChange?: (org: Organization) => void;
   onSetDefault?: (organizationId: string) => void;
+  organizations: Organization[];
 }
 
 /**

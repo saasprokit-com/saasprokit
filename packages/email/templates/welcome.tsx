@@ -7,8 +7,8 @@ import {
 } from "../components";
 
 interface WelcomeEmailProps {
-  name?: string;
   dashboardUrl?: string;
+  name?: string;
 }
 
 export default function WelcomeEmail({

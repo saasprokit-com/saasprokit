@@ -7,12 +7,12 @@ import type { ReactNode } from "react";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 interface FeatureShowcaseMotionItemProps {
-  isReversed: boolean;
-  visual: ReactNode;
   badge: ReactNode;
-  title: string;
-  description: string;
   bullets: string[];
+  description: string;
+  isReversed: boolean;
+  title: string;
+  visual: ReactNode;
 }
 
 export function FeatureShowcaseMotionItem({

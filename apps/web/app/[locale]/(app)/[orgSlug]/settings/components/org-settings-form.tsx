@@ -44,6 +44,8 @@ import { type UpdateOrgFormValues, updateOrgSchema } from "../schemas";
 import { LogoUpload } from "./logo-upload";
 
 interface OrgSettingsFormProps {
+  canEdit: boolean;
+  errors: ActionErrorMessages;
   organization: {
     id: string;
     name: string;
@@ -51,8 +53,6 @@ interface OrgSettingsFormProps {
     logo: string | null;
     createdAt: Date;
   };
-  canEdit: boolean;
-  errors: ActionErrorMessages;
   userRole: OrgRoleName;
 }
 

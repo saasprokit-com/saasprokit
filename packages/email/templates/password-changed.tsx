@@ -9,11 +9,11 @@ import {
 } from "../components";
 
 interface PasswordChangedProps {
-  userEmail?: string;
-  userName?: string;
   changedAt?: string;
   ipAddress?: string;
   secureAccountUrl?: string;
+  userEmail?: string;
+  userName?: string;
 }
 
 export default function PasswordChanged({

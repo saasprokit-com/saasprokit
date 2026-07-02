@@ -1,12 +1,12 @@
 export interface SiteConfig {
-  name: string;
-  description: string;
-  url: string;
-  ogImage?: string;
-  locale?: string;
-  twitterHandle?: string;
   author?: { name: string; url?: string };
+  description: string;
   links?: { twitter?: string; github?: string };
+  locale?: string;
+  name: string;
+  ogImage?: string;
+  twitterHandle?: string;
+  url: string;
 }
 
 let _siteConfig: SiteConfig | null = null;

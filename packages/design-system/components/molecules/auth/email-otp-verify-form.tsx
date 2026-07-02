@@ -19,11 +19,11 @@ import { type VerifyOtpFormValues, verifyOtpSchema } from "./schemas";
 export type { VerifyOtpFormValues } from "./schemas";
 
 export interface EmailOtpVerifyFormProps {
+  className?: string;
+  error?: string;
   onSubmit: (data: VerifyOtpFormValues) => Promise<void>;
   onUseDifferentEmail: () => void;
   signUpUrl?: string;
-  error?: string;
-  className?: string;
 }
 
 export function EmailOtpVerifyForm({

@@ -225,15 +225,15 @@
 }
 
 .shiki-preview {
+  width: max-content;
+  min-width: 100%;
   font-family: var(--font-geist-mono);
   line-height: 1;
   counter-reset: line;
-  width: max-content;
-  min-width: 100%;
 }
 .shiki-preview pre {
-  margin: 0;
   padding: 1rem;
+  margin: 0;
   overflow: visible;
 }
 .shiki-preview code {
@@ -244,21 +244,21 @@
   min-height: 1lh;
 }
 .shiki-preview .line::before {
-  counter-increment: line;
-  content: counter(line);
   display: inline-block;
   width: 1.5rem;
   margin-right: 1rem;
   color: color-mix(in oklch, var(--muted-foreground) 50%, transparent);
   text-align: right;
   user-select: none;
+  content: counter(line);
+  counter-increment: line;
 }
 
 .dark .shiki-preview .shiki,
 .dark .shiki-preview .shiki span {
-  color: var(--shiki-dark) !important;
-  background-color: var(--shiki-dark-bg) !important;
   font-style: var(--shiki-dark-font-style) !important;
   font-weight: var(--shiki-dark-font-weight) !important;
+  color: var(--shiki-dark) !important;
   text-decoration: var(--shiki-dark-text-decoration) !important;
+  background-color: var(--shiki-dark-bg) !important;
 }

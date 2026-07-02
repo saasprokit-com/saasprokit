@@ -12,12 +12,12 @@ import {
 } from "@react-email/components";
 
 interface SubscriptionStartedProps {
-  userName?: string;
-  planName?: string;
-  billingInterval?: string;
   amount?: string;
-  nextBillingDate?: string;
+  billingInterval?: string;
   dashboardUrl?: string;
+  nextBillingDate?: string;
+  planName?: string;
+  userName?: string;
 }
 
 export default function SubscriptionStarted({

@@ -4,9 +4,9 @@ import { spacing } from "../theme/spacing";
 import { typography } from "../theme/typography";
 
 interface LineItemProps {
+  isTotal?: boolean;
   label: string;
   value: string;
-  isTotal?: boolean;
 }
 
 interface ReceiptTableProps {

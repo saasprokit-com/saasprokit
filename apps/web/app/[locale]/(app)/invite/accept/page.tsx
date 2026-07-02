@@ -22,10 +22,10 @@ import { AcceptInvitationButton } from "./accept-button";
 type SessionResult = Awaited<ReturnType<typeof getServerSession>>;
 
 interface InvitationFooterProps {
-  session: SessionResult;
-  invitationId: string;
-  invitationEmail: string;
   errors: ActionErrorMessages;
+  invitationEmail: string;
+  invitationId: string;
+  session: SessionResult;
 }
 
 function InvitationFooter({

@@ -12,13 +12,13 @@ import {
 } from "@react-email/components";
 
 interface LoginNewDeviceProps {
-  userEmail?: string;
-  userName?: string;
   deviceInfo?: string;
-  location?: string;
   ipAddress?: string;
+  location?: string;
   loginTime?: string;
   secureAccountUrl?: string;
+  userEmail?: string;
+  userName?: string;
 }
 
 export default function LoginNewDevice({

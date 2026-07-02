@@ -19,11 +19,8 @@ import { InviteMemberDialog } from "./invite-member-dialog";
 import { RemoveMembersDialog } from "./remove-members-dialog";
 
 interface MembersToolbarProps {
-  table: Table<Member>;
-  errors: ActionErrorMessages;
-  organizationId: string;
   currentUserId: string;
-  permissions: MemberPermissions;
+  errors: ActionErrorMessages;
   filters?: {
     columnId: string;
     title: string;
@@ -33,6 +30,9 @@ interface MembersToolbarProps {
       icon?: ComponentType<{ className?: string }>;
     }[];
   }[];
+  organizationId: string;
+  permissions: MemberPermissions;
+  table: Table<Member>;
 }
 
 export function MembersToolbar({

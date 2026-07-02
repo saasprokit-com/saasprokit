@@ -3,8 +3,8 @@ import { Stamp } from "../stamp/stamp";
 
 interface LogoProps {
   className?: string;
-  text?: string;
   icon?: ReactNode;
+  text?: string;
 }
 
 export const Logo = ({ className, text, icon }: LogoProps) => {

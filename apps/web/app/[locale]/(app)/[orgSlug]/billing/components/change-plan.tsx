@@ -20,8 +20,8 @@ import { PlanCard } from "./plan-card";
 
 interface ChangePlanProps {
   errors: ActionErrorMessages;
-  organizationId: string;
   memberCount: number;
+  organizationId: string;
   storageMB: number;
 }
 

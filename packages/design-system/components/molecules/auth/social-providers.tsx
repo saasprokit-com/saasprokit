@@ -9,11 +9,11 @@ import type * as React from "react";
 export type SocialProvider = "google" | "github";
 
 export interface SocialProvidersProps {
-  providers: SocialProvider[];
-  onProviderClick: (provider: SocialProvider) => void;
-  isLoading?: boolean;
-  disabled?: boolean;
   className?: string;
+  disabled?: boolean;
+  isLoading?: boolean;
+  onProviderClick: (provider: SocialProvider) => void;
+  providers: SocialProvider[];
 }
 
 const providerConfig: Record<

@@ -4,16 +4,16 @@ import { cn } from "../../../lib/utils";
 import { Button } from "../../ui/button";
 
 export interface CTABannerCtaProps {
-  label: string;
   href: string;
+  label: string;
 }
 
 export interface CTABannerProps {
-  title: string;
-  subtitle?: string;
+  className?: string;
   primaryCta?: CTABannerCtaProps;
   secondaryCta?: CTABannerCtaProps;
-  className?: string;
+  subtitle?: string;
+  title: string;
 }
 
 export function CTABanner({

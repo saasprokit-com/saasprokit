@@ -6,26 +6,26 @@ import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 
 export interface HeroCtaProps {
-  label: string;
   href: string;
+  label: string;
 }
 
 export interface HeroBenefitProps {
-  text: string;
   icon?: React.ReactNode;
+  text: string;
 }
 
 export interface HeroProps {
   badge?: string;
-  title: string;
+  benefits?: (string | HeroBenefitProps)[];
+  className?: string;
   highlightedText?: string;
-  subtitle: string;
+  id?: string;
   primaryCta?: HeroCtaProps;
   secondaryCta?: HeroCtaProps;
-  benefits?: (string | HeroBenefitProps)[];
   showGradientBackground?: boolean;
-  className?: string;
-  id?: string;
+  subtitle: string;
+  title: string;
 }
 
 export function Hero({

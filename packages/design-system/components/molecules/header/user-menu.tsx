@@ -15,27 +15,27 @@ import {
 } from "../../ui/dropdown-menu";
 
 export interface UserMenuUser {
-  name?: string | null;
   email?: string | null;
   image?: string | null;
+  name?: string | null;
 }
 
 export interface UserMenuItem {
-  label: string;
   href: string;
   icon?: LucideIcon;
+  label: string;
 }
 
 export interface UserMenuProps {
-  user: UserMenuUser | null | undefined;
+  className?: string;
+  loginHref?: string;
+  loginLabel?: string;
+  logoutLabel?: string;
   menuItems?: UserMenuItem[];
   onLogout?: () => void | Promise<void>;
-  loginHref?: string;
   signUpHref?: string;
-  loginLabel?: string;
   signUpLabel?: string;
-  logoutLabel?: string;
-  className?: string;
+  user: UserMenuUser | null | undefined;
 }
 
 function getInitials(name?: string | null): string {

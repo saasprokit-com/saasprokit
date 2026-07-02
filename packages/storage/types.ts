@@ -3,43 +3,43 @@ export type StorageProviderType = "local" | "s3";
 export type FileVisibility = "public" | "private";
 
 export interface UploadOptions {
-  filename: string;
-  buffer: Buffer;
-  mimeType: string;
-  folder?: string;
-  visibility?: FileVisibility;
-  attachableType?: string;
   attachableId?: string;
-  uploadedById?: string;
+  attachableType?: string;
+  buffer: Buffer;
+  filename: string;
+  folder?: string;
   metadata?: Record<string, unknown>;
+  mimeType: string;
+  uploadedById?: string;
+  visibility?: FileVisibility;
 }
 
 export interface UploadResult {
-  storagePath: string;
-  publicUrl: string | null;
+  bucket: string | null;
   filename: string;
   mimeType: string;
-  size: number;
   provider: StorageProviderType;
-  bucket: string | null;
+  publicUrl: string | null;
+  size: number;
+  storagePath: string;
   visibility: FileVisibility;
 }
 
 export interface DeleteOptions {
-  path: string;
   bucket?: string;
+  path: string;
 }
 
 export interface GetUrlOptions {
-  path: string;
   bucket?: string;
   expiresIn?: number;
+  path: string;
 }
 
 export interface StorageProvider {
+  delete(options: DeleteOptions): Promise<void>;
+  exists(path: string): Promise<boolean>;
+  getUrl(options: GetUrlOptions): Promise<string>;
   readonly type: StorageProviderType;
   upload(options: UploadOptions): Promise<UploadResult>;
-  delete(options: DeleteOptions): Promise<void>;
-  getUrl(options: GetUrlOptions): Promise<string>;
-  exists(path: string): Promise<boolean>;
 }

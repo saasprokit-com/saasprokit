@@ -11,8 +11,8 @@ import Link from "next/link";
 import type { VerificationFailureReason } from "../verify-session";
 
 interface CheckoutErrorCardProps {
-  readonly reason: Exclude<VerificationFailureReason, "not_paid">;
   readonly billingHref: string;
+  readonly reason: Exclude<VerificationFailureReason, "not_paid">;
 }
 
 const ERROR_MESSAGES: Record<

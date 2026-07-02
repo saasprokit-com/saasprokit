@@ -12,14 +12,14 @@ import { colors } from "../components/theme/colors";
 import { typography } from "../components/theme/typography";
 
 interface PaymentReceiptProps {
-  userName?: string;
-  invoiceNumber?: string;
   amount?: string;
-  planName?: string;
   billingPeriod?: string;
-  paymentMethod?: string;
+  invoiceNumber?: string;
   paymentDate?: string;
+  paymentMethod?: string;
+  planName?: string;
   receiptUrl?: string;
+  userName?: string;
 }
 
 export default function PaymentReceipt({

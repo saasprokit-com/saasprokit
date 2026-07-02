@@ -6,39 +6,39 @@ import {
 import type { InvitationStatusValue } from "@repo/utils/organization";
 
 export interface Invitation {
-  id: string;
-  email: string;
-  role: OrgRoleName | null;
-  status: InvitationStatusValue;
-  expiresAt: Date;
   createdAt: Date;
+  email: string;
+  expiresAt: Date;
+  id: string;
   inviter: {
     name: string | null;
   } | null;
+  role: OrgRoleName | null;
+  status: InvitationStatusValue;
 }
 
 export interface InviteLink {
-  id: string;
-  token: string;
-  role: OrgRoleName;
-  expiresAt: Date | null;
-  maxUses: number | null;
-  usedCount: number;
   createdAt: Date;
-  isActive: boolean;
   createdBy: {
     name: string | null;
   } | null;
+  expiresAt: Date | null;
+  id: string;
+  isActive: boolean;
+  maxUses: number | null;
+  role: OrgRoleName;
+  token: string;
+  usedCount: number;
 }
 
 export interface MemberPermissions {
   canInvite: boolean;
-  canRemove: boolean;
-  canUpdateRole: boolean;
   canManageInvitations: boolean;
   canManageInviteLinks: boolean;
+  canRemove: boolean;
   canSuspend: boolean;
   canTransferOwnership: boolean;
+  canUpdateRole: boolean;
   isOwner: boolean;
 }
 

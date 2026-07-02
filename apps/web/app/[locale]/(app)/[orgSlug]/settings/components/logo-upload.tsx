@@ -25,12 +25,12 @@ import {
 } from "../actions";
 
 interface LogoUploadProps {
+  canEdit: boolean;
+  currentLogo: string | null;
+  errors: ActionErrorMessages;
   organizationId: string;
   organizationName: string;
   orgSlug: string;
-  currentLogo: string | null;
-  canEdit: boolean;
-  errors: ActionErrorMessages;
 }
 
 // File size constants

@@ -9,9 +9,6 @@ import { DataTableFacetedFilter } from "./faceted-filter";
 import { DataTableViewOptions } from "./view-options";
 
 interface DataTableToolbarProps<TData> {
-  table: Table<TData>;
-  searchKey?: string;
-  searchPlaceholder?: string;
   filters?: {
     columnId: string;
     title: string;
@@ -21,6 +18,9 @@ interface DataTableToolbarProps<TData> {
       icon?: ComponentType<{ className?: string }>;
     }[];
   }[];
+  searchKey?: string;
+  searchPlaceholder?: string;
+  table: Table<TData>;
 }
 
 export function DataTableToolbar<TData>({

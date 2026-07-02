@@ -31,7 +31,10 @@ export function CheckoutSuccessCard({
           aria-label="Success"
           className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100"
         >
-          <CheckCircle aria-hidden="true" className="h-10 w-10 text-green-600" />
+          <CheckCircle
+            aria-hidden="true"
+            className="h-10 w-10 text-green-600"
+          />
         </output>
         <CardTitle className="text-2xl">
           You're on the {plan.displayName} plan
@@ -43,8 +46,8 @@ export function CheckoutSuccessCard({
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <p className="text-muted-foreground text-sm">
-            You'll receive a confirmation email shortly. Your{" "}
-            {plan.displayName} plan includes:
+            You'll receive a confirmation email shortly. Your {plan.displayName}{" "}
+            plan includes:
           </p>
           <ul className="list-inside list-disc space-y-1 text-muted-foreground text-sm">
             {plan.features.map((feature) => (

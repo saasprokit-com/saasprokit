@@ -6,16 +6,16 @@ import { KeyRound, Mail, RefreshCw, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 export interface VerifyEmailCardProps {
+  className?: string;
+  cooldown: number;
   email: string | null;
   isResending: boolean;
-  resendSuccess: boolean;
-  resendError?: string | null;
-  cooldown: number;
-  onResend: () => void;
-  signInUrl?: string;
   magicLinkUrl?: string;
+  onResend: () => void;
   otpUrl?: string;
-  className?: string;
+  resendError?: string | null;
+  resendSuccess: boolean;
+  signInUrl?: string;
 }
 
 export function VerifyEmailCard({

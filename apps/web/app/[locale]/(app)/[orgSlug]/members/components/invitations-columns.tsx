@@ -26,9 +26,9 @@ export const invitationStatusFilterOptions = [
 ];
 
 interface GetInvitationColumnsParams {
+  canManage: boolean;
   errors: ActionErrorMessages;
   organizationId: string;
-  canManage: boolean;
 }
 
 export function getInvitationColumns({

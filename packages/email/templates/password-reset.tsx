@@ -8,8 +8,8 @@ import {
 } from "../components";
 
 interface PasswordResetEmailProps {
-  userEmail?: string;
   resetUrl?: string;
+  userEmail?: string;
 }
 
 export default function PasswordResetEmail({

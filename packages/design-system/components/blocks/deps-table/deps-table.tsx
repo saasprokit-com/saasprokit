@@ -2,8 +2,8 @@ import { cn } from "@repo/design-system/lib/utils";
 
 interface Dep {
   category: string;
-  name: string;
   description: string;
+  name: string;
 }
 
 const DEPS: [Dep, Dep][] = [
@@ -70,8 +70,11 @@ export function DepsTable({ className }: DepsTableProps) {
       </div>
 
       {/* Rows */}
-      {DEPS.map((pair, i) => (
-        <div className="grid grid-cols-1 md:grid-cols-2" key={`dep-row-${i}`}>
+      {DEPS.map((pair) => (
+        <div
+          className="grid grid-cols-1 md:grid-cols-2"
+          key={pair.map((dep) => dep.name).join("-")}
+        >
           {pair.map((dep) => (
             <div
               className="flex items-baseline gap-4 border-border border-b px-6 py-4 last:border-b-0 md:[&:nth-child(odd)]:border-r"

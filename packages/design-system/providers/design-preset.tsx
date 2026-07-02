@@ -18,8 +18,8 @@ const DESIGN_ATTRIBUTE = "data-design";
 
 interface DesignPresetContextValue {
   preset: DesignPreset;
-  setPreset: (preset: DesignPreset) => void;
   presets: readonly DesignPreset[];
+  setPreset: (preset: DesignPreset) => void;
 }
 
 const DesignPresetContext = createContext<DesignPresetContextValue | null>(

@@ -30,10 +30,10 @@ export const inviteLinkStatusFilterOptions = [
 ];
 
 interface GetInviteLinkColumnsParams {
-  errors: ActionErrorMessages;
-  organizationId: string;
   baseUrl: string;
   canManage: boolean;
+  errors: ActionErrorMessages;
+  organizationId: string;
 }
 
 function getLinkStatusBadge(link: InviteLink) {

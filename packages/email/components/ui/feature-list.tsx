@@ -6,10 +6,10 @@ import { typography } from "../theme/typography";
 type FeatureListVariant = "default" | "success" | "warning" | "error";
 
 interface FeatureListProps {
-  /** List title (optional) */
-  title?: string;
   /** Features to display */
   features: string[];
+  /** List title (optional) */
+  title?: string;
   /** Visual variant */
   variant?: FeatureListVariant;
 }

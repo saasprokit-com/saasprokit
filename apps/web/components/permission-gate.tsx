@@ -2,10 +2,10 @@ import type { ReactNode } from "react";
 import { checkOrgPermission } from "@/lib/auth/auth";
 
 interface PermissionGateProps {
+  children: ReactNode;
+  fallback?: ReactNode;
   organizationId: string;
   permissions: Record<string, string[]>;
-  fallback?: ReactNode;
-  children: ReactNode;
 }
 
 /**

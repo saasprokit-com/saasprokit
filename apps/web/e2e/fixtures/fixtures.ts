@@ -1,5 +1,7 @@
-import { test as base, expect, type Page } from "@playwright/test";
-import { localePath, orgPath, TEST_CONFIG } from "./test-config";
+import { test as base, type Page } from "@playwright/test";
+
+export { expect } from "@playwright/test";
+export { localePath, orgPath, TEST_CONFIG } from "./test-config";
 
 /**
  * Custom test fixtures for E2E tests.
@@ -27,5 +29,3 @@ export const test = base.extend<{
     await context.close();
   },
 });
-
-export { expect, localePath, orgPath, TEST_CONFIG };

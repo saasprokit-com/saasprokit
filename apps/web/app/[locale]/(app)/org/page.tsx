@@ -6,15 +6,13 @@ interface OrgRedirectPageProps {
   params: Promise<{ locale: string }>;
 }
 
-/**
- * Post-auth trampoline — redirects to the user's default workspace.
- * Workspace creation is handled by the parent AppLayout.
- */
 export default async function OrgRedirectPage({
   params,
 }: OrgRedirectPageProps) {
-  const { locale } = await params;
-  const defaultOrg = await getDefaultOrganization();
+  const [{ locale }, defaultOrg] = await Promise.all([
+    params,
+    getDefaultOrganization(),
+  ]);
 
   if (!defaultOrg) {
     redirect(`/${locale}${PAGE_ROUTES.ACCOUNT_NEW_ORG}`);

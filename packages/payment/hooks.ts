@@ -20,24 +20,24 @@ interface UseSubscriptionOptions {
 }
 
 interface UseSubscriptionReturn {
-  /** The current subscription data */
-  subscription: Subscription | null;
-  /** Subscription with plan configuration */
-  subscriptionWithPlan: SubscriptionWithPlan | null;
-  /** Whether the subscription data is loading */
-  isLoading: boolean;
   /** Error if subscription fetch failed */
   error: Error | null;
-  /** The current plan name */
-  planName: PlanName;
-  /** Whether the user has a paid plan */
-  isPaid: boolean;
   /** Whether the subscription is active */
   isActive: boolean;
   /** Whether the subscription is canceled but still active */
   isCanceled: boolean;
+  /** Whether the subscription data is loading */
+  isLoading: boolean;
+  /** Whether the user has a paid plan */
+  isPaid: boolean;
+  /** The current plan name */
+  planName: PlanName;
   /** Refetch the subscription data */
   refetch: () => Promise<void>;
+  /** The current subscription data */
+  subscription: Subscription | null;
+  /** Subscription with plan configuration */
+  subscriptionWithPlan: SubscriptionWithPlan | null;
 }
 
 /**
@@ -192,17 +192,17 @@ export function useSubscription(
 interface UseCancelOptions {
   /** Current locale for URL construction (e.g., "en") */
   locale?: string;
-  onSuccess?: () => void;
   onError?: (error: Error) => void;
+  onSuccess?: () => void;
 }
 
 interface UseCancelReturn {
   /** Cancel the current subscription */
   cancel: () => Promise<void>;
-  /** Whether a cancellation is in progress */
-  isCanceling: boolean;
   /** Error if cancellation failed */
   error: Error | null;
+  /** Whether a cancellation is in progress */
+  isCanceling: boolean;
 }
 
 /**

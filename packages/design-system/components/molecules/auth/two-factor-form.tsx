@@ -21,13 +21,13 @@ import { type TwoFactorFormValues, twoFactorSchema } from "./schemas";
 export type { TwoFactorFormValues } from "./schemas";
 
 export interface TwoFactorFormProps {
-  onSubmit: (data: TwoFactorFormValues) => Promise<void>;
-  onResendCode?: () => Promise<void>;
-  onUseBackupCode?: () => void;
-  signInUrl?: string;
+  className?: string;
   error?: string;
   method?: "totp" | "otp";
-  className?: string;
+  onResendCode?: () => Promise<void>;
+  onSubmit: (data: TwoFactorFormValues) => Promise<void>;
+  onUseBackupCode?: () => void;
+  signInUrl?: string;
 }
 
 export function TwoFactorForm({

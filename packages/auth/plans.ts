@@ -9,15 +9,15 @@ import {
 } from "@repo/utils/payment";
 
 export interface PlanConfig extends Omit<StripePlan, "name" | "limits"> {
-  name: PlanName;
-  displayName: string;
+  badge?: string;
   description: string;
-  monthlyPrice: number;
-  yearlyPrice: number;
-  limits: PlanLimits;
+  displayName: string;
   features: string[];
   highlighted?: boolean;
-  badge?: string;
+  limits: PlanLimits;
+  monthlyPrice: number;
+  name: PlanName;
+  yearlyPrice: number;
 }
 
 export const PLANS: Record<PlanName, PlanConfig> = {
@@ -85,10 +85,10 @@ export const PLANS: Record<PlanName, PlanConfig> = {
 };
 
 export interface StripePriceIds {
-  proMonthly?: string;
-  proAnnual?: string;
-  enterpriseMonthly?: string;
   enterpriseAnnual?: string;
+  enterpriseMonthly?: string;
+  proAnnual?: string;
+  proMonthly?: string;
 }
 
 export function buildStripePlans(prices: StripePriceIds): StripePlan[] {

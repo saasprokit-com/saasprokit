@@ -11,8 +11,8 @@ import type { ActionResult } from "@/lib/auth/auth";
 import { acceptInvitationFormAction } from "../actions";
 
 interface AcceptInvitationButtonProps {
-  invitationId: string;
   errors: ActionErrorMessages;
+  invitationId: string;
 }
 
 const initialState: ActionResult<{ organizationSlug: string }> = {

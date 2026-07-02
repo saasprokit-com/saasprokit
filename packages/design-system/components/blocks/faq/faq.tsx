@@ -9,16 +9,16 @@ import {
 import { Badge } from "../../ui/badge";
 
 export interface FAQItemProps {
-  question: string;
   answer: string;
+  question: string;
 }
 
 export interface FAQSectionProps {
   badge?: string;
-  title: string;
-  subtitle?: string;
-  items: FAQItemProps[];
   className?: string;
+  items: FAQItemProps[];
+  subtitle?: string;
+  title: string;
 }
 
 export function FAQSection({

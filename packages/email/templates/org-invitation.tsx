@@ -12,13 +12,13 @@ import {
 } from "@react-email/components";
 
 interface OrgInvitationProps {
+  expiresAt?: string;
   inviteeEmail?: string;
   inviterName?: string;
+  inviteUrl?: string;
+  message?: string;
   organizationName?: string;
   role?: string;
-  inviteUrl?: string;
-  expiresAt?: string;
-  message?: string;
 }
 
 export default function OrgInvitation({

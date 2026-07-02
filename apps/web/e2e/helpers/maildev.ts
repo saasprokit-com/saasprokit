@@ -21,14 +21,14 @@ function authHeaders(): HeadersInit {
 }
 
 export interface MaildevEmail {
-  id: string;
   from: { address: string; name: string }[];
-  to: { address: string; name: string }[];
+  headers: Record<string, string>;
+  html: string;
+  id: string;
   subject: string;
   text: string;
-  html: string;
   time: string;
-  headers: Record<string, string>;
+  to: { address: string; name: string }[];
 }
 
 /** Clear all emails from Maildev inbox */

@@ -14,12 +14,12 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 
 interface UpgradeFormProps {
+  billingInterval: BillingInterval;
+  errors: ActionErrorMessages;
+  locale: string;
   organizationId: string;
   organizationSlug: string;
   planName: PlanName;
-  billingInterval: BillingInterval;
-  locale: string;
-  errors: ActionErrorMessages;
 }
 
 export function UpgradeForm({
@@ -34,19 +34,27 @@ export function UpgradeForm({
 
   const handleUpgrade = () => {
     startTransition(async () => {
-      const checkoutBase = `${window.location.origin}/${locale}/${organizationSlug}/checkout`;
+      const orgBase = `${window.location.origin}/${locale}/${organizationSlug}`;
+      const checkoutBase = `${orgBase}/checkout`;
       const { error } = await subscription.upgrade({
         plan: planName,
         annual: billingInterval === BILLING_INTERVALS.YEARLY,
         referenceId: organizationId,
+        // free→paid goes through Stripe Checkout (uses success/cancel URLs).
         successUrl: `${checkoutBase}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${checkoutBase}/canceled`,
+        // paid→paid (e.g. pro→enterprise) updates the existing subscription via
+        // a Stripe-hosted confirm flow and redirects here afterward — without
+        // this it would fall back to the site root ("/").
+        returnUrl: `${orgBase}/billing`,
       });
 
       if (error) {
         toast.error(errors.startCheckout, { description: error.message });
       }
-      // On success, subscription.upgrade redirects the browser to Stripe Checkout.
+      // On success, subscription.upgrade redirects the browser — to Stripe
+      // Checkout for a new subscription, or the plan-change confirm flow for
+      // an existing one.
     });
   };
 

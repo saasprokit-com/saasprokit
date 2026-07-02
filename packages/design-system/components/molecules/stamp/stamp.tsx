@@ -2,11 +2,11 @@ import { cn } from "@repo/design-system/lib/utils";
 import type { CSSProperties, ReactNode } from "react";
 
 interface StampProps {
-  children?: ReactNode;
-  color?: string;
   bracketSize?: string;
   bracketWidth?: string;
+  children?: ReactNode;
   className?: string;
+  color?: string;
 }
 
 export const Stamp = ({

@@ -11,14 +11,14 @@ import {
 } from "../components";
 
 interface SubscriptionDowngradedProps {
-  userName?: string;
-  previousPlan?: string;
-  newPlan?: string;
-  newAmount?: string;
   billingInterval?: string;
+  dashboardUrl?: string;
   effectiveDate?: string;
   lostFeatures?: string[];
-  dashboardUrl?: string;
+  newAmount?: string;
+  newPlan?: string;
+  previousPlan?: string;
+  userName?: string;
 }
 
 export default function SubscriptionDowngraded({

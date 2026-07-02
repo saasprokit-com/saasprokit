@@ -8,20 +8,20 @@ import {
 import { z } from "zod";
 
 export interface Subscription {
+  cancelAt: Date | null;
+  cancelAtPeriodEnd: boolean | null;
+  createdAt: Date;
   id: string;
+  periodEnd: Date | null;
+  periodStart: Date | null;
   plan: string;
   referenceId: string;
+  seats: number | null;
+  status: SubscriptionStatus | null;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
-  status: SubscriptionStatus | null;
-  periodStart: Date | null;
-  periodEnd: Date | null;
-  trialStart: Date | null;
   trialEnd: Date | null;
-  cancelAtPeriodEnd: boolean | null;
-  cancelAt: Date | null;
-  seats: number | null;
-  createdAt: Date;
+  trialStart: Date | null;
   updatedAt: Date;
 }
 
@@ -51,8 +51,8 @@ export type SubscriptionWithPlan = Subscription & {
 export type FeatureKey = (typeof FEATURE_KEYS)[keyof typeof FEATURE_KEYS];
 
 export interface FeatureAccess {
-  feature: FeatureKey;
   enabled: boolean;
+  feature: FeatureKey;
   limit?: number;
   usage?: number;
 }
@@ -62,18 +62,18 @@ export interface BillingPortalSession {
 }
 
 export interface UpgradeOptions {
-  plan: PlanName;
   annual?: boolean;
-  referenceId?: string;
-  successUrl: string;
   cancelUrl: string;
+  plan: PlanName;
+  referenceId?: string;
   seats?: number;
+  successUrl: string;
 }
 
 export interface CancelOptions {
-  subscriptionId?: string;
   referenceId?: string;
   returnUrl?: string;
+  subscriptionId?: string;
 }
 
 export interface UsageStats {

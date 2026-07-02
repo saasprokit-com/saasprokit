@@ -12,12 +12,12 @@ import {
 } from "@react-email/components";
 
 interface SubscriptionCancelledProps {
-  userName?: string;
-  planName?: string;
   accessUntil?: string;
   cancellationReason?: string;
-  reactivateUrl?: string;
   feedbackUrl?: string;
+  planName?: string;
+  reactivateUrl?: string;
+  userName?: string;
 }
 
 export default function SubscriptionCancelled({

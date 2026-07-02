@@ -19,10 +19,10 @@ import { type MagicLinkFormValues, magicLinkSchema } from "./schemas";
 export type { MagicLinkFormValues } from "./schemas";
 
 export interface MagicLinkFormProps {
+  className?: string;
+  error?: string;
   onSubmit: (data: MagicLinkFormValues) => Promise<void>;
   signUpUrl?: string;
-  error?: string;
-  className?: string;
 }
 
 export function MagicLinkForm({

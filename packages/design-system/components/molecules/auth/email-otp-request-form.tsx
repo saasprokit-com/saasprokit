@@ -19,10 +19,10 @@ import { type SendOtpFormValues, sendOtpSchema } from "./schemas";
 export type { SendOtpFormValues } from "./schemas";
 
 export interface EmailOtpRequestFormProps {
+  className?: string;
+  error?: string;
   onSubmit: (data: SendOtpFormValues) => Promise<void>;
   signUpUrl?: string;
-  error?: string;
-  className?: string;
 }
 
 export function EmailOtpRequestForm({

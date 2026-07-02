@@ -23,20 +23,20 @@ import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 
 export interface HeaderNavItem {
+  external?: boolean;
   href: string;
   label: string;
-  external?: boolean;
 }
 
 export interface HeaderProps {
+  className?: string;
+  items?: HeaderNavItem[];
   logo?: ReactNode;
   logoHref?: string;
-  items?: HeaderNavItem[];
-  right?: ReactNode;
-  transparent?: boolean;
-  sticky?: boolean;
-  className?: string;
   mobileBreakpoint?: "md" | "lg";
+  right?: ReactNode;
+  sticky?: boolean;
+  transparent?: boolean;
 }
 
 const BREAKPOINT_CLASSES = {

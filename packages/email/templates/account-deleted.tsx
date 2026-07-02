@@ -11,9 +11,9 @@ import {
 } from "@react-email/components";
 
 interface AccountDeletedProps {
-  userName?: string;
   deletedAt?: string;
   supportEmail?: string;
+  userName?: string;
 }
 
 export default function AccountDeleted({

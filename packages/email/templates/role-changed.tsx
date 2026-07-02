@@ -12,13 +12,13 @@ import {
 } from "@react-email/components";
 
 interface RoleChangedProps {
-  userName?: string;
+  changedAt?: string;
+  changedBy?: string;
+  dashboardUrl?: string;
+  newRole?: string;
   organizationName?: string;
   previousRole?: string;
-  newRole?: string;
-  changedBy?: string;
-  changedAt?: string;
-  dashboardUrl?: string;
+  userName?: string;
 }
 
 export default function RoleChanged({

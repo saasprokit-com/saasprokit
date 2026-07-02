@@ -12,12 +12,12 @@ import {
 } from "@react-email/components";
 
 interface InvitationAcceptedProps {
-  ownerName?: string;
-  newMemberName?: string;
-  newMemberEmail?: string;
-  organizationName?: string;
-  role?: string;
   joinedAt?: string;
+  newMemberEmail?: string;
+  newMemberName?: string;
+  organizationName?: string;
+  ownerName?: string;
+  role?: string;
   teamUrl?: string;
 }
 

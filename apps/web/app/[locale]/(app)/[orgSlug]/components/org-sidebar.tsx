@@ -23,13 +23,13 @@ import { orgRoutes, PAGE_ROUTES } from "@/lib/routes";
 import { setDefaultWorkspaceAction } from "../actions";
 
 interface OrgSidebarProps {
-  user: User;
-  organizations: Organization[];
   activeOrganization?: Organization | null;
+  canManageBilling: boolean;
   defaultOrganizationId?: string | null;
   locale: string;
+  organizations: Organization[];
   orgSlug: string;
-  canManageBilling: boolean;
+  user: User;
 }
 
 export function OrgSidebar({

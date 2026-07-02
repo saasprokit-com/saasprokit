@@ -16,10 +16,8 @@ import { SEARCH_DEBOUNCE_MS } from "../utils";
 import { CancelInvitationsDialog } from "./cancel-invitations-dialog";
 
 interface InvitationsToolbarProps {
-  table: Table<Invitation>;
-  errors: ActionErrorMessages;
-  organizationId: string;
   canManage: boolean;
+  errors: ActionErrorMessages;
   filters?: {
     columnId: string;
     title: string;
@@ -29,6 +27,8 @@ interface InvitationsToolbarProps {
       icon?: ComponentType<{ className?: string }>;
     }[];
   }[];
+  organizationId: string;
+  table: Table<Invitation>;
 }
 
 export function InvitationsToolbar({

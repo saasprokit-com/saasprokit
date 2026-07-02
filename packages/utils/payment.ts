@@ -17,17 +17,18 @@ export type BillingInterval =
   (typeof BILLING_INTERVALS)[keyof typeof BILLING_INTERVALS];
 
 export interface PlanLimits {
-  [key: string]: number | boolean;
+  advancedAnalytics: boolean;
   maxMembers: number;
   maxStorageMB: number;
   prioritySupport: boolean;
-  advancedAnalytics: boolean;
+  [key: string]: number | boolean;
 }
 
-// Mirrors `Stripe.Subscription.Status` from the Stripe SDK
+// Mirrors `Stripe.Subscription.Status` from the Stripe SDK (all 8 statuses)
 export const SUBSCRIPTION_STATUS = {
   INCOMPLETE: "incomplete",
   INCOMPLETE_EXPIRED: "incomplete_expired",
+  TRIALING: "trialing",
   ACTIVE: "active",
   PAST_DUE: "past_due",
   CANCELED: "canceled",
@@ -38,7 +39,15 @@ export const SUBSCRIPTION_STATUS = {
 export type SubscriptionStatus =
   (typeof SUBSCRIPTION_STATUS)[keyof typeof SUBSCRIPTION_STATUS];
 
-export const ACTIVE_STATUSES = [SUBSCRIPTION_STATUS.ACTIVE] as const;
+// Statuses that grant a paid plan's entitlements. `trialing` is a valid in-trial
+// paid state; `past_due` keeps access during Stripe's dunning retries (Stripe
+// revokes at `unpaid`, not `past_due`). Access is dropped for unpaid / canceled /
+// incomplete / incomplete_expired / paused.
+export const ACTIVE_STATUSES = [
+  SUBSCRIPTION_STATUS.ACTIVE,
+  SUBSCRIPTION_STATUS.TRIALING,
+  SUBSCRIPTION_STATUS.PAST_DUE,
+] as const;
 
 export const UNLIMITED = -1;
 
@@ -99,8 +108,8 @@ export type OrgCreationDenialCode = "max_reached" | "upgrade_required";
 
 export interface OrgCreationCheck {
   allowed: boolean;
-  reason?: string;
   code?: OrgCreationDenialCode;
+  reason?: string;
 }
 
 /**

@@ -10,8 +10,8 @@ import {
 } from "react";
 
 export interface BreadcrumbItem {
-  label: string;
   href?: string;
+  label: string;
 }
 
 interface BreadcrumbContextValue {

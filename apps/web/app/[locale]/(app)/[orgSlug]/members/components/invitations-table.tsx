@@ -24,14 +24,14 @@ import {
 import { InvitationsToolbar } from "./invitations-toolbar";
 
 interface InvitationsTableProps {
+  canManage: boolean;
+  errors: ActionErrorMessages;
   invitationsPromise: Promise<{
     invitations: Invitation[];
     totalCount: number;
     pageCount: number;
   }>;
-  errors: ActionErrorMessages;
   organizationId: string;
-  canManage: boolean;
 }
 
 const filterFields = [

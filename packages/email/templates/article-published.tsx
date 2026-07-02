@@ -13,14 +13,14 @@ import {
 } from "@react-email/components";
 
 interface ArticlePublishedProps {
-  userName?: string;
-  articleTitle?: string;
+  analyticsUrl?: string;
   articleExcerpt?: string;
+  articleTitle?: string;
   articleUrl?: string;
   coverImageUrl?: string;
-  publishedAt?: string;
   dashboardUrl?: string;
-  analyticsUrl?: string;
+  publishedAt?: string;
+  userName?: string;
 }
 
 export default function ArticlePublished({

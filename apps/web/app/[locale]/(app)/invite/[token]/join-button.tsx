@@ -11,8 +11,8 @@ import type { ActionResult } from "@/lib/auth/auth";
 import { acceptInviteLinkFormAction } from "../actions";
 
 interface JoinButtonProps {
-  token: string;
   errors: ActionErrorMessages;
+  token: string;
 }
 
 const initialState: ActionResult<{ organizationSlug: string }> = {
