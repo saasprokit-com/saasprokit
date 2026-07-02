@@ -1,14 +1,6 @@
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from "@repo/utils/user";
 import { z } from "zod";
 
-/**
- * Shared field primitives.
- *
- * Every auth form composes these so validation rules — and their user-facing
- * messages — stay identical across all auth forms (sign-in, sign-up, reset,
- * forgot-password, two-factor, magic-link, and email-OTP).
- * Edit a rule here once and every form inherits it.
- */
 const emailSchema = z.email("Please enter a valid email address");
 
 const strongPasswordSchema = z

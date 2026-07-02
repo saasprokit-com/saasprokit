@@ -259,9 +259,6 @@ export async function sendWelcomeEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send email verification email
- */
 export async function sendEmailVerificationEmail({
   email,
   userName,
@@ -275,7 +272,8 @@ export async function sendEmailVerificationEmail({
     to: email,
     subject: "Verify Your Email Address",
     react: EmailVerificationEmail({
-      userName: userName || "there",
+      userName: userName || email.split("@")[0],
+      userEmail: email,
       verificationUrl,
     }),
   });

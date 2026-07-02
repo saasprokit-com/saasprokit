@@ -1,10 +1,3 @@
-/**
- * Centralized route definitions for the entire app.
- * Static constants + dynamic helpers in one place.
- */
-
-// ─── Static page routes ─────────────────────────────────────────────────────
-
 export const PAGE_ROUTES = {
   // Public (frontier)
   HOME: "/",
@@ -56,8 +49,6 @@ export const AUTH_ROUTE_PREFIXES = [
   PAGE_ROUTES.VERIFY_EMAIL,
   PAGE_ROUTES.TWO_FACTOR,
 ] as const;
-
-// ─── Dynamic route helpers ───────────────────────────────────────────────────
 
 /**
  * Org page subpaths for cache revalidation.

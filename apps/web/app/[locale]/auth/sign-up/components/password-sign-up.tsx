@@ -1,13 +1,12 @@
 "use client";
 
 import { signIn, signUp } from "@repo/auth/client";
-import {
-  SignUpForm,
-  type SignUpFormValues,
-} from "@repo/design-system/components/molecules/auth/sign-up-form";
+import type { SignUpFormValues } from "@repo/design-system/components/molecules/auth/schemas";
+import { SignUpForm } from "@repo/design-system/components/molecules/auth/sign-up-form";
 import type { SocialProvider } from "@repo/design-system/components/molecules/auth/social-providers";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useRouter } from "next/navigation";
+import { PAGE_ROUTES } from "@/lib/routes";
 
 interface PasswordSignUpProps {
   errors: ActionErrorMessages;
@@ -23,7 +22,7 @@ export function PasswordSignUp({ errors }: PasswordSignUpProps) {
       email: normalizedEmail,
       password: data.password,
       name: data.name,
-      callbackURL: "/org",
+      callbackURL: PAGE_ROUTES.ORG,
     });
 
     if (result.error) {
@@ -31,12 +30,12 @@ export function PasswordSignUp({ errors }: PasswordSignUpProps) {
     }
 
     router.push(
-      `/auth/verify-email?email=${encodeURIComponent(normalizedEmail)}`
+      `${PAGE_ROUTES.VERIFY_EMAIL}?email=${encodeURIComponent(normalizedEmail)}`
     );
   }
 
   function handleSocialLogin(provider: SocialProvider) {
-    signIn.social({ provider, callbackURL: "/org" });
+    signIn.social({ provider, callbackURL: PAGE_ROUTES.ORG });
   }
 
   return (

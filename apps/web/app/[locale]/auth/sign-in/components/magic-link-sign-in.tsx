@@ -5,7 +5,7 @@ import {
   MagicLinkForm,
   type MagicLinkFormValues,
 } from "@repo/design-system/components/molecules/auth/magic-link-form";
-import { MagicLinkSuccess } from "@repo/design-system/components/molecules/auth/magic-link-success";
+import { MagicLinkSentCard } from "@repo/design-system/components/molecules/auth/magic-link-sent-card";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useState } from "react";
 import { PAGE_ROUTES } from "@/lib/routes";
@@ -33,7 +33,7 @@ export function MagicLinkSignIn({ errors }: MagicLinkSignInProps) {
   }
 
   if (success) {
-    return <MagicLinkSuccess />;
+    return <MagicLinkSentCard />;
   }
 
   return <MagicLinkForm onSubmit={handleSubmit} />;

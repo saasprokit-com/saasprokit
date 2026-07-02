@@ -17,8 +17,6 @@ import { AuthCard } from "./auth-card";
 import { type SignUpFormValues, signUpSchema } from "./schemas";
 import { type SocialProvider, SocialProviders } from "./social-providers";
 
-export type { SignUpFormValues } from "./schemas";
-
 export interface SignUpFormProps {
   className?: string;
   error?: string;

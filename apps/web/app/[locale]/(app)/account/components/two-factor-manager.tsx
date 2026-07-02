@@ -168,8 +168,7 @@ export function TwoFactorManager({ enabled, errors }: TwoFactorManagerProps) {
                 </AlertDescription>
               </Alert>
 
-              <div className="space-y-3">
-                <p className="font-medium text-sm">Options:</p>
+              <div className="space-x-4">
                 <Button
                   disabled={isPending}
                   onClick={handleOpenDialog}
