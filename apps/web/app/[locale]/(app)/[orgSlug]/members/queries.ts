@@ -1,5 +1,4 @@
 import "server-only";
-
 import type { OrgRoleName } from "@repo/auth/permissions";
 import { database, type Prisma } from "@repo/database";
 import { INVITATION_STATUS } from "@repo/utils/organization";

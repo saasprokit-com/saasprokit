@@ -4,6 +4,7 @@ import { auth } from "@repo/auth/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
+import { PAGE_ROUTES } from "../routes";
 
 export interface ActionResult<T = void> {
   data?: T;
@@ -24,8 +25,8 @@ export async function requireAuth(returnTo?: string) {
   if (!session) {
     const returnUrl = returnTo
       ? encodeURIComponent(returnTo)
-      : encodeURIComponent("/user");
-    redirect(`/auth/sign-in?returnTo=${returnUrl}`);
+      : encodeURIComponent(PAGE_ROUTES.ORG);
+    redirect(`${PAGE_ROUTES.SIGN_IN}?returnTo=${returnUrl}`);
   }
 
   return session;

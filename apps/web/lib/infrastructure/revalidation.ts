@@ -20,7 +20,7 @@ export async function getLocaleFromRequest(): Promise<string> {
       return firstSegment;
     }
   } catch {
-    // Invalid URL — fall back
+    // Invalid URL — fallback
   }
 
   return DEFAULT_LOCALE;
