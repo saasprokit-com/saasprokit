@@ -7,16 +7,7 @@ import {
 } from "@repo/utils/organization";
 import { z } from "zod";
 
-// ============================================================================
-// Shared Schemas
-// ============================================================================
-
-/** Single email validation (used by bulk-invite dialog for per-email checks) */
 export const emailSchema = z.email();
-
-// ============================================================================
-// Validation Schemas
-// ============================================================================
 
 export const inviteMemberSchema = z.object({
   organizationId: z.string().min(1),
@@ -120,10 +111,6 @@ export const transferOwnershipSchema = z.object({
   orgSlug: z.string().min(1),
   newOwnerMemberId: z.string().min(1),
 });
-
-// ============================================================================
-// Inferred Types
-// ============================================================================
 
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
 export type RemoveMembersInput = z.infer<typeof removeMembersSchema>;

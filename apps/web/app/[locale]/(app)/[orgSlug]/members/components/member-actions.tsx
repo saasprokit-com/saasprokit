@@ -43,7 +43,7 @@ import {
   transferOwnershipAction,
 } from "../actions";
 import type { MemberPermissions } from "../utils";
-import type { Member } from "./columns";
+import type { Member } from "./members-columns";
 
 interface MemberActionsProps {
   currentUserId: string;

@@ -50,14 +50,6 @@ import {
   updateRoleSchema,
 } from "./schemas";
 
-// ============================================================================
-// Helpers
-// ============================================================================
-
-/**
- * Diagnose why an atomic member update matched 0 rows.
- * Returns an i18n error code for use with `actionError()`.
- */
 async function diagnoseMemberUpdateFailure(
   memberId: string,
   organizationId: string,
@@ -87,10 +79,6 @@ async function diagnoseMemberUpdateFailure(
   }
   return operation === "suspension" ? "suspendMember" : "updateRole";
 }
-
-// ============================================================================
-// Actions
-// ============================================================================
 
 /**
  * Invite a new member to the organization
@@ -604,6 +592,9 @@ export async function bulkInviteAction(
     if (!caller) {
       return actionError("unauthorized");
     }
+
+    //
+    auth.api.hasPermission("");
 
     const memberCheck = await canOrgAddMember(validated.organizationId);
     if (!memberCheck.allowed) {

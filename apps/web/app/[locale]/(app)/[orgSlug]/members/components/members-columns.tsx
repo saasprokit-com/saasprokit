@@ -13,26 +13,10 @@ import type { ActionErrorMessages } from "@repo/internationalization";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
 import { Crown, Shield, User } from "lucide-react";
+import type { Member } from "../queries";
 import type { MemberPermissions } from "../utils";
 import { MemberActions } from "./member-actions";
 import { RoleSelector } from "./role-selector";
-
-export interface Member {
-  createdAt: Date;
-  id: string;
-  role: OrgRoleName;
-  suspendedAt: Date | null;
-  suspendedBy: string | null;
-  suspendReason: string | null;
-  user: {
-    id: string;
-    name: string | null;
-    email: string | null;
-    image: string | null;
-    lastActiveAt: Date | null;
-  };
-  userId: string;
-}
 
 export const roleFilterOptions = [
   { label: "Owner", value: ORG_ROLES.OWNER, icon: Crown },
@@ -52,7 +36,7 @@ export function getColumns({
   errors,
   organizationId,
   permissions,
-}: GetColumnsParams): ColumnDef<Member>[] {
+}: GetColumnsParams) {
   const columns: ColumnDef<Member>[] = [];
 
   // Add select column if user can remove members
@@ -98,14 +82,14 @@ export function getColumns({
     cell: ({ row }) => {
       const member = row.original;
       const isSuspended = !!member.suspendedAt;
-      const initials = member.user.name
+      const initials = member?.user?.name
         ? member.user.name
             .split(" ")
             .map((n) => n[0])
             .join("")
             .toUpperCase()
             .slice(0, 2)
-        : (member.user.email?.slice(0, 2).toUpperCase() ?? "??");
+        : (member.user.email?.slice(0, 2).toUpperCase() ?? "");
 
       return (
         <div className="flex items-center gap-3">
@@ -161,7 +145,7 @@ export function getColumns({
       return (
         <RoleSelector
           canUpdateRole={permissions.canUpdateRole}
-          currentRole={member.role}
+          currentRole={member.role as OrgRoleName}
           errors={errors}
           isOwner={isOwner}
           isSelf={isSelf}

@@ -13,26 +13,23 @@ import {
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { flexRender } from "@tanstack/react-table";
 import { use, useMemo } from "react";
-
 import { useDataTable } from "@/hooks/use-data-table";
+import type { GetListPayload } from "@/types/queries";
+import type { Member } from "../queries";
 import type { MemberPermissions } from "../utils";
-import { getColumns, type Member, roleFilterOptions } from "./columns";
+import { getColumns, roleFilterOptions } from "./members-columns";
 import { MembersToolbar } from "./members-toolbar";
 
 interface MembersTableProps {
   currentUserId: string;
   errors: ActionErrorMessages;
-  membersPromise: Promise<{
-    members: Member[];
-    totalCount: number;
-    pageCount: number;
-  }>;
+  membersPromise: Promise<GetListPayload<Member>>;
   organizationId: string;
   permissions: MemberPermissions;
 }
 
 const filterFields = [
-  { id: "user", urlKey: "search", type: "string" as const },
+  { id: "user", urlKey: "q", type: "string" as const },
   { id: "role", urlKey: "role", type: "array" as const },
 ];
 
@@ -43,7 +40,7 @@ export function MembersTable({
   organizationId,
   permissions,
 }: MembersTableProps) {
-  const { members, pageCount } = use(membersPromise);
+  const { data: members, totalPage } = use(membersPromise);
 
   const columns = useMemo(
     () => getColumns({ currentUserId, errors, organizationId, permissions }),
@@ -53,7 +50,7 @@ export function MembersTable({
   const { table } = useDataTable({
     data: members,
     columns,
-    pageCount,
+    pageCount: totalPage || 1,
     filterFields,
     enableRowSelection: (row: Member) =>
       row.role !== ORG_ROLES.OWNER && row.userId !== currentUserId,

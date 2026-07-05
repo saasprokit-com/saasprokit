@@ -7,15 +7,15 @@ import { getMembers } from "./queries";
 import { getMemberPermissions } from "./utils";
 import { membersSearchParamsCache } from "./validations";
 
-interface OrgMembersPageProps {
+interface MembersPageProps {
   params: Promise<{ locale: string; orgSlug: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-export default async function OrgMembersPage({
+export default async function MembersPage({
   params,
   searchParams,
-}: OrgMembersPageProps) {
+}: MembersPageProps) {
   const [{ locale, orgSlug }, resolvedSearchParams] = await Promise.all([
     params,
     searchParams,

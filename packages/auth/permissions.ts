@@ -3,9 +3,6 @@ import { createAccessControl } from "better-auth/plugins/access";
 import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
 import { defaultStatements as orgDefaultStatements } from "better-auth/plugins/organization/access";
 
-/**
- * Admin role name constants - used for platform-level role assignments
- */
 export const ADMIN_ROLES = {
   ADMIN: "admin",
   MODERATOR: "moderator",
@@ -14,9 +11,6 @@ export const ADMIN_ROLES = {
 
 export type AdminRoleName = (typeof ADMIN_ROLES)[keyof typeof ADMIN_ROLES];
 
-/**
- * Organization role constants - used for org membership role checks
- */
 export const ORG_ROLES = {
   OWNER: "owner",
   ADMIN: "admin",

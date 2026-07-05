@@ -1,12 +1,11 @@
 import "server-only";
+
 import type { OrgRoleName } from "@repo/auth/permissions";
 import { database, type Prisma } from "@repo/database";
 import { INVITATION_STATUS } from "@repo/utils/organization";
+import type { GetListPayload } from "@/types/queries";
 import type { MembersSearchParams } from "./validations";
 
-/**
- * Get lightweight counts for the members layout nav badges.
- */
 export async function getMembersLayoutCounts(organizationId: string) {
   const [memberCount, pendingInvitationCount, activeInviteLinkCount] =
     await Promise.all([
@@ -22,7 +21,7 @@ export async function getMembersLayoutCounts(organizationId: string) {
   return { memberCount, pendingInvitationCount, activeInviteLinkCount };
 }
 
-const memberSelect = {
+const listMemberSelect = {
   id: true,
   role: true,
   createdAt: true,
@@ -41,20 +40,24 @@ const memberSelect = {
   },
 } satisfies Prisma.MemberSelect;
 
-type GetMembersInput = MembersSearchParams & {
+export type Member = Prisma.MemberGetPayload<{
+  select: typeof listMemberSelect;
+}>;
+
+export type ListMembersType = MembersSearchParams & {
   organizationId: string;
 };
 
 export async function getMembers({
   organizationId,
   page,
-  perPage,
-  sort,
-  search,
-  role,
-}: GetMembersInput) {
-  const skip = (page - 1) * perPage;
-  const take = perPage;
+  limit,
+  sorts,
+  q,
+  roles,
+}: ListMembersType): Promise<GetListPayload<Member>> {
+  const skip = (page - 1) * limit;
+  const take = limit;
 
   // Build where clause
   const where: Prisma.MemberWhereInput = {
@@ -62,27 +65,27 @@ export async function getMembers({
   };
 
   // Search filter (name or email, case-insensitive)
-  if (search) {
+  if (q) {
     where.user = {
       OR: [
-        { name: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
+        { name: { contains: q, mode: "insensitive" } },
+        { email: { contains: q, mode: "insensitive" } },
       ],
     };
   }
 
   // Role filter
-  if (role.length > 0) {
-    where.role = { in: role };
+  if (roles.length > 0) {
+    where.role = { in: roles };
   }
 
   // Build orderBy from sort state
-  const orderBy = buildOrderBy(sort);
+  const orderBy = buildOrderBy(sorts);
 
-  const [members, totalCount] = await Promise.all([
+  const [members, total] = await Promise.all([
     database.member.findMany({
       where,
-      select: memberSelect,
+      select: listMemberSelect,
       skip,
       take,
       orderBy,
@@ -90,51 +93,73 @@ export async function getMembers({
     database.member.count({ where }),
   ]);
 
-  const pageCount = Math.ceil(totalCount / perPage);
-
   return {
-    members: members.map((m) => ({
+    data: members.map((m) => ({
       ...m,
       role: m.role as OrgRoleName,
     })),
-    totalCount,
-    pageCount,
+    total,
+    page,
+    limit,
+    totalPage: Math.ceil(total / limit),
   };
 }
 
 function buildOrderBy(
-  sort: MembersSearchParams["sort"]
-):
-  | Prisma.MemberOrderByWithRelationInput
-  | Prisma.MemberOrderByWithRelationInput[] {
+  sort: MembersSearchParams["sorts"]
+): Prisma.MemberOrderByWithRelationInput {
   if (sort.length === 0) {
     return { createdAt: "asc" };
   }
 
-  return sort.map((s) => {
+  const memberOrderByWithRelationInput: Prisma.MemberOrderByWithRelationInput =
+    {};
+
+  sort.map((s) => {
     const direction = s.desc ? "desc" : "asc";
 
     switch (s.id) {
       case "user":
         return {
-          user: { name: direction },
-        } as Prisma.MemberOrderByWithRelationInput;
+          ...memberOrderByWithRelationInput,
+          user: {
+            ...memberOrderByWithRelationInput?.user,
+            name: direction,
+          },
+        };
       case "email":
         return {
-          user: { email: direction },
-        } as Prisma.MemberOrderByWithRelationInput;
+          ...memberOrderByWithRelationInput,
+          user: {
+            ...memberOrderByWithRelationInput?.user,
+            email: direction,
+          },
+        };
       case "lastActiveAt":
         return {
-          user: { lastActiveAt: direction },
-        } as Prisma.MemberOrderByWithRelationInput;
+          ...memberOrderByWithRelationInput,
+          user: {
+            ...memberOrderByWithRelationInput?.user,
+            email: direction,
+          },
+        };
       case "role":
-        return { role: direction } as Prisma.MemberOrderByWithRelationInput;
+        return {
+          ...memberOrderByWithRelationInput,
+          user: {
+            ...memberOrderByWithRelationInput?.user,
+            email: direction,
+          },
+        };
       case "createdAt":
         return {
+          ...memberOrderByWithRelationInput,
           createdAt: direction,
-        } as Prisma.MemberOrderByWithRelationInput;
+        };
       default:
-        return { createdAt: "asc" } as Prisma.MemberOrderByWithRelationInput;
+        return { createdAt: "asc" };
     }
   });
+
+  return memberOrderByWithRelationInput;
 }

@@ -11,10 +11,10 @@ import { X } from "lucide-react";
 import { type ComponentType, useEffect, useState } from "react";
 
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
+import type { Member } from "../queries";
 import type { MemberPermissions } from "../utils";
 import { SEARCH_DEBOUNCE_MS } from "../utils";
 import { BulkInviteDialog } from "./bulk-invite-dialog";
-import type { Member } from "./columns";
 import { InviteMemberDialog } from "./invite-member-dialog";
 import { RemoveMembersDialog } from "./remove-members-dialog";
 

@@ -17,7 +17,7 @@ import { useParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { removeMembersAction } from "../actions";
-import type { Member } from "./columns";
+import type { Member } from "./members-columns";
 
 interface RemoveMembersDialogProps {
   errors: ActionErrorMessages;
