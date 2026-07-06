@@ -1,8 +1,7 @@
 import "server-only";
-
-import type { OrgRoleName } from "@repo/auth/permissions";
 import { database, type Prisma } from "@repo/database";
 import { INVITE_LINK_STATUS } from "@repo/utils/organization";
+import type { GetListPayload } from "@/types/queries";
 import type { InviteLinksSearchParams } from "./validations";
 
 const inviteLinkSelect = {
@@ -21,6 +20,10 @@ const inviteLinkSelect = {
   },
 } satisfies Prisma.InviteLinkSelect;
 
+export type InviteLink = Prisma.InviteLinkGetPayload<{
+  select: typeof inviteLinkSelect;
+}>;
+
 type GetInviteLinksInput = InviteLinksSearchParams & {
   organizationId: string;
 };
@@ -33,7 +36,7 @@ export async function getInviteLinks({
   search,
   role,
   status,
-}: GetInviteLinksInput) {
+}: GetInviteLinksInput): Promise<GetListPayload<InviteLink>> {
   const skip = (page - 1) * perPage;
   const take = perPage;
 
@@ -69,7 +72,7 @@ export async function getInviteLinks({
 
   const orderBy = buildOrderBy(sort);
 
-  const [inviteLinks, totalCount] = await Promise.all([
+  const [inviteLinks, total] = await Promise.all([
     database.inviteLink.findMany({
       where,
       select: inviteLinkSelect,
@@ -80,15 +83,13 @@ export async function getInviteLinks({
     database.inviteLink.count({ where }),
   ]);
 
-  const pageCount = Math.ceil(totalCount / perPage);
+  const totalPage = Math.ceil(total / perPage);
 
   return {
-    inviteLinks: inviteLinks.map((link) => ({
-      ...link,
-      role: link.role as OrgRoleName,
-    })),
-    totalCount,
-    pageCount,
+    data: inviteLinks,
+    total,
+    limit: perPage,
+    totalPage,
   };
 }
 

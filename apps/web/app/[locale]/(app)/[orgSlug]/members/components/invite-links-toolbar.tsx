@@ -32,8 +32,8 @@ import { toast } from "sonner";
 
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { createInviteLinkAction } from "../actions";
+import type { InviteLink } from "../invite-links/queries";
 import type { CreateInviteLinkInput } from "../schemas";
-import type { InviteLink } from "../utils";
 import { SEARCH_DEBOUNCE_MS } from "../utils";
 import { RevokeInviteLinksDialog } from "./revoke-invite-links-dialog";
 

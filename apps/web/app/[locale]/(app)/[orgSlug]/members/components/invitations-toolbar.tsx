@@ -11,7 +11,7 @@ import { X } from "lucide-react";
 import { type ComponentType, useEffect, useState } from "react";
 
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
-import type { Invitation } from "../utils";
+import type { Invitation } from "../invitations/queries";
 import { SEARCH_DEBOUNCE_MS } from "../utils";
 import { CancelInvitationsDialog } from "./cancel-invitations-dialog";
 

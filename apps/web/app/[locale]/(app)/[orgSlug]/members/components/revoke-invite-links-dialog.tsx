@@ -17,7 +17,7 @@ import { useParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { revokeInviteLinksAction } from "../actions";
-import type { InviteLink } from "../utils";
+import type { InviteLink } from "../invite-links/queries";
 import { TOKEN_PREVIEW_LENGTH } from "../utils";
 
 interface RevokeInviteLinksDialogProps {

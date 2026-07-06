@@ -18,7 +18,7 @@ import { useParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { cancelInvitationsAction } from "../actions";
-import type { Invitation } from "../utils";
+import type { Invitation } from "../invitations/queries";
 
 interface CancelInvitationsDialogProps {
   errors: ActionErrorMessages;

@@ -42,8 +42,8 @@ import {
   suspendMemberAction,
   transferOwnershipAction,
 } from "../actions";
+import type { Member } from "../queries";
 import type { MemberPermissions } from "../utils";
-import type { Member } from "./members-columns";
 
 interface MemberActionsProps {
   currentUserId: string;

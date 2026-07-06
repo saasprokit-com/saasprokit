@@ -11,7 +11,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
 import { Activity, Ban, Copy, Shield, User } from "lucide-react";
 import { toast } from "sonner";
-import type { InviteLink } from "../utils";
+import type { InviteLink } from "../invite-links/queries";
 import {
   isInviteLinkExpired,
   isInviteLinkMaxedOut,

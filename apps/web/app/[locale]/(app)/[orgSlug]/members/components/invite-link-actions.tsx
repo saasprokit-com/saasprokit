@@ -14,7 +14,7 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 
 import { revokeInviteLinkAction } from "../actions";
-import type { InviteLink } from "../utils";
+import type { InviteLink } from "../invite-links/queries";
 import { isInviteLinkExpired, isInviteLinkMaxedOut } from "../utils";
 
 interface InviteLinkActionsProps {

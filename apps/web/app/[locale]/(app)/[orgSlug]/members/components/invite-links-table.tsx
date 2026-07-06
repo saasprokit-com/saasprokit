@@ -12,9 +12,9 @@ import {
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { flexRender } from "@tanstack/react-table";
 import { use, useMemo } from "react";
-
 import { useDataTable } from "@/hooks/use-data-table";
-import type { InviteLink } from "../utils";
+import type { GetListPayload } from "@/types/queries";
+import type { InviteLink } from "../invite-links/queries";
 import {
   getInviteLinkColumns,
   inviteLinkRoleFilterOptions,
@@ -26,11 +26,7 @@ interface InviteLinksTableProps {
   baseUrl: string;
   canManage: boolean;
   errors: ActionErrorMessages;
-  inviteLinksPromise: Promise<{
-    inviteLinks: InviteLink[];
-    totalCount: number;
-    pageCount: number;
-  }>;
+  inviteLinksPromise: Promise<GetListPayload<InviteLink>>;
   organizationId: string;
 }
 
@@ -47,7 +43,7 @@ export function InviteLinksTable({
   baseUrl,
   canManage,
 }: InviteLinksTableProps) {
-  const { inviteLinks, pageCount } = use(inviteLinksPromise);
+  const { data, totalPage } = use(inviteLinksPromise);
 
   const columns = useMemo(
     () => getInviteLinkColumns({ errors, organizationId, baseUrl, canManage }),
@@ -55,9 +51,9 @@ export function InviteLinksTable({
   );
 
   const { table } = useDataTable({
-    data: inviteLinks,
+    data,
     columns,
-    pageCount,
+    pageCount: totalPage || 1,
     filterFields,
     enableRowSelection: (row: InviteLink) => row.isActive,
   });
