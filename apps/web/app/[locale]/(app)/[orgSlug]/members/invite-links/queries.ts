@@ -94,35 +94,20 @@ export async function getInviteLinks({
 
 function buildOrderBy(
   sort: InviteLinksSearchParams["sort"]
-):
-  | Prisma.InviteLinkOrderByWithRelationInput
-  | Prisma.InviteLinkOrderByWithRelationInput[] {
+): Prisma.InviteLinkOrderByWithRelationInput {
   if (sort.length === 0) {
     return { createdAt: "desc" };
   }
 
-  return sort.map((s) => {
-    const direction = s.desc ? "desc" : "asc";
+  return sort.reduce<Prisma.InviteLinkOrderByWithRelationInput>(
+    (inviteLinkOrders, s) => {
+      const direction = s.desc ? "desc" : "asc";
 
-    switch (s.id) {
-      case "role":
-        return { role: direction } as Prisma.InviteLinkOrderByWithRelationInput;
-      case "usedCount":
-        return {
-          usedCount: direction,
-        } as Prisma.InviteLinkOrderByWithRelationInput;
-      case "createdAt":
-        return {
-          createdAt: direction,
-        } as Prisma.InviteLinkOrderByWithRelationInput;
-      case "isActive":
-        return {
-          isActive: direction,
-        } as Prisma.InviteLinkOrderByWithRelationInput;
-      default:
-        return {
-          createdAt: "desc",
-        } as Prisma.InviteLinkOrderByWithRelationInput;
-    }
-  });
+      return {
+        ...inviteLinkOrders,
+        [s.id]: direction,
+      };
+    },
+    {}
+  );
 }

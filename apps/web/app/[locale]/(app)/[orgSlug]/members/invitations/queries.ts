@@ -1,8 +1,6 @@
 import "server-only";
-
-import type { OrgRoleName } from "@repo/auth/permissions";
 import { database, type Prisma } from "@repo/database";
-import type { InvitationStatusValue } from "@repo/utils/organization";
+import type { GetListPayload } from "@/types/queries";
 import type { InvitationsSearchParams } from "./validations";
 
 const invitationSelect = {
@@ -19,6 +17,10 @@ const invitationSelect = {
   },
 } satisfies Prisma.InvitationSelect;
 
+export type Invitation = Prisma.InvitationGetPayload<{
+  select: typeof invitationSelect;
+}>;
+
 type GetInvitationsInput = InvitationsSearchParams & {
   organizationId: string;
 };
@@ -31,7 +33,7 @@ export async function getInvitations({
   q,
   role,
   status,
-}: GetInvitationsInput) {
+}: GetInvitationsInput): Promise<GetListPayload<Invitation>> {
   const skip = (page - 1) * perPage;
   const take = perPage;
 
@@ -56,7 +58,7 @@ export async function getInvitations({
 
   const orderBy = buildOrderBy(sort);
 
-  const [invitations, totalCount] = await Promise.all([
+  const [invitations, total] = await Promise.all([
     database.invitation.findMany({
       where,
       select: invitationSelect,
@@ -67,20 +69,9 @@ export async function getInvitations({
     database.invitation.count({ where }),
   ]);
 
-  // Transform: rename user -> inviter, omit the raw `user` key, narrow role type
-  const transformedInvitations = invitations.map((inv) => {
-    const { user, ...rest } = inv;
-    return {
-      ...rest,
-      role: rest.role as OrgRoleName | null,
-      status: rest.status as InvitationStatusValue,
-      inviter: user,
-    };
-  });
+  const totalPage = Math.ceil(total / perPage);
 
-  const pageCount = Math.ceil(totalCount / perPage);
-
-  return { invitations: transformedInvitations, totalCount, pageCount };
+  return { data: invitations, total, totalPage, limit: perPage };
 }
 
 function buildOrderBy(

@@ -9,7 +9,7 @@ import { INVITATION_STATUS } from "@repo/utils/organization";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
 import { Ban, CheckCircle, Clock, Shield, User, XCircle } from "lucide-react";
-import type { Invitation } from "../utils";
+import type { Invitation } from "../invitations/queries";
 import { isInvitationExpired } from "../utils";
 import { InvitationActions } from "./invitation-actions";
 
@@ -35,13 +35,13 @@ export function getInvitationColumns({
   errors,
   organizationId,
   canManage,
-}: GetInvitationColumnsParams): ColumnDef<Invitation>[] {
+}: GetInvitationColumnsParams) {
   const columns: ColumnDef<Invitation>[] = [];
 
   // Add select column if user can manage invitations
   if (canManage) {
     columns.push({
-      id: "select",
+      id: "id",
       header: ({ table }) => (
         <Checkbox
           aria-label="Select all"
@@ -98,7 +98,7 @@ export function getInvitationColumns({
     header: "Invited By",
     cell: ({ row }) => (
       <span className="text-muted-foreground">
-        {row.original.inviter?.name ?? "Unknown"}
+        {row.original.user?.name ?? "Unknown"}
       </span>
     ),
     enableSorting: false,

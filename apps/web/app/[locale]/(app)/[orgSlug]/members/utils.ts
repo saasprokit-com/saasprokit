@@ -3,33 +3,6 @@ import {
   type OrgRoleName,
   orgRoleDefinitions,
 } from "@repo/auth/permissions";
-import type { InvitationStatusValue } from "@repo/utils/organization";
-
-export interface Invitation {
-  createdAt: Date;
-  email: string;
-  expiresAt: Date;
-  id: string;
-  inviter: {
-    name: string | null;
-  } | null;
-  role: OrgRoleName | null;
-  status: InvitationStatusValue;
-}
-
-export interface InviteLink {
-  createdAt: Date;
-  createdBy: {
-    name: string | null;
-  } | null;
-  expiresAt: Date | null;
-  id: string;
-  isActive: boolean;
-  maxUses: number | null;
-  role: OrgRoleName;
-  token: string;
-  usedCount: number;
-}
 
 export interface MemberPermissions {
   canInvite: boolean;

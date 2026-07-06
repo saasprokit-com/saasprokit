@@ -15,7 +15,8 @@ import { flexRender } from "@tanstack/react-table";
 import { use, useMemo } from "react";
 
 import { useDataTable } from "@/hooks/use-data-table";
-import type { Invitation } from "../utils";
+import type { GetListPayload } from "@/types/queries";
+import type { Invitation } from "../invitations/queries";
 import {
   getInvitationColumns,
   invitationRoleFilterOptions,
@@ -26,11 +27,7 @@ import { InvitationsToolbar } from "./invitations-toolbar";
 interface InvitationsTableProps {
   canManage: boolean;
   errors: ActionErrorMessages;
-  invitationsPromise: Promise<{
-    invitations: Invitation[];
-    totalCount: number;
-    pageCount: number;
-  }>;
+  invitationsPromise: Promise<GetListPayload<Invitation>>;
   organizationId: string;
 }
 
@@ -46,7 +43,7 @@ export function InvitationsTable({
   organizationId,
   canManage,
 }: InvitationsTableProps) {
-  const { invitations, pageCount } = use(invitationsPromise);
+  const { data, totalPage } = use(invitationsPromise);
 
   const columns = useMemo(
     () => getInvitationColumns({ errors, organizationId, canManage }),
@@ -54,9 +51,9 @@ export function InvitationsTable({
   );
 
   const { table } = useDataTable({
-    data: invitations,
+    data,
     columns,
-    pageCount,
+    pageCount: totalPage || 1,
     filterFields,
     enableRowSelection: (row: Invitation) =>
       row.status === INVITATION_STATUS.PENDING,
