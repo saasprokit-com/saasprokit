@@ -593,9 +593,6 @@ export async function bulkInviteAction(
       return actionError("unauthorized");
     }
 
-    //
-    auth.api.hasPermission("");
-
     const memberCheck = await canOrgAddMember(validated.organizationId);
     if (!memberCheck.allowed) {
       return actionError("memberLimitReached");

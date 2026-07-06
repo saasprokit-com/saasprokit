@@ -13,27 +13,17 @@ import { profileSchema } from "./schemas";
  * Email cannot be changed for security reasons
  */
 export async function updateProfileAction(formData: FormData) {
-  const logger = createRequestLogger({
-    action: "updateProfile",
-  });
-
   try {
     const { session, error } = await verifySession();
     if (error) {
       return error;
     }
 
-    const userLogger = logger.child({ userId: session.user.id });
-
     const rawName = formData.get("name") as string;
     const image = formData.get("image") as string | null;
 
     const parsed = profileSchema.safeParse({ name: rawName });
     if (!parsed.success) {
-      userLogger.warn(
-        { errors: parsed.error.flatten() },
-        "Invalid profile data"
-      );
       return actionError("nameTooShort");
     }
 
@@ -44,11 +34,9 @@ export async function updateProfileAction(formData: FormData) {
       try {
         const url = new URL(image);
         if (url.protocol !== "https:" && url.protocol !== "http:") {
-          userLogger.warn({ image }, "Invalid image URL protocol");
           return actionError("invalidImageUrl");
         }
       } catch {
-        userLogger.warn({ image }, "Invalid image URL format");
         return actionError("invalidImageUrl");
       }
     }
@@ -62,18 +50,11 @@ export async function updateProfileAction(formData: FormData) {
       },
     });
 
-    userLogger.info(
-      {
-        fieldsUpdated: { name: true, image: !!image },
-      },
-      "Profile updated successfully"
-    );
-
     await revalidateAccountPage("profile");
 
     return { success: true };
   } catch (error) {
-    return toActionError(error, { fallback: "updateProfile", logger });
+    return toActionError(error, { fallback: "updateProfile" });
   }
 }
 
