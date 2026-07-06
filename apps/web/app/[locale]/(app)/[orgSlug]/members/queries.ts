@@ -52,7 +52,7 @@ export async function getMembers({
   organizationId,
   page,
   limit,
-  sorts,
+  sort,
   q,
   roles,
 }: ListMembersType): Promise<GetListPayload<Member>> {
@@ -80,7 +80,8 @@ export async function getMembers({
   }
 
   // Build orderBy from sort state
-  const orderBy = buildOrderBy(sorts);
+  const orderBy = buildOrderBy(sort);
+  console.log(">>>", orderBy);
 
   const [members, total] = await Promise.all([
     database.member.findMany({
@@ -106,60 +107,44 @@ export async function getMembers({
 }
 
 function buildOrderBy(
-  sort: MembersSearchParams["sorts"]
+  sort: MembersSearchParams["sort"]
 ): Prisma.MemberOrderByWithRelationInput {
   if (sort.length === 0) {
     return { createdAt: "asc" };
   }
+  return sort.reduce<Prisma.MemberOrderByWithRelationInput>(
+    (accumulation, s) => {
+      const direction = s.desc ? "desc" : "asc";
 
-  const memberOrderByWithRelationInput: Prisma.MemberOrderByWithRelationInput =
-    {};
-
-  sort.map((s) => {
-    const direction = s.desc ? "desc" : "asc";
-
-    switch (s.id) {
-      case "user":
-        return {
-          ...memberOrderByWithRelationInput,
-          user: {
-            ...memberOrderByWithRelationInput?.user,
-            name: direction,
-          },
-        };
-      case "email":
-        return {
-          ...memberOrderByWithRelationInput,
-          user: {
-            ...memberOrderByWithRelationInput?.user,
-            email: direction,
-          },
-        };
-      case "lastActiveAt":
-        return {
-          ...memberOrderByWithRelationInput,
-          user: {
-            ...memberOrderByWithRelationInput?.user,
-            email: direction,
-          },
-        };
-      case "role":
-        return {
-          ...memberOrderByWithRelationInput,
-          user: {
-            ...memberOrderByWithRelationInput?.user,
-            email: direction,
-          },
-        };
-      case "createdAt":
-        return {
-          ...memberOrderByWithRelationInput,
-          createdAt: direction,
-        };
-      default:
-        return { createdAt: "asc" };
-    }
-  });
-
-  return memberOrderByWithRelationInput;
+      switch (s.id) {
+        case "user":
+          return {
+            ...accumulation,
+            user: {
+              ...accumulation.user,
+              name: direction,
+            },
+          };
+        case "email":
+          return {
+            ...accumulation,
+            user: {
+              ...accumulation.user,
+              email: direction,
+            },
+          };
+        case "role":
+          return {
+            ...accumulation,
+            role: direction,
+          };
+        default:
+          return {
+            ...accumulation,
+            createdAt: "asc",
+          };
+      }
+    },
+    {}
+  );
 }

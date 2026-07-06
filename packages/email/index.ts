@@ -430,13 +430,6 @@ export async function sendAccountDeletedEmail({
   return { success: true, messageId: result.messageId };
 }
 
-// ============================================================================
-// Organization Email Functions
-// ============================================================================
-
-/**
- * Send organization invitation email
- */
 export async function sendOrgInvitationEmail({
   email,
   inviterName,

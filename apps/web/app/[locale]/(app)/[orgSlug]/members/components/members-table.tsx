@@ -30,7 +30,7 @@ interface MembersTableProps {
 
 const filterFields = [
   { id: "user", urlKey: "q", type: "string" as const },
-  { id: "role", urlKey: "role", type: "array" as const },
+  { id: "role", urlKey: "roles", type: "array" as const },
 ];
 
 export function MembersTable({

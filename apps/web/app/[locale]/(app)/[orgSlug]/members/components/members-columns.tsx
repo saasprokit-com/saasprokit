@@ -104,7 +104,8 @@ export function getColumns({
             <span
               className={`font-medium ${isSuspended ? "text-muted-foreground line-through" : ""}`}
             >
-              {member.user.name ?? "Unknown"}
+              {(member.user.name || member?.user?.email.split("@")[0]) ??
+                "Unknown"}
             </span>
             {isSuspended && (
               <span className="text-destructive text-xs">Suspended</span>
