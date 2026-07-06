@@ -35,7 +35,7 @@ interface InvitationsTableProps {
 }
 
 const filterFields = [
-  { id: "email", urlKey: "search", type: "string" as const },
+  { id: "email", urlKey: "q", type: "string" as const },
   { id: "role", urlKey: "role", type: "array" as const },
   { id: "status", urlKey: "status", type: "array" as const },
 ];

@@ -51,13 +51,13 @@ export type ListMembersType = MembersSearchParams & {
 export async function getMembers({
   organizationId,
   page,
-  limit,
+  perPage,
   sort,
   q,
   roles,
 }: ListMembersType): Promise<GetListPayload<Member>> {
-  const skip = (page - 1) * limit;
-  const take = limit;
+  const skip = (page - 1) * perPage;
+  const take = perPage;
 
   // Build where clause
   const where: Prisma.MemberWhereInput = {
@@ -81,7 +81,6 @@ export async function getMembers({
 
   // Build orderBy from sort state
   const orderBy = buildOrderBy(sort);
-  console.log(">>>", orderBy);
 
   const [members, total] = await Promise.all([
     database.member.findMany({
@@ -101,8 +100,8 @@ export async function getMembers({
     })),
     total,
     page,
-    limit,
-    totalPage: Math.ceil(total / limit),
+    perPage,
+    totalPage: Math.ceil(total / perPage),
   };
 }
 
@@ -133,15 +132,10 @@ function buildOrderBy(
               email: direction,
             },
           };
-        case "role":
-          return {
-            ...accumulation,
-            role: direction,
-          };
         default:
           return {
             ...accumulation,
-            createdAt: "asc",
+            [s.id]: direction,
           };
       }
     },

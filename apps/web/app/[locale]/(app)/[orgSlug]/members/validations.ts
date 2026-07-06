@@ -8,7 +8,7 @@ import { sortingStateParser } from "@/lib/parsers";
 
 export const membersSearchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
-  limit: parseAsInteger.withDefault(10),
+  perPage: parseAsInteger.withDefault(10),
   sort: sortingStateParser.withDefault([]),
   q: parseAsString.withDefault(""),
   roles: parseAsArrayOf(parseAsString).withDefault([]),

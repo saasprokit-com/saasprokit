@@ -10,7 +10,7 @@ export const invitationsSearchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
   perPage: parseAsInteger.withDefault(10),
   sort: sortingStateParser.withDefault([]),
-  search: parseAsString.withDefault(""),
+  q: parseAsString.withDefault(""),
   role: parseAsArrayOf(parseAsString).withDefault([]),
   status: parseAsArrayOf(parseAsString).withDefault([]),
 });

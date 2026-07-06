@@ -28,7 +28,7 @@ export async function getInvitations({
   page,
   perPage,
   sort,
-  search,
+  q,
   role,
   status,
 }: GetInvitationsInput) {
@@ -45,8 +45,8 @@ export async function getInvitations({
   }
 
   // Search filter (email, case-insensitive)
-  if (search) {
-    where.email = { contains: search, mode: "insensitive" };
+  if (q) {
+    where.email = { contains: q, mode: "insensitive" };
   }
 
   // Role filter
@@ -85,35 +85,20 @@ export async function getInvitations({
 
 function buildOrderBy(
   sort: InvitationsSearchParams["sort"]
-):
-  | Prisma.InvitationOrderByWithRelationInput
-  | Prisma.InvitationOrderByWithRelationInput[] {
+): Prisma.InvitationOrderByWithRelationInput {
   if (sort.length === 0) {
     return { createdAt: "desc" };
   }
 
-  return sort.map((s) => {
-    const direction = s.desc ? "desc" : "asc";
+  return sort.reduce<Prisma.InvitationOrderByWithRelationInput>(
+    (invitationOrder, s) => {
+      const direction = s.desc ? "desc" : "asc";
 
-    switch (s.id) {
-      case "email":
-        return {
-          email: direction,
-        } as Prisma.InvitationOrderByWithRelationInput;
-      case "role":
-        return { role: direction } as Prisma.InvitationOrderByWithRelationInput;
-      case "createdAt":
-        return {
-          createdAt: direction,
-        } as Prisma.InvitationOrderByWithRelationInput;
-      case "expiresAt":
-        return {
-          expiresAt: direction,
-        } as Prisma.InvitationOrderByWithRelationInput;
-      default:
-        return {
-          createdAt: "desc",
-        } as Prisma.InvitationOrderByWithRelationInput;
-    }
-  });
+      return {
+        ...invitationOrder,
+        [s.id]: direction,
+      };
+    },
+    {}
+  );
 }
