@@ -1,9 +1,9 @@
+import { TableSkeleton } from "@repo/design-system/components/data-table/table-skeleton";
 import { getDictionary } from "@repo/internationalization";
 import { Suspense } from "react";
 import { env } from "@/lib/env";
 import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
 import { InviteLinksTable } from "../components/invite-links-table";
-import { InviteLinksTableSkeleton } from "../components/invite-links-table-skeleton";
 import { getMemberPermissions } from "../utils";
 import { getInviteLinks } from "./queries";
 import { inviteLinksSearchParamsCache } from "./validations";
@@ -36,7 +36,7 @@ export default async function InviteLinksPage({
   const permissions = getMemberPermissions(orgContext.role);
 
   return (
-    <Suspense fallback={<InviteLinksTableSkeleton />}>
+    <Suspense fallback={<TableSkeleton />}>
       <InviteLinksTable
         baseUrl={env.BETTER_AUTH_URL}
         canManage={permissions.canManageInviteLinks}

@@ -1,8 +1,8 @@
+import { TableSkeleton } from "@repo/design-system/components/data-table/table-skeleton";
 import { getDictionary } from "@repo/internationalization";
 import { Suspense } from "react";
 import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
 import { MembersTable } from "./components/members-table";
-import { MembersTableSkeleton } from "./components/members-table-skeleton";
 import { getMembers } from "./queries";
 import { getMemberPermissions } from "./utils";
 import { membersSearchParamsCache } from "./validations";
@@ -35,7 +35,7 @@ export default async function MembersPage({
   const permissions = getMemberPermissions(orgContext.role);
 
   return (
-    <Suspense fallback={<MembersTableSkeleton />}>
+    <Suspense fallback={<TableSkeleton />}>
       <MembersTable
         currentUserId={orgContext.userId}
         errors={dict.errors.action}

@@ -1,8 +1,8 @@
+import { TableSkeleton } from "@repo/design-system/components/data-table/table-skeleton";
 import { getDictionary } from "@repo/internationalization";
 import { Suspense } from "react";
 import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
 import { InvitationsTable } from "../components/invitations-table";
-import { InvitationsTableSkeleton } from "../components/invitations-table-skeleton";
 import { getMemberPermissions } from "../utils";
 import { getInvitations } from "./queries";
 import { invitationsSearchParamsCache } from "./validations";
@@ -35,7 +35,7 @@ export default async function InvitationsPage({
   const permissions = getMemberPermissions(orgContext.role);
 
   return (
-    <Suspense fallback={<InvitationsTableSkeleton />}>
+    <Suspense fallback={<TableSkeleton />}>
       <InvitationsTable
         canManage={permissions.canManageInvitations}
         errors={dict.errors.action}
