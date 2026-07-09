@@ -100,7 +100,7 @@ export async function getMembers({
     })),
     total,
     page,
-    perPage,
+    limit: perPage,
     totalPage: Math.ceil(total / perPage),
   };
 }

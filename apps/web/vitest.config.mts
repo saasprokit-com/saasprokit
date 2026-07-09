@@ -6,6 +6,8 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: "jsdom",
+    // Unit tests only — e2e/**/*.spec.ts files are Playwright specs
+    include: ["**/*.test.{ts,tsx}"],
   },
   resolve: {
     alias: {

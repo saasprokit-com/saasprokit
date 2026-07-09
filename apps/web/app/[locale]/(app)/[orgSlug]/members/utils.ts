@@ -3,6 +3,7 @@ import {
   type OrgRoleName,
   orgRoleDefinitions,
 } from "@repo/auth/permissions";
+import type { InviteLink } from "@repo/database";
 
 export interface MemberPermissions {
   canInvite: boolean;

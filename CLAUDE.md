@@ -26,7 +26,7 @@ pnpm fix                      # Auto-fix lint issues
 pnpm --filter app typecheck   # Type check web app
 
 # Testing (details: project-testing skill)
-pnpm test                     # All unit tests (only @repo/auth + @repo/payment have test scripts)
+pnpm test                     # All unit tests via turbo (@repo/auth, @repo/payment, app)
 pnpm --filter app test:e2e    # Playwright E2E tests
 
 # Database (details: project-data-access skill)
@@ -34,6 +34,9 @@ pnpm migrate                  # Format, generate, and push Prisma schema
 
 # Local infra (details: project-env-setup skill)
 docker compose up postgres maildev   # DB + mail catcher (recommended for app dev)
+
+# i18n
+pnpm --filter internationalization translate   # Machine-translate locale files via languine
 ```
 
 ## Monorepo Structure
@@ -67,6 +70,10 @@ Detailed architecture docs live as skills in `.claude/skills/project-*/SKILL.md`
 ### Linting & Formatting
 
 **Biome** (`biome.jsonc`) extends `ultracite/core`, `ultracite/react`, `ultracite/next`. Test files are excluded from linting; `noBarrelFile` and `noNonNullAssertion` are disabled; design system `ui/`, `lib/`, `hooks/` directories are excluded.
+
+### Design System
+
+`DESIGN.md` (repo root) is the source of truth for the marketing/homepage UI — shadcn `new-york`/`neutral` foundation, OKLCH tokens, typography scale, and a decisions log. Read it before touching homepage sections or `packages/design-system` tokens.
 
 ## Skills & Plugins
 
