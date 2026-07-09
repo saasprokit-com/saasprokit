@@ -57,6 +57,7 @@ saasprokit/
 4. Install dependencies: `pnpm install`
 5. Run database migrations: `pnpm migrate`
 6. Start development: `pnpm dev`
+7. (Optional) Install AI coding-assistant skills: `pnpm skills:install` — requires `git`; not run automatically on `pnpm install`
 
 ### Development
 

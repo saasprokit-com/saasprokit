@@ -262,10 +262,12 @@ $RECYCLE.BIN/
 .cursorrules
 .github/copilot-instructions.md
 
-# AI Skills — regenerated from skills-lock.json via `skills` CLI on pnpm install.
-# Only the lockfile is tracked; skill content is downloaded on install.
+# AI Skills — restored from skills-lock.json via `pnpm skills:install`.
+# Only the lockfile is tracked; skill content is downloaded on demand.
+# Exception: .claude/skills/project-* are project-owned skills tracked in git.
 .agents/skills/
-.claude/skills/
+.claude/skills/*
+!.claude/skills/project-*/
 .continue/skills/
 .windsurf/skills/
 
