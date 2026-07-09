@@ -100,15 +100,11 @@ function buildOrderBy(
     return { createdAt: "desc" };
   }
 
-  return sort.reduce<Prisma.InviteLinkOrderByWithRelationInput>(
-    (inviteLinkOrders, s) => {
-      const direction = s.desc ? "desc" : "asc";
-
-      return {
-        ...inviteLinkOrders,
-        [s.id]: direction,
-      };
-    },
-    {}
-  );
+  const orderBy: Prisma.InviteLinkOrderByWithRelationInput = {};
+  for (const s of sort) {
+    (orderBy as Record<string, Prisma.SortOrder>)[s.id] = s.desc
+      ? "desc"
+      : "asc";
+  }
+  return orderBy;
 }

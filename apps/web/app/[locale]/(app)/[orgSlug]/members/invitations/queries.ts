@@ -81,15 +81,11 @@ function buildOrderBy(
     return { createdAt: "desc" };
   }
 
-  return sort.reduce<Prisma.InvitationOrderByWithRelationInput>(
-    (invitationOrder, s) => {
-      const direction = s.desc ? "desc" : "asc";
-
-      return {
-        ...invitationOrder,
-        [s.id]: direction,
-      };
-    },
-    {}
-  );
+  const orderBy: Prisma.InvitationOrderByWithRelationInput = {};
+  for (const s of sort) {
+    (orderBy as Record<string, Prisma.SortOrder>)[s.id] = s.desc
+      ? "desc"
+      : "asc";
+  }
+  return orderBy;
 }

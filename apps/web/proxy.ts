@@ -109,7 +109,6 @@ export async function proxy(request: NextRequest) {
     // Return i18n response (may have modified headers for locale)
     return applyNonceCsp(i18nResponse);
   } catch (error) {
-    // biome-ignore lint/suspicious/noConsole: Intentional error logging for proxy auth failures
     console.error("[proxy] Session check failed:", error);
     // Fail closed: deny access on protected routes when auth check fails
     if (!(isPublicRoute || isAuthRoute)) {

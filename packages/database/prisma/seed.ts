@@ -11,7 +11,6 @@ import { hashPassword } from "better-auth/crypto";
 import { PrismaClient } from "../generated/client/client";
 
 if (process.env.NODE_ENV === "production") {
-  // biome-ignore lint/suspicious/noConsole: seed script output
   console.error("Seed script cannot run in production environment.");
   process.exit(1);
 }
@@ -24,21 +23,18 @@ async function main() {
   // Clean all tables in FK-safe order (leaf → root)
   // Team tables may not exist yet if schema hasn't been fully pushed
   await prisma.teamMember.deleteMany().catch((error: unknown) => {
-    // biome-ignore lint/suspicious/noConsole: seed script output
     console.warn(
       "Skipping teamMember cleanup:",
       error instanceof Error ? error.message : error
     );
   });
   await prisma.team.deleteMany().catch((error: unknown) => {
-    // biome-ignore lint/suspicious/noConsole: seed script output
     console.warn(
       "Skipping team cleanup:",
       error instanceof Error ? error.message : error
     );
   });
   await prisma.inviteLink.deleteMany().catch((error: unknown) => {
-    // biome-ignore lint/suspicious/noConsole: seed script output
     console.warn(
       "Skipping inviteLink cleanup:",
       error instanceof Error ? error.message : error
@@ -503,7 +499,6 @@ async function main() {
 
 main()
   .catch((error: unknown) => {
-    // biome-ignore lint/suspicious/noConsole: seed script output
     console.error("Seed failed:", error);
     process.exit(1);
   })
