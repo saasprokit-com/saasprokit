@@ -1,4 +1,7 @@
 {
+  "attribution": {
+    "commit": ""
+  },
   "permissions": {
     "allow": [
       "Bash(pnpm install:*)",
@@ -94,15 +97,19 @@
       "WebFetch(domain:www.premieroctet.com)",
       "mcp__plugin_context7_context7__resolve-library-id",
       "mcp__plugin_context7_context7__query-docs",
-      "WebFetch(domain:html.spec.whatwg.org)"
+      "WebFetch(domain:html.spec.whatwg.org)",
+      "Bash(pnpm store *)",
+      "Bash(pnpm config *)",
+      "Bash(git check-ignore *)",
+      "Bash(echo \"=== device of project ===\" && stat -f \"%d  %Sd\" /Users/luannguyen/Documents/project/saasprokit; echo \"=== device of global store ===\" && stat -f \"%d  %Sd\" /Users/luannguyen/Library/pnpm/store 2>/dev/null; echo \"=== node_modules/.pnpm exists? ===\" && ls -d node_modules/.pnpm 2>/dev/null | head -1; echo \"=== is .pnpm-store referenced in any config ===\" && grep -rn \"pnpm-store\" .npmrc pnpm-workspace.yaml package.json 2>/dev/null || echo \"no config references\")",
+      "Read(//Users/luannguyen/Library/pnpm/store/**)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.scripts,null,2\\)\\); console.log\\('--- pnpm.onlyBuiltDependencies / hooks ---'\\); console.log\\(JSON.stringify\\(p.pnpm||{},null,2\\)\\)\")"
     ],
     "deny": [],
     "ask": []
   },
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": ["shadcn"],
-  "attribution": {
-    "commit": "",
-    "pullRequest": ""
-  }
+  "enabledMcpjsonServers": [
+    "shadcn"
+  ]
 }

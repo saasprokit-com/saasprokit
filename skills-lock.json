@@ -71,19 +71,19 @@
       "source": "shadcn/ui",
       "sourceType": "github",
       "skillPath": "skills/shadcn/SKILL.md",
-      "computedHash": "ac9d0d69caac7de1d1e5647f3db3bcd2f13af355d6b3a78780fbf7fc80e8dca0"
+      "computedHash": "d81caa0f86aabab65b25e302d454f23a3328760386ed9078345584c0d5c8058e"
     },
     "stripe-best-practices": {
       "source": "stripe/ai",
       "sourceType": "github",
       "skillPath": "skills/stripe-best-practices/SKILL.md",
-      "computedHash": "742352fa4f1d3305157cf03d9c7b74bb8a389f5875215bcc7651632ba45408e9"
+      "computedHash": "7ff3b3441a1b1396584f85c3c7304ca4c28f2af5622a1932a046c86739063fd3"
     },
     "turborepo": {
       "source": "vercel/turborepo",
       "sourceType": "github",
       "skillPath": "skills/turborepo/SKILL.md",
-      "computedHash": "b7c3165ae67a2892d6195a5b2cba15c8d96341f5c64ddd0d3ce4225c94a2ae83"
+      "computedHash": "0910fe833567b2ebe6743d6a76e1b4220b7a78e338b0cc4e8779a0da49dd9484"
     },
     "two-factor-authentication-best-practices": {
       "source": "better-auth/skills",
@@ -95,7 +95,7 @@
       "source": "stripe/ai",
       "sourceType": "github",
       "skillPath": "skills/upgrade-stripe/SKILL.md",
-      "computedHash": "3c8e84384380ba9d90ed0d9f323495baedcaf0a44d8445b51381f821cb9dcaf3"
+      "computedHash": "46bb3c16878f93b953ed901b950686d64f04f90c67400bf31e1a0d7790d889df"
     },
     "vercel-cli-with-tokens": {
       "source": "vercel-labs/agent-skills",
