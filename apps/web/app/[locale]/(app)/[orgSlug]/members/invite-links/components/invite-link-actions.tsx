@@ -8,64 +8,57 @@ import {
   DropdownMenuTrigger,
 } from "@repo/design-system/components/ui/dropdown-menu";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { INVITATION_STATUS } from "@repo/utils/organization";
-import { MoreHorizontal, RefreshCw, Trash2 } from "lucide-react";
+import { Copy, MoreHorizontal, Trash2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { isInviteLinkExpired, isInviteLinkMaxedOut } from "../../utils";
+import { revokeInviteLinkAction } from "../actions";
+import type { InviteLink } from "../queries";
 
-import { cancelInvitationAction, resendInvitationAction } from "../actions";
-import type { Invitation } from "../invitations/queries";
-
-interface InvitationActionsProps {
+interface InviteLinkActionsProps {
+  baseUrl: string;
   errors: ActionErrorMessages;
-  invitation: Invitation;
+  inviteLink: InviteLink;
   organizationId: string;
 }
 
-export function InvitationActions({
+export function InviteLinkActions({
   errors,
-  invitation,
+  inviteLink,
   organizationId,
-}: InvitationActionsProps) {
+  baseUrl,
+}: InviteLinkActionsProps) {
   const { orgSlug } = useParams<{ orgSlug: string }>();
   const [isPending, startTransition] = useTransition();
 
-  if (invitation.status !== INVITATION_STATUS.PENDING) {
+  // Only show actions for active, non-expired, non-maxed links
+  if (
+    !inviteLink.isActive ||
+    isInviteLinkExpired(inviteLink.expiresAt) ||
+    isInviteLinkMaxedOut(inviteLink)
+  ) {
     return null;
   }
 
-  const handleResend = () => {
-    startTransition(async () => {
-      try {
-        const result = await resendInvitationAction({
-          invitationId: invitation.id,
-          organizationId,
-          orgSlug,
-        });
-        if (result.success) {
-          toast.success("Invitation resent successfully");
-        } else {
-          toast.error(result.error || errors.resendInvitation);
-        }
-      } catch {
-        toast.error("An error occurred");
-      }
-    });
+  const handleCopy = async () => {
+    const url = `${baseUrl}/invite/${inviteLink.token}`;
+    await navigator.clipboard.writeText(url);
+    toast.success("Link copied to clipboard");
   };
 
-  const handleCancel = () => {
+  const handleRevoke = () => {
     startTransition(async () => {
       try {
-        const result = await cancelInvitationAction({
-          invitationId: invitation.id,
+        const result = await revokeInviteLinkAction({
+          inviteLinkId: inviteLink.id,
           organizationId,
           orgSlug,
         });
         if (result.success) {
-          toast.success("Invitation cancelled");
+          toast.success("Invite link revoked");
         } else {
-          toast.error(result.error || errors.cancelInvitation);
+          toast.error(result.error || errors.revokeInviteLink);
         }
       } catch {
         toast.error("An error occurred");
@@ -82,16 +75,16 @@ export function InvitationActions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleResend}>
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Resend invitation
+        <DropdownMenuItem onClick={handleCopy}>
+          <Copy className="mr-2 h-4 w-4" />
+          Copy link
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-destructive focus:text-destructive"
-          onClick={handleCancel}
+          onClick={handleRevoke}
         >
           <Trash2 className="mr-2 h-4 w-4" />
-          Cancel invitation
+          Revoke link
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

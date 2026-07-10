@@ -8,58 +8,64 @@ import {
   DropdownMenuTrigger,
 } from "@repo/design-system/components/ui/dropdown-menu";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { Copy, MoreHorizontal, Trash2 } from "lucide-react";
+import { INVITATION_STATUS } from "@repo/utils/organization";
+import { MoreHorizontal, RefreshCw, Trash2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
-import { revokeInviteLinkAction } from "../actions";
-import type { InviteLink } from "../invite-links/queries";
-import { isInviteLinkExpired, isInviteLinkMaxedOut } from "../utils";
+import { cancelInvitationAction, resendInvitationAction } from "../actions";
+import type { Invitation } from "../queries";
 
-interface InviteLinkActionsProps {
-  baseUrl: string;
+interface InvitationActionsProps {
   errors: ActionErrorMessages;
-  inviteLink: InviteLink;
+  invitation: Invitation;
   organizationId: string;
 }
 
-export function InviteLinkActions({
+export function InvitationActions({
   errors,
-  inviteLink,
+  invitation,
   organizationId,
-  baseUrl,
-}: InviteLinkActionsProps) {
+}: InvitationActionsProps) {
   const { orgSlug } = useParams<{ orgSlug: string }>();
   const [isPending, startTransition] = useTransition();
 
-  // Only show actions for active, non-expired, non-maxed links
-  if (
-    !inviteLink.isActive ||
-    isInviteLinkExpired(inviteLink.expiresAt) ||
-    isInviteLinkMaxedOut(inviteLink)
-  ) {
+  if (invitation.status !== INVITATION_STATUS.PENDING) {
     return null;
   }
 
-  const handleCopy = async () => {
-    const url = `${baseUrl}/invite/${inviteLink.token}`;
-    await navigator.clipboard.writeText(url);
-    toast.success("Link copied to clipboard");
-  };
-
-  const handleRevoke = () => {
+  const handleResend = () => {
     startTransition(async () => {
       try {
-        const result = await revokeInviteLinkAction({
-          inviteLinkId: inviteLink.id,
+        const result = await resendInvitationAction({
+          invitationId: invitation.id,
           organizationId,
           orgSlug,
         });
         if (result.success) {
-          toast.success("Invite link revoked");
+          toast.success("Invitation resent successfully");
         } else {
-          toast.error(result.error || errors.revokeInviteLink);
+          toast.error(result.error || errors.resendInvitation);
+        }
+      } catch {
+        toast.error("An error occurred");
+      }
+    });
+  };
+
+  const handleCancel = () => {
+    startTransition(async () => {
+      try {
+        const result = await cancelInvitationAction({
+          invitationId: invitation.id,
+          organizationId,
+          orgSlug,
+        });
+        if (result.success) {
+          toast.success("Invitation cancelled");
+        } else {
+          toast.error(result.error || errors.cancelInvitation);
         }
       } catch {
         toast.error("An error occurred");
@@ -76,16 +82,16 @@ export function InviteLinkActions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleCopy}>
-          <Copy className="mr-2 h-4 w-4" />
-          Copy link
+        <DropdownMenuItem onClick={handleResend}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Resend invitation
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-destructive focus:text-destructive"
-          onClick={handleRevoke}
+          onClick={handleCancel}
         >
           <Trash2 className="mr-2 h-4 w-4" />
-          Revoke link
+          Cancel invitation
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

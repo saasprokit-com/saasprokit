@@ -31,10 +31,10 @@ import { type ComponentType, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
+import { SEARCH_DEBOUNCE_MS } from "../../utils";
 import { createInviteLinkAction } from "../actions";
-import type { InviteLink } from "../invite-links/queries";
+import type { InviteLink } from "../queries";
 import type { CreateInviteLinkInput } from "../schemas";
-import { SEARCH_DEBOUNCE_MS } from "../utils";
 import { RevokeInviteLinksDialog } from "./revoke-invite-links-dialog";
 
 interface InviteLinksToolbarProps {

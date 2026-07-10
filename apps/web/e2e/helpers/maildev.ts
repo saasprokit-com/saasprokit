@@ -33,7 +33,7 @@ export interface MaildevEmail {
 
 /** Clear all emails from Maildev inbox */
 export async function clearInbox(): Promise<void> {
-  await fetch(`${MAILDEV_URL}/email/all`, {
+  await fetch(`${MAILDEV_URL}/api/email/all`, {
     method: "DELETE",
     headers: authHeaders(),
   });
@@ -41,11 +41,11 @@ export async function clearInbox(): Promise<void> {
 
 /** Get all emails from Maildev inbox */
 export async function getAllEmails(): Promise<MaildevEmail[]> {
-  const res = await fetch(`${MAILDEV_URL}/email`, {
+  const res = await fetch(`${MAILDEV_URL}/api/email`, {
     headers: authHeaders(),
   });
   if (!res.ok) {
-    throw new Error(`Maildev GET /email failed: ${res.status}`);
+    throw new Error(`Maildev GET /api/email failed: ${res.status}`);
   }
   return res.json();
 }
@@ -144,7 +144,7 @@ export async function waitForEmailLink(
 /** Check if Maildev is running and accessible */
 export async function isMaildevAvailable(): Promise<boolean> {
   try {
-    const res = await fetch(`${MAILDEV_URL}/email`, {
+    const res = await fetch(`${MAILDEV_URL}/api/email`, {
       headers: authHeaders(),
       signal: AbortSignal.timeout(AVAILABILITY_TIMEOUT_MS),
     });

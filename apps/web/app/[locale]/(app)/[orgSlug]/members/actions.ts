@@ -1,14 +1,11 @@
 "use server";
 
-import crypto from "node:crypto";
 import { ORG_ROLES } from "@repo/auth/permissions";
 import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
-import { MILLISECONDS_PER_DAY } from "@repo/utils/date";
 import {
   BULK_INVITE_CONCURRENCY,
   INVITATION_STATUS,
-  INVITE_TOKEN_BYTES,
 } from "@repo/utils/organization";
 import { headers } from "next/headers";
 import { verifySession } from "@/lib/auth/action-auth";
@@ -20,28 +17,17 @@ import {
 import { type ActionResult, checkOrgPermission } from "@/lib/auth/auth";
 import { mapBAError } from "@/lib/auth/ba-error";
 import { canOrgAddMember } from "@/lib/billing/subscription-queries";
-import { env } from "@/lib/env";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
 import { ORG_PAGES } from "@/lib/routes";
 import {
   type BulkInviteInput,
   bulkInviteSchema,
-  type CancelInvitationsInput,
-  type CreateInviteLinkInput,
-  cancelInvitationsSchema,
-  createInviteLinkSchema,
-  type InvitationIdInput,
-  type InviteLinkIdInput,
   type InviteMemberInput,
-  invitationIdSchema,
-  inviteLinkIdSchema,
   inviteMemberSchema,
   type ReactivateMemberInput,
   type RemoveMembersInput,
-  type RevokeInviteLinksInput,
   reactivateMemberSchema,
   removeMembersSchema,
-  revokeInviteLinksSchema,
   type SuspendMemberInput,
   suspendMemberSchema,
   type TransferOwnershipInput,
@@ -226,205 +212,6 @@ export async function updateMemberRoleAction(
     return { success: true };
   } catch (error) {
     return toActionError(error, { fallback: "updateRole" });
-  }
-}
-
-/**
- * Resend invitation email
- *
- * Uses BA's inviteMember with resend: true, which extends expiry
- * and re-triggers the sendInvitationEmail callback.
- */
-export async function resendInvitationAction(
-  input: InvitationIdInput
-): Promise<ActionResult> {
-  try {
-    const validated = invitationIdSchema.parse(input);
-
-    const caller = await checkOrgPermission(validated.organizationId, {
-      invitation: ["create"],
-    });
-    if (!caller) {
-      return actionError("unauthorized");
-    }
-
-    // Bridge: action receives invitationId, but BA needs email + role
-    const invitation = await database.invitation.findFirst({
-      where: {
-        id: validated.invitationId,
-        organizationId: validated.organizationId,
-        status: INVITATION_STATUS.PENDING,
-      },
-      select: { email: true, role: true },
-    });
-
-    if (!invitation) {
-      return actionError("notFound");
-    }
-
-    const roleValue = invitation.role || ORG_ROLES.MEMBER;
-    if (roleValue !== ORG_ROLES.ADMIN && roleValue !== ORG_ROLES.MEMBER) {
-      return actionError("invalidRole");
-    }
-
-    await auth.api.createInvitation({
-      body: {
-        email: invitation.email,
-        role: roleValue,
-        organizationId: validated.organizationId,
-        resend: true,
-      },
-      headers: await headers(),
-    });
-
-    await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
-    return { success: true };
-  } catch (error) {
-    return toActionError(error, {
-      fallback: "invalidInput",
-      baFallback: "resendInvitation",
-    });
-  }
-}
-
-/**
- * Cancel a pending invitation
- *
- * Delegates to BA's cancelInvitation API which handles permission checks.
- * Pre-checks pending status since BA doesn't validate status before canceling.
- */
-export async function cancelInvitationAction(
-  input: InvitationIdInput
-): Promise<ActionResult> {
-  try {
-    const validated = invitationIdSchema.parse(input);
-
-    const caller = await checkOrgPermission(validated.organizationId, {
-      invitation: ["cancel"],
-    });
-    if (!caller) {
-      return actionError("unauthorized");
-    }
-
-    // Pre-check: only cancel pending invitations
-    const invitation = await database.invitation.findFirst({
-      where: {
-        id: validated.invitationId,
-        organizationId: validated.organizationId,
-        status: INVITATION_STATUS.PENDING,
-      },
-      select: { id: true },
-    });
-
-    if (!invitation) {
-      return actionError("notFound");
-    }
-
-    await auth.api.cancelInvitation({
-      body: { invitationId: validated.invitationId },
-      headers: await headers(),
-    });
-
-    await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
-    return { success: true };
-  } catch (error) {
-    return toActionError(error, {
-      fallback: "invalidInput",
-      baFallback: "cancelInvitation",
-    });
-  }
-}
-
-/**
- * Cancel multiple pending invitations
- */
-export async function cancelInvitationsAction(
-  input: CancelInvitationsInput
-): Promise<ActionResult<{ cancelledCount: number; failedCount: number }>> {
-  try {
-    const validated = cancelInvitationsSchema.parse(input);
-
-    const caller = await checkOrgPermission(validated.organizationId, {
-      invitation: ["cancel"],
-    });
-    if (!caller) {
-      return actionError("unauthorized");
-    }
-
-    // Fetch only pending invitations that belong to this org
-    const pendingInvitations = await database.invitation.findMany({
-      where: {
-        id: { in: validated.invitationIds },
-        organizationId: validated.organizationId,
-        status: INVITATION_STATUS.PENDING,
-      },
-      select: { id: true },
-    });
-
-    if (pendingInvitations.length === 0) {
-      return actionError("noPendingInvitations");
-    }
-
-    const reqHeaders = await headers();
-
-    // Cancel each via BA API (handles status update + side effects)
-    const results = await Promise.allSettled(
-      pendingInvitations.map((inv) =>
-        auth.api.cancelInvitation({
-          body: { invitationId: inv.id },
-          headers: reqHeaders,
-        })
-      )
-    );
-
-    const cancelledCount = results.filter(
-      (r) => r.status === "fulfilled"
-    ).length;
-    const failedCount = results.length - cancelledCount;
-
-    await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
-    return { success: true, data: { cancelledCount, failedCount } };
-  } catch (error) {
-    return toActionError(error, {
-      fallback: "cancelInvitations",
-      baFallback: "cancelInvitation",
-    });
-  }
-}
-
-/**
- * Revoke multiple active invite links
- */
-export async function revokeInviteLinksAction(
-  input: RevokeInviteLinksInput
-): Promise<ActionResult<{ revokedCount: number }>> {
-  try {
-    const validated = revokeInviteLinksSchema.parse(input);
-
-    const caller = await checkOrgPermission(validated.organizationId, {
-      invitation: ["cancel"],
-    });
-    if (!caller) {
-      return actionError("unauthorized");
-    }
-
-    const result = await database.inviteLink.updateMany({
-      where: {
-        id: { in: validated.inviteLinkIds },
-        organizationId: validated.organizationId,
-        isActive: true,
-      },
-      data: { isActive: false },
-    });
-
-    if (result.count === 0) {
-      return actionError("noActiveInviteLinks");
-    }
-
-    await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
-    return { success: true, data: { revokedCount: result.count } };
-  } catch (error) {
-    return toActionError(error, { fallback: "revokeInviteLinks" });
   }
 }
 
@@ -711,87 +498,6 @@ export async function reactivateMemberAction(
     return { success: true };
   } catch (error) {
     return toActionError(error, { fallback: "reactivateMember" });
-  }
-}
-
-/**
- * Create a shareable invite link
- */
-export async function createInviteLinkAction(
-  input: CreateInviteLinkInput
-): Promise<ActionResult<{ token: string; url: string }>> {
-  try {
-    const validated = createInviteLinkSchema.parse(input);
-
-    const caller = await checkOrgPermission(validated.organizationId, {
-      invitation: ["create"],
-    });
-    if (!caller) {
-      return actionError("unauthorized");
-    }
-
-    const token = crypto.randomBytes(INVITE_TOKEN_BYTES).toString("hex");
-    const expiresAt = new Date(
-      Date.now() + validated.expiresInDays * MILLISECONDS_PER_DAY
-    );
-
-    await database.inviteLink.create({
-      data: {
-        organizationId: validated.organizationId,
-        token,
-        role: validated.role,
-        expiresAt,
-        maxUses: validated.maxUses || null,
-        createdById: caller.userId,
-      },
-    });
-
-    const url = `${env.BETTER_AUTH_URL}/invite/${token}`;
-
-    await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
-    return { success: true, data: { token, url } };
-  } catch (error) {
-    return toActionError(error, { fallback: "createInviteLink" });
-  }
-}
-
-/**
- * Revoke an invite link
- */
-export async function revokeInviteLinkAction(
-  input: InviteLinkIdInput
-): Promise<ActionResult> {
-  try {
-    const validated = inviteLinkIdSchema.parse(input);
-
-    const caller = await checkOrgPermission(validated.organizationId, {
-      invitation: ["cancel"],
-    });
-    if (!caller) {
-      return actionError("unauthorized");
-    }
-
-    const inviteLink = await database.inviteLink.findFirst({
-      where: {
-        id: validated.inviteLinkId,
-        organizationId: validated.organizationId,
-        isActive: true,
-      },
-    });
-
-    if (!inviteLink) {
-      return actionError("notFound");
-    }
-
-    await database.inviteLink.update({
-      where: { id: inviteLink.id },
-      data: { isActive: false },
-    });
-
-    await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
-    return { success: true };
-  } catch (error) {
-    return toActionError(error, { fallback: "revokeInviteLink" });
   }
 }
 

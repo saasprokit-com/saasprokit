@@ -9,8 +9,8 @@ import { INVITATION_STATUS } from "@repo/utils/organization";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
 import { Ban, CheckCircle, Clock, Shield, User, XCircle } from "lucide-react";
-import type { Invitation } from "../invitations/queries";
-import { isInvitationExpired } from "../utils";
+import { isInvitationExpired } from "../../utils";
+import type { Invitation } from "../queries";
 import { InvitationActions } from "./invitation-actions";
 
 export const invitationRoleFilterOptions = [

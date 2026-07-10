@@ -11,12 +11,12 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
 import { Activity, Ban, Copy, Shield, User } from "lucide-react";
 import { toast } from "sonner";
-import type { InviteLink } from "../invite-links/queries";
 import {
   isInviteLinkExpired,
   isInviteLinkMaxedOut,
   TOKEN_PREVIEW_LENGTH,
-} from "../utils";
+} from "../../utils";
+import type { InviteLink } from "../queries";
 import { InviteLinkActions } from "./invite-link-actions";
 
 export const inviteLinkRoleFilterOptions = [

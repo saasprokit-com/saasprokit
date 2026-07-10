@@ -3,8 +3,8 @@ import { getDictionary } from "@repo/internationalization";
 import { Suspense } from "react";
 import { env } from "@/lib/env";
 import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
-import { InviteLinksTable } from "../components/invite-links-table";
 import { getMemberPermissions } from "../utils";
+import { InviteLinksTable } from "./components/invite-links-table";
 import { getInviteLinks } from "./queries";
 import { inviteLinksSearchParamsCache } from "./validations";
 

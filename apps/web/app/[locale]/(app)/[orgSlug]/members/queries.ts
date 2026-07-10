@@ -2,24 +2,8 @@ import "server-only";
 
 import type { OrgRoleName } from "@repo/auth/permissions";
 import { database, type Prisma } from "@repo/database";
-import { INVITATION_STATUS } from "@repo/utils/organization";
 import type { GetListPayload } from "@/types/queries";
 import type { MembersSearchParams } from "./validations";
-
-export async function getMembersLayoutCounts(organizationId: string) {
-  const [memberCount, pendingInvitationCount, activeInviteLinkCount] =
-    await Promise.all([
-      database.member.count({ where: { organizationId } }),
-      database.invitation.count({
-        where: { organizationId, status: INVITATION_STATUS.PENDING },
-      }),
-      database.inviteLink.count({
-        where: { organizationId, isActive: true },
-      }),
-    ]);
-
-  return { memberCount, pendingInvitationCount, activeInviteLinkCount };
-}
 
 const listMemberSelect = {
   id: true,
