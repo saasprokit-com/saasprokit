@@ -83,7 +83,7 @@ Detailed architecture docs live as skills in the `saasprokit` plugin at `claude-
 **Vercel plugin** (`vercel@claude-plugins-official`) is installed and injects skills dynamically via hooks.
 
 **Agent Skills** come from two places:
-- `claude-plugin/skills/` — SaaSProKit-owned skills, tracked in git and shipped as the `saasprokit` plugin (see list above)
+- `claude-plugin/skills/` — SaaSProKit-owned skills, tracked in git and shipped as the `saasprokit` plugin (see list above). Also symlinked into `.agents/skills/` so other agents (Codex, etc.) discover the same skills; `AGENTS.md` at the repo root carries the equivalent guidance for those tools.
 - `.agents/skills/` — third-party skills managed by `skills-lock.json`, restored on demand via `pnpm skills:install` (Better Auth, Prisma, Stripe, Vercel/React, shadcn, Turborepo, web design). Not automatic on `pnpm install` — it shells out to `git`, which the Docker images lack. Update with `npx skills check` then `npx skills update`.
 
 **When the user requests a review**, read the relevant SKILL.md files before starting. For auth-related reviews, read the Better Auth skills. For database/schema reviews, read the Prisma skills.
