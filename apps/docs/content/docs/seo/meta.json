@@ -1,11 +1,5 @@
 {
-  "title": "SEO Checklist",
+  "title": "SEO",
   "icon": "Search",
-  "pages": [
-    "index",
-    "technical-seo",
-    "content",
-    "structured-data",
-    "trends-2026"
-  ]
+  "pages": ["index"]
 }

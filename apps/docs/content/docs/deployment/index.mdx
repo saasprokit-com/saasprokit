@@ -1,0 +1,72 @@
+---
+title: Deployment Overview
+description: Deploy the web app to Vercel or Cloudflare Workers — comparison, shared setup, and the verification checklist
+---
+
+The web app (`apps/web`) deploys to two tested targets. Pick one guide and follow it end to end:
+
+- **[Vercel](/docs/deployment/vercel)** — the recommended path. Zero code changes, native Next.js support.
+- **[Cloudflare Workers](/docs/deployment/cloudflare)** — the advanced path. Cheaper at scale, but requires code changes (Prisma driver adapter, S3-compatible storage) via the OpenNext adapter.
+
+## Choosing a platform
+
+| | Vercel | Cloudflare Workers |
+|---|---|---|
+| Code changes required | None | Prisma driver adapter, storage config |
+| Next.js 16 support | Native | Via `@opennextjs/cloudflare` |
+| Database access | Direct (Neon pooled) | Neon serverless driver over HTTP |
+| File uploads | S3 provider (serverless FS is ephemeral) | S3 provider (R2 or S3) |
+| Stripe webhooks | Works as-is | Requires async crypto verification (see guide) |
+| Effort | ~30 minutes | ~2–3 hours first time |
+
+## Shared prerequisites
+
+Both platforms need these accounts provisioned first:
+
+1. **Neon** (or any hosted Postgres) — copy the pooled connection string as `DATABASE_URL`
+2. **Stripe** — create the Pro and Enterprise products with monthly/annual prices; note the four `price_...` IDs
+3. **Resend** — verify your sending domain; note the API key
+4. **OAuth apps** (optional) — Google and GitHub apps; callback URLs are added post-deploy
+
+## Shared post-deploy configuration
+
+After either guide's deploy step:
+
+1. **Push the schema** — from your machine, with the production `DATABASE_URL` in `packages/database/.env`:
+
+   ```bash
+   cd packages/database && npx prisma db push
+   ```
+
+2. **Stripe webhook** — in the Stripe Dashboard, add an endpoint:
+
+   ```
+   https://yourdomain.com/api/auth/stripe/webhook
+   ```
+
+   Subscribe to `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`. Copy the signing secret into `STRIPE_WEBHOOK_SECRET` and redeploy.
+
+3. **OAuth callback URLs** — add to each provider:
+
+   ```
+   https://yourdomain.com/api/auth/callback/google
+   https://yourdomain.com/api/auth/callback/github
+   ```
+
+4. **Production URLs** — `NEXT_PUBLIC_APP_URL`, `BETTER_AUTH_URL`, and `BETTER_AUTH_TRUSTED_ORIGINS` must all match the final domain. `NEXT_PUBLIC_*` values are baked in at build time — changing them requires a rebuild, not just a restart.
+
+## Verification checklist
+
+Run this after every deploy, on both platforms:
+
+- [ ] `GET /api/health` returns OK (database + auth checks pass)
+- [ ] Sign up with email/password; verification email arrives via Resend
+- [ ] Magic link sign-in works
+- [ ] 2FA enrolment works (QR code renders, TOTP accepted)
+- [ ] Social sign-in works (if OAuth configured)
+- [ ] Create an organization; invite a member; the invite email arrives
+- [ ] Locale routing: `/vi/...` (or another locale) renders and redirects correctly
+- [ ] Middleware gating: signed-out visit to `/{orgSlug}/billing` redirects to sign-in with `callbackUrl`
+- [ ] Stripe test-mode checkout completes; the webhook deliveries show `200` in the Stripe Dashboard; the subscription appears on the billing page
+- [ ] File upload (avatar) succeeds and the file is served back
+- [ ] Response headers include `Content-Security-Policy` with a nonce

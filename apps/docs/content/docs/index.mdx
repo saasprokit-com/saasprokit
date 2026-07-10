@@ -15,181 +15,31 @@ A comprehensive, fully-featured SaaS foundation that includes:
 ✅ **Global multi-language support** with i18n
 ✅ **Modern tech stack** (Next.js 16, React 19, TypeScript, Tailwind CSS)
 ✅ **Production-ready** security, performance, and scalability
-✅ **Comprehensive documentation** and best practices
 
 ## Quick Navigation
 
 ### New? Start Here
 
 1. **[Getting Started](/docs/getting-started)** — Installation and setup in 5 minutes
-2. **[Requirements](/docs/getting-started/requirements)** — System and software requirements
-3. **[Project Structure](/docs/getting-started/structure)** — Understanding the codebase
+2. **[Project Structure](/docs/getting-started/structure)** — Understanding the codebase
 
 ### Building Your Product
 
 - **[Features](/docs/getting-started/features)** — Complete feature checklist
-- **[Project Goals](/docs/getting-started/project-goals)** — Vision and strategy
 
 ### Deployment & Infrastructure
 
-- **[Deployment Guide](/docs/getting-started/deployment)** — Deploy to production
+- **[Deployment Guide](/docs/deployment)** — Deploy to production (Vercel, Cloudflare Workers)
 - **[Database Design](/docs/database/database-design)** — Schema and data models
 
 ### Learn More
 
+- **[Authentication](/docs/authentication)** — Better Auth setup and flows
 - **[Database](/docs/database)** — Prisma schema overview
 - **[Payment](/docs/payment)** — Stripe billing integration
 - **[Testing](/docs/testing)** — E2E and unit test catalog
 - **[Email](/docs/email)** — Email templates and setup
 - **[SEO](/docs/seo)** — SEO checklist and optimization
-- **[Environment Variables](/docs/getting-started/environment)** — Configuration reference
-
-## Documentation Structure
-
-```
-Getting Started          ← Start here for setup & overview
-├── Quick Start
-├── Requirements
-├── Project Structure
-├── Project Goals
-├── Deployment
-├── Features
-└── Environment Variables
-
-Database                 ← Prisma schema & data models
-Payment                  ← Stripe billing, plans & webhooks
-Testing                  ← E2E (428 tests) & unit tests (26)
-Email                    ← Templates, providers & setup
-SEO Checklist            ← Technical SEO & optimization
-```
-
-## Key Features at a Glance
-
-### Authentication
-- Email/password, OAuth (Google, GitHub), magic links
-- Two-factor authentication (TOTP)
-- Email verification and OTP
-- Session management
-
-### Multi-Organization
-- Unlimited organizations per user
-- Role-based access control (OWNER, ADMIN, MEMBER)
-- Granular permission system
-- Team member management
-
-### Billing
-- Stripe payment processing
-- Subscription tiers (free, pro, enterprise)
-- Invoice generation and tracking
-- Customer portal
-- Webhook handling
-
-### Development Experience
-- Full TypeScript support
-- Modern Next.js 16 with server components
-- Comprehensive component library (shadcn/ui)
-- Automated linting and formatting
-- Monorepo structure with Turborepo
-- Hot module reload development
-
-### Internationalization
-- Multi-language support
-- Locale-specific routing (`/[locale]/...`)
-- Translated UI and content
-- SEO-friendly URL structure
-
-## Technology Stack
-
-### Frontend
-- **React 19** — UI library
-- **Next.js 16** — Framework
-- **TypeScript** — Type safety
-- **Tailwind CSS** — Styling
-- **shadcn/ui** — Components
-
-### Backend
-- **Next.js API Routes** — Backend
-- **Prisma** — ORM
-- **Better Auth** — Authentication
-- **PostgreSQL** — Database
-
-### Infrastructure
-- **Turborepo** — Build orchestration
-- **pnpm** — Package manager
-- **Vercel** — Deployment (recommended)
-- **Stripe** — Payments
-
-### Quality
-- **Biome** — Linting & formatting
-- **Vitest** — Testing
-- **TypeScript** — Type checking
-
-## Getting Started in 3 Steps
-
-### 1. Clone & Install
-```bash
-git clone <repo-url>
-cd next-nest-monorepo
-pnpm install
-```
-
-### 2. Setup Environment
-```bash
-# Create apps/web/.env.local
-DATABASE_URL=postgresql://...
-BETTER_AUTH_SECRET=your-secret
-```
-
-### 3. Run Dev Server
-```bash
-pnpm dev
-# Main app: http://localhost:3000
-# Docs: http://localhost:3004
-```
-
-## Common Tasks
-
-### Creating a New Feature
-1. Create route under `/apps/web/app/[locale]/(app)/`
-2. Add authorization checks
-3. Use components from `@repo/design-system`
-4. Style with Tailwind CSS
-
-### Adding Database Models
-1. Update `packages/database/prisma/schema.prisma`
-2. Run `pnpm migrate`
-3. Use generated types in application
-
-### Deploying to Production
-1. Push code to main branch
-2. Connect to Vercel
-3. Set environment variables
-4. Deploy
-
-See [Deployment](/docs/getting-started/deployment) for detailed guide.
-
-## Architecture Highlights
-
-### Monorepo Structure
-- **apps/** — Independent applications (web, docs, email, storybook)
-- **packages/** — Shared code (auth, database, design-system, payment)
-- **Turborepo** — Orchestrates building and testing
-
-### Route Organization
-```
-/[locale]/
-├── (app)/           ← Authenticated app
-│   ├── [orgSlug]/   ← Organization routes
-│   └── account/     ← User account routes
-├── (frontier)/      ← Public/marketing
-└── auth/            ← Authentication
-```
-
-### Multi-Tenancy
-- Organizations are the root tenant
-- Users belong to organizations with roles
-- Data is scoped by organization
-- Role-based permissions control access
 
 ## Who Should Use This?
 
@@ -198,30 +48,6 @@ See [Deployment](/docs/getting-started/deployment) for detailed guide.
 ✅ **Digital Agencies** — Reusable client template
 ✅ **Enterprise** — Internal tools foundation
 ✅ **Educators** — Teaching SaaS development
-
-## What's Next?
-
-1. **Explore** the documentation by section
-2. **Understand** the architecture and patterns
-3. **Build** your unique features
-4. **Deploy** to production
-5. **Iterate** based on user feedback
-
-## Need Help?
-
-- 📖 Check the [documentation](/docs)
-- 🔍 Search in the docs
-- 💬 Open an issue on GitHub
-- 🤝 Check discussions for similar questions
-
-## Project Stats
-
-- **Tech Stack** — Next.js 16, React 19, TypeScript, Prisma
-- **Apps** — 5 (web, docs, email, storybook, studio)
-- **Packages** — 9 shared packages
-- **Components** — 50+ UI components
-- **Built-in Features** — 20+ core features
-- **Documentation** — Comprehensive guides
 
 ---
 

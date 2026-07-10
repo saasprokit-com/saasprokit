@@ -1,116 +1,82 @@
 ---
-title: SEO Checklist
-description: Comprehensive SEO implementation checklist for Next.js (2025 Best Practices)
+title: SEO
+description: Site metadata, JSON-LD structured data, sitemap, and robots.txt — as actually implemented in @repo/seo
 ---
 
-# SEO Checklist for Next.js
+`@repo/seo` provides site-wide metadata, JSON-LD structured data, and is wired into `apps/web`'s root layout, `sitemap.ts`, and `robots.ts`.
 
-Comprehensive SEO implementation guide covering technical SEO, content optimization, and 2025 emerging trends.
+## Site config
 
-## Priority Matrix
+`configureSeo()` sets a single, module-level `SiteConfig` that the rest of the package reads via `getSiteConfig()`:
 
-### Critical Priority (Week 1-2)
-
-| Status | Task | Implementation | Difficulty |
-|--------|------|---------------|------------|
-| [ ] | **Metadata API** | Static + dynamic `generateMetadata` | Easy |
-| [ ] | **Core Web Vitals** | LCP ≤2.5s, INP ≤200ms, CLS ≤0.1 | Medium |
-| [ ] | **Structured Data** | Organization, Article, FAQPage schemas | Medium |
-| [ ] | **Sitemap** | Dynamic `sitemap.ts` generation | Easy |
-| [ ] | **robots.txt** | Configure `robots.ts` | Easy |
-| [ ] | **Image Optimization** | Replace img with `next/image` | Easy |
-| [ ] | **Font Optimization** | Use `next/font` for all fonts | Easy |
-
-### High Priority (Week 3-4)
-
-| Status | Task | Impact |
-|--------|------|--------|
-| [ ] | **E-E-A-T Signals** | 30% higher chance of top 3 rankings |
-| [ ] | **Heading Hierarchy** | Proper H1-H6 structure |
-| [ ] | **Internal Linking** | Hub & spoke model |
-| [ ] | **Canonical URLs** | Prevent duplicate content |
-| [ ] | **Mobile-First** | Required for indexing |
-
-### Medium Priority (Week 5-6)
-
-| Status | Task | 2025 Relevance |
-|--------|------|----------------|
-| [ ] | **Google SGE** | 86%+ searches include AI overviews |
-| [ ] | **Voice Search** | 50% of searches by 2025 |
-| [ ] | **Zero-Click** | 60% searches end without click |
-| [ ] | **Topic Clusters** | Authority building |
-
----
-
-## Key 2025 Statistics
-
-- **89%** of Next.js deployments meet Core Web Vitals
-- **30%** CTR lift with structured data
-- **86%+** of searches include Google SGE
-- **60%** of searches are zero-click
-- **50%** of searches will be voice by 2025
-- **INP replaced FID** as Core Web Vital (March 2024)
-
----
-
-## Implementation Phases
-
-### Phase 1: Foundation (Week 1-2)
-
-```
-apps/web/app/
-├── layout.tsx         # Root metadata
-├── sitemap.ts         # Dynamic sitemap
-├── robots.ts          # robots.txt config
-└── [route]/page.tsx   # generateMetadata
+```ts
+// packages/seo/config.ts
+export interface SiteConfig {
+  name: string;
+  description: string;
+  url: string;
+  ogImage?: string;
+  locale?: string;
+  twitterHandle?: string;
+  author?: { name: string; url?: string };
+  links?: { twitter?: string; github?: string };
+}
 ```
 
-### Phase 2: Core Web Vitals (Week 3-4)
+The web app configures it once in `apps/web/lib/seo-config.ts`:
 
-- [ ] Replace img tags with `next/image` + `priority`
-- [ ] Replace custom fonts with `next/font`
-- [ ] Implement React 18 `useTransition` for INP
-- [ ] Add `placeholder="blur"` for images
+```ts
+import { configureSeo, type SiteConfig } from "@repo/seo";
 
-### Phase 3: Structured Data (Week 5-6)
+export const siteConfig: SiteConfig = {
+  name: "SaaSProKit",
+  description: "Production-ready SaaS boilerplate with auth, billing, organizations...",
+  url: env.NEXT_PUBLIC_APP_URL,
+  ogImage: "/og-image.png",
+  locale: "en_US",
+  twitterHandle: "@saasprokit",
+  author: { name: "SaaSProKit", url: "https://github.com/saasprokit-com/saasprokit" },
+  links: { twitter: "...", github: "..." },
+};
 
-- [ ] Organization schema (homepage)
-- [ ] Article schema (blog posts)
-- [ ] FAQPage schema (FAQ sections)
-- [ ] BreadcrumbList schema (navigation)
+configureSeo(siteConfig);
+```
 
-### Phase 4: E-E-A-T & Trust (Week 7-8)
+`apps/web/app/[locale]/layout.tsx` imports this module (for its side effect) before calling anything else in `@repo/seo`.
 
-- [ ] Author pages with Person schema
-- [ ] Author bios on all content
-- [ ] About page with Organization details
-- [ ] Contact page with full info
-- [ ] Content freshness dates
+## Default metadata
 
-### Phase 5: 2025 Trends (Week 9-10)
+`getDefaultMetadata()` builds a Next.js `Metadata` object from the site config: title template, description, Open Graph, Twitter card, `robots` (full index/follow + Googlebot directives), and a canonical alternate. It's used directly as the root layout's `metadata` export:
 
-- [ ] Conversational keywords for SGE
-- [ ] FAQ sections for voice search
-- [ ] Featured snippet optimization
-- [ ] Topic cluster strategy
+```ts
+// apps/web/app/[locale]/layout.tsx
+export const metadata = getDefaultMetadata();
+```
 
----
+> `keywords` is currently hardcoded to a generic list (`"blog", "technology", "development", ...`) — update `packages/seo/metadata.ts` if you want keywords tailored to your product.
 
-## Testing & Validation
+## Structured data (JSON-LD)
 
-| Tool | Purpose | Link |
-|------|---------|------|
-| PageSpeed Insights | Core Web Vitals | [pagespeed.web.dev](https://pagespeed.web.dev/) |
-| Rich Results Test | Structured Data | [search.google.com/test/rich-results](https://search.google.com/test/rich-results) |
-| Schema Validator | JSON-LD | [validator.schema.org](https://validator.schema.org/) |
-| Mobile-Friendly Test | Mobile UX | [search.google.com/test/mobile-friendly](https://search.google.com/test/mobile-friendly) |
-| Search Console | Indexing | [search.google.com/search-console](https://search.google.com/search-console) |
+The `JsonLd` component renders an escaped `application/ld+json` script tag. Exactly two schema generators exist today, both rendered in the root layout:
 
----
+```tsx
+import { generateOrganizationSchema, generateWebSiteSchema, JsonLd } from "@repo/seo";
 
-## Quick Reference
+<JsonLd code={generateOrganizationSchema()} />
+<JsonLd code={generateWebSiteSchema()} />
+```
 
-- [Technical SEO](/docs/seo/technical-seo) - Metadata, Core Web Vitals, Sitemap
-- [Content SEO](/docs/seo/content) - Headings, Internal Links, E-E-A-T
-- [Structured Data](/docs/seo/structured-data) - JSON-LD Schemas
-- [2026 Trends](/docs/seo/trends-2026) - SGE, Voice Search, Zero-Click
+- **`generateOrganizationSchema()`** — `Organization` schema from `SiteConfig` (name, url, logo, `sameAs` from `links.twitter`/`links.github`, a generic `ContactPoint`).
+- **`generateWebSiteSchema()`** — `WebSite` schema with a `SearchAction` pointing at `/search?q={search_term_string}`.
+
+To add another schema type (Article, FAQPage, etc.), add a generator function to `packages/seo/schemas.tsx` following the same pattern — typed against `schema-dts`, reading from `getSiteConfig()` — and render it with the same `JsonLd` component. None of these exist yet; add them when you actually have the page type to back them (e.g. don't add `Product` schema without product pages).
+
+## Sitemap and robots
+
+`apps/web/app/sitemap.ts` currently returns a single static entry for the homepage — there's no dynamic route enumeration (no blog/CMS in this app to enumerate). `apps/web/app/robots.ts` disallows `/api/`, `/auth/`, `/user/`, `/_next/`, `/private/` for all crawlers plus a Googlebot-specific rule, and points `sitemap`/`host` at `siteConfig.url`.
+
+## Validating
+
+- [Rich Results Test](https://search.google.com/test/rich-results) — checks the Organization/WebSite JSON-LD renders correctly
+- [PageSpeed Insights](https://pagespeed.web.dev/) — Core Web Vitals
+- [Google Search Console](https://search.google.com/search-console) — indexing status, sitemap submission
