@@ -1,9 +1,19 @@
 ---
 title: Unit Tests
-description: Catalog of all 26 Vitest unit test cases and coverage gaps
+description: Catalog of Vitest unit tests and coverage gaps
 ---
 
-**Total: 26 test cases** in 1 test file.
+**Total: 70 test cases** across 6 files in 3 packages/apps (`@repo/auth`: 37, `@repo/payment`: 13, `apps/web`: 20).
+
+## Other test files
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `packages/auth/billing-authorize.test.ts` | 11 | `isOrgMember`, `canManageBilling`, `authorizeBillingAction` — the allow/deny matrix from [Billing Authorization](/docs/payment/billing-authorization), including the suspended-member and unknown-action cases |
+| `packages/payment/helpers.test.ts` | 13 | `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, and `isSubscriptionActive` across all 8 Stripe subscription statuses |
+| `apps/web/lib/routes.test.ts` | 6 | `orgRoutes`, `accountRoutes`, and the `AUTH_ROUTE_PREFIXES`/`PUBLIC_ROUTE_PREFIXES` middleware prefixes |
+| `apps/web/lib/parsers.test.ts` | 5 | `sortingStateParser` (table sort-state URL serialization) |
+| `apps/web/app/.../checkout/success/verify-session.test.ts` | 9 | `verifyCheckoutSession` — the independent post-checkout verification described in [Subscribe & Checkout](/docs/payment/subscribe-and-checkout) |
 
 ## Auth Permissions — 26 tests
 
@@ -84,14 +94,10 @@ Tests the dual RBAC system (platform-level admin roles + organization-scoped rol
 
 ## Coverage Gaps
 
-Packages with Vitest configs but **no test files**:
-
 | Package | Config | Tests | Suggested Test Areas |
 |---------|--------|-------|---------------------|
-| `web` | `vitest.config.mts` | 0 | Server action helpers, route definitions |
-| `payment` | `vitest.config.mts` | 0 | Plan helpers, eligibility checks, price calculations |
-| `storage` | `vitest.config.mts` | 0 | Quota validation, MIME checking, provider logic |
-| `utils` | — | 0 | Slug generation/validation, date helpers, payment utils |
+| `storage` | none | 0 | No vitest config at all — quota validation, MIME checking, provider logic |
+| `utils` | none | 0 | Slug generation/validation, date helpers, payment utils |
 
 ### High-Value Unit Test Candidates
 
@@ -102,7 +108,7 @@ These are pure functions with no external dependencies — ideal for unit testin
 | `getPlanLimits()` | `packages/payment/plans.ts` | Core billing logic, multiple plan tiers |
 | `isPlanHigherTier()` | `packages/payment/plans.ts` | Upgrade/downgrade decisions |
 | `getAnnualSavingsPercent()` | `packages/payment/plans.ts` | Pricing display |
-| `canCreateOrganization()` | `packages/utils/payment.ts` | Org creation eligibility |
+| `checkOrgCreationEligibility()` | `packages/utils/payment.ts` | Org creation eligibility |
 | `generateSlug()` | `packages/utils/slug.ts` | Used across org creation |
 | `slugSchema` | `packages/utils/slug.ts` | Reserved slug validation |
 | `toActionError()` | `apps/web/lib/auth/action-error.ts` | Error handling for all server actions |

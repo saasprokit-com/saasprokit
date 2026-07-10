@@ -39,7 +39,6 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 | Sign Up | `/auth/sign-up` | Registration with email verification |
 | Forgot Password | `/auth/forgot-password` | Password reset request |
 | Reset Password | `/auth/reset-password` | Password reset with token |
-| Magic Link | `/auth/magic-link` | Passwordless auth via email |
 | Verify Email | `/auth/verify-email` | Email verification flow |
 | Two-Factor | `/auth/2fa` | 2FA challenge screen |
 
@@ -49,7 +48,7 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 |---------|--------|-------|
 | Multiple Organizations per User | Implemented | Up to 10 orgs per user (configurable) |
 | Organization Creation | Implemented | Create new orgs at `/account/new-org` |
-| Auto Personal Workspace | Implemented | Created automatically on first login |
+| Auto Personal Workspace | Planned | `createDefaultWorkspace()` helper exists but is not called anywhere — not wired to sign-up |
 | Organization Settings | Implemented | Configure name, logo, slug at `/[orgSlug]/settings` |
 | Organization Switcher | Implemented | Quick switching between orgs at `/org` |
 | Default Organization | Implemented | Set and remember preferred org |
@@ -65,11 +64,13 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 
 ### Organization Limits by Plan
 
-| Plan | Members | Storage | Organizations | Teams | Price |
-|------|---------|---------|---------------|-------|-------|
-| Free | 1 | 100 MB | 1 | 0 | $0 |
-| Pro | 10 | 5 GB | 3 | 5 | $19/mo or $190/yr |
-| Enterprise | Unlimited | Unlimited | 10 | Unlimited | $49/mo or $490/yr |
+| Plan | Members | Storage | Price |
+|------|---------|---------|-------|
+| Free | 1 | 100 MB | $0 |
+| Pro | 10 | 5 GB | $19/mo or $190/yr |
+| Enterprise | 50 | 50 GB | $49/mo or $490/yr |
+
+Organization creation isn't plan-gated by count — it's capped at 10 total orgs per user (`MAX_ORGS_PER_USER`) regardless of plan, and only 1 free-tier org is allowed per user (additional orgs require a paid plan). Teams have no per-plan limit since the feature has no UI yet (see below).
 
 ## Billing & Payment
 
@@ -82,7 +83,7 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 | Monthly & Annual Billing | Implemented | Annual discount (~17% savings) |
 | Cancellation | Implemented | Cancel, pause, and reactivate subscriptions |
 | Stripe Integration | Implemented | Checkout, webhooks, customer portal |
-| Auto Customer Creation | Implemented | Stripe customer created on signup |
+| Auto Customer Creation | Implemented | Stripe customer created on first checkout, not on signup (`createCustomerOnSignUp: false`) |
 | Webhook Processing | Implemented | Idempotent Stripe event handling with deduplication |
 | Checkout Flow | Implemented | Checkout with success and canceled pages |
 | Manage Billing | Implemented | Update payment methods via Stripe portal |
@@ -114,7 +115,7 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 | S3 Storage | Implemented | AWS S3 provider with configurable credentials |
 | Per-Plan Storage Quotas | Implemented | 100 MB / 5 GB / 50 GB per plan |
 | File Metadata | Implemented | Tracks filename, size, mime type, provider |
-| Allowed Types | Implemented | JPEG, PNG, WebP, GIF, SVG |
+| Allowed Types | Implemented | JPEG, PNG, WebP, GIF |
 | Soft Delete | Implemented | Files can be soft-deleted with timestamp |
 | File Sharing | Planned | Not implemented |
 | File Versioning | Planned | Not implemented |
@@ -124,18 +125,18 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Email Preview | Implemented | Preview templates in email app (port 3003) |
-| Email Templating | Implemented | 24 React Email templates with components |
+| Email Templating | Implemented | 21 React Email templates with components |
 | Resend Integration | Implemented | Primary email provider via Resend API |
 | Nodemailer (SMTP) | Implemented | Fallback SMTP provider |
 | Pluggable Providers | Implemented | Swap between Resend and Nodemailer |
 
-### Email Templates (24 total)
+### Email Templates (21 total)
 
 | Category | Templates |
 |----------|-----------|
 | Auth | Email verification, password reset, magic link, sign-in OTP, verification OTP, 2FA OTP, password changed, account locked, new device login |
 | Organization | Invitation, invitation accepted, role changed, member removed |
-| Billing | Subscription started, upgraded, downgraded, renewed, cancelled, payment receipt, payment failed |
+| Billing | Subscription started, upgraded, downgraded, cancelled, payment receipt |
 | Account | Welcome, account deleted |
 | Content | Article published |
 
@@ -147,14 +148,14 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 | Content Security Policy | Implemented | Per-request nonce-based CSP |
 | CSRF Protection | Implemented | Origin header validation on server actions |
 | Permissions Policy | Implemented | Disables camera, microphone, geolocation, payment, USB |
-| Password Hashing | Implemented | Via Better Auth (bcrypt) |
+| Password Hashing | Implemented | Via Better Auth's default hasher (scrypt) |
 | Session Security | Implemented | Secure cookies, 7-day expiry, revocation on password reset |
 | Webhook Signature Verification | Implemented | Stripe webhook signature validation |
 | Idempotent Webhook Processing | Implemented | WebhookEvent deduplication model |
-| SQL Injection Prevention | Implemented | All queries via Prisma ORM (parameterized) |
+| SQL Injection Prevention | Implemented | All queries via Prisma ORM (parameterized); one static `$queryRaw` health check with no user input |
 | Audit Logging | Implemented | AuditLog model for user actions with IP tracking |
 | Edge Route Protection | Implemented | `proxy.ts` for auth checks |
-| Rate Limiting | Partial | Architecture supports it via Better Auth config |
+| Rate Limiting | Implemented | Per-route limits (sign-in, sign-up, password reset, 2FA) via Better Auth, backed by a database-stored `RateLimit` model |
 
 ## Monitoring & Logging
 
@@ -170,22 +171,22 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Dynamic Metadata | Implemented | Per-page title, description, keywords |
-| Open Graph | Implemented | OG tags for social sharing |
-| Twitter Cards | Implemented | Twitter card metadata |
-| JSON-LD | Implemented | Structured data schema |
-| Sitemap | Implemented | Auto-generated sitemap |
-| Canonical URLs | Implemented | Canonical link tags |
+| Per-Page Metadata | Implemented | Static `export const metadata` on several pages overrides the root title template; no route uses `generateMetadata` for param-based dynamic titles |
+| Open Graph | Implemented | OG tags for social sharing (root layout only) |
+| Twitter Cards | Implemented | Twitter card metadata (root layout only) |
+| JSON-LD | Implemented | Organization + WebSite schemas only (see [SEO](/docs/seo)) |
+| Sitemap | Partial | `sitemap.ts` returns a single static homepage entry, no dynamic route enumeration |
+| Canonical URLs | Implemented | Canonical link tag (root layout only) |
 
 ## Design System
 
 | Feature | Status | Notes |
 |---------|--------|-------|
 | UI Components | Implemented | 50+ shadcn/ui components (Radix-based) |
-| Landing Page Blocks | Implemented | 11 blocks: hero, pricing, testimonials, FAQ, CTA, etc. |
+| Landing Page Blocks | Implemented | 13 blocks: hero, pricing, testimonials, FAQ, CTA banner, features grid, feature showcase, footer, code preview, tech stack, deps table, social proof bar, stats section |
 | Dark Mode | Implemented | Theme provider with dark mode toggle |
 | Responsive Design | Implemented | Mobile-first responsive layouts |
-| Direct Imports | Implemented | No barrel imports — always import from source files |
+| Direct Imports | Partial | Convention is no barrel imports, but two barrel re-export files remain (`design-system/index.tsx`, `header/index.ts`) |
 
 ## Developer Experience
 
@@ -206,8 +207,8 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Unit Tests | Partial | 26 tests in auth package only; web, payment, storage have configs but no tests |
-| E2E Tests | Implemented | 428 Playwright tests across 34 spec files (auth, account, org, billing) |
+| Unit Tests | Partial | 70 tests: 37 in `@repo/auth`, 13 in `@repo/payment`, 20 in `apps/web`; `@repo/storage`/`@repo/utils` have no test setup at all |
+| E2E Tests | Implemented | 341 Playwright tests across 26 spec files (see [Testing](/docs/testing)) |
 | Integration Tests | Planned | Not yet implemented |
 
 ## Infrastructure & DevOps
@@ -218,7 +219,7 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 | Database Migrations | Implemented | Prisma migrate and db push |
 | Database Seeding | Implemented | Comprehensive seed script |
 | CI/CD | Implemented | GitHub Actions workflows |
-| Docker Support | Partial | Dockerfile exists for docs app |
+| Docker Support | Partial | Dockerfiles exist for `web` and `docs`; `email`, `storybook`, `studio` do not have one |
 
 ## Feature Coverage by Package
 
@@ -227,10 +228,10 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 | `@repo/auth` | Authentication, dual RBAC (admin + org), permissions, 2FA, magic links, email OTP |
 | `@repo/database` | Prisma schema, client, types, migrations |
 | `@repo/payment` | Stripe billing, subscriptions, plan management, checkout |
-| `@repo/email` | 24 React Email templates with Resend + Nodemailer |
+| `@repo/email` | 21 React Email templates with Resend + Nodemailer |
 | `@repo/design-system` | 50+ shadcn/ui components, 11 landing page blocks, dark mode |
 | `@repo/storage` | File uploads with local + S3 providers, quota management |
-| `@repo/seo` | Meta tags, Open Graph, Twitter cards, JSON-LD, sitemap |
+| `@repo/seo` | Site metadata, Organization + WebSite JSON-LD schemas |
 | `@repo/internationalization` | 6 languages, locale routing, dictionary translations |
 | `@repo/logger` | Structured logging with Pino (server + client) |
 | `@repo/utils` | Date, payment, slug, organization, storage, user utilities |

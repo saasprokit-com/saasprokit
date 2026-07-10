@@ -107,59 +107,48 @@ The web interface at http://localhost:1080 provides:
 | **Source** | Raw email source (RFC 822) |
 | **Responsive Preview** | Resize viewport to test responsive design |
 
-## Docker Compose Setup
+## Docker Compose Setup (already configured)
 
-Add Maildev to your project's `docker-compose.yml`:
+This repo's root `docker-compose.yml` already defines Maildev — you don't need to add it:
 
 ```yaml
-services:
-  # Your other services...
-
-  maildev:
-    image: maildev/maildev:latest
-    container_name: maildev
-    ports:
-      - "1080:1080"  # Web UI
-      - "1025:1025"  # SMTP
-    environment:
-      - MAILDEV_WEB_PORT=1080
-      - MAILDEV_SMTP_PORT=1025
-      - MAILDEV_MAIL_DIRECTORY=/tmp/maildev
-    volumes:
-      - maildev-data:/tmp/maildev
-    restart: unless-stopped
-
-volumes:
-  maildev-data:
+maildev:
+  image: maildev/maildev:latest
+  container_name: maildev
+  ports:
+    - "1080:1080"  # Web UI
+    - "1025:1025"  # SMTP
+  environment:
+    - MAILDEV_WEB_PORT=1080
+    - MAILDEV_SMTP_PORT=1025
+  restart: unless-stopped
+  healthcheck:
+    # 127.0.0.1, not localhost: the web UI binds IPv4-only, and localhost
+    # resolves to ::1 inside the container, failing the check.
+    test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:1080"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
 ```
 
 ### Commands
 
 ```bash
-# Start Maildev
-docker compose up maildev -d
+# Start Postgres + Maildev (this is what `pnpm dev` runs first, and waits for healthchecks)
+pnpm dev:infra
 
-# View logs
+# Stop them
+pnpm dev:infra:stop
+
+# View Maildev logs
 docker compose logs maildev
-
-# Stop Maildev
-docker compose stop maildev
-
-# Remove container and data
-docker compose down maildev -v
 ```
 
-## NPM Scripts
+## Related Scripts
 
-Add convenient scripts to your root `package.json`:
-
-```json
-{
-  "scripts": {
-    "email:dev": "npx maildev --web 1080 --smtp 1025",
-    "email:preview": "pnpm --filter @repo/email dev"
-  }
-}
+```bash
+pnpm dev:infra         # Start Postgres + Maildev, wait for healthchecks (root package.json)
+pnpm --filter email dev  # Preview email templates directly (port 3003), independent of Maildev
 ```
 
 ## Testing with Maildev REST API
@@ -186,29 +175,25 @@ curl -X DELETE http://localhost:1080/email/all
 
 ### Example: E2E Test
 
+This repo already has a Maildev REST API helper at `apps/web/e2e/helpers/maildev.ts` — use `clearInbox()`/`waitForEmail()` from there instead of reimplementing the polling/fetch logic:
+
 ```typescript
-// tests/email.test.ts
 import { test, expect } from '@playwright/test';
+import { clearInbox, waitForEmail } from '../helpers/maildev';
 
-test('sends welcome email on registration', async ({ page, request }) => {
-  // Clear maildev inbox
-  await request.delete('http://localhost:1080/email/all');
+test('sends a verification email on sign-up', async ({ page }) => {
+  await clearInbox();
 
-  // Register new user
-  await page.goto('/register');
+  await page.goto('/auth/sign-up');
   await page.fill('[name="email"]', 'test@example.com');
   await page.fill('[name="password"]', 'password123');
   await page.click('button[type="submit"]');
 
-  // Wait for email
-  await page.waitForTimeout(1000);
+  const email = await waitForEmail('test@example.com', {
+    subjectContains: 'verify',
+  });
 
-  // Check maildev inbox
-  const emails = await request.get('http://localhost:1080/email').then(r => r.json());
-
-  expect(emails).toHaveLength(1);
-  expect(emails[0].to[0].address).toBe('test@example.com');
-  expect(emails[0].subject).toContain('Welcome');
+  expect(email.to[0].address).toBe('test@example.com');
 });
 ```
 

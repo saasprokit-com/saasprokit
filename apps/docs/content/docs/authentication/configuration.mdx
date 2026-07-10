@@ -80,7 +80,7 @@ session: {
 },
 ```
 
-Sessions live **7 days** and slide forward when used (`updateAge` 1 day). The **cookie cache** (5 minutes) lets the proxy and Server Components read the session from a signed cookie without a DB round-trip most of the time. Details in [Sessions & Route Protection](./sessions-and-routing).
+See [Sessions & Route Protection](./sessions-and-routing) for how the lifetime and cookie cache are actually used by the proxy and server helpers.
 
 ## Rate limiting
 

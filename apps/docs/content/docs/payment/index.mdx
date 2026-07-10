@@ -21,7 +21,6 @@ The Stripe plugin is conditionally added to the Better Auth `plugins` array — 
         stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
         createCustomerOnSignUp: false,
         organization: { enabled: true },
-        onEvent: handleStripeInvoiceEvent,
         subscription: {
           enabled: true,
           onSubscriptionComplete: handleSubscriptionComplete,
@@ -42,7 +41,7 @@ The plugin owns:
 - **Signature verification** — incoming webhooks are verified against `STRIPE_WEBHOOK_SECRET` before any handler runs.
 - **Subscription persistence** — the plugin reads and writes the `Subscription` table via the Prisma adapter.
 - **Reference authorization** — `authorizeReference` delegates to `authorizeBillingAction` (`packages/auth/billing-authorize.ts`) so a user can only act on subscriptions for organizations they are allowed to manage.
-- **Event dispatch** — lifecycle events are routed to the custom hooks in `packages/auth/stripe-hooks.ts`: `handleSubscriptionComplete`, `handleSubscriptionUpdate`, `handleSubscriptionDeleted`, and the catch-all `handleStripeInvoiceEvent` (wired via `onEvent`).
+- **Event dispatch** — lifecycle events are routed to the custom hooks in `packages/auth/stripe-hooks.ts`: `handleSubscriptionComplete`, `handleSubscriptionUpdate`, `handleSubscriptionDeleted`. Each first calls `claimWebhookEvent` (`packages/auth/webhook-idempotency.ts`) so a redelivered Stripe event doesn't re-send its notification email.
 
 Note `createCustomerOnSignUp: false` and `organization: { enabled: true }` — subscriptions are **organization-scoped**, keyed by `referenceId` (the organization id), not per-user.
 
@@ -88,7 +87,7 @@ flowchart TD
       BA["Better Auth + stripe() plugin<br/>packages/auth/server.ts"]
       AUTHZ["authorizeBillingAction<br/>billing-authorize.ts"]
       ROUTE["/api/auth/* handler<br/>(plugin-mounted)"]
-      HOOKS["stripe-hooks.ts<br/>onSubscriptionComplete / Update / Deleted<br/>onEvent: handleStripeInvoiceEvent"]
+      HOOKS["stripe-hooks.ts<br/>onSubscriptionComplete / Update / Deleted<br/>(claimWebhookEvent gates each)"]
       DB[("Subscription table<br/>@repo/database")]
     end
 
@@ -129,7 +128,8 @@ Outbound: the billing UI calls subscription methods through `authClient` (and se
 - `packages/auth/plans.ts` — `PLANS`, `PlanConfig`, `buildStripePlans`, `getPlanNameFromPriceId`
 - `packages/auth/stripe-client.ts` — `stripeClient` / `requireStripeClient`
 - `packages/auth/client.ts` — browser `stripeClient()` plugin registration
-- `packages/auth/stripe-hooks.ts` — `handleSubscriptionComplete` / `Update` / `Deleted`, `handleStripeInvoiceEvent`
+- `packages/auth/stripe-hooks.ts` — `handleSubscriptionComplete` / `Update` / `Deleted`
+- `packages/auth/webhook-idempotency.ts` — `claimWebhookEvent`, backed by the `WebhookEvent` model's `(provider, eventId)` unique constraint
 - `packages/auth/keys.ts` — Stripe env var schema (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, price-id vars)
 - `packages/payment/plans.ts` — plan ordering/comparison helpers
 - `packages/payment/types.ts` — `Subscription`, `SubscriptionSchema`, `UpgradeOptions`, `CancelOptions`, `UsageStats`

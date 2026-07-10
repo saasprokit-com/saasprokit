@@ -3,13 +3,15 @@ title: Email Overview
 description: Transactional email system with dual provider support
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 The `@repo/email` package provides a complete transactional email system with React Email templates and support for multiple email providers.
 
 ## Features
 
 - **Dual Provider Support**: Switch between Resend (production) and Nodemailer (local development)
-- **React Email Templates**: 22+ pre-built templates for common use cases
-- **i18n Support**: Built-in internationalization with English and Spanish
+- **React Email Templates**: 21 pre-built templates for common use cases
+- **i18n Support**: Message catalogs for English and Spanish (the `Locale` type declares more locales for future use, but only `en`/`es` have translated content)
 - **Type-Safe**: Full TypeScript support with validated configurations
 - **Auto-Detection**: Automatically selects the appropriate provider based on environment
 
@@ -52,11 +54,14 @@ await sendWelcomeEmail({
 
 | Category | Templates |
 |----------|-----------|
-| **Auth & Security** | Password Reset, Email Verification, 2FA OTP, Account Locked, Password Changed |
+| **Auth & Security** | Password Reset, Email Verification, Magic Link, Sign-In OTP, Verification OTP, 2FA OTP, Account Locked, Password Changed, Login from New Device |
 | **Organization** | Invitation, Invitation Accepted, Role Changed, Removed from Org |
-| **Subscription** | Started, Upgraded, Downgraded, Cancelled, Renewed, Trial Ending |
-| **Billing** | Payment Receipt, Payment Failed |
-| **Content** | Article Published, Welcome |
+| **Billing** | Subscription Started, Upgraded, Downgraded, Cancelled, Payment Receipt |
+| **Content** | Article Published, Welcome, Account Deleted |
+
+<Callout type="info">
+Not every template is currently wired up to a real code path — see [Templates](/docs/email/templates) for which ones the app actually triggers today versus which exist but aren't called from anywhere yet.
+</Callout>
 
 ## Next Steps
 

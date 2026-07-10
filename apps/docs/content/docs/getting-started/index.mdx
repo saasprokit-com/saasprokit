@@ -10,9 +10,11 @@ The next-nest-monorepo is a production-grade Next.js 16 monorepo using pnpm work
 ### Prerequisites
 
 Ensure you have the following installed:
-- **Node.js** 22+ (LTS recommended)
-- **pnpm** 10+ (package manager for monorepo)
-- **Git** (for version control)
+- **Node.js** 22+ (required, see `engines` in root `package.json`)
+- **pnpm** 10+ (project pins `pnpm@10.19.0` via `packageManager`)
+- **Git**
+- **PostgreSQL** 12+ (or use Docker Compose — see below)
+- macOS, Linux, or Windows (WSL2 recommended)
 
 ### Installation Steps
 
@@ -29,23 +31,46 @@ Ensure you have the following installed:
 
 3. **Set up environment variables**
 
-   Create `.env.local` in `apps/web/`:
+   Create `.env.local` in `apps/web/` (see `.env.example` for the full list):
    ```bash
-   # Database
+   # App Configuration (required)
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
+   NEXT_PUBLIC_APP_NAME=MyApp
+   NEXT_PUBLIC_DOCS_URL=http://localhost:3004
+
+   # Database (required)
    DATABASE_URL=postgresql://user:password@host/database
 
-   # Better Auth
+   # Better Auth (required)
    BETTER_AUTH_SECRET=your-secret-key
+   # Generate with: openssl rand -base64 48
    BETTER_AUTH_URL=http://localhost:3000
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
+   BETTER_AUTH_TRUSTED_ORIGINS=
 
-   # Stripe (optional for billing features)
+   # OAuth Providers (optional)
+   GOOGLE_CLIENT_ID=
+   GOOGLE_CLIENT_SECRET=
+   GITHUB_CLIENT_ID=
+   GITHUB_CLIENT_SECRET=
+
+   # Stripe (optional, for billing features)
    STRIPE_SECRET_KEY=sk_test_...
    STRIPE_WEBHOOK_SECRET=whsec_test_...
+
+   # Email (optional — defaults to MailDev locally)
+   EMAIL_FROM=noreply@yourdomain.com
+   RESEND_API_KEY=
 
    # Storage
    STORAGE_PROVIDER=local
    ```
+
+   Also create `.env` in `packages/database/` with the same connection string:
+   ```bash
+   DATABASE_URL=postgresql://user:password@host/database
+   ```
+
+   This is required separately from `apps/web/.env.local` — Prisma CLI commands (`migrate`, `studio`, `db:seed`) run as their own process and load env vars from `packages/database/`, not from the Next.js app.
 
 4. **Set up the database**
    ```bash
@@ -117,7 +142,7 @@ pnpm --filter @repo/database db:seed      # Seed development data
 - Change the port: `pnpm --filter app dev -- -p 3001`
 
 **Database connection issues**
-- Verify `DATABASE_URL` in `.env.local`
+- Verify `DATABASE_URL` in `apps/web/.env.local` **and** `packages/database/.env` (both are required, and must match)
 - Ensure PostgreSQL is running
 - Check Neon credentials if using Neon database
 
@@ -135,4 +160,4 @@ pnpm --filter @repo/database db:seed      # Seed development data
 - Read the [Project Structure](/docs/getting-started/structure) guide
 - Learn about [Features](/docs/getting-started/features)
 - Understand the [Database Design](/docs/database/database-design)
-- Review [Deployment](/docs/getting-started/deployment) options
+- Review [Deployment](/docs/deployment) options

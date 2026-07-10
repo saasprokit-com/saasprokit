@@ -215,7 +215,7 @@ model Invitation {
   organizationId String
   email          String
   role           String?
-  status         String       @default("pending")    // "pending" | "accepted" | "declined"
+  status         String       @default("pending")    // "pending" | "accepted" | "rejected" | "canceled"
   expiresAt      DateTime
   inviterId      String
   teamId         String?
@@ -420,6 +420,21 @@ model WebhookEvent {
 ```
 
 **Purpose:** Ensures webhook events are processed exactly once, with retry support.
+
+### RateLimit
+
+Backs Better Auth's database-stored rate limiter (see `packages/auth/server.ts`'s per-route `rateLimit.customRules`).
+
+```prisma
+model RateLimit {
+  id          String @id @default(cuid())
+  key         String        // Rate-limit bucket key (route + identifier)
+  count       Int
+  lastRequest BigInt        // Unix ms of the last request in this window
+
+  @@map("rateLimit")
+}
+```
 
 ## Entity Relationships
 

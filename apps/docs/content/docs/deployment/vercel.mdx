@@ -1,0 +1,92 @@
+---
+title: Deploy to Vercel
+description: Step-by-step production deployment of the web app on Vercel — no code changes required
+---
+
+The recommended path. Vercel runs Next.js 16 natively, understands the pnpm + Turborepo monorepo, and needs no code changes. Budget ~30 minutes plus DNS propagation.
+
+Complete the [shared prerequisites](/docs/deployment) first (Neon, Stripe, Resend, OAuth apps).
+
+## 1. Import the project
+
+1. Push the repository to GitHub and import it at **vercel.com/new**
+2. Set **Root Directory** to `apps/web`
+3. Leave the framework preset on **Next.js**. Vercel detects the pnpm workspace and Turborepo automatically and builds `app` together with its workspace dependencies
+4. If the build ever fails to resolve `@repo/*` packages, override the build command with:
+
+   ```bash
+   cd ../.. && pnpm turbo build --filter=app
+   ```
+
+## 2. Environment variables
+
+Add these in **Project → Settings → Environment Variables** (Production). This mirrors `apps/web/.env.example`:
+
+```bash
+# App
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
+NEXT_PUBLIC_APP_NAME=YourApp
+NEXT_PUBLIC_DOCS_URL=https://docs.yourdomain.com
+
+# Database (Neon pooled connection string)
+DATABASE_URL=postgresql://...@ep-*-pooler.*.neon.tech/...
+
+# Better Auth
+BETTER_AUTH_SECRET=            # openssl rand -base64 48
+BETTER_AUTH_URL=https://yourdomain.com
+BETTER_AUTH_TRUSTED_ORIGINS=https://yourdomain.com
+
+# OAuth (optional)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+
+# Stripe
+STRIPE_SECRET_KEY=sk_live_...   # or sk_test_ while testing
+STRIPE_WEBHOOK_SECRET=whsec_... # added after step 5
+STRIPE_PRO_PRICE_ID_MONTHLY=price_...
+STRIPE_PRO_PRICE_ID_ANNUAL=price_...
+STRIPE_ENTERPRISE_PRICE_ID_MONTHLY=price_...
+STRIPE_ENTERPRISE_PRICE_ID_ANNUAL=price_...
+
+# Email — with RESEND_API_KEY set, production auto-selects the Resend provider
+EMAIL_FROM=noreply@yourdomain.com
+RESEND_API_KEY=re_...
+
+# Storage — serverless filesystems are ephemeral; use S3 in production
+STORAGE_PROVIDER=s3
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=your-bucket
+AWS_S3_PUBLIC_URL=https://your-bucket.s3.amazonaws.com
+```
+
+> `STORAGE_PROVIDER=local` writes to `./public/uploads`, which does not persist on Vercel's serverless filesystem. Use `s3` for any real deployment.
+
+## 3. Push the database schema
+
+From your machine, with the production `DATABASE_URL` in `packages/database/.env`:
+
+```bash
+cd packages/database && npx prisma db push
+```
+
+## 4. Deploy and attach the domain
+
+Trigger the first deploy, then add your domain under **Settings → Domains**. If the domain differs from what you set in step 2, update `NEXT_PUBLIC_APP_URL`, `BETTER_AUTH_URL`, and `BETTER_AUTH_TRUSTED_ORIGINS` and **redeploy** — `NEXT_PUBLIC_*` values are baked at build time.
+
+## 5. Stripe webhook and OAuth callbacks
+
+Follow the [shared post-deploy configuration](/docs/deployment#shared-post-deploy-configuration): register `https://yourdomain.com/api/auth/stripe/webhook`, copy the signing secret into `STRIPE_WEBHOOK_SECRET`, redeploy, and add the OAuth callback URLs.
+
+## 6. Verify
+
+Run the full [verification checklist](/docs/deployment#verification-checklist).
+
+## Vercel-specific notes
+
+- **Middleware** (`apps/web/proxy.ts`) runs on Vercel's edge runtime. The session check calls Better Auth over the request's own origin; if it ever throws, the middleware fails closed and redirects protected routes to sign-in — watch the function logs if you see unexpected sign-in redirects.
+- **Preview deployments** get `*.vercel.app` URLs that won't match `BETTER_AUTH_TRUSTED_ORIGINS`; auth flows on previews will be limited unless you add the preview origin.
+- **Rollback**: `vercel rollback` restores the previous deployment; the schema is managed separately via Prisma, so roll it back deliberately if a deploy included schema changes.

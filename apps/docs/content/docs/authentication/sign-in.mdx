@@ -58,17 +58,9 @@ const result = await authClient.signIn.magicLink({
 
 The link is generated server-side by the `magicLink()` plugin and emailed via `sendMagicLinkEmail`. It **expires in 10 minutes** (`MAGIC_LINK_EXPIRES_IN_MINUTES`). Clicking it hits the plugin's verify endpoint, which establishes a session and redirects to `callbackURL` (`/org`).
 
-### The `/auth/magic-link` landing page
-
-`magic-link/page.tsx` is the **failure/landing** surface for the flow, driven entirely by a `?error=` query param:
-
-| `?error=` | Rendered state |
-| --- | --- |
-| `expired` | "This magic link has expired. Please request a new one." |
-| `invalid` | "This magic link is invalid. Please request a new one." |
-| _(none)_ | A generic "Check your email" confirmation |
-
-A successful link click redirects to `/org`, not here — so in practice this page is reached when verification fails (the plugin redirects with `?error=…`) or when navigated to directly.
+<Callout type="warn">
+There used to be a dedicated `/auth/magic-link` landing page for the failure/expired-link state (driven by a `?error=` param), but its `page.tsx` was removed. `PAGE_ROUTES.MAGIC_LINK` and the `MagicLinkErrorCard`/`MagicLinkSuccess` design-system components still exist but are currently unused — the only live magic-link UI is the inline `MagicLinkSentCard` shown on this tab after a successful request.
+</Callout>
 
 ## Email OTP
 
@@ -89,17 +81,7 @@ The code is **6 digits** (`OTP_LENGTH`) and **expires in 5 minutes** (`OTP_EXPIR
 
 ## The two-factor hand-off
 
-When a user with 2FA enabled signs in with a correct password, Better Auth does **not** return a full session — it returns a "two-factor required" result. The client's `twoFactorClient` is configured to intercept this:
-
-```ts
-twoFactorClient({
-  onTwoFactorRedirect() {
-    if (typeof window !== "undefined") window.location.href = "/auth/2fa";
-  },
-})
-```
-
-So the browser is sent to `/auth/2fa` to complete the second factor before any session is granted. See [Two-Factor Authentication](./two-factor).
+When a user with 2FA enabled signs in with a correct password, Better Auth does **not** return a full session — it returns a "two-factor required" result, and the browser is sent to `/auth/2fa` before any session is granted. See [Two-Factor Authentication](./two-factor) for the redirect hook and the rest of the flow.
 
 ## Method comparison
 
@@ -132,6 +114,5 @@ flowchart LR
 - `apps/web/app/[locale]/auth/sign-in/page.tsx` — server page; hosts the Tabs and resolves `?tab=`
 - `apps/web/app/[locale]/auth/sign-in/components/{password,magic-link,email-otp}-sign-in.tsx` — the three per-tab client components
 - `packages/design-system/components/molecules/auth/{sign-in,magic-link,email-otp-request,email-otp-verify}-form.tsx` — the presentational forms
-- `apps/web/app/[locale]/auth/magic-link/page.tsx` → `components/magic-link-content.tsx` — magic-link landing / error states
 - `packages/auth/server.ts` — `magicLink` and `emailOTP` plugin config
 - `packages/auth/client.ts` — `magicLinkClient`, `emailOTPClient`, `twoFactorClient`

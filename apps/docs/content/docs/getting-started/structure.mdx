@@ -14,10 +14,10 @@ next-nest-monorepo/
 │   │   │   │   ├── (app)/         # Authenticated app routes
 │   │   │   │   │   ├── [orgSlug]/ # Organization-scoped routes
 │   │   │   │   │   ├── account/   # User account pages
-│   │   │   │   │   ├── invite/    # Organization invitation handling
-│   │   │   │   │   └── org/       # Organization selection
+│   │   │   │   │   └── invite/    # Organization invitation handling
 │   │   │   │   ├── (frontier)/    # Public/marketing routes
-│   │   │   │   └── auth/          # Authentication flows
+│   │   │   │   ├── auth/          # Authentication flows
+│   │   │   │   └── org/           # Organization selection (outside the (app) group)
 │   │   │   ├── api/               # API routes
 │   │   │   └── layout.tsx         # Root layout
 │   │   ├── components/            # Shared app components
@@ -83,7 +83,7 @@ next-nest-monorepo/
 │   │
 │   ├── payment/                   # Stripe integration
 │   │   ├── plans.ts               # Subscription tier configs
-│   │   ├── keys.ts                # Constants and pricing
+│   │   ├── helpers.ts, guards.ts  # Subscription helpers + billing guards
 │   │   ├── types.ts               # TypeScript types
 │   │   └── package.json
 │   │
@@ -123,119 +123,11 @@ next-nest-monorepo/
 └── package.json                   # Root package
 ```
 
-## Apps Breakdown
+A few notes beyond what the tree above already shows:
 
-### Web App (`apps/web`)
-
-Main SaaS application with authentication, multi-org support, and billing.
-
-**Key directories:**
-- `app/[locale]/(app)/` — Authenticated routes
-- `app/[locale]/(frontier)/` — Public/marketing pages
-- `app/[locale]/auth/` — Authentication flows
-- `app/api/` — Backend API routes
-- `lib/` — Shared utilities, hooks, helpers
-- `components/` — Shared React components
-
-**Important files:**
-- `proxy.ts` — Edge proxy for route protection (Next.js 16 replacement for middleware.ts)
-- `layout.tsx` — Root layout with locale handling
-- `next.config.mjs` — Next.js configuration
-- `.env.local` — Environment variables
-
-### Docs App (`apps/docs`)
-
-Fumadocs-powered documentation site with MDX support.
-
-**Key directories:**
-- `content/docs/` — MDX documentation files
-- `app/(home)/` — Landing page
-- `app/docs/` — Documentation pages
-
-**Important files:**
-- `source.config.ts` — Fumadocs MDX configuration
-- `mdx-components.tsx` — Custom MDX components
-
-### Email App (`apps/email`)
-
-A thin React Email **preview runner** (`email dev`). It has no local `app/` or `emails/` — the templates live in `@repo/email` (`packages/email/templates/`), which this app points at.
-
-### Storybook
-
-Component library and design system documentation with Storybook.
-
-**Key directories:**
-- `stories/` — Component stories
-
-### Studio
-
-Wrapper around Prisma Studio for database inspection and management.
-
-## Packages Breakdown
-
-### Core Packages
-
-#### `@repo/auth`
-Better Auth configuration with:
-- Authentication methods (email/password, OAuth, magic links, 2FA)
-- Dual RBAC: platform-level admin roles + organization-scoped roles
-- Client hooks and server instance
-- Session management
-
-#### `@repo/database`
-Prisma ORM with:
-- Data models in `schema.prisma`
-- Generated Prisma client in `generated/client/`
-- Seed script for development data
-- Migration management via `prisma.config.ts`
-
-#### `@repo/design-system`
-UI component library with:
-- shadcn/ui base components
-- Theme provider (light/dark mode)
-- Tailwind CSS utilities
-
-#### `@repo/payment`
-Stripe integration featuring:
-- Subscription plan definitions (Free, Pro, Enterprise)
-- Plan utilities and comparison functions
-- Pricing constants and billing intervals
-
-### Supporting Packages
-
-#### `@repo/utils`
-Shared utility functions for:
-- Date constants (durations, intervals)
-- Payment constants (plan names, statuses)
-- Slug generation and validation
-
-#### `@repo/logger`
-Structured logging with:
-- Server-side Pino logger (`@repo/logger/server`)
-- Client-side logger (`@repo/logger/client`)
-
-#### `@repo/email`
-React Email templates (in `templates/`) — email verification, password changed, magic link, org invitations, new-device login, account deleted/locked, and more — sent via Resend (prod) or Nodemailer → MailDev (dev).
-
-#### `@repo/seo`
-SEO utilities for:
-- Metadata generation
-- Sitemap generation
-- JSON-LD structured data
-
-#### `@repo/internationalization`
-i18n configuration with:
-- Locale definitions
-- Translation keys
-- Locale-specific routing
-
-#### `@repo/storage`
-File storage integration with:
-- Local and S3 storage providers
-- File upload helpers
-
-#### `@repo/typescript-config`
-Shared TypeScript configuration for type consistency.
+- **`apps/email`** is a thin React Email **preview runner** (`email dev`) — it has no local `app/` or `emails/` dir; the templates live in `@repo/email` (`packages/email/templates/`), which this app points at.
+- **`apps/web/proxy.ts`** is the Next.js 16 replacement for `middleware.ts` — it handles edge route protection.
+- **`@repo/auth`** implements dual RBAC: platform-level admin roles plus separate organization-scoped roles.
 
 ## Route Structure in Web App
 
@@ -254,9 +146,10 @@ Shared TypeScript configuration for type consistency.
 │   ├── security/       # Security settings (sessions, 2FA)
 │   ├── danger/         # Account deletion
 │   └── new-org/        # Create organization
-├── invite/             # Organization invitation handling
-└── org/                # Organization selection
+└── invite/             # Organization invitation handling
 ```
+
+> `/[locale]/org/` (organization selection) is a sibling of `(app)/`, not nested inside it — it sits outside the `(app)` route group at the `[locale]/` level, alongside `(frontier)/` and `auth/`.
 
 ### Public Routes (`/[locale]/(frontier)/`)
 
@@ -279,9 +172,10 @@ Each route is a Server-Component `page.tsx` plus a `components/` folder of `"use
 ├── forgot-password/  # page.tsx + components/
 ├── reset-password/   # page.tsx + components/
 ├── verify-email/     # page.tsx + components/
-├── 2fa/              # page.tsx + components/
-└── magic-link/       # page.tsx + components/
+└── 2fa/              # page.tsx + components/
 ```
+
+> Magic link sign-in is a component on the `sign-in/` page, not its own route.
 
 ### API Routes (`/api/`)
 
@@ -322,40 +216,3 @@ Each route is a Server-Component `page.tsx` plus a `components/` folder of `"use
 | `tsconfig.json` | Root TypeScript configuration |
 | `biome.jsonc` | Linting and formatting rules |
 | `CLAUDE.md` | Claude Code guidelines |
-
-## File Organization Best Practices
-
-### By Feature
-```
-app/[locale]/(app)/[orgSlug]/members/
-├── page.tsx              # Page component
-├── layout.tsx            # Layout
-├── components/           # Feature-specific components
-│   ├── member-list.tsx
-│   ├── member-form.tsx
-│   └── ...
-├── actions.ts            # Server actions
-└── ...
-```
-
-### Component Locations
-
-- **UI components**: `packages/design-system/components/ui/`
-- **Feature components**: `app/[feature]/components/`
-- **Shared app components**: `apps/web/components/`
-
-### Utility Locations
-
-- **Database**: `packages/database/`
-- **Auth**: `packages/auth/`
-- **Shared app utilities**: `apps/web/lib/`
-- **Feature utilities**: `app/[feature]/lib/`
-
-## Monorepo Benefits
-
-- **Code reuse** — Shared packages across apps
-- **Unified tooling** — Single build system via Turborepo
-- **Dependency management** — pnpm workspaces
-- **Consistent linting** — One Biome config
-- **Efficient CI/CD** — Only build what changed
-- **Shared types** — TypeScript types across apps

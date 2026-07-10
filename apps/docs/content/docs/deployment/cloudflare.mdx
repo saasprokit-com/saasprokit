@@ -1,0 +1,121 @@
+---
+title: Deploy to Cloudflare Workers
+description: Advanced deployment of the web app on Cloudflare Workers via OpenNext — requires code changes for Prisma and storage
+---
+
+The advanced path. Cloudflare Workers runs Next.js through the **OpenNext adapter** (`@opennextjs/cloudflare`) on the workerd runtime — not Node.js — which requires real changes: Prisma must use a driver adapter, storage must be S3-compatible, and Stripe webhook verification must use async crypto. Budget 2–3 hours the first time.
+
+Complete the [shared prerequisites](/docs/deployment) first. If you want zero-change deployment, use [Vercel](/docs/deployment/vercel).
+
+## 1. Install the adapter
+
+In `apps/web`:
+
+```bash
+pnpm --filter app add @opennextjs/cloudflare
+pnpm --filter app add -D wrangler
+```
+
+Create `apps/web/open-next.config.ts`:
+
+```ts
+import { defineCloudflareConfig } from "@opennextjs/cloudflare";
+
+export default defineCloudflareConfig({});
+```
+
+Create `apps/web/wrangler.jsonc`:
+
+```jsonc
+{
+  "name": "saasprokit-web",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  }
+}
+```
+
+Add scripts to `apps/web/package.json`:
+
+```jsonc
+"preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+"deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+```
+
+## 2. Prisma: switch to the Neon driver adapter
+
+Workers cannot open raw TCP connections to Postgres, so Prisma needs the Neon serverless driver (HTTP/WebSocket).
+
+```bash
+pnpm --filter @repo/database add @prisma/adapter-neon @neondatabase/serverless
+```
+
+In `packages/database/prisma/schema.prisma`:
+
+```prisma
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+```
+
+In `packages/database/index.ts`, construct the client with the adapter:
+
+```ts
+import { PrismaNeon } from "@prisma/adapter-neon";
+
+const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
+// pass to the client: new PrismaClient({ adapter })
+```
+
+Regenerate afterwards: `pnpm migrate`. The adapter also works for local dev against Neon; if you develop against local Docker Postgres, keep the default client locally and gate the adapter on an env flag.
+
+## 3. Storage: S3-compatible only
+
+There is no filesystem on Workers, so `STORAGE_PROVIDER=local` cannot work. Use `s3` — **Cloudflare R2 is S3-compatible** and keeps everything on one platform. Note the storage package's env schema has no custom-endpoint variable out of the box; R2 requires one (`https://<account-id>.r2.cloudflarestorage.com`). Either add endpoint support to `packages/storage` or use AWS S3 for the first test deployment.
+
+## 4. Secrets and variables
+
+Runtime secrets go through Wrangler (never in `wrangler.jsonc`):
+
+```bash
+wrangler secret put DATABASE_URL
+wrangler secret put BETTER_AUTH_SECRET
+wrangler secret put STRIPE_SECRET_KEY
+wrangler secret put STRIPE_WEBHOOK_SECRET
+wrangler secret put RESEND_API_KEY
+# ...and the OAuth secrets if used
+```
+
+Non-secret vars (`EMAIL_FROM`, price IDs, `STORAGE_PROVIDER`, …) go in `wrangler.jsonc` under `"vars"`. `NEXT_PUBLIC_*` values are compile-time — they must be present in the **build** environment, not just as Worker vars. For local preview, put everything in `apps/web/.dev.vars`.
+
+## 5. Stripe webhooks: async crypto
+
+workerd has no synchronous `node:crypto`, so the classic `stripe.webhooks.constructEvent()` throws at runtime. Verification must go through `constructEventAsync()` with `Stripe.createSubtleCryptoProvider()`. Webhook handling in this repo lives inside `@better-auth/stripe` — **verify during your test deploy that a `checkout.session.completed` delivery returns 200**. If it fails with a crypto error, this is the cause, and the webhook route needs the async provider wired in.
+
+## 6. Build, deploy, domain
+
+```bash
+pnpm --filter app deploy
+```
+
+Then in the Cloudflare dashboard: **Workers → your worker → Settings → Domains & Routes** to attach `yourdomain.com` (DNS already on Cloudflare makes this one click). Update `NEXT_PUBLIC_APP_URL`, `BETTER_AUTH_URL`, and `BETTER_AUTH_TRUSTED_ORIGINS` to the final domain and rebuild.
+
+## 7. Shared post-deploy + verify
+
+Follow the [shared post-deploy configuration](/docs/deployment#shared-post-deploy-configuration) (schema push, Stripe webhook, OAuth callbacks), then run the full [verification checklist](/docs/deployment#verification-checklist). Pay special attention to:
+
+- the Stripe webhook delivery status (async crypto issue above)
+- file uploads (storage provider change)
+- `/api/health` (proves the Prisma driver adapter works)
+
+## Known limitations
+
+- **`next/image` optimization** is not available by default — configure Cloudflare Images in the OpenNext config, or set images to `unoptimized`
+- **ISR/data cache** needs a KV binding if you use it; this app is mostly dynamic, so defaults are fine
+- **Bundle size**: Workers caps compressed bundles (10 MB on the paid plan); the Prisma client is the heaviest dependency — if the limit bites, check that only the driver-adapter client is bundled
+- **Logs**: `wrangler tail` replaces the Vercel function log view
