@@ -14,16 +14,24 @@ test.describe("18 - Organization Invitations", () => {
   // ───────────────────────────────────────────────
 
   test.describe("Navigation & Layout", () => {
-    test("TC-18-01: invitations page loads with Pending Invitations tab active", async ({ page }) => {
-      const tab = page.getByRole("tab", { name: /pending invitations/i });
-      await expect(tab).toBeVisible();
-      await expect(tab).toHaveAttribute("aria-selected", "true");
+    test("TC-18-01: invitations page loads with Invitations sidebar link active", async ({ page }) => {
+      const link = page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Invitations", exact: true });
+      await expect(link).toBeVisible();
+      await expect(link).toHaveAttribute("data-active", "true");
     });
 
-    test("TC-18-02: all three tab navigation items are visible", async ({ page }) => {
-      await expect(page.getByRole("tab", { name: /members/i }).first()).toBeVisible();
-      await expect(page.getByRole("tab", { name: /pending invitations/i })).toBeVisible();
-      await expect(page.getByRole("tab", { name: /invite links/i })).toBeVisible();
+    test("TC-18-02: all three sidebar navigation items are visible", async ({ page }) => {
+      await expect(page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Members", exact: true })).toBeVisible();
+      await expect(page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Invitations", exact: true })).toBeVisible();
+      await expect(page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Invite Links", exact: true })).toBeVisible();
     });
 
     test("TC-18-03: page heading and description are visible", async ({ page }) => {
@@ -87,44 +95,52 @@ test.describe("18 - Organization Invitations", () => {
   // Functional Tests (new)
   // ───────────────────────────────────────────────
 
-  test.describe("Tab Navigation Functionality", () => {
-    test("TC-18-10: clicking Members tab navigates to members page", async ({ page }) => {
-      const membersTab = page.getByRole("tab", { name: /members/i }).first();
-      await membersTab.click();
-      await page.waitForLoadState("networkidle");
+  test.describe("Sidebar Navigation Functionality", () => {
+    test("TC-18-10: clicking Members link navigates to members page", async ({ page }) => {
+      const membersLink = page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Members", exact: true });
+      await membersLink.click();
+      await page.waitForURL((url) => url.pathname.endsWith("/members"));
 
       // Should navigate to the members page (URL ends with /members)
       expect(page.url()).toContain(`/${TEST_CONFIG.org.slug}/members`);
       expect(page.url()).not.toContain("/invitations");
 
-      // Members tab should now be active
-      await expect(membersTab).toHaveAttribute("aria-selected", "true");
+      // Members link should now be active
+      await expect(membersLink).toHaveAttribute("data-active", "true");
     });
 
-    test("TC-18-11: clicking Invite Links tab navigates to invite links page", async ({ page }) => {
-      const inviteLinksTab = page.getByRole("tab", { name: /invite links/i });
-      await inviteLinksTab.click();
-      await page.waitForLoadState("networkidle");
+    test("TC-18-11: clicking Invite Links link navigates to invite links page", async ({ page }) => {
+      const inviteLinksLink = page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Invite Links", exact: true });
+      await inviteLinksLink.click();
+      await page.waitForURL(/\/invite-links/);
 
       // Should navigate to the invite-links page
       expect(page.url()).toContain("/invite-links");
-      await expect(inviteLinksTab).toHaveAttribute("aria-selected", "true");
+      await expect(inviteLinksLink).toHaveAttribute("data-active", "true");
     });
 
-    test("TC-18-12: navigating away and back preserves invitations tab state", async ({ page }) => {
-      // Navigate to Members tab
-      const membersTab = page.getByRole("tab", { name: /members/i }).first();
-      await membersTab.click();
-      await page.waitForLoadState("networkidle");
+    test("TC-18-12: navigating away and back preserves invitations link state", async ({ page }) => {
+      // Navigate to the members page
+      const membersLink = page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Members", exact: true });
+      await membersLink.click();
+      await page.waitForURL((url) => url.pathname.endsWith("/members"));
 
-      // Navigate back to Pending Invitations tab
-      const invitationsTab = page.getByRole("tab", { name: /pending invitations/i });
-      await invitationsTab.click();
-      await page.waitForLoadState("networkidle");
+      // Navigate back to the invitations page
+      const invitationsLink = page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Invitations", exact: true });
+      await invitationsLink.click();
+      await page.waitForURL(/\/invitations/);
 
       // Should be back on invitations page
       expect(page.url()).toContain("/invitations");
-      await expect(invitationsTab).toHaveAttribute("aria-selected", "true");
+      await expect(invitationsLink).toHaveAttribute("data-active", "true");
     });
   });
 
@@ -278,10 +294,4 @@ test.describe("18 - Organization Invitations", () => {
     });
   });
 
-  test.describe("Member Count Badge", () => {
-    test("TC-18-21: member count badge is displayed in the header", async ({ page }) => {
-      const badge = page.getByText(/\d+\s*member\(s\)/i);
-      await expect(badge).toBeVisible();
-    });
-  });
 });

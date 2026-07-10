@@ -61,8 +61,21 @@ export function OrgSidebar({
       items: [
         {
           title: "Members",
-          url: orgRoutes.members(orgSlug),
           icon: Users,
+          items: [
+            {
+              title: "Members",
+              url: orgRoutes.members(orgSlug),
+            },
+            {
+              title: "Invitations",
+              url: orgRoutes.membersInvitations(orgSlug),
+            },
+            {
+              title: "Invite Links",
+              url: orgRoutes.membersInviteLinks(orgSlug),
+            },
+          ],
         },
         {
           title: "Settings",
