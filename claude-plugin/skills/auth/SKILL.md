@@ -1,5 +1,5 @@
 ---
-name: project-auth
+name: auth
 description: Authentication & authorization patterns for this repo — Better Auth setup, role systems, server-side session helpers, org membership validation, server action auth, and client-side usage. Read before writing or reviewing any code that touches sessions, permissions, roles, or protected pages/actions.
 ---
 

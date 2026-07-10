@@ -1,5 +1,5 @@
 ---
-name: project-data-access
+name: data-access
 description: Data access layer conventions for this repo — the servers/ vs lib/ split in apps/web, where queries/actions/helpers live, and the Prisma workflow. Read before adding server queries, server actions, or shared helpers, or when unsure where a new file belongs.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: project-workflows
+name: workflows
 description: Step-by-step recipes for common tasks in this repo — creating a new organization-scoped page, a personal account page, or an API route. Read when adding any new page or endpoint to the web app.
 ---
 
@@ -23,4 +23,4 @@ description: Step-by-step recipes for common tasks in this repo — creating a n
 2. Add route constant to `API_ROUTES` in `@/lib/routes`
 3. Use `getServerSession()` for auth checks
 
-See `project-auth` for the auth helper details and `project-routing` for route structure and middleware implications.
+See `saasprokit:auth` for the auth helper details and `saasprokit:routing` for route structure and middleware implications.

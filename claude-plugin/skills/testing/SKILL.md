@@ -1,5 +1,5 @@
 ---
-name: project-testing
+name: testing
 description: Testing and CI setup for this repo — Vitest unit tests, Playwright E2E projects, which packages actually have runnable tests, and CI self-containment rules. Read before writing, running, or debugging tests, or editing GitHub Actions workflows.
 ---
 

@@ -1,0 +1,9 @@
+{
+  "name": "saasprokit",
+  "description": "SaaSProKit development skills — authentication, forms, billing, routing, data access, conventions, workflows, testing, and environment setup for the SaaSProKit Next.js starter kit",
+  "version": "1.0.0",
+  "author": {
+    "name": "SaaSProKit"
+  },
+  "homepage": "https://saasprokit.com"
+}

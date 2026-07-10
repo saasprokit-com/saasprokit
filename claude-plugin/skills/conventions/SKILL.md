@@ -1,5 +1,5 @@
 ---
-name: project-conventions
+name: conventions
 description: Code conventions for this repo — no barrel imports, Next.js 16 async params, and interface-over-type. Read before writing or reviewing any TypeScript/React code in this repo.
 ---
 
