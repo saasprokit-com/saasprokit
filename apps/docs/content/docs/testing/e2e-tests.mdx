@@ -1,618 +1,77 @@
 ---
 title: E2E Tests
-description: Complete catalog of all 428 Playwright end-to-end test cases organized by feature area
+description: Playwright end-to-end test suite organized by feature area
 ---
 
-**Total: 428 test cases** across 34 spec files (24 numbered + 10 categorized).
-
-## Home / Landing Page — 20 tests
-
-### `01-home.spec.ts`
-
-| # | Test Case | Type |
-|---|-----------|------|
-| 1 | Page loads with hero section, CTA buttons, pricing, and footer | Display |
-| 2 | Get Started Free CTA links to sign-up | Navigation |
-| 3 | Pricing toggle switches between monthly and annual | Interaction |
-| 4 | All major page sections render in correct order | Display |
-| 5 | Hero section displays benefits list | Display |
-| 6 | Features grid renders all 9 feature cards | Display |
-| 7 | Tech stack section shows all technologies | Display |
-| 8 | Demo showcase section renders demo items | Display |
-| 9 | Hero "Get Started Free" CTA navigates to sign-up page | Navigation |
-| 10 | Hero "View Demo" link navigates to sign-up page | Navigation |
-| 11 | "Explore Dashboard" link navigates to sign-up page | Navigation |
-| 12 | CTA banner "Start Building Now" navigates to sign-up page | Navigation |
-| 13 | Pricing tier CTAs have correct sign-up hrefs | Navigation |
-| 14 | Clicking Pro pricing CTA navigates to sign-up with plan param | Navigation |
-| 15 | Pricing toggle updates all tier prices simultaneously | Interaction |
-| 16 | Page renders correctly on mobile viewport | Responsive |
-| 17 | Page renders correctly on tablet viewport | Responsive |
-| 18 | Page is scrollable and bottom CTA banner is reachable | Layout |
-| 19 | Page has no broken images | Integrity |
-| 20 | Header logo link navigates to home page | Navigation |
-
-## Authentication — 166 tests
-
-### `02-sign-in.spec.ts` — 9 tests
-
-| # | Test Case |
-|---|-----------|
-| 1 | Page loads with password, magic link, and email OTP tabs |
-| 2 | Empty form submission shows validation errors |
-| 3 | Invalid email format shows error |
-| 4 | Links to sign-up and forgot-password are present |
-| 5 | Social login buttons for Google and GitHub are present |
-| 6 | Wrong password shows error and does not redirect |
-| 7 | Successful sign-in redirects to org page |
-| 8 | Sign-in then sign-out flow |
-| 9 | Non-existent user cannot sign in |
-
-### `03-sign-up.spec.ts` — 9 tests
-
-| # | Test Case |
-|---|-----------|
-| 1 | Page loads with name, email, password, and confirm password fields |
-| 2 | Empty form submission shows validation errors |
-| 3 | Password mismatch shows error |
-| 4 | Link to sign-in works |
-| 5 | Social login buttons for Google and GitHub are present |
-| 6 | Successful sign-up redirects to verify-email page |
-| 7 | Sign-up sends verification email to Maildev |
-| 8 | Duplicate email shows error |
-| 9 | Weak password shows validation error |
-
-### `04-forgot-password.spec.ts` — 5 tests
-
-| # | Test Case |
-|---|-----------|
-| 1 | Page loads with email input and reset button |
-| 2 | Empty submission shows validation error |
-| 3 | Submit with valid email shows success message and email is captured |
-| 4 | Reset email contains a reset-password link |
-| 5 | Submit with non-existent email shows success (no email leak) |
-
-### `05-reset-password.spec.ts` — 7 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-05-01 | No token shows error state |
-| TC-05-02 | Invalid token shows error |
-| TC-05-03 | With token param, page renders |
-| TC-05-04 | Back to sign-in link exists |
-| TC-05-05 | Full reset flow — change password and sign in |
-| TC-05-06 | Reset email contains valid reset link |
-| TC-05-07 | Reset form validates password requirements |
-
-### `06-verify-email.spec.ts` — 9 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-06-01 | Renders verify email page |
-| TC-06-02 | Resend button is visible when email param present |
-| TC-06-03 | Resend button is hidden when no email param |
-| TC-06-04 | Displays the email address from query param |
-| TC-06-05 | Alternative sign-in methods shown |
-| TC-06-06 | Back to sign in link is visible |
-| TC-06-10 | Resend verification email is captured in Maildev |
-| TC-06-11 | Cooldown timer prevents immediate re-send |
-| TC-06-12 | Success message appears after resend |
-
-### `07-2fa.spec.ts` — 14 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-07-01 | Renders 2FA verification page |
-| TC-07-02 | TOTP code input visible |
-| TC-07-03 | Verify button visible |
-| TC-07-04 | Input has numeric attributes |
-| TC-07-05 | Verify button is enabled and functional |
-| TC-07-06 | Back to sign-in link visible |
-| TC-07-07 | Wrong code shows error |
-| TC-07-08 | Visiting /auth/2fa without pending 2FA session shows error or redirects |
-| TC-07-09 | Submitting 000000 displays a visible error in the form |
-| TC-07-10 | Submitting non-numeric text is blocked by input validation |
-| TC-07-11 | Submitting fewer than 6 digits triggers client-side validation error |
-| TC-07-12 | "Back to sign in" link navigates to sign-in page |
-| TC-07-13 | "Use a backup code" button is only present when the handler is provided |
-| TC-07-14 | Verify button shows loading state during submission |
-
-### `08-magic-link.spec.ts` — 10 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-08-01 | Default state shows Check Your Email |
-| TC-08-02 | Success info shows link sent message |
-| TC-08-03 | Try again link navigates to sign-in |
-| TC-08-04 | Expired error shows failure UI |
-| TC-08-05 | Back to sign in button on expired |
-| TC-08-06 | Invalid error shows failure UI |
-| TC-08-07 | Unknown error shows generic message |
-| TC-08-08 | Page card is visible |
-| TC-08-09 | Request magic link, receive email, click link, and sign in |
-| TC-08-10 | Magic link email is captured in Maildev |
-
-### `auth/sign-in.spec.ts` — 9 tests
-
-| # | Test Case |
-|---|-----------|
-| SI-01 | Page loads with password, magic link, and email OTP tabs |
-| SI-02 | Empty form submission shows validation errors |
-| SI-03 | Invalid email format shows error |
-| SI-04 | Links to sign-up and forgot-password are present |
-| SI-05 | Social login buttons for Google and GitHub are present |
-| SI-06 | Wrong password shows error and does not redirect |
-| SI-07 | Non-existent user cannot sign in |
-| SI-08 | Successful sign-in redirects to org page |
-| SI-09 | Sign-in then sign-out flow |
-
-### `auth/sign-up.spec.ts` — 9 tests
-
-| # | Test Case |
-|---|-----------|
-| SU-01 | Page loads with name, email, password, and confirm password fields |
-| SU-02 | Empty form submission shows validation errors |
-| SU-03 | Password mismatch shows error |
-| SU-04 | Link to sign-in works |
-| SU-05 | Social login buttons for Google and GitHub are present |
-| SU-06 | Successful sign-up redirects to verify-email page |
-| SU-07 | Sign-up sends verification email to Maildev |
-| SU-08 | Duplicate email shows error |
-| SU-09 | Weak password shows validation error |
-
-### `auth/password-reset.spec.ts` — 12 tests
-
-| # | Test Case |
-|---|-----------|
-| PR-01 | Page loads with email input and reset button |
-| PR-02 | Empty submission shows validation error |
-| PR-03 | Submit with valid email shows success message and email is captured |
-| PR-04 | Reset email contains a reset-password link |
-| PR-05 | Submit with non-existent email shows success (no email leak) |
-| PR-06 | No token shows error state |
-| PR-07 | Invalid token shows error |
-| PR-08 | With token param, page renders |
-| PR-09 | Back to sign-in link exists |
-| PR-10 | Full reset flow — change password and sign in |
-| PR-11 | Reset email contains valid reset link |
-| PR-12 | Reset form validates password requirements |
-
-### `auth/verify-email.spec.ts` — 9 tests
-
-| # | Test Case |
-|---|-----------|
-| VE-01 | Renders verify email page |
-| VE-02 | Resend button is visible when email param present |
-| VE-03 | Resend button is hidden when no email param |
-| VE-04 | Displays the email address from query param |
-| VE-05 | Alternative sign-in methods shown |
-| VE-06 | Back to sign in link is visible |
-| VE-07 | Resend verification email is captured in Maildev |
-| VE-08 | Cooldown timer prevents immediate re-send |
-| VE-09 | Success message appears after resend |
-
-### `auth/two-factor.spec.ts` — 14 tests
-
-| # | Test Case |
-|---|-----------|
-| TF-01 | Renders 2FA verification page |
-| TF-02 | TOTP code input visible |
-| TF-03 | Verify button visible |
-| TF-04 | Input has numeric attributes |
-| TF-05 | Verify button is enabled after entering a code |
-| TF-06 | Back to sign-in link visible |
-| TF-07 | Back to sign-in link navigates to sign-in page |
-| TF-08 | Wrong code shows error |
-| TF-09 | Submitting 000000 displays error in destructive banner |
-| TF-10 | Submitting non-numeric text is blocked by input validation |
-| TF-11 | Submitting fewer than 6 digits triggers client-side validation error |
-| TF-12 | Visiting /auth/2fa without pending session shows error or redirects |
-| TF-13 | Verify button shows loading state during submission |
-| TF-14 | Backup code button is not shown when handler is absent |
-
-### `auth/magic-link.spec.ts` — 10 tests
-
-| # | Test Case |
-|---|-----------|
-| ML-01 | Default state shows Check Your Email |
-| ML-02 | Success info shows link sent message |
-| ML-03 | Try again link navigates to sign-in |
-| ML-04 | Expired error shows failure UI |
-| ML-05 | Back to sign in button on expired |
-| ML-06 | Invalid error shows failure UI |
-| ML-07 | Unknown error shows generic message |
-| ML-08 | Page card is visible |
-| ML-09 | Request magic link, receive email, click link, and sign in |
-| ML-10 | Magic link email is captured in Maildev |
-
-## Account Management — 52 tests
-
-### `09-account-home.spec.ts` — 7 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-09-01 | Redirects to profile page |
-| TC-09-02 | Redirect preserves locale |
-| TC-09-03 | Sidebar is visible after redirect |
-| TC-09-04 | Sidebar Profile link navigates to profile page |
-| TC-09-05 | Sidebar Security link navigates to security page |
-| TC-09-06 | Sidebar Danger Zone link navigates to danger page |
-| TC-09-07 | Sidebar displays user name and email |
-
-### `10-account-profile.spec.ts` — 11 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-10-01 | Renders profile form with name field |
-| TC-10-02 | Email is displayed as read-only text (not an input) |
-| TC-10-03 | Save button is present |
-| TC-10-04 | Save button disabled when form not dirty |
-| TC-10-05 | Save button enables when name changed |
-| TC-10-06 | Name too short shows validation error |
-| TC-10-07 | Name too long shows validation error |
-| TC-10-08 | Breadcrumb shows Account > Profile |
-| TC-10-09 | Update name, verify success, and confirm persistence after reload |
-| TC-10-10 | Restore original name after update |
-| TC-10-11 | Email field cannot be edited |
-
-### `11-account-security.spec.ts` — 17 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-11-01 | Change password form renders |
-| TC-11-02 | Empty current password shows error |
-| TC-11-03 | New password too short shows error |
-| TC-11-04 | Passwords do not match shows error |
-| TC-11-05 | New password same as current shows error |
-| TC-11-06 | Wrong current password shows error |
-| TC-11-07 | Change password successfully and change back |
-| TC-11-12 | Sessions list renders |
-| TC-11-13 | Current session has Current badge |
-| TC-11-14 | Current session has no logout button |
-| TC-11-15 | At least one session is visible |
-| TC-11-21 | 2FA section renders |
-| TC-11-22 | 2FA shows enable or reconfigure button |
-| TC-11-23 | Enable 2FA opens dialog |
-| TC-11-24 | Enable 2FA — empty password disables continue |
-| TC-11-25 | Enable 2FA — cancel closes dialog |
-| TC-11-41 | Breadcrumb shows Account > Security |
-
-### `12-account-danger.spec.ts` — 11 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-12-01 | Renders danger zone with warning content |
-| TC-12-02 | Delete button is visible |
-| TC-12-03 | Consequences list is visible |
-| TC-12-04 | Opens delete confirmation dialog |
-| TC-12-05 | Delete button disabled until checkbox checked |
-| TC-12-06 | Checking checkbox enables delete button |
-| TC-12-07 | Cancel closes dialog |
-| TC-12-08 | Escape closes dialog |
-| TC-12-09 | Breadcrumb shows Account > Danger Zone |
-| TC-12-11 | Full delete account flow with throwaway user |
-| TC-12-12 | Deleted user can no longer sign in |
-
-### `13-account-new-org.spec.ts` — 13 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-13-01 | Renders new workspace page |
-| TC-13-02 | Auto-generates slug from name |
-| TC-13-03 | Slug stops auto-generating after manual edit |
-| TC-13-04 | Reset button clears form |
-| TC-13-05 | Name too short shows error |
-| TC-13-06 | Empty slug shows error |
-| TC-13-07 | Shows upgrade or form based on eligibility |
-| TC-13-08 | Breadcrumb visible |
-| TC-13-09 | Creates a new organization and redirects to its dashboard |
-| TC-13-10 | Newly created organization dashboard shows owner role |
-| TC-13-11 | Success toast appears after creating organization |
-| TC-13-12 | Can navigate to newly created org via direct URL |
-| TC-13-13 | Duplicate slug shows field error |
-
-## Organization — 39 tests
-
-### `14-org-dashboard.spec.ts` — 14 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-14-01 | Dashboard loads with org name |
-| TC-14-02 | Members stat card visible |
-| TC-14-03 | Your role card visible |
-| TC-14-04 | Slug card shows org slug |
-| TC-14-05 | Created card visible |
-| TC-14-06 | Quick actions card renders |
-| TC-14-07 | Recent activity card renders |
-| TC-14-08 | Stat cards in grid on desktop |
-| TC-14-09 | Navigating to org dashboard displays org name |
-| TC-14-10 | Clicking Members link navigates to members page |
-| TC-14-11 | Clicking Settings link navigates to settings page |
-| TC-14-12 | Clicking Billing link navigates to billing page |
-| TC-14-13 | Clicking Dashboard link returns to org dashboard |
-| TC-14-14 | Unauthenticated access redirects to sign-in |
-
-### `16-org-settings.spec.ts` — 16 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-16-01 | Settings form renders with current values |
-| TC-16-02 | Save button disabled when not dirty |
-| TC-16-03 | Save button enables on name change |
-| TC-16-04 | Slug is read-only |
-| TC-16-05 | Name too short shows error |
-| TC-16-06 | Role badge displayed |
-| TC-16-07 | Branding card visible |
-| TC-16-08 | Upload logo button visible for admin/owner |
-| TC-16-09 | Danger zone card visible for owner |
-| TC-16-10 | Delete org opens confirmation dialog |
-| TC-16-11 | Delete disabled until correct name typed |
-| TC-16-12 | Cancel closes delete dialog |
-| TC-16-13 | Breadcrumbs visible |
-| TC-16-20 | Org name field is populated with test org name |
-| TC-16-21 | Slug field is displayed as plain text (not editable) |
-| TC-16-22 | Update org name and verify persistence, then restore |
-
-### `22-org-selection.spec.ts` — 9 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-22-01 | Authenticated user is redirected to org |
-| TC-22-02 | Redirect preserves locale |
-| TC-22-03 | Unauthenticated user redirected to sign-in |
-| TC-22-04 | /org redirects to the test organization dashboard |
-| TC-22-05 | Org dashboard loads successfully after redirect |
-| TC-22-06 | Direct navigation to org dashboard works |
-| TC-22-07 | Org dashboard shows organization context |
-| TC-22-08 | Org dashboard has navigation to key sections |
-| TC-22-09 | Repeated /org visits consistently redirect |
-
-## Members & Invitations — 63 tests
-
-### `17-org-members.spec.ts` — 26 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-17-01 | Members page loads with heading |
-| TC-17-02 | Tab navigation visible |
-| TC-17-03 | Members tab is active |
-| TC-17-04 | Navigate between tabs |
-| TC-17-05 | Table renders with members |
-| TC-17-06 | Current user shows You badge |
-| TC-17-07 | Search input visible |
-| TC-17-08 | Search filters members |
-| TC-17-09 | Role filter button visible |
-| TC-17-10 | Invite member button visible for admin/owner |
-| TC-17-11 | Invite member dialog opens |
-| TC-17-12 | Invite with empty email shows error |
-| TC-17-13 | Cancel invite closes dialog |
-| TC-17-14 | Bulk invite button visible |
-| TC-17-F01 | Current test user appears in the member list |
-| TC-17-F02 | Current test user row shows the "You" badge |
-| TC-17-F03 | Member role is displayed for each row |
-| TC-17-F04 | Current test user has owner role |
-| TC-17-F05 | Member count badge shows correct count |
-| TC-17-F06 | Search by test user name filters to matching results |
-| TC-17-F07 | Search by email filters to matching results |
-| TC-17-F08 | Search with non-existent term shows no results |
-| TC-17-F09 | Clearing search restores full member list |
-| TC-17-F10 | Invite dialog form has email input and role selector |
-| TC-17-F11 | Invite dialog fills email and submits form |
-| TC-17-F12 | Invite dialog role defaults to Member |
-
-### `18-org-invitations.spec.ts` — 21 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-18-01 | Invitations page loads with Pending Invitations tab active |
-| TC-18-02 | All three tab navigation items are visible |
-| TC-18-03 | Page heading and description are visible |
-| TC-18-04 | Table renders or shows empty state |
-| TC-18-05 | Search input is visible with correct placeholder |
-| TC-18-06 | Role filter button is present |
-| TC-18-07 | Status filter button is present |
-| TC-18-08 | Search filters invitations without errors |
-| TC-18-09 | Reset button clears filters when active |
-| TC-18-10 | Clicking Members tab navigates to members page |
-| TC-18-11 | Clicking Invite Links tab navigates to invite links page |
-| TC-18-12 | Navigating away and back preserves invitations tab state |
-| TC-18-13 | Invitations display email, role, and status columns |
-| TC-18-14 | Invitation rows show Invited By and Sent columns |
-| TC-18-15 | Empty state renders correctly when no invitations match |
-| TC-18-16 | Empty state disappears after clearing search |
-| TC-18-17 | Role filter opens and shows filter options |
-| TC-18-18 | Status filter opens and shows filter options |
-| TC-18-19 | Applying a filter shows Reset button |
-| TC-18-20 | Search and filter can be combined |
-| TC-18-21 | Member count badge is displayed in the header |
-
-### `19-org-invite-links.spec.ts` — 16 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-19-01 | Invite links page loads |
-| TC-19-02 | Table renders or shows empty state |
-| TC-19-03 | Search input visible |
-| TC-19-04 | Create link button visible for admin/owner |
-| TC-19-05 | Create link dialog opens |
-| TC-19-06 | Create dialog has role and expiry selectors |
-| TC-19-07 | Cancel closes create dialog |
-| TC-19-08 | Search filters links |
-| TC-19-09 | Role filter visible |
-| TC-19-10 | Status filter visible |
-| TC-19-11 | Invite links page renders with correct URL and content |
-| TC-19-12 | Generate invite link end-to-end |
-| TC-19-13 | Generated invite link URL contains valid structure |
-| TC-19-14 | Copy button is clickable after link generation |
-| TC-19-15 | Done button closes dialog after link generation |
-| TC-19-16 | Newly created invite link appears in the table |
-
-## Billing & Payment — 69 tests
-
-### `15-org-billing.spec.ts` — 24 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-15-01 | Billing page renders |
-| TC-15-02 | Current plan card visible |
-| TC-15-03 | Plan name displayed |
-| TC-15-04 | Plan comparison grid displays |
-| TC-15-05 | Billing toggle switches monthly/annual |
-| TC-15-06 | Current plan button is disabled |
-| TC-15-07 | Usage stats card visible |
-| TC-15-08 | Page loads for authenticated org member |
-| TC-15-09 | Breadcrumbs visible |
-| TC-15-10 | Current plan shows Free plan for test org |
-| TC-15-11 | Current plan card shows subscription status badge |
-| TC-15-12 | Free plan shows upgrade prompt |
-| TC-15-13 | Current plan shows included features list |
-| TC-15-14 | All three plan cards are visible with prices |
-| TC-15-15 | Current plan card is visually highlighted |
-| TC-15-16 | Billing toggle switches prices between monthly and annual |
-| TC-15-17 | Each plan card shows feature list |
-| TC-15-18 | Upgrade button visible for higher plans |
-| TC-15-19 | Clicking upgrade initiates checkout via API |
-| TC-15-20 | Upgrade sends correct plan name in checkout request |
-| TC-15-21 | Upgrade with annual billing sends correct interval |
-| TC-15-22 | Usage stats shows team members count |
-| TC-15-23 | Usage stats shows storage info |
-| TC-15-24 | Billing actions card hidden on free plan |
-
-### `20-checkout-success.spec.ts` — 16 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-20-01 | Success card renders with activation title |
-| TC-20-02 | Payment success description text visible |
-| TC-20-03 | Subscription benefits list visible |
-| TC-20-04 | Go to dashboard button visible |
-| TC-20-05 | Go to dashboard links to org home |
-| TC-20-06 | Session ID shown when present in URL |
-| TC-20-07 | Session ID hidden when absent |
-| TC-20-10 | Navigating to success URL renders confirmation page |
-| TC-20-11 | Success page with session_id query param displays session info |
-| TC-20-12 | Success page without session_id omits session block |
-| TC-20-13 | Success page shows confirmation email notice |
-| TC-20-14 | Subscription benefits list contains all expected items |
-| TC-20-15 | Success icon (check circle) is rendered |
-| TC-20-16 | Clicking "Go to Dashboard" navigates to org home |
-| TC-20-17 | Browser back from dashboard returns to success page |
-| TC-20-18 | Navigating directly to billing page from success context works |
-
-### `21-checkout-canceled.spec.ts` — 11 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-21-01 | Canceled checkout card renders |
-| TC-21-02 | No charges description visible |
-| TC-21-03 | Try again button visible |
-| TC-21-04 | Try again links to billing page |
-| TC-21-05 | Contact support button visible |
-| TC-21-06 | Both buttons displayed |
-| TC-21-07 | Navigating to checkout canceled URL shows cancellation message |
-| TC-21-08 | Clicking Try Again navigates to the billing page |
-| TC-21-09 | Billing page is accessible after checkout cancellation (retry flow) |
-| TC-21-10 | Navigating back from billing returns to canceled page |
-| TC-21-11 | Direct URL navigation to checkout canceled works without prior checkout |
-
-### `payment/billing-page.spec.ts` — 12 tests
-
-| # | Test Case |
-|---|-----------|
-| BP-01 | Billing page renders for authorized user |
-| BP-02 | Current plan card shows Free plan with status badge |
-| BP-03 | Free plan shows upgrade prompt |
-| BP-04 | Current plan shows included features list |
-| BP-05 | Plan comparison grid shows 3 plans with prices |
-| BP-06 | Billing toggle switches monthly/annual pricing |
-| BP-07 | Annual toggle shows savings badge |
-| BP-08 | Current plan button is disabled |
-| BP-09 | Usage stats show team members count |
-| BP-10 | Usage stats show storage info |
-| BP-11 | Billing actions hidden on free plan |
-| BP-12 | Each plan card shows feature list |
-
-### `payment/checkout.spec.ts` — 15 tests
-
-| # | Test Case |
-|---|-----------|
-| CO-01 | Upgrade to Pro button exists and is clickable |
-| CO-02 | Upgrade to Enterprise button exists and is clickable |
-| CO-03 | Clicking upgrade triggers server action |
-| CO-04 | Annual toggle changes billing interval before checkout |
-| CO-05 | Success page renders with activation title |
-| CO-06 | Success page shows session ID when in URL |
-| CO-07 | Success page hides session ID when absent |
-| CO-08 | Success page shows subscription benefits list |
-| CO-09 | "Go to Dashboard" links to org home |
-| CO-10 | Canceled page renders with correct messaging |
-| CO-11 | "Try Again" links back to billing page |
-| CO-12 | "Contact Support" has mailto link |
-| CO-13 | Navigating to canceled page directly works |
-| CO-14 | Clicking "Try Again" navigates to billing |
-| CO-15 | Browser back from billing returns to canceled page |
-
-### `payment/guards.spec.ts` — 6 tests
-
-| # | Test Case |
-|---|-----------|
-| GD-01 | Non-owner sees "Access Restricted" on billing page |
-| GD-02 | Owner sees full billing page with all sections |
-| GD-03 | New org page shows UpgradePrompt when blocked |
-| GD-04 | "Upgrade Plan" link visible on UpgradePrompt |
-| GD-05 | Downgrade blocked when member count exceeds target limit |
-| GD-06 | Downgrade blocked when storage exceeds target limit |
-
-### `payment/plan-changes.spec.ts` — 10 tests
-
-| # | Test Case |
-|---|-----------|
-| PC-01 | Downgrade button visible for lower plans (when on paid plan) |
-| PC-02 | Downgrade button opens AlertDialog with warning |
-| PC-03 | "Keep Plan" closes dialog without action |
-| PC-04 | Downgrade sends correct changePlanAction data |
-| PC-05 | Cancel subscription button visible on paid plan |
-| PC-06 | Cancel opens confirmation AlertDialog |
-| PC-07 | "Yes, Cancel" triggers cancel flow |
-| PC-08 | "Keep Subscription" closes dialog |
-| PC-09 | Manage billing button triggers portal redirect |
-| PC-10 | Manage billing shows "Opening..." during submit |
-
-## Invite Accept & Preview — 27 tests
-
-### `23-invite-preview.spec.ts` — 12 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-23-01 | Invalid token shows error card |
-| TC-23-02 | Error page has go-to-homepage link |
-| TC-23-03 | Unauthenticated user is redirected to sign-in or sees error |
-| TC-23-04 | Authenticated user with invalid token sees error |
-| TC-23-05 | Non-existent token renders error title and description |
-| TC-23-06 | Empty token segment renders 404 or error |
-| TC-23-07 | Very long token is handled gracefully (no 500) |
-| TC-23-08 | Special characters in token are handled gracefully |
-| TC-23-09 | Accept page with missing invitation ID shows error |
-| TC-23-10 | Accept page with non-existent invitation ID shows not found |
-| TC-23-11 | Unauthenticated user hitting accept page is redirected or sees sign-in prompt |
-| TC-23-12 | Clicking homepage link from error card navigates to root |
-
-### `24-invite-accept.spec.ts` — 15 tests
-
-| # | Test Case |
-|---|-----------|
-| TC-24-01 | No token shows invalid invitation |
-| TC-24-02 | Missing token error has go to homepage link |
-| TC-24-03 | Invalid token shows invitation not found |
-| TC-24-04 | Not found error has go to homepage link |
-| TC-24-05 | Unauthenticated sees sign-in prompt or error |
-| TC-24-06 | Authenticated with invalid token sees error |
-| TC-24-07 | Navigating without token query param renders Invalid Invitation card |
-| TC-24-08 | Navigating with empty token query param renders Invalid Invitation |
-| TC-24-09 | Fake UUID-style token shows Invitation Not Found |
-| TC-24-10 | Random string token shows Invitation Not Found |
-| TC-24-11 | Unauthenticated user is either redirected to sign-in or sees sign-in prompt |
-| TC-24-12 | Unauthenticated with missing token still shows error, not sign-in |
-| TC-24-13 | Authenticated user sees full error card for non-existent invitation |
-| TC-24-14 | Clicking homepage link from error navigates to root |
-| TC-24-15 | No accept button or join UI visible for non-existent invitation |
+import { Callout } from 'fumadocs-ui/components/callout';
+
+**341 tests** across 26 spec files, organized into domain folders under `apps/web/e2e/` (plus `fixtures/`, `helpers/`, and `setup/` for shared test infrastructure — see [Maildev helper](/docs/email/local-development)).
+
+<Callout type="info">
+A handful of files still carry an old numbered title in their `test.describe()` block (e.g. `"12 - Account Danger Zone"`) left over from a prior flat `01-*.spec.ts`-style layout — the files themselves have since been reorganized into the domain folders below. There's no duplication between an old and new copy; each test exists exactly once.
+</Callout>
+
+## `account/` — 59 tests
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `danger.spec.ts` | 11 | Danger zone: delete-account confirmation flow |
+| `home.spec.ts` | 7 | `/account` redirect + sidebar navigation |
+| `new-org.spec.ts` | 13 | Create-organization form, slug generation, eligibility |
+| `profile.spec.ts` | 11 | Profile editing (name, read-only email) |
+| `security.spec.ts` | 17 | Password change, session list, 2FA enrollment |
+
+## `auth/` — 63 tests
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `magic-link.spec.ts` | 10 | Magic-link landing/error states + full sign-in-via-email round trip |
+| `password-reset.spec.ts` | 12 | Forgot-password request + reset-password token flow |
+| `sign-in.spec.ts` | 9 | Sign-in page — password, social, magic link, OTP tabs |
+| `sign-up.spec.ts` | 9 | Registration form and validation |
+| `two-factor.spec.ts` | 14 | `/auth/2fa` challenge page |
+| `verify-email.spec.ts` | 9 | Email verification screen + resend cooldown |
+
+## `dashboard/` — 39 tests
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `overview.spec.ts` | 14 | Org dashboard stat cards and navigation |
+| `selection.spec.ts` | 9 | `/org` redirect/selection behavior |
+| `settings.spec.ts` | 16 | Org settings form, branding, danger zone |
+
+## `members/` — 90 tests
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `invitations.spec.ts` | 21 | Pending invitations tab — search, filters |
+| `invite-accept.spec.ts` | 15 | Accepting an email invitation |
+| `invite-links.spec.ts` | 16 | Shareable invite links — create, revoke |
+| `invite-preview.spec.ts` | 12 | Invite-link preview and error states |
+| `list.spec.ts` | 26 | Member list — table, search, filters, invite dialog |
+
+## `payment/` — 70 tests
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `billing-page.spec.ts` | 12 | Billing page rendering, plan cards, usage stats |
+| `checkout-canceled.spec.ts` | 11 | Checkout-canceled page |
+| `checkout-success.spec.ts` | 16 | Checkout-success page, session verification |
+| `checkout.spec.ts` | 15 | Upgrade/checkout flow end-to-end |
+| `guards.spec.ts` | 6 | Access control — non-owner restrictions, downgrade guards |
+| `plan-changes.spec.ts` | 10 | Downgrade, cancel, and manage-billing UI |
+
+## `public/` — 20 tests
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `home.spec.ts` | 20 | Landing page sections, CTAs, pricing toggle, responsive layout |
+
+## Running these tests
+
+```bash
+pnpm --filter app test:e2e                          # all E2E tests
+pnpm --filter app test:e2e -- --grep "Sign In"       # by describe/test title
+pnpm --filter app test:e2e -- e2e/payment            # by folder
+pnpm --filter app test:e2e:ui                        # with the Playwright UI
+```

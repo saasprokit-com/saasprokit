@@ -86,7 +86,7 @@ The Stripe customer portal is Stripe-hosted; its exact capabilities depend on th
 - View and download past **invoices** and receipts.
 - See and manage the current **subscription** — including reactivating a subscription that was set to cancel. The empty-state copy in `BillingActions` points users here: *"You can reactivate it from the billing portal."*
 
-Subscription state changes made inside the portal (cancellations, plan changes, payment updates) flow back into the app asynchronously via Stripe webhooks. Those webhooks are delivered to `/api/auth/stripe/webhook` and dispatched by the plugin's `onEvent` / `onSubscription*` hooks (`handleStripeInvoiceEvent`, `handleSubscriptionUpdate`, `handleSubscriptionDeleted`, etc.) configured in `packages/auth/server.ts`. The portal redirect itself only returns the browser to `returnUrl`; it does not directly mutate the local database.
+Subscription state changes made inside the portal (cancellations, plan changes) flow back into the app asynchronously via Stripe webhooks. Those webhooks are delivered to `/api/auth/stripe/webhook` and dispatched by the plugin's `onSubscriptionUpdate` / `onSubscriptionDeleted` hooks configured in `packages/auth/server.ts` (see [Webhooks](./webhooks) — there is no handler for payment/invoice events). The portal redirect itself only returns the browser to `returnUrl`; it does not directly mutate the local database.
 
 ## Source files
 

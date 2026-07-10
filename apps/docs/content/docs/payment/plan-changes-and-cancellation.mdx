@@ -49,11 +49,7 @@ Downgrades are a **server action**, not a client plugin call, because they must 
 
 ### Downgrade guard rules
 
-`guardDowngrade` returns `{ allowed, reason, requiredPlan }` and blocks when:
-
-- The subscription status is `past_due` or `incomplete` (Stripe retry logic does not compose cleanly with mid-flight tier changes).
-- Current member count exceeds the target plan's `maxMembers`.
-- Current storage (MB) exceeds the target plan's `maxStorageMB`.
+`guardDowngrade` returns `{ allowed, reason, requiredPlan }`. See [Subscription Lifecycle § Downgrade guard](./subscription-lifecycle#downgrade-guard) for the three rules it enforces (must actually be a downgrade, billing-health gate, resource fit).
 
 When blocked, the action returns `{ success: true, data: { action: "changed", blockReason } }`. `DowngradeButton` keeps the dialog open, renders the reason in a destructive `Alert`, and disables the submit button (`disabled={isPending || !!serverBlockReason}`). `PlanCard` also pre-computes `downgradeBlockReason` so the disabled state shows before the user even opens the dialog.
 
@@ -113,11 +109,7 @@ Commit `4875cbb` (`fix(billing): surface cancel errors and recognize cancelAt ca
 
 **Bug 1 — cancel silently no-op'd.** Better Auth client methods resolve with an `{ error }` object instead of throwing. The old `useCancel` ignored it, so every click showed a success toast even when nothing happened. The fix destructures `{ error: cancelError }` from `subscription.cancel()` and throws on real failures, routing them to `onError` → `toast.error(errors.cancelSubscription, { description: error.message })`.
 
-**Bug 2 — `cancelAt` cancellations looked active.** `isCanceled` previously checked only `cancelAtPeriodEnd`. Stripe also expresses pending cancellation via the newer `cancelAt` timestamp; a subscription scheduled that way looked active, so the Cancel button kept showing and re-triggered a 400. The fix:
-
-- Added `cancelAt: Date | null` to the `Subscription` interface and `SubscriptionSchema` in `packages/payment/types.ts` (the Prisma column already existed).
-- Added `isSubscriptionPendingCancel(subscription)` in `helpers.ts`, which returns true when `cancelAtPeriodEnd === true` **or** `cancelAt != null`, matching Better Auth's own `isPendingCancel`.
-- Added `isAlreadyCancelingError(message)`, which detects the substring `"already set to be canceled"`. When local state has drifted from Stripe, re-cancelling surfaces a benign 400; `useCancel` treats it as a no-op success and falls through to `onSuccess()` so the UI reloads and re-syncs from Stripe rather than showing a spurious error.
+**Bug 2 — `cancelAt` cancellations looked active.** `isCanceled` previously checked only `cancelAtPeriodEnd`, missing subscriptions Stripe scheduled to cancel via the newer `cancelAt` timestamp instead — see [Subscription Lifecycle](./subscription-lifecycle) (Pending cancellation section) for how `isSubscriptionPendingCancel` checks both signals today. The fix also added `isAlreadyCancelingError(message)`, which detects Better Auth's benign `"already set to be canceled"` 400 (when local state has drifted from Stripe) and treats it as a no-op success rather than an error.
 
 ```mermaid
 stateDiagram-v2

@@ -3,9 +3,9 @@ title: Database Overview
 description: Prisma schema and Better Auth database structure
 ---
 
-The `@repo/database` package provides a Prisma client configured for PostgreSQL (Neon) with Better Auth integration.
+The `@repo/database` package provides a Prisma client configured for PostgreSQL (Neon) with Better Auth integration. It has 16 models in total — Better Auth core (`User`, `Session`, `Account`, `Verification`), plugin-backed (`TwoFactor`, `Organization`, `Member`, `Invitation`, `InviteLink`, `Team`, `TeamMember`, `Subscription`, `RateLimit`), and app-specific (`File`, `AuditLog`, `CSRFToken`, `WebhookEvent`). See [Database Design](/docs/database/database-design) for the full field-by-field reference.
 
-## Entity Relationship Diagram
+## Entity Relationships
 
 ```mermaid
 erDiagram
@@ -14,148 +14,20 @@ erDiagram
     User ||--o{ TwoFactor : "has many"
     User ||--o{ Member : "belongs to orgs"
     User ||--o{ Invitation : "invites"
+    User ||--o{ File : "uploads"
+    User ||--o{ AuditLog : "logged actions"
+    User ||--o{ InviteLink : "creates"
 
     Organization ||--o{ Member : "has members"
     Organization ||--o{ Invitation : "has invitations"
+    Organization ||--o{ InviteLink : "has invite links"
+    Organization ||--o{ Team : "has teams"
 
-    User {
-        string id PK
-        string name
-        string email UK
-        boolean emailVerified
-        string image
-        string role "admin|moderator|user"
-        boolean banned
-        string banReason
-        datetime banExpires
-        boolean twoFactorEnabled
-        string stripeCustomerId
-        string firstName
-        string lastName
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    Session {
-        string id PK
-        string token UK
-        datetime expiresAt
-        string ipAddress
-        string userAgent
-        string userId FK
-        string impersonatedBy
-        string activeOrganizationId
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    Account {
-        string id PK
-        string accountId
-        string providerId "google|github|credential"
-        string userId FK
-        string accessToken
-        string refreshToken
-        string idToken
-        datetime accessTokenExpiresAt
-        string scope
-        string password "hashed"
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    Verification {
-        string id PK
-        string identifier "email"
-        string value "token|otp"
-        datetime expiresAt
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    TwoFactor {
-        string id PK
-        string secret "TOTP secret"
-        string backupCodes
-        string userId FK
-    }
-
-    Organization {
-        string id PK
-        string name
-        string slug UK
-        string logo
-        string metadata
-        datetime createdAt
-    }
-
-    Member {
-        string id PK
-        string organizationId FK
-        string userId FK
-        string role "owner|admin|member"
-        datetime createdAt
-    }
-
-    Invitation {
-        string id PK
-        string organizationId FK
-        string email
-        string role
-        string status "pending|accepted|rejected"
-        datetime expiresAt
-        string inviterId FK
-        datetime createdAt
-    }
-
-    Subscription {
-        string id PK
-        string plan "free|pro|enterprise"
-        string referenceId "userId or orgId"
-        string stripeCustomerId
-        string stripeSubscriptionId
-        string status "active|canceled|incomplete"
-        datetime periodStart
-        datetime periodEnd
-        datetime trialStart
-        datetime trialEnd
-        boolean cancelAtPeriodEnd
-        int seats
-    }
+    Team ||--o{ TeamMember : "has members"
+    Session ||--o{ CSRFToken : "has tokens"
 ```
 
-## Tables Overview
-
-### Core Auth Tables (Better Auth base)
-
-| Table | DB Name | Purpose |
-|-------|---------|---------|
-| `User` | `user` | User accounts with profile data, role, ban status |
-| `Session` | `session` | Active sessions with device tracking (IP, userAgent) |
-| `Account` | `account` | OAuth providers + email/password credentials |
-| `Verification` | `verification` | Magic links, OTPs, email verification tokens |
-
-### Plugin Tables
-
-| Table | DB Name | Plugin | Purpose |
-|-------|---------|--------|---------|
-| `TwoFactor` | `twoFactor` | `twoFactor()` | TOTP secrets and backup codes |
-| `Organization` | `organization` | `organization()` | Teams/workspaces |
-| `Member` | `member` | `organization()` | User-Organization membership with roles |
-| `Invitation` | `invitation` | `organization()` | Pending org invites |
-| `Subscription` | `subscription` | `stripe()` | Stripe subscription tracking |
-
-## User Table Extensions
-
-The `User` model has extra fields beyond base Better Auth:
-
-| Field | Source | Purpose |
-|-------|--------|---------|
-| `role` | `admin()` plugin | RBAC role (admin/moderator/user) |
-| `banned`, `banReason`, `banExpires` | `admin()` plugin | User banning support |
-| `twoFactorEnabled` | `twoFactor()` plugin | 2FA status flag |
-| `stripeCustomerId` | `stripe()` plugin | Stripe customer reference |
-| `firstName`, `lastName` | Custom fields | Extended profile data |
+`Subscription`, `WebhookEvent`, and `RateLimit` are standalone tables — not tied to `User`/`Organization` via a Prisma relation (`Subscription.referenceId` is a polymorphic user-or-org ID resolved in application code).
 
 ## Quick Start
 

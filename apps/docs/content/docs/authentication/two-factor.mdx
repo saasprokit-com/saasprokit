@@ -62,8 +62,8 @@ async function handleSubmit(data: TwoFactorFormValues) {
 The page only wires **TOTP** (`verifyTotp`, `method="totp"`). The server *also* configures an email-OTP second factor (`otpOptions.sendOTP`), but there is no UI here to request or verify an emailed 2FA code. Email 2FA is configured-but-unused by the current `/auth/2fa` page; add a `verifyOTP` path and a "send code by email" control if you want it reachable.
 </Callout>
 
-<Callout type="warn">
-Unlike the other auth pages, **`/auth/2fa` is not in `AUTH_ROUTE_PREFIXES`** (`apps/web/lib/routes.ts`). The `proxy.ts` gate therefore treats it as a default-deny *protected* route rather than an auth route. Completing the 2FA step relies on Better Auth's intermediate two-factor cookie being recognized by `auth.api.getSession()` in the proxy; if it isn't, an unauthenticated visitor would be bounced to sign-in. Verify this end-to-end when changing the route gating, and consider adding `TWO_FACTOR` to `AUTH_ROUTE_PREFIXES` if you want it treated like the rest of `/auth/*`.
+<Callout type="info">
+`/auth/2fa` (`PAGE_ROUTES.TWO_FACTOR`) is included in `AUTH_ROUTE_PREFIXES` (`apps/web/lib/routes.ts`), so the `proxy.ts` gate treats it like the other auth pages: reachable without a full session, and a fully-authenticated user visiting it directly is redirected to `/org`. Completing the 2FA step relies on Better Auth's intermediate two-factor cookie being recognized by `auth.api.getSession()` in the proxy.
 </Callout>
 
 ## End-to-end sequence
@@ -94,5 +94,5 @@ sequenceDiagram
 - `apps/web/app/[locale]/auth/2fa/components/two-factor-client.tsx` — `twoFactor.verifyTotp`
 - `packages/auth/server.ts` — `twoFactor()` plugin config
 - `packages/auth/client.ts` — `twoFactorClient({ onTwoFactorRedirect })`
-- `apps/web/lib/routes.ts` — `AUTH_ROUTE_PREFIXES` (note: excludes `/auth/2fa`)
+- `apps/web/lib/routes.ts` — `AUTH_ROUTE_PREFIXES` (includes `/auth/2fa`)
 - `packages/database/prisma/schema.prisma` — `TwoFactor` model, `User.twoFactorEnabled`

@@ -46,26 +46,7 @@ On success `subscription.upgrade()` redirects the browser to Stripe; control doe
 
 ## Server configuration: the Stripe plugin
 
-The `@better-auth/stripe` plugin is wired up in `packages/auth/server.ts`. It is only added when both a Stripe client and `STRIPE_WEBHOOK_SECRET` are configured:
-
-```ts
-stripe({
-  stripeClient,
-  stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
-  createCustomerOnSignUp: false,
-  organization: { enabled: true },
-  onEvent: handleStripeInvoiceEvent,
-  subscription: {
-    enabled: true,
-    onSubscriptionComplete: handleSubscriptionComplete,
-    onSubscriptionUpdate: handleSubscriptionUpdate,
-    onSubscriptionDeleted: handleSubscriptionDeleted,
-    plans: buildStripePlans({ ... }),
-    authorizeReference: ({ user, referenceId, action }) =>
-      authorizeBillingAction({ userId: user.id, referenceId, action }),
-  },
-})
-```
+The `@better-auth/stripe` plugin is wired up in `packages/auth/server.ts` (full config in [Payment Overview](/docs/payment)); for checkout specifically, the relevant pieces are `subscription.plans` and `subscription.authorizeReference`:
 
 - **Plan catalog** — `buildStripePlans(...)` in `packages/auth/plans.ts` builds the `StripePlan[]` array, attaching `priceId` (monthly) and `annualDiscountPriceId` (annual) to the `pro` and `enterprise` plan configs from the `STRIPE_*_PRICE_ID_*` env vars. The plugin uses `plan` + `annual` from the client call to pick the right price.
 - **Authorization** — every subscription action is gated by `authorizeReference`, which delegates to `authorizeBillingAction` in `packages/auth/billing-authorize.ts`. For `upgrade-subscription` this calls `canManageBilling(userId, referenceId)`, allowing only active (non-suspended) org `owner`/`admin` members. This server-side check is the real security boundary — the client-side `PermissionGate` is only UX.

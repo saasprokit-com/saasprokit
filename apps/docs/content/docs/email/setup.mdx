@@ -39,6 +39,7 @@ EMAIL_PROVIDER=resend|nodemailer
     SMTP_SECURE=false          # Default: false
     SMTP_USER=                 # Optional - for authenticated SMTP
     SMTP_PASS=                 # Optional - for authenticated SMTP
+    SMTP_POOL=false            # Default: false - enable connection pooling
     ```
   </Tab>
 </Tabs>
@@ -60,84 +61,59 @@ The email package automatically selects the appropriate provider based on your e
 
 ## Configuration Schema
 
-The configuration is validated using Zod. Here's the full schema:
+The configuration is validated using Zod via `@t3-oss/env-nextjs`. Here's the real schema:
 
 ```typescript
-// packages/email/config.ts
+// packages/email/keys.ts
 import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
-export const emailConfig = createEnv({
-  server: {
-    EMAIL_PROVIDER: z.enum(['resend', 'nodemailer']).optional(),
-    EMAIL_FROM: z.string().default('App <noreply@localhost>'),
+export const keys = () =>
+  createEnv({
+    server: {
+      EMAIL_PROVIDER: z.enum(['resend', 'nodemailer']).optional(),
+      EMAIL_FROM: z.string().default('App <noreply@localhost>'),
 
-    // Resend
-    RESEND_API_KEY: z.string().optional(),
+      // Resend
+      RESEND_API_KEY: z.string().optional(),
 
-    // SMTP/Nodemailer
-    SMTP_HOST: z.string().default('localhost'),
-    SMTP_PORT: z.coerce.number().default(1025),
-    SMTP_SECURE: z.coerce.boolean().default(false),
-    SMTP_USER: z.string().optional(),
-    SMTP_PASS: z.string().optional(),
-  },
-  runtimeEnv: {
-    EMAIL_PROVIDER: process.env.EMAIL_PROVIDER,
-    EMAIL_FROM: process.env.EMAIL_FROM,
-    RESEND_API_KEY: process.env.RESEND_API_KEY,
-    SMTP_HOST: process.env.SMTP_HOST,
-    SMTP_PORT: process.env.SMTP_PORT,
-    SMTP_SECURE: process.env.SMTP_SECURE,
-    SMTP_USER: process.env.SMTP_USER,
-    SMTP_PASS: process.env.SMTP_PASS,
-  },
-});
+      // SMTP/Nodemailer
+      SMTP_HOST: z.string().default('localhost'),
+      SMTP_PORT: z.coerce.number().default(1025),
+      SMTP_SECURE: z.coerce.boolean().default(false), // custom string->bool transform, not z.coerce.boolean() directly (see source)
+      SMTP_USER: z.string().optional(),
+      SMTP_PASS: z.string().optional(),
+      SMTP_POOL: z.coerce.boolean().default(false),
+    },
+    runtimeEnv: {
+      EMAIL_PROVIDER: process.env.EMAIL_PROVIDER,
+      EMAIL_FROM: process.env.EMAIL_FROM,
+      RESEND_API_KEY: process.env.RESEND_API_KEY,
+      SMTP_HOST: process.env.SMTP_HOST,
+      SMTP_PORT: process.env.SMTP_PORT,
+      SMTP_SECURE: process.env.SMTP_SECURE,
+      SMTP_USER: process.env.SMTP_USER,
+      SMTP_PASS: process.env.SMTP_PASS,
+      SMTP_POOL: process.env.SMTP_POOL,
+    },
+  });
 ```
 
 ## Usage in Applications
 
-### Next.js App (apps/app)
+<Callout type="info">
+In `apps/web`, the auth-related templates (password reset, email verification, magic link, OTPs, org invitations) are **not** called directly from app routes or server actions — they're triggered by Better Auth plugin hooks in `packages/auth/server.ts` (e.g. `emailAndPassword.sendResetPassword`), and the subscription templates by `packages/auth/stripe-hooks.ts`. See [Configuration](/docs/authentication/configuration) for those hooks. Several other templates (welcome, account-deleted, role-changed, and others — see [Templates](/docs/email/templates)) are fully built but not currently called from anywhere; the example below shows the pattern for wiring one up yourself.
+</Callout>
 
-```typescript
-// app/api/auth/register/route.ts
-import { sendWelcomeEmail, sendEmailVerificationEmail } from '@repo/email';
-
-export async function POST(request: Request) {
-  const { email, name } = await request.json();
-
-  // Create user...
-
-  // Send welcome email
-  await sendWelcomeEmail({ email, name });
-
-  // Send verification email
-  await sendEmailVerificationEmail({
-    email,
-    userName: name,
-    verificationUrl: `${process.env.NEXT_PUBLIC_APP_URL}/verify?token=${token}`,
-  });
-
-  return Response.json({ success: true });
-}
-```
-
-### Server Actions
+### Calling a send function directly
 
 ```typescript
 'use server';
 
-import { sendPasswordResetEmail } from '@repo/email';
+import { sendWelcomeEmail } from '@repo/email';
 
-export async function requestPasswordReset(email: string) {
-  const token = generateResetToken();
-
-  await sendPasswordResetEmail({
-    email,
-    resetUrl: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`,
-  });
-
-  return { success: true };
+export async function onUserCreated(email: string, name: string) {
+  await sendWelcomeEmail({ email, name });
 }
 ```
 

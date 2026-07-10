@@ -7,7 +7,7 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 ## Template Overview
 
-The email package includes 22+ pre-built templates covering authentication, organization management, subscriptions, and content notifications.
+The email package includes 21 pre-built templates covering authentication, organization management, billing, and content notifications.
 
 All templates are built with [React Email](https://react.email) components and support:
 - Responsive design
@@ -15,9 +15,13 @@ All templates are built with [React Email](https://react.email) components and s
 - i18n (English, Spanish)
 - Consistent branding
 
+<Callout type="warn">
+Not all 21 are actually called from application code today. Auth, org-invitation, and subscription-lifecycle templates are triggered from Better Auth plugin hooks in `packages/auth/server.ts`. The rest (marked **Unused** below) are fully built but not currently invoked anywhere — wire them up where noted if you want that notification to actually go out.
+</Callout>
+
 ## Authentication & Security
 
-### Password Reset
+### Password Reset (wired — `packages/auth/server.ts`)
 
 ```typescript
 import { sendPasswordResetEmail } from '@repo/email';
@@ -33,7 +37,7 @@ await sendPasswordResetEmail({
 | `email` | `string` | Recipient email address |
 | `resetUrl` | `string` | Password reset link |
 
-### Email Verification
+### Email Verification (wired — `packages/auth/server.ts`)
 
 ```typescript
 import { sendEmailVerificationEmail } from '@repo/email';
@@ -51,7 +55,61 @@ await sendEmailVerificationEmail({
 | `userName` | `string?` | User's display name |
 | `verificationUrl` | `string` | Verification link |
 
-### Two-Factor OTP
+### Magic Link (wired — `packages/auth/server.ts`)
+
+```typescript
+import { sendMagicLinkEmail } from '@repo/email';
+
+await sendMagicLinkEmail({
+  email: 'user@example.com',
+  magicLinkUrl: 'https://app.example.com/auth/magic-link?token=abc123',
+  expiresInMinutes: 10,
+});
+```
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `email` | `string` | Recipient email address |
+| `magicLinkUrl` | `string` | The one-time sign-in link |
+| `expiresInMinutes` | `number?` | Link expiration time (default: 10) |
+
+### Sign-In OTP (wired — `packages/auth/server.ts`)
+
+```typescript
+import { sendSignInOTPEmail } from '@repo/email';
+
+await sendSignInOTPEmail({
+  email: 'user@example.com',
+  otp: '123456',
+  expiresInMinutes: 5,
+});
+```
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `email` | `string` | Recipient email address |
+| `otp` | `string` | One-time passcode for the email-OTP sign-in flow |
+| `expiresInMinutes` | `number?` | OTP expiration time (default: 5) |
+
+### Verification OTP (wired — `packages/auth/server.ts`)
+
+```typescript
+import { sendVerificationOTPEmail } from '@repo/email';
+
+await sendVerificationOTPEmail({
+  email: 'user@example.com',
+  otp: '123456',
+  expiresInMinutes: 5,
+});
+```
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `email` | `string` | Recipient email address |
+| `otp` | `string` | One-time passcode used for email verification |
+| `expiresInMinutes` | `number?` | OTP expiration time (default: 5) |
+
+### Two-Factor OTP (wired — `packages/auth/server.ts`)
 
 ```typescript
 import { sendTwoFactorOTPEmail } from '@repo/email';
@@ -69,7 +127,7 @@ await sendTwoFactorOTPEmail({
 | `otp` | `string` | One-time password code |
 | `expiresInMinutes` | `number?` | OTP expiration time (default: 5) |
 
-### Login from New Device
+### Login from New Device (not currently used)
 
 ```typescript
 import { sendLoginNewDeviceEmail } from '@repo/email';
@@ -85,7 +143,7 @@ await sendLoginNewDeviceEmail({
 });
 ```
 
-### Password Changed
+### Password Changed (not currently used)
 
 ```typescript
 import { sendPasswordChangedEmail } from '@repo/email';
@@ -99,7 +157,7 @@ await sendPasswordChangedEmail({
 });
 ```
 
-### Account Locked
+### Account Locked (not currently used)
 
 ```typescript
 import { sendAccountLockedEmail } from '@repo/email';
@@ -115,7 +173,7 @@ await sendAccountLockedEmail({
 });
 ```
 
-### Account Deleted
+### Account Deleted (not currently used)
 
 ```typescript
 import { sendAccountDeletedEmail } from '@repo/email';
@@ -130,7 +188,7 @@ await sendAccountDeletedEmail({
 
 ## Organization Management
 
-### Organization Invitation
+### Organization Invitation (wired — `packages/auth/server.ts`)
 
 ```typescript
 import { sendOrgInvitationEmail } from '@repo/email';
@@ -146,7 +204,7 @@ await sendOrgInvitationEmail({
 });
 ```
 
-### Invitation Accepted
+### Invitation Accepted (not currently used)
 
 ```typescript
 import { sendInvitationAcceptedEmail } from '@repo/email';
@@ -163,7 +221,7 @@ await sendInvitationAcceptedEmail({
 });
 ```
 
-### Role Changed
+### Role Changed (not currently used)
 
 ```typescript
 import { sendRoleChangedEmail } from '@repo/email';
@@ -180,7 +238,7 @@ await sendRoleChangedEmail({
 });
 ```
 
-### Removed from Organization
+### Removed from Organization (not currently used)
 
 ```typescript
 import { sendRemovedFromOrgEmail } from '@repo/email';
@@ -197,7 +255,7 @@ await sendRemovedFromOrgEmail({
 
 ## Subscription & Billing
 
-### Subscription Started
+### Subscription Started (wired — `packages/auth/stripe-hooks.ts`)
 
 ```typescript
 import { sendSubscriptionStartedEmail } from '@repo/email';
@@ -213,7 +271,7 @@ await sendSubscriptionStartedEmail({
 });
 ```
 
-### Payment Receipt
+### Payment Receipt (not currently used)
 
 ```typescript
 import { sendPaymentReceiptEmail } from '@repo/email';
@@ -231,23 +289,7 @@ await sendPaymentReceiptEmail({
 });
 ```
 
-### Payment Failed
-
-```typescript
-import { sendPaymentFailedEmail } from '@repo/email';
-
-await sendPaymentFailedEmail({
-  email: 'user@example.com',
-  userName: 'John',
-  planName: 'Pro',
-  amount: '$29.00',
-  failureReason: 'Card declined',
-  retryDate: '2024-01-18',
-  updatePaymentUrl: 'https://app.example.com/billing',
-});
-```
-
-### Subscription Upgraded
+### Subscription Upgraded (wired — `packages/auth/stripe-hooks.ts`)
 
 ```typescript
 import { sendSubscriptionUpgradedEmail } from '@repo/email';
@@ -264,7 +306,7 @@ await sendSubscriptionUpgradedEmail({
 });
 ```
 
-### Subscription Downgraded
+### Subscription Downgraded (wired — `packages/auth/stripe-hooks.ts`)
 
 ```typescript
 import { sendSubscriptionDowngradedEmail } from '@repo/email';
@@ -282,7 +324,7 @@ await sendSubscriptionDowngradedEmail({
 });
 ```
 
-### Subscription Cancelled
+### Subscription Cancelled (wired — `packages/auth/stripe-hooks.ts`)
 
 ```typescript
 import { sendSubscriptionCancelledEmail } from '@repo/email';
@@ -298,44 +340,9 @@ await sendSubscriptionCancelledEmail({
 });
 ```
 
-### Subscription Renewed
-
-```typescript
-import { sendSubscriptionRenewedEmail } from '@repo/email';
-
-await sendSubscriptionRenewedEmail({
-  email: 'user@example.com',
-  userName: 'John',
-  planName: 'Pro',
-  amount: '$29.00',
-  billingInterval: 'monthly',
-  renewalDate: '2024-01-15',
-  nextBillingDate: '2024-02-15',
-  dashboardUrl: 'https://app.example.com/dashboard',
-});
-```
-
-### Trial Ending
-
-```typescript
-import { sendTrialEndingEmail } from '@repo/email';
-
-await sendTrialEndingEmail({
-  email: 'user@example.com',
-  userName: 'John',
-  planName: 'Pro',
-  trialEndDate: '2024-01-22',
-  daysRemaining: 3,
-  amount: '$29.00',
-  billingInterval: 'monthly',
-  upgradeUrl: 'https://app.example.com/upgrade',
-  featuresUsed: ['Custom domains', 'Analytics', 'Team collaboration'],
-});
-```
-
 ## Content Notifications
 
-### Welcome Email
+### Welcome Email (not currently used)
 
 ```typescript
 import { sendWelcomeEmail } from '@repo/email';
@@ -346,7 +353,7 @@ await sendWelcomeEmail({
 });
 ```
 
-### Article Published
+### Article Published (not currently used)
 
 ```typescript
 import { sendArticlePublishedEmail } from '@repo/email';
@@ -366,14 +373,13 @@ await sendArticlePublishedEmail({
 
 ## Previewing Templates
 
-Use the React Email dev server to preview templates:
+The canonical way to preview templates is the dedicated `apps/email` app (see [Getting Started](/docs/getting-started)):
 
 ```bash
-cd packages/email
-pnpm dev
+pnpm --filter email dev
 ```
 
-Open http://localhost:3030 to view all templates in the browser.
+Open http://localhost:3003 to view all templates in the browser. (`packages/email` also has its own `pnpm dev` script pointing at the same `templates/` directory on port 3030 — either works, but `apps/email` is the one referenced elsewhere in these docs.)
 
 ## Creating Custom Templates
 
@@ -402,7 +408,7 @@ export default function MyCustomEmail({
 }
 ```
 
-2. Add the send function in `index.ts`:
+2. Add the send function in `index.ts`, using the package's internal `sendEmail()` helper (it wraps `getEmailProvider()` so individual send functions don't touch provider details directly):
 
 ```typescript
 import MyCustomEmail from './templates/my-custom-email';
@@ -416,13 +422,17 @@ export async function sendMyCustomEmail({
   userName?: string;
   actionUrl?: string;
 }) {
-  const provider = getEmailProvider();
-  return provider.send({
+  const result = await sendEmail({
     to: email,
     subject: 'Your Custom Subject',
     react: MyCustomEmail({ userName, actionUrl }),
-    from: FROM_EMAIL,
   });
+
+  if (!result.success) {
+    throw result.error || new Error('Failed to send email');
+  }
+
+  return { success: true, messageId: result.messageId };
 }
 ```
 

@@ -3,6 +3,8 @@ title: Stripe Webhooks
 description: How Stripe webhook events are received, verified by the @better-auth/stripe plugin, and synced into the database and notification emails
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 Billing webhooks are **not** handled by a hand-rolled API route. The `@better-auth/stripe` plugin mounts the webhook endpoint, verifies the Stripe signature, persists subscription state, and then dispatches into the project's own hook functions defined in `packages/auth/stripe-hooks.ts`.
 
 ## Endpoint & Signature Verification
@@ -23,7 +25,6 @@ Signature verification is performed entirely by the plugin using `stripeWebhookS
         stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET,
         createCustomerOnSignUp: false,
         organization: { enabled: true },
-        onEvent: handleStripeInvoiceEvent,
         subscription: {
           enabled: true,
           onSubscriptionComplete: handleSubscriptionComplete,
@@ -39,10 +40,13 @@ Signature verification is performed entirely by the plugin using `stripeWebhookS
 
 `STRIPE_WEBHOOK_SECRET` is declared in `packages/auth/keys.ts` as an optional `z.string().startsWith("whsec_")`. If it is unset, the plugin is omitted and no webhook endpoint is registered.
 
-The plugin exposes two dispatch surfaces, both wired in `server.ts`:
+The plugin has exactly one dispatch surface, wired in `server.ts`:
 
 - **`subscription.onSubscriptionComplete` / `onSubscriptionUpdate` / `onSubscriptionDeleted`** — typed subscription lifecycle callbacks. The plugin has already upserted the local `subscription` record (status, plan, `stripeSubscriptionId`, `referenceId`) before invoking these; our handlers run as **side effects**, primarily sending notification email.
-- **`onEvent`** — a raw `Stripe.Event` catch-all, used here for invoice events (`handleStripeInvoiceEvent`).
+
+<Callout type="warn">
+The plugin does not configure a raw `onEvent` catch-all. Events outside the three subscription lifecycle callbacks above — notably `invoice.payment_failed` and `invoice.paid` — are **not handled at all** in this codebase today: there is no payment-failure or renewal notification email. If you need those, you'd add an `onEvent` handler to the `stripe()` config yourself.
+</Callout>
 
 ## Flow
 
@@ -60,37 +64,49 @@ sequenceDiagram
     Plugin->>Plugin: verify signature with STRIPE_WEBHOOK_SECRET
     alt invalid signature
         Plugin-->>Stripe: 400 (rejected)
-    else valid
+    else valid, subscription.* event
         Plugin->>DB: upsert subscription (status/plan/ids)
-        alt subscription.* event
-            Plugin->>Hooks: onSubscriptionComplete / Update / Deleted
-        else other event (e.g. invoice.*)
-            Plugin->>Hooks: onEvent(event) -> handleStripeInvoiceEvent
-        end
-        Hooks->>DB: lookup org owner / subscription (read)
+        Plugin->>Hooks: onSubscriptionComplete / Update / Deleted
+        Hooks->>Hooks: claimWebhookEvent(event) — dedupe by (provider, eventId)
+        Hooks->>DB: lookup org owner (read)
         Hooks->>Email: send lifecycle email
         Plugin-->>Stripe: 200 OK
+    else valid, other event type (e.g. invoice.*)
+        Plugin-->>Stripe: 200 OK (no handler configured, no-op)
     end
 ```
 
 ## Event Handlers
 
-The dispatch handlers all resolve an **org email context** via `getOrgEmailContext(referenceId)`, which loads the `organization` and its `OWNER` `member` (using `ORG_ROLES.OWNER`) and builds a `dashboardUrl` of `${NEXT_PUBLIC_APP_URL}/${org.slug}/billing`. If the org or owner email is missing, the handler returns early and sends nothing.
+Every handler first calls `claimWebhookEvent(event)` (`packages/auth/webhook-idempotency.ts`) and returns immediately if it returns `false` — see [Idempotency](#idempotency) below. After that, the dispatch handlers resolve an **org email context** via `getOrgEmailContext(referenceId)`, which loads the `organization` and its `OWNER` `member` (using `ORG_ROLES.OWNER`) and builds a `dashboardUrl` of `${NEXT_PUBLIC_APP_URL}/${org.slug}/billing`. If the org or owner email is missing, the handler returns early and sends nothing.
 
 | Dispatch source | Stripe trigger | Handler in `stripe-hooks.ts` | What it does |
 | --- | --- | --- | --- |
 | `subscription.onSubscriptionComplete` | First successful subscription checkout | `handleSubscriptionComplete` | Sends `sendSubscriptionStartedEmail` with the plan display name and billing interval (`getBillingInterval` compares the price ID against `STRIPE_*_PRICE_ID_ANNUAL`). |
 | `subscription.onSubscriptionUpdate` | `customer.subscription.updated` | `handleSubscriptionUpdate` | Reads `event.data.previous_attributes.items`. If no item change, returns (skips status-only updates / period rollovers). Otherwise resolves the previous plan from the previous price ID via `getPlanNameFromPriceId`, compares plan positions using `PLAN_ORDER`, and sends `sendSubscriptionDowngradedEmail` when `previousIndex > newIndex`, else `sendSubscriptionUpgradedEmail`. |
 | `subscription.onSubscriptionDeleted` | `customer.subscription.deleted` | `handleSubscriptionDeleted` | Computes the access cutoff from the first subscription item's `current_period_end` (Stripe v22.2+ moved this onto each `SubscriptionItem`) and sends `sendSubscriptionCancelledEmail` with `accessUntil` and a `reactivateUrl`. |
-| `onEvent` (raw) | `invoice.payment_failed` | `handleStripeInvoiceEvent` → `handleInvoicePaymentFailed` | Extracts the subscription ID via `extractSubscriptionId` (reads `invoice.lines.data[0].subscription`), looks up the local `subscription` by `stripeSubscriptionId`, then sends `sendPaymentFailedEmail` with `amount_due` (formatted via `CENTS_PER_DOLLAR`), the `next_payment_attempt` retry date, and a `failureReason` derived from `last_finalization_error`. |
-| `onEvent` (raw) | `invoice.paid` | `handleStripeInvoiceEvent` → `handleInvoiceRenewal` | Returns unless `invoice.billing_reason === "subscription_cycle"` (skips the first payment, which is covered by `onSubscriptionComplete`). Looks up the local subscription, derives the billing interval from `invoice.lines.data[0].pricing.price_details.price`, and sends `sendSubscriptionRenewedEmail` with `amount_paid` and the `period_end` renewal date. |
+
+<Callout type="warn">
+There is no handler for `invoice.payment_failed` or `invoice.paid` — dunning/payment-failure notifications and renewal-receipt emails are not implemented. `sendPaymentReceiptEmail` exists in `@repo/email` but is not currently called from anywhere (see [Email Templates](/docs/email/templates)).
+</Callout>
+
+### Idempotency
+
+Stripe delivers webhooks **at least once** and retries on failure, so the same `event.id` can arrive repeatedly (and concurrently) — but the `@better-auth/stripe` plugin only deduplicates the subscription-*create* path internally. Every handler above guards its own notification side effect with:
+
+```ts
+if (!(await claimWebhookEvent(args.event))) {
+  return;
+}
+```
+
+`claimWebhookEvent` (`packages/auth/webhook-idempotency.ts`) inserts a `WebhookEvent` row keyed by the unique `(provider, eventId)` constraint; the first insert wins, and a duplicate/concurrent insert hits the constraint and returns `false`. The claim is recorded *before* the side effect runs, so a best-effort notification that fails afterward is not retried — an accepted tradeoff for lifecycle emails specifically.
 
 ### Notes on the handler implementations
 
 - **Plan naming.** `displayPlanName` maps internal plan keys to `PLAN_DISPLAY_NAMES[PlanName]`, falling back to the raw value.
-- **Stripe v22.2+ field moves.** Several helpers exist purely to read fields that Stripe relocated: `extractSubscriptionId` (subscription now on the line item), `handleSubscriptionDeleted` (`current_period_end` now on each `SubscriptionItem`), and `handleInvoiceRenewal` (price now at `lines.data[N].pricing.price_details.price`).
-- **Idempotency / safety.** Every handler returns early when its lookup (`getOrgEmailContext`, `database.subscription.findFirst`, or `extractSubscriptionId`) yields nothing, so missing data never throws inside the webhook path.
-- **Database writes.** The handlers in `stripe-hooks.ts` only **read** the `subscription`, `organization`, and `member` tables. The authoritative subscription row write (status/plan/`stripeSubscriptionId`) is done by the `@better-auth/stripe` plugin itself before our hooks fire.
+- **Stripe v22.2+ field move.** `handleSubscriptionDeleted` reads `current_period_end` from the first item in `stripeSubscription.items.data`, since Stripe relocated this field from the `Subscription` root onto each `SubscriptionItem`.
+- **Database writes.** The handlers in `stripe-hooks.ts` only **read** the `subscription`, `organization`, and `member` tables (aside from the `claimWebhookEvent` insert). The authoritative subscription row write (status/plan/`stripeSubscriptionId`) is done by the `@better-auth/stripe` plugin itself before our hooks fire.
 
 ### Not a webhook handler
 
@@ -98,7 +114,9 @@ The dispatch handlers all resolve an **org email context** via `getOrgEmailConte
 
 ## Source files
 
-- `packages/auth/stripe-hooks.ts` — all webhook event handlers (`handleSubscriptionComplete`, `handleSubscriptionUpdate`, `handleSubscriptionDeleted`, `handleStripeInvoiceEvent`, plus `handleInvoicePaymentFailed` / `handleInvoiceRenewal`) and helpers (`getOrgEmailContext`, `getBillingInterval`, `extractSubscriptionId`).
-- `packages/auth/server.ts` — wires `stripeWebhookSecret`, `onEvent`, and the `subscription.*` callbacks into the `stripe()` plugin.
-- `packages/auth/keys.ts` — declares `STRIPE_WEBHOOK_SECRET` and the `STRIPE_*_PRICE_ID_*` env vars.
-- `packages/payment/hooks.ts` — client-side subscription React hooks (not webhook handling).
+- `packages/auth/stripe-hooks.ts` — `handleSubscriptionComplete`, `handleSubscriptionUpdate`, `handleSubscriptionDeleted`, and helpers (`getOrgEmailContext`, `getBillingInterval`, `displayPlanName`)
+- `packages/auth/webhook-idempotency.ts` — `claimWebhookEvent`
+- `packages/auth/server.ts` — wires `stripeWebhookSecret` and the `subscription.*` callbacks into the `stripe()` plugin
+- `packages/auth/keys.ts` — declares `STRIPE_WEBHOOK_SECRET` and the `STRIPE_*_PRICE_ID_*` env vars
+- `packages/database/prisma/schema.prisma` — `WebhookEvent` model, `(provider, eventId)` unique constraint
+- `packages/payment/hooks.ts` — client-side subscription React hooks (not webhook handling)
