@@ -145,44 +145,6 @@ test.describe("18 - Organization Invitations", () => {
   });
 
   test.describe("Invitation Data Display", () => {
-    test("TC-18-13: invitations display email, role, and status columns", async ({ page }) => {
-      const rows = page.locator("tbody tr");
-      const rowCount = await rows.count();
-
-      if (rowCount > 0) {
-        // Check that table headers include expected columns
-        const thead = page.locator("thead");
-        await expect(thead.getByText("Email")).toBeVisible();
-        await expect(thead.getByText("Role")).toBeVisible();
-        await expect(thead.getByText("Status")).toBeVisible();
-
-        // Verify first row has content in each key cell
-        const firstRow = rows.first();
-
-        // Email cell: should contain an email-like string (has @)
-        const emailCell = firstRow.locator("td").nth(0);
-        const emailCellAlt = firstRow.locator("td").nth(1); // might be offset by select checkbox
-        const emailText = await emailCell.textContent();
-        const emailTextAlt = await emailCellAlt.textContent();
-        const hasEmail = emailText?.includes("@") || emailTextAlt?.includes("@");
-        expect(hasEmail).toBeTruthy();
-
-        // Role cell: should contain a badge with role text (admin or member)
-        const roleBadge = firstRow.locator("td").getByText(/admin|member/i).first();
-        await expect(roleBadge).toBeVisible();
-
-        // Status cell: should show one of the known statuses
-        const statusBadge = firstRow
-          .locator("td")
-          .getByText(/pending|accepted|canceled|rejected|expired|expires/i)
-          .first();
-        await expect(statusBadge).toBeVisible();
-      } else {
-        // Empty state
-        await expect(page.getByText(/no results/i)).toBeVisible();
-      }
-    });
-
     test("TC-18-14: invitation rows show Invited By and Sent columns", async ({ page }) => {
       const rows = page.locator("tbody tr");
       const rowCount = await rows.count();

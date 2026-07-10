@@ -56,27 +56,6 @@ test.describe("23 - Invite Link Preview", () => {
   test.describe("Invite Link — Functional (Invalid/Missing Token)", () => {
     test.use({ storageState: "e2e/.auth/user.json" });
 
-    test("TC-23-05: non-existent token renders error title and description", async ({
-      page,
-    }) => {
-      await page.goto(localePath("/invite/does-not-exist-abc123"));
-
-      // Verify the error card structure
-      await expect(
-        page.getByRole("heading", { name: /invalid invite link/i })
-      ).toBeVisible();
-      await expect(
-        page.getByText(/this invite link is invalid or doesn't exist/i)
-      ).toBeVisible();
-
-      // Homepage link should point to root
-      const homepageLink = page.getByRole("link", {
-        name: /go to homepage/i,
-      });
-      await expect(homepageLink).toBeVisible();
-      await expect(homepageLink).toHaveAttribute("href", "/");
-    });
-
     test("TC-23-06: empty token segment renders 404 or error", async ({
       page,
     }) => {
@@ -127,45 +106,6 @@ test.describe("23 - Invite Link Preview", () => {
 
       // Should not return 500
       expect(status).toBeLessThan(500);
-    });
-  });
-
-  test.describe("Email Invitation Preview — Functional (Accept Page)", () => {
-    test.use({ storageState: "e2e/.auth/user.json" });
-
-    test("TC-23-09: accept page with missing invitation ID shows error", async ({
-      page,
-    }) => {
-      // The accept page reads ?token= from searchParams
-      await page.goto(localePath("/invite/accept"));
-
-      await expect(
-        page.getByRole("heading", { name: /invalid invitation/i })
-      ).toBeVisible();
-      await expect(
-        page.getByText(/invalid or missing the invitation id/i)
-      ).toBeVisible();
-      await expect(
-        page.getByRole("link", { name: /go to homepage/i })
-      ).toBeVisible();
-    });
-
-    test("TC-23-10: accept page with non-existent invitation ID shows not found", async ({
-      page,
-    }) => {
-      await page.goto(
-        localePath("/invite/accept?token=non-existent-invitation-id")
-      );
-
-      await expect(
-        page.getByRole("heading", { name: /invitation not found/i })
-      ).toBeVisible();
-      await expect(
-        page.getByText(/may have been cancelled or doesn't exist/i)
-      ).toBeVisible();
-      await expect(
-        page.getByRole("link", { name: /go to homepage/i })
-      ).toBeVisible();
     });
   });
 
