@@ -1,5 +1,5 @@
 ---
-name: project-routing
+name: routing
 description: Route structure, edge middleware (proxy.ts), and centralized route definitions for this repo. Read before adding pages or API routes, changing public/auth route allowlists, touching locale handling, or adjusting CSP.
 ---
 

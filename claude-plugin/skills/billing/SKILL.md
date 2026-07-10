@@ -1,5 +1,5 @@
 ---
-name: project-billing
+name: billing
 description: Billing and payment architecture for this repo — Stripe integration via @better-auth/stripe, subscription plans, org-scoped billing, and webhook configuration. Read before working on checkout, subscriptions, plans, or Stripe webhooks.
 ---
 

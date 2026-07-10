@@ -25,14 +25,14 @@ pnpm check                    # Lint check via ultracite + Biome
 pnpm fix                      # Auto-fix lint issues
 pnpm --filter app typecheck   # Type check web app
 
-# Testing (details: project-testing skill)
+# Testing (details: saasprokit:testing skill)
 pnpm test                     # All unit tests via turbo (@repo/auth, @repo/payment, app)
 pnpm --filter app test:e2e    # Playwright E2E tests
 
-# Database (details: project-data-access skill)
+# Database (details: saasprokit:data-access skill)
 pnpm migrate                  # Format, generate, and push Prisma schema
 
-# Local infra (details: project-env-setup skill)
+# Local infra (details: saasprokit:env-setup skill)
 docker compose up postgres maildev   # DB + mail catcher (recommended for app dev)
 
 # i18n
@@ -47,18 +47,21 @@ pnpm --filter internationalization translate   # Machine-translate locale files 
 
 **Supporting packages**: `@repo/utils`, `@repo/logger` (Pino, `/server` + `/client` exports), `@repo/internationalization`, `@repo/seo`, `@repo/storage`, `@repo/typescript-config`.
 
-## Project Skills (read before working in these areas)
+## SaaSProKit Skills (read before working in these areas)
 
-Detailed architecture docs live as skills in `.claude/skills/project-*/SKILL.md`. Read the relevant one BEFORE writing code in its area:
+Detailed architecture docs live as skills in the `saasprokit` plugin at `claude-plugin/skills/*/SKILL.md`. Once the plugin is installed they are invocable as `/saasprokit:<name>`; either way, read the relevant SKILL.md BEFORE writing code in its area:
 
-- `project-auth` — Better Auth setup, role systems, server-side session helpers (`getServerSession`, `requireAuth`, `checkOrgPermission`), `validateOrgMembershipBySlug`, server action auth (`verifySession`, `toActionError`), client-side usage
-- `project-routing` — Route structure, edge middleware (`apps/web/proxy.ts`), centralized routes (`@/lib/routes`), locale handling
-- `project-data-access` — `servers/` vs `lib/` split in `apps/web`, Prisma workflow
-- `project-billing` — Stripe integration, subscription plans, webhook config
-- `project-conventions` — No barrel imports, Next.js 16 async params, interface-over-type
-- `project-workflows` — Recipes for new org-scoped pages, account pages, API routes
-- `project-testing` — Vitest/Playwright layout, CI rules, Turbo build graph
-- `project-env-setup` — Env vars, Docker Compose, MailDev
+- `saasprokit:auth` — Better Auth setup, role systems, server-side session helpers (`getServerSession`, `requireAuth`, `checkOrgPermission`), `validateOrgMembershipBySlug`, server action auth (`verifySession`, `toActionError`), client-side usage
+- `saasprokit:routing` — Route structure, edge middleware (`apps/web/proxy.ts`), centralized routes (`@/lib/routes`), locale handling
+- `saasprokit:data-access` — `servers/` vs `lib/` split in `apps/web`, Prisma workflow
+- `saasprokit:forms` — Form patterns (RHF + zod + server actions), scaffold recipes for new forms and dialogs
+- `saasprokit:billing` — Stripe integration, subscription plans, webhook config
+- `saasprokit:conventions` — No barrel imports, Next.js 16 async params, interface-over-type
+- `saasprokit:workflows` — Recipes for new org-scoped pages, account pages, API routes
+- `saasprokit:testing` — Vitest/Playwright layout, CI rules, Turbo build graph
+- `saasprokit:env-setup` — Env vars, Docker Compose, MailDev
+
+**Plugin setup** (once per machine): `/plugin marketplace add ./` then `/plugin install saasprokit@saasprokit`, then `/reload-plugins`. The marketplace manifest lives at `.claude-plugin/marketplace.json`; the plugin at `claude-plugin/`.
 
 ## Key Conventions
 
@@ -80,7 +83,7 @@ Detailed architecture docs live as skills in `.claude/skills/project-*/SKILL.md`
 **Vercel plugin** (`vercel@claude-plugins-official`) is installed and injects skills dynamically via hooks.
 
 **Agent Skills** come from two places:
-- `.claude/skills/project-*/` — project-owned skills, tracked in git (see list above)
+- `claude-plugin/skills/` — SaaSProKit-owned skills, tracked in git and shipped as the `saasprokit` plugin (see list above)
 - `.agents/skills/` — third-party skills managed by `skills-lock.json`, restored on demand via `pnpm skills:install` (Better Auth, Prisma, Stripe, Vercel/React, shadcn, Turborepo, web design). Not automatic on `pnpm install` — it shells out to `git`, which the Docker images lack. Update with `npx skills check` then `npx skills update`.
 
 **When the user requests a review**, read the relevant SKILL.md files before starting. For auth-related reviews, read the Better Auth skills. For database/schema reviews, read the Prisma skills.
