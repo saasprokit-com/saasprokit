@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "saasprokit",
-      "source": "./claude-plugin",
+      "source": "./saasprokit-skills",
       "description": "SaaSProKit development skills: auth, forms, billing, routing, data-access, conventions, workflows, testing, env-setup",
       "author": {
         "name": "SaaSProKit"

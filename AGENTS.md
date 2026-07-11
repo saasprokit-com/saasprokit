@@ -21,7 +21,7 @@ pnpm migrate                  # Format, generate, and push Prisma schema
 
 ## Skills
 
-Detailed architecture docs and recipes live as Agent Skills (SKILL.md format) in `.agents/skills/` — symlinked to their canonical home in `claude-plugin/skills/`. Codex discovers them automatically; invoke explicitly with `$<name>` or let the description trigger them. **Read the relevant skill BEFORE writing code in its area:**
+Detailed architecture docs and recipes live as Agent Skills (SKILL.md format) in `.agents/skills/` — symlinked to their canonical home in `saasprokit-skills/skills/`. Codex and Cursor discover them automatically; invoke explicitly with `$<name>` (Codex) or `/` in Agent chat (Cursor), or let the description trigger them. **Read the relevant skill BEFORE writing code in its area:**
 
 - `auth` — Better Auth setup, role systems, session helpers (`getServerSession`, `requireAuth`, `checkOrgPermission`), server action auth (`verifySession`, `toActionError`)
 - `routing` — Route structure, edge middleware (`apps/web/proxy.ts`), centralized routes (`@/lib/routes`), locale handling
