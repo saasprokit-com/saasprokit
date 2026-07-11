@@ -24,7 +24,6 @@ export const queryLoggingExtension = Prisma.defineExtension({
               ARGS_PREVIEW_LENGTH
             );
 
-            // biome-ignore lint/suspicious/noConsole: logging extension intentionally writes to console
             console.warn(
               `[SLOW_QUERY] ${model}.${operation} took ${duration}ms | Args: ${argsPreview}...`
             );
@@ -36,7 +35,6 @@ export const queryLoggingExtension = Prisma.defineExtension({
           const errorMsg =
             error instanceof Error ? error.message : String(error);
 
-          // biome-ignore lint/suspicious/noConsole: logging extension intentionally writes to console
           console.error(
             `[QUERY_ERROR] ${model}.${operation} failed after ${duration}ms | Error: ${errorMsg}`
           );

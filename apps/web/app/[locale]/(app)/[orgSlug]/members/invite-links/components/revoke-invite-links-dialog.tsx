@@ -16,9 +16,9 @@ import { Loader2, XCircle } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { TOKEN_PREVIEW_LENGTH } from "../../utils";
 import { revokeInviteLinksAction } from "../actions";
-import type { InviteLink } from "../invite-links/queries";
-import { TOKEN_PREVIEW_LENGTH } from "../utils";
+import type { InviteLink } from "../queries";
 
 interface RevokeInviteLinksDialogProps {
   errors: ActionErrorMessages;

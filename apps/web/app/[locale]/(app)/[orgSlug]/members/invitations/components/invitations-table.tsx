@@ -10,44 +10,44 @@ import {
   TableRow,
 } from "@repo/design-system/components/ui/table";
 import type { ActionErrorMessages } from "@repo/internationalization";
+import { INVITATION_STATUS } from "@repo/utils/organization";
 import { flexRender } from "@tanstack/react-table";
 import { use, useMemo } from "react";
+
 import { useDataTable } from "@/hooks/use-data-table";
 import type { GetListPayload } from "@/types/queries";
-import type { InviteLink } from "../invite-links/queries";
+import type { Invitation } from "../queries";
 import {
-  getInviteLinkColumns,
-  inviteLinkRoleFilterOptions,
-  inviteLinkStatusFilterOptions,
-} from "./invite-links-columns";
-import { InviteLinksToolbar } from "./invite-links-toolbar";
+  getInvitationColumns,
+  invitationRoleFilterOptions,
+  invitationStatusFilterOptions,
+} from "./invitations-columns";
+import { InvitationsToolbar } from "./invitations-toolbar";
 
-interface InviteLinksTableProps {
-  baseUrl: string;
+interface InvitationsTableProps {
   canManage: boolean;
   errors: ActionErrorMessages;
-  inviteLinksPromise: Promise<GetListPayload<InviteLink>>;
+  invitationsPromise: Promise<GetListPayload<Invitation>>;
   organizationId: string;
 }
 
 const filterFields = [
-  { id: "token", urlKey: "search", type: "string" as const },
+  { id: "email", urlKey: "q", type: "string" as const },
   { id: "role", urlKey: "role", type: "array" as const },
-  { id: "isActive", urlKey: "status", type: "array" as const },
+  { id: "status", urlKey: "status", type: "array" as const },
 ];
 
-export function InviteLinksTable({
-  inviteLinksPromise,
+export function InvitationsTable({
+  invitationsPromise,
   errors,
   organizationId,
-  baseUrl,
   canManage,
-}: InviteLinksTableProps) {
-  const { data, totalPage } = use(inviteLinksPromise);
+}: InvitationsTableProps) {
+  const { data, totalPage } = use(invitationsPromise);
 
   const columns = useMemo(
-    () => getInviteLinkColumns({ errors, organizationId, baseUrl, canManage }),
-    [errors, organizationId, baseUrl, canManage]
+    () => getInvitationColumns({ errors, organizationId, canManage }),
+    [errors, organizationId, canManage]
   );
 
   const { table } = useDataTable({
@@ -55,24 +55,25 @@ export function InviteLinksTable({
     columns,
     pageCount: totalPage || 1,
     filterFields,
-    enableRowSelection: (row: InviteLink) => row.isActive,
+    enableRowSelection: (row: Invitation) =>
+      row.status === INVITATION_STATUS.PENDING,
   });
 
   return (
     <div className="flex flex-col gap-4">
-      <InviteLinksToolbar
+      <InvitationsToolbar
         canManage={canManage}
         errors={errors}
         filters={[
           {
             columnId: "role",
             title: "Role",
-            options: inviteLinkRoleFilterOptions,
+            options: invitationRoleFilterOptions,
           },
           {
-            columnId: "isActive",
+            columnId: "status",
             title: "Status",
-            options: inviteLinkStatusFilterOptions,
+            options: invitationStatusFilterOptions,
           },
         ]}
         organizationId={organizationId}

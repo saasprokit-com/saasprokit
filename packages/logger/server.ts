@@ -12,11 +12,9 @@ function log(
     // Structured JSON for log aggregation
     const entry =
       typeof obj === "object" && obj !== null ? obj : { value: obj };
-    // biome-ignore lint/suspicious/noConsole: Intentional server logging
     console[level](JSON.stringify({ timestamp, level: label, msg, ...entry }));
   } else {
     // Human-readable for development
-    // biome-ignore lint/suspicious/noConsole: Intentional server logging
     console[level](`[${label}] ${msg ?? ""}`, obj);
   }
 }

@@ -42,7 +42,6 @@ function formatLogEntry(
 function log(level: LogLevel, message: string, data?: LogData) {
   const entry = formatLogEntry(level, message, data);
 
-  // biome-ignore lint/suspicious/noConsole: Intentional logging via console
   const consoleMethod = console[
     level as keyof typeof console
   ] as typeof console.log;

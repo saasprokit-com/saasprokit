@@ -2,8 +2,8 @@ import { TableSkeleton } from "@repo/design-system/components/data-table/table-s
 import { getDictionary } from "@repo/internationalization";
 import { Suspense } from "react";
 import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
-import { InvitationsTable } from "../components/invitations-table";
 import { getMemberPermissions } from "../utils";
+import { InvitationsTable } from "./components/invitations-table";
 import { getInvitations } from "./queries";
 import { invitationsSearchParamsCache } from "./validations";
 

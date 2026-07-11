@@ -2,24 +2,8 @@ import "server-only";
 
 import type { OrgRoleName } from "@repo/auth/permissions";
 import { database, type Prisma } from "@repo/database";
-import { INVITATION_STATUS } from "@repo/utils/organization";
 import type { GetListPayload } from "@/types/queries";
 import type { MembersSearchParams } from "./validations";
-
-export async function getMembersLayoutCounts(organizationId: string) {
-  const [memberCount, pendingInvitationCount, activeInviteLinkCount] =
-    await Promise.all([
-      database.member.count({ where: { organizationId } }),
-      database.invitation.count({
-        where: { organizationId, status: INVITATION_STATUS.PENDING },
-      }),
-      database.inviteLink.count({
-        where: { organizationId, isActive: true },
-      }),
-    ]);
-
-  return { memberCount, pendingInvitationCount, activeInviteLinkCount };
-}
 
 const listMemberSelect = {
   id: true,
@@ -111,34 +95,20 @@ function buildOrderBy(
   if (sort.length === 0) {
     return { createdAt: "asc" };
   }
-  return sort.reduce<Prisma.MemberOrderByWithRelationInput>(
-    (accumulation, s) => {
-      const direction = s.desc ? "desc" : "asc";
+  const orderBy: Prisma.MemberOrderByWithRelationInput = {};
+  for (const s of sort) {
+    const direction = s.desc ? "desc" : "asc";
 
-      switch (s.id) {
-        case "user":
-          return {
-            ...accumulation,
-            user: {
-              ...accumulation.user,
-              name: direction,
-            },
-          };
-        case "email":
-          return {
-            ...accumulation,
-            user: {
-              ...accumulation.user,
-              email: direction,
-            },
-          };
-        default:
-          return {
-            ...accumulation,
-            [s.id]: direction,
-          };
-      }
-    },
-    {}
-  );
+    switch (s.id) {
+      case "user":
+        orderBy.user = { ...orderBy.user, name: direction };
+        break;
+      case "email":
+        orderBy.user = { ...orderBy.user, email: direction };
+        break;
+      default:
+        (orderBy as Record<string, Prisma.SortOrder>)[s.id] = direction;
+    }
+  }
+  return orderBy;
 }

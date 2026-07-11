@@ -299,7 +299,6 @@ export const auth = betterAuth({
               : undefined,
           });
         } catch (error) {
-          // biome-ignore lint/suspicious/noConsole: auth package has no logger dependency
           console.error(
             `[auth] Failed to send invitation email to ${data.email}`,
             error
