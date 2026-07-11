@@ -49,7 +49,7 @@ pnpm --filter internationalization translate   # Machine-translate locale files 
 
 ## SaaSProKit Skills (read before working in these areas)
 
-Detailed architecture docs live as skills in the `saasprokit` plugin at `claude-plugin/skills/*/SKILL.md`. Once the plugin is installed they are invocable as `/saasprokit:<name>`; either way, read the relevant SKILL.md BEFORE writing code in its area:
+Detailed architecture docs live as skills in the `saasprokit` plugin at `saasprokit-skills/skills/*/SKILL.md`. Once the plugin is installed they are invocable as `/saasprokit:<name>`; either way, read the relevant SKILL.md BEFORE writing code in its area:
 
 - `saasprokit:auth` — Better Auth setup, role systems, server-side session helpers (`getServerSession`, `requireAuth`, `checkOrgPermission`), `validateOrgMembershipBySlug`, server action auth (`verifySession`, `toActionError`), client-side usage
 - `saasprokit:routing` — Route structure, edge middleware (`apps/web/proxy.ts`), centralized routes (`@/lib/routes`), locale handling
@@ -61,7 +61,7 @@ Detailed architecture docs live as skills in the `saasprokit` plugin at `claude-
 - `saasprokit:testing` — Vitest/Playwright layout, CI rules, Turbo build graph
 - `saasprokit:env-setup` — Env vars, Docker Compose, MailDev
 
-**Plugin setup** (once per machine): `/plugin marketplace add ./` then `/plugin install saasprokit@saasprokit`, then `/reload-plugins`. The marketplace manifest lives at `.claude-plugin/marketplace.json`; the plugin at `claude-plugin/`.
+**Plugin setup** (once per machine): `/plugin marketplace add ./` then `/plugin install saasprokit@saasprokit`, then `/reload-plugins`. The marketplace manifest lives at `.claude-plugin/marketplace.json`; the plugin at `saasprokit-skills/`.
 
 ## Key Conventions
 
@@ -83,7 +83,7 @@ Detailed architecture docs live as skills in the `saasprokit` plugin at `claude-
 **Vercel plugin** (`vercel@claude-plugins-official`) is installed and injects skills dynamically via hooks.
 
 **Agent Skills** come from two places:
-- `claude-plugin/skills/` — SaaSProKit-owned skills, tracked in git and shipped as the `saasprokit` plugin (see list above). Also symlinked into `.agents/skills/` so other agents (Codex, etc.) discover the same skills; `AGENTS.md` at the repo root carries the equivalent guidance for those tools.
+- `saasprokit-skills/skills/` — SaaSProKit-owned skills, tracked in git and shipped as the `saasprokit` plugin (see list above). Also symlinked into `.agents/skills/` so other agents (Codex, Cursor, etc.) discover the same skills; `AGENTS.md` at the repo root carries the equivalent guidance for those tools.
 - `.agents/skills/` — third-party skills managed by `skills-lock.json`, restored on demand via `pnpm skills:install` (Better Auth, Prisma, Stripe, Vercel/React, shadcn, Turborepo, web design). Not automatic on `pnpm install` — it shells out to `git`, which the Docker images lack. Update with `npx skills check` then `npx skills update`.
 
 **When the user requests a review**, read the relevant SKILL.md files before starting. For auth-related reviews, read the Better Auth skills. For database/schema reviews, read the Prisma skills.
