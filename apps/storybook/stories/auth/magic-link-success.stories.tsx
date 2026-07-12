@@ -1,5 +1,5 @@
 import { MagicLinkSuccess } from "@repo/design-system/components/molecules/auth/magic-link-success";
-import type { Meta, StoryObj } from "@storybook/nextjs";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const meta = {
   title: "molecules/auth/MagicLinkSuccess",

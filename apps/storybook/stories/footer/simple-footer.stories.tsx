@@ -1,5 +1,5 @@
 import { SimpleFooter } from "@repo/design-system/components/molecules/footer/simple-footer";
-import type { Meta, StoryObj } from "@storybook/nextjs";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const meta = {
   title: "molecules/footer/SimpleFooter",

@@ -1,5 +1,5 @@
 import { ForgotPasswordSuccess } from "@repo/design-system/components/molecules/auth/forgot-password-success";
-import type { Meta, StoryObj } from "@storybook/nextjs";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const meta = {
   title: "molecules/auth/ForgotPasswordSuccess",

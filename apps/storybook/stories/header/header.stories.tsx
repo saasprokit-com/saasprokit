@@ -1,6 +1,6 @@
 import { Header } from "@repo/design-system/components/molecules/header/header";
 import { Button } from "@repo/design-system/components/ui/button";
-import type { Meta, StoryObj } from "@storybook/nextjs";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import Link from "next/link";
 
 const meta = {
