@@ -1,5 +1,5 @@
 import { SocialProviders } from "@repo/design-system/components/molecules/auth/social-providers";
-import type { Meta, StoryObj } from "@storybook/nextjs";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
 const meta = {

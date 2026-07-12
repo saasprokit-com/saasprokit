@@ -1,5 +1,5 @@
 import { TwoFactorForm } from "@repo/design-system/components/molecules/auth/two-factor-form";
-import type { Meta, StoryObj } from "@storybook/nextjs";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
 const meta = {

@@ -1,5 +1,5 @@
 import { Footer } from "@repo/design-system/components/molecules/footer/footer";
-import type { Meta, StoryObj } from "@storybook/nextjs";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { Github, Instagram, Linkedin, Twitter } from "lucide-react";
 
 const meta = {

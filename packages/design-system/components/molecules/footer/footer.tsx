@@ -85,8 +85,8 @@ export function Footer({
                     {section.title}
                   </h3>
                   <ul className="space-y-3">
-                    {section.links.map((link, index) => (
-                      <li key={index}>
+                    {section.links.map((link) => (
+                      <li key={link.href}>
                         {link.external ? (
                           <a
                             className="text-muted-foreground text-sm transition-colors hover:text-foreground"
@@ -121,11 +121,11 @@ export function Footer({
           </p>
           {bottomLinks.length > 0 && (
             <nav className="flex items-center gap-4">
-              {bottomLinks.map((link, index) => (
+              {bottomLinks.map((link) => (
                 <Link
                   className="text-muted-foreground text-sm transition-colors hover:text-foreground"
                   href={link.href}
-                  key={index}
+                  key={link.href}
                 >
                   {link.label}
                 </Link>

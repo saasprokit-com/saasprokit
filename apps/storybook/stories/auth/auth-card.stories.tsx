@@ -1,5 +1,5 @@
 import { AuthCard } from "@repo/design-system/components/molecules/auth/auth-card";
-import type { Meta, StoryObj } from "@storybook/nextjs";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const meta = {
   title: "molecules/auth/AuthCard",
