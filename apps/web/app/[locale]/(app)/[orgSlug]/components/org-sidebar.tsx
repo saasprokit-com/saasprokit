@@ -16,7 +16,14 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@repo/design-system/components/ui/sidebar";
-import { CreditCard, LayoutDashboard, Settings, Users } from "lucide-react";
+import {
+  CreditCard,
+  LayoutDashboard,
+  Link,
+  Mail,
+  Settings,
+  Users,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { orgRoutes, PAGE_ROUTES } from "@/lib/routes";
@@ -61,8 +68,24 @@ export function OrgSidebar({
       items: [
         {
           title: "Members",
-          url: orgRoutes.members(orgSlug),
           icon: Users,
+          items: [
+            {
+              title: "Members",
+              url: orgRoutes.members(orgSlug),
+              icon: Users,
+            },
+            {
+              title: "Invitations",
+              url: orgRoutes.membersInvitations(orgSlug),
+              icon: Mail,
+            },
+            {
+              title: "Invite Links",
+              url: orgRoutes.membersInviteLinks(orgSlug),
+              icon: Link,
+            },
+          ],
         },
         {
           title: "Settings",

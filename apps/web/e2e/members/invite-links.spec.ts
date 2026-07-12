@@ -14,8 +14,10 @@ test.describe("19 - Organization Invite Links", () => {
 
   test.describe("Navigation & Layout", () => {
     test("TC-19-01: invite links page loads", async ({ page }) => {
-      const tab = page.getByRole("tab", { name: /invite links/i });
-      await expect(tab).toHaveAttribute("aria-selected", "true");
+      const link = page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Invite Links", exact: true });
+      await expect(link).toHaveAttribute("data-active", "true");
     });
   });
 
@@ -120,10 +122,12 @@ test.describe("19 - Organization Invite Links", () => {
         `/${TEST_CONFIG.org.slug}/members/invite-links`
       );
 
-      // Page should contain the invite links tab marked as active
-      const tab = page.getByRole("tab", { name: /invite links/i });
-      await expect(tab).toBeVisible();
-      await expect(tab).toHaveAttribute("aria-selected", "true");
+      // Page should contain the invite links sidebar link marked as active
+      const link = page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Invite Links", exact: true });
+      await expect(link).toBeVisible();
+      await expect(link).toHaveAttribute("data-active", "true");
 
       // The table container or empty state should be present
       const tableOrEmpty = page

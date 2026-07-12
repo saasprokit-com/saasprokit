@@ -17,23 +17,35 @@ test.describe("17 - Organization Members", () => {
       await expect(page.getByRole("heading", { name: /members/i }).first()).toBeVisible();
     });
 
-    test("TC-17-02: tab navigation visible", async ({ page }) => {
-      await expect(page.getByRole("tab", { name: /members/i }).first()).toBeVisible();
-      await expect(page.getByRole("tab", { name: /pending invitations/i })).toBeVisible();
-      await expect(page.getByRole("tab", { name: /invite links/i })).toBeVisible();
+    test("TC-17-02: sidebar members navigation visible", async ({ page }) => {
+      await expect(page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Members", exact: true })).toBeVisible();
+      await expect(page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Invitations", exact: true })).toBeVisible();
+      await expect(page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Invite Links", exact: true })).toBeVisible();
     });
 
-    test("TC-17-03: members tab is active", async ({ page }) => {
-      const tab = page.getByRole("tab", { name: /members/i }).first();
-      await expect(tab).toHaveAttribute("aria-selected", "true");
+    test("TC-17-03: members sidebar link is active", async ({ page }) => {
+      const link = page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Members", exact: true });
+      await expect(link).toHaveAttribute("data-active", "true");
     });
 
-    test("TC-17-04: navigate between tabs", async ({ page }) => {
-      await page.getByRole("tab", { name: /pending invitations/i }).click();
+    test("TC-17-04: navigate between members pages via sidebar", async ({ page }) => {
+      await page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Invitations", exact: true }).click();
       await page.waitForURL(/\/invitations/);
       expect(page.url()).toContain("/invitations");
 
-      await page.getByRole("tab", { name: /invite links/i }).click();
+      await page
+        .locator('[data-sidebar="content"]')
+        .getByRole("link", { name: "Invite Links", exact: true }).click();
       await page.waitForURL(/\/invite-links/);
       expect(page.url()).toContain("/invite-links");
     });
@@ -177,20 +189,6 @@ test.describe("17 - Organization Members", () => {
       await expect(userRow.first().getByText(/owner/i).first()).toBeVisible();
     });
 
-    test("TC-17-F05: member count badge shows correct count", async ({ page }) => {
-      // The layout renders a badge like "N member(s)"
-      const memberCountBadge = page.getByText(/\d+\s+member\(s\)/i);
-      await expect(memberCountBadge).toBeVisible();
-
-      // The count in the badge should match the number of table rows
-      const rows = page.locator("tbody tr");
-      const rowCount = await rows.count();
-      // Extract number from the badge text
-      const badgeText = await memberCountBadge.textContent();
-      const badgeCount = Number.parseInt(badgeText?.match(/(\d+)/)?.[1] ?? "0", 10);
-      // Badge count should be >= row count (table may be paginated)
-      expect(badgeCount).toBeGreaterThanOrEqual(rowCount);
-    });
   });
 
   // ---------------------------------------------------------------------------
