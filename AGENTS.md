@@ -27,6 +27,7 @@ Detailed architecture docs and recipes live as Agent Skills (SKILL.md format) in
 - `routing` — Route structure, edge middleware (`apps/web/proxy.ts`), centralized routes (`@/lib/routes`), locale handling
 - `data-access` — `servers/` vs `lib/` split in `apps/web`, Prisma workflow
 - `forms` — Form patterns (react-hook-form + zod + server actions), scaffold recipes for new forms and dialogs
+- `tables` — Server-driven data table pages (TanStack Table manual mode + nuqs URL state + Prisma), scaffold recipe for list/table pages
 - `billing` — Stripe integration, subscription plans, webhook config
 - `conventions` — No barrel imports, Next.js 16 async params, interface-over-type
 - `workflows` — Recipes for new org-scoped pages, account pages, API routes

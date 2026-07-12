@@ -55,6 +55,7 @@ Detailed architecture docs live as skills in the `saasprokit` plugin at `saaspro
 - `saasprokit:routing` — Route structure, edge middleware (`apps/web/proxy.ts`), centralized routes (`@/lib/routes`), locale handling
 - `saasprokit:data-access` — `servers/` vs `lib/` split in `apps/web`, Prisma workflow
 - `saasprokit:forms` — Form patterns (RHF + zod + server actions), scaffold recipes for new forms and dialogs
+- `saasprokit:tables` — Server-driven data table pages (TanStack Table manual mode + nuqs URL state + Prisma), scaffold recipe for list/table pages
 - `saasprokit:billing` — Stripe integration, subscription plans, webhook config
 - `saasprokit:conventions` — No barrel imports, Next.js 16 async params, interface-over-type
 - `saasprokit:workflows` — Recipes for new org-scoped pages, account pages, API routes

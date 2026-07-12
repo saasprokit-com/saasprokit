@@ -23,4 +23,4 @@ description: Step-by-step recipes for common tasks in this repo — creating a n
 2. Add route constant to `API_ROUTES` in `@/lib/routes`
 3. Use `getServerSession()` for auth checks
 
-See `saasprokit:auth` for the auth helper details and `saasprokit:routing` for route structure and middleware implications.
+See `saasprokit:auth` for the auth helper details, `saasprokit:routing` for route structure and middleware implications, and `saasprokit:tables` if the page lists tabular data.
