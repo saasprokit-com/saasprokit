@@ -1,7 +1,10 @@
+import Github from "@repo/design-system/components/icons/github";
+import Linkedin from "@repo/design-system/components/icons/linkedin";
+import X from "@repo/design-system/components/icons/x";
+import Youtube from "@repo/design-system/components/icons/youtube";
 import { Footer } from "@repo/design-system/components/molecules/footer/footer";
 import { Header } from "@repo/design-system/components/molecules/header/header";
 import { Logo } from "@repo/design-system/components/molecules/logo/logo";
-import { Github, Linkedin, Twitter, Youtube } from "lucide-react";
 import type { ReactNode } from "react";
 import { getServerSession } from "@/lib/auth/auth";
 import { HeaderUserMenu } from "./components/header-user-menu";
@@ -71,22 +74,22 @@ const Frontier = async ({ children }: RootLayoutProperties) => {
           {
             label: "GitHub",
             href: "https://github.com",
-            icon: <Github size={20} />,
+            icon: <Github />,
           },
           {
             label: "Twitter",
             href: "https://twitter.com",
-            icon: <Twitter size={20} />,
+            icon: <X />,
           },
           {
             label: "LinkedIn",
             href: "https://linkedin.com",
-            icon: <Linkedin size={20} />,
+            icon: <Linkedin />,
           },
           {
             label: "YouTube",
             href: "https://youtube.com",
-            icon: <Youtube size={20} />,
+            icon: <Youtube />,
           },
         ]}
       />

@@ -3,6 +3,8 @@
 import "./styles.css";
 import { logger } from "@repo/logger/client";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@repo/design-system/components/ui/button";
 
 interface GlobalErrorProps {
   error: Error & { digest?: string };
@@ -10,12 +12,15 @@ interface GlobalErrorProps {
 }
 
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
+  const router = useRouter();
+
   useEffect(() => {
     logger.error("Global error", {
       message: error.message,
       digest: error.digest,
     });
   }, [error]);
+
 
   return (
     <html lang="en">
@@ -32,20 +37,20 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             </p>
           )}
           <div className="mt-6 flex justify-center gap-4">
-            <button
+            <Button
               className="cursor-pointer rounded-md border border-neutral-200 bg-transparent px-4 py-2 font-medium text-neutral-900 text-sm"
-              onClick={() => window.history.back()}
+              onClick={() => router.back()}
               type="button"
             >
               Go Back
-            </button>
-            <button
+            </Button>
+            <Button
               className="cursor-pointer rounded-md border-none bg-neutral-900 px-4 py-2 font-medium text-neutral-50 text-sm"
               onClick={reset}
-              type="button"
+              type="reset"
             >
               Try Again
-            </button>
+            </Button>
           </div>
         </div>
       </body>
