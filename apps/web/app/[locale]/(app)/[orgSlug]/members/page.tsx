@@ -1,6 +1,9 @@
 import { TableSkeleton } from "@repo/design-system/components/data-table/table-skeleton";
+import { SetBreadcrumbs } from "@repo/design-system/components/layout/breadcrumb-context";
+import { ContentSection } from "@repo/design-system/components/layout/content-section";
 import { getDictionary } from "@repo/internationalization";
 import { Suspense } from "react";
+import { orgRoutes } from "@/lib/routes";
 import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
 import { MembersTable } from "./components/members-table";
 import { getMembers } from "./queries";
@@ -35,14 +38,27 @@ export default async function MembersPage({
   const permissions = getMemberPermissions(orgContext.role);
 
   return (
-    <Suspense fallback={<TableSkeleton />}>
-      <MembersTable
-        currentUserId={orgContext.userId}
-        errors={dict.errors.action}
-        membersPromise={membersPromise}
-        organizationId={orgContext.organizationId}
-        permissions={permissions}
+    <>
+      <SetBreadcrumbs
+        items={[
+          { label: "Organization", href: orgRoutes.home(orgSlug) },
+          { label: "Members" },
+        ]}
       />
-    </Suspense>
+      <ContentSection
+        description="Manage your organization members, invitations, and invite links"
+        title="Members"
+      >
+        <Suspense fallback={<TableSkeleton />}>
+          <MembersTable
+            currentUserId={orgContext.userId}
+            errors={dict.errors.action}
+            membersPromise={membersPromise}
+            organizationId={orgContext.organizationId}
+            permissions={permissions}
+          />
+        </Suspense>
+      </ContentSection>
+    </>
   );
 }
