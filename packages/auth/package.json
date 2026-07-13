@@ -17,12 +17,13 @@
     "./stripe-client": "./stripe-client.ts"
   },
   "dependencies": {
-    "@better-auth/stripe": "^1.6.11",
+    "@better-auth/i18n": "^1.6.23",
+    "@better-auth/stripe": "^1.6.23",
     "@repo/database": "workspace:*",
     "@repo/email": "workspace:*",
     "@repo/utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.10",
-    "better-auth": "^1.6.11",
+    "better-auth": "^1.6.23",
     "stripe": "^22.2.0",
     "zod": "^4.2.1"
   }
