@@ -1,9 +1,9 @@
 "use client";
 
-import { GoogleIcon } from "@repo/design-system/components/icons/google";
+import GoogleIcon from "@repo/design-system/components/icons/google";
+import Github from "@repo/design-system/components/icons/github";
 import { Button } from "@repo/design-system/components/ui/button";
 import { cn } from "@repo/design-system/lib/utils";
-import { Github } from "lucide-react";
 import type * as React from "react";
 
 export type SocialProvider = "google" | "github";
@@ -22,11 +22,11 @@ const providerConfig: Record<
 > = {
   google: {
     label: "Google",
-    icon: <GoogleIcon className="size-4" />,
+    icon: <GoogleIcon />,
   },
   github: {
     label: "GitHub",
-    icon: <Github className="size-4" />,
+    icon: <Github />,
   },
 };
 
