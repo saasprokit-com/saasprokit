@@ -1,7 +1,7 @@
 "use client";
 
-import GoogleIcon from "@repo/design-system/components/icons/google";
 import Github from "@repo/design-system/components/icons/github";
+import GoogleIcon from "@repo/design-system/components/icons/google";
 import { Button } from "@repo/design-system/components/ui/button";
 import { cn } from "@repo/design-system/lib/utils";
 import type * as React from "react";

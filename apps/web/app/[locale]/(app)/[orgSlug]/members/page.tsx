@@ -4,7 +4,7 @@ import { ContentSection } from "@repo/design-system/components/layout/content-se
 import { getDictionary } from "@repo/internationalization";
 import { Suspense } from "react";
 import { orgRoutes } from "@/lib/routes";
-import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
+import { getActiveOrganization } from "@/servers/organization/queries";
 import { MembersTable } from "./components/members-table";
 import { getMembers } from "./queries";
 import { getMemberPermissions } from "./utils";
@@ -23,9 +23,9 @@ export default async function MembersPage({
     params,
     searchParams,
   ]);
-  const [orgContext, dict] = await Promise.all([
-    validateOrgMembershipBySlug(orgSlug),
+  const [dict, orgContext] = await Promise.all([
     getDictionary(locale),
+    getActiveOrganization(orgSlug),
   ]);
 
   const parsedParams = membersSearchParamsCache.parse(resolvedSearchParams);

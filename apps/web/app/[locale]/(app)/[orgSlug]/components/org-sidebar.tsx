@@ -27,14 +27,15 @@ import {
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { orgRoutes, PAGE_ROUTES } from "@/lib/routes";
+import type { UserOrganization } from "@/servers/organization/queries";
 import { setDefaultWorkspaceAction } from "../actions";
 
 interface OrgSidebarProps {
-  activeOrganization?: Organization | null;
+  activeOrganization?: UserOrganization;
   canManageBilling: boolean;
   defaultOrganizationId?: string | null;
   locale: string;
-  organizations: Organization[];
+  organizations: UserOrganization[];
   orgSlug: string;
   user: User;
 }

@@ -7,6 +7,7 @@ import {
   ac,
   adminRole,
   adminRoleDefinitions,
+  canOrg,
   moderatorRole,
   orgAc,
   orgAdminRole,
@@ -189,5 +190,50 @@ describe("Organization role definitions", () => {
     expect(orgMemberRole.authorize({ team: ["create"] }).success).toBe(false);
     expect(orgMemberRole.authorize({ team: ["update"] }).success).toBe(false);
     expect(orgMemberRole.authorize({ team: ["delete"] }).success).toBe(false);
+  });
+});
+
+describe("canOrg", () => {
+  // { organization: ["update"] } is the exact map gating the Billing sidebar link
+  // and the org settings form. A regression here is a privilege escalation.
+  it("should gate organization:update to owner and admin only", () => {
+    const permissions = { organization: ["update"] };
+    expect(canOrg(ORG_ROLES.OWNER, permissions)).toBe(true);
+    expect(canOrg(ORG_ROLES.ADMIN, permissions)).toBe(true);
+    expect(canOrg(ORG_ROLES.MEMBER, permissions)).toBe(false);
+  });
+
+  it("should allow only the owner to delete the organization", () => {
+    const permissions = { organization: ["delete"] };
+    expect(canOrg(ORG_ROLES.OWNER, permissions)).toBe(true);
+    expect(canOrg(ORG_ROLES.ADMIN, permissions)).toBe(false);
+    expect(canOrg(ORG_ROLES.MEMBER, permissions)).toBe(false);
+  });
+
+  it("should require every action listed for a resource", () => {
+    // member holds member:["read"] but not member:["delete"]
+    expect(canOrg(ORG_ROLES.MEMBER, { member: ["read"] })).toBe(true);
+    expect(canOrg(ORG_ROLES.MEMBER, { member: ["read", "delete"] })).toBe(false);
+  });
+
+  it("should require every resource listed", () => {
+    const permissions = { member: ["delete"], invitation: ["cancel"] };
+    expect(canOrg(ORG_ROLES.ADMIN, permissions)).toBe(true);
+    // member holds neither
+    expect(canOrg(ORG_ROLES.MEMBER, permissions)).toBe(false);
+  });
+
+  it("should deny an unknown resource rather than throwing", () => {
+    expect(canOrg(ORG_ROLES.OWNER, { nonexistent: ["read"] })).toBe(false);
+  });
+
+  it("should deny an unknown role rather than throwing", () => {
+    expect(canOrg("nonexistent", { organization: ["read"] })).toBe(false);
+  });
+
+  it("should grant when any role in a comma-separated list allows it", () => {
+    // better-auth stores multi-role members as "a,b" and ORs across them
+    expect(canOrg("member,admin", { organization: ["update"] })).toBe(true);
+    expect(canOrg("member,admin", { organization: ["delete"] })).toBe(false);
   });
 });

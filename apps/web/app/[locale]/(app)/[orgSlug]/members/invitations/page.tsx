@@ -4,7 +4,7 @@ import { ContentSection } from "@repo/design-system/components/layout/content-se
 import { getDictionary } from "@repo/internationalization";
 import { Suspense } from "react";
 import { orgRoutes } from "@/lib/routes";
-import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
+import { getActiveOrganization } from "@/servers/organization/queries";
 import { getMemberPermissions } from "../utils";
 import { InvitationsTable } from "./components/invitations-table";
 import { getInvitations } from "./queries";
@@ -23,9 +23,9 @@ export default async function InvitationsPage({
     params,
     searchParams,
   ]);
-  const [orgContext, dict] = await Promise.all([
-    validateOrgMembershipBySlug(orgSlug),
+  const [dict, orgContext] = await Promise.all([
     getDictionary(locale),
+    getActiveOrganization(orgSlug),
   ]);
 
   const parsedParams = invitationsSearchParamsCache.parse(resolvedSearchParams);

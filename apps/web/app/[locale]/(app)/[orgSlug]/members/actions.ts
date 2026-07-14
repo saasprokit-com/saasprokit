@@ -147,21 +147,15 @@ export async function removeMembersAction(
       return actionError("noValidMembers");
     }
 
-    // Remove members and revoke their org-scoped sessions atomically
-    // so a partial failure can't leave removed members with active sessions
-    const [memberResult] = await database.$transaction([
-      database.member.deleteMany({
-        where: {
-          id: { in: validMembers.map((m) => m.id) },
-        },
-      }),
-      database.session.deleteMany({
-        where: {
-          userId: { in: validMembers.map((m) => m.userId) },
-          activeOrganizationId: validated.organizationId,
-        },
-      }),
-    ]);
+    // Deleting the membership row is enough to revoke access: every org-scoped page
+    // re-reads membership on each request via getActiveOrganization(), so a removed
+    // member is locked out on their very next request. Their session stays valid for
+    // the organizations they still belong to.
+    const memberResult = await database.member.deleteMany({
+      where: {
+        id: { in: validMembers.map((m) => m.id) },
+      },
+    });
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
     return { success: true, data: { removedCount: memberResult.count } };

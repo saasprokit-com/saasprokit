@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/design-system/components/ui/card";
-import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
+import { getActiveOrganization } from "@/servers/organization/queries";
 import { getOrgDashboardData } from "./queries";
 
 interface OrgDashboardPageProps {
@@ -18,7 +18,7 @@ export default async function OrgDashboardPage({
   params,
 }: OrgDashboardPageProps) {
   const { orgSlug } = await params;
-  const orgContext = await validateOrgMembershipBySlug(orgSlug);
+  const orgContext = await getActiveOrganization(orgSlug);
 
   const { memberCount, organization } = await getOrgDashboardData(
     orgContext.organizationId

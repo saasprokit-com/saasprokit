@@ -9,7 +9,7 @@ import {
 import { getDictionary } from "@repo/internationalization";
 import { PermissionGate } from "@/components/permission-gate";
 import { orgRoutes } from "@/lib/routes";
-import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
+import { getActiveOrganization } from "@/servers/organization/queries";
 import { BillingActions } from "./components/billing-actions";
 import { ChangePlan } from "./components/change-plan";
 import { CurrentPlan } from "./components/current-plan";
@@ -23,7 +23,7 @@ interface OrgBillingPageProps {
 export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
   const { locale, orgSlug } = await params;
   const [orgContext, dict] = await Promise.all([
-    validateOrgMembershipBySlug(orgSlug),
+    getActiveOrganization(orgSlug),
     getDictionary(locale),
   ]);
 
@@ -55,8 +55,8 @@ export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
               </CardContent>
             </Card>
           }
-          organizationId={orgContext.organizationId}
           permissions={{ organization: ["update"] }}
+          role={orgContext.role}
         >
           <CurrentPlan />
           <ChangePlan
