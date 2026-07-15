@@ -13,6 +13,8 @@ import {
 } from "@repo/design-system/components/ui/alert-dialog";
 import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
+import { imageFileSchema } from "@repo/storage/constants";
+import { ALLOWED_IMAGE_TYPES } from "@repo/utils/storage";
 import { Building2, Loader2, Trash2, Upload } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -31,34 +33,6 @@ interface LogoUploadProps {
   organizationId: string;
   organizationName: string;
   orgSlug: string;
-}
-
-// File size constants
-const BYTES_PER_KILOBYTE = 1024;
-const MAX_FILE_SIZE_MB = 5;
-const MAX_FILE_SIZE =
-  MAX_FILE_SIZE_MB * BYTES_PER_KILOBYTE * BYTES_PER_KILOBYTE; // 5MB
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-
-function validateFileInput(file: File): {
-  valid: boolean;
-  errorMessage?: string;
-} {
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    return {
-      valid: false,
-      errorMessage: "Please upload a JPEG, PNG, WebP, or GIF image.",
-    };
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    return {
-      valid: false,
-      errorMessage: "Please upload an image smaller than 5MB.",
-    };
-  }
-
-  return { valid: true };
 }
 
 export function LogoUpload({
@@ -82,10 +56,10 @@ export function LogoUpload({
     }
 
     // Validate file
-    const validation = validateFileInput(file);
-    if (!validation.valid) {
-      toast.error("Invalid file type", {
-        description: validation.errorMessage,
+    const validation = imageFileSchema.safeParse(file);
+    if (!validation.success) {
+      toast.error("Invalid file", {
+        description: validation.error.issues[0]?.message,
       });
       return;
     }
@@ -195,7 +169,7 @@ export function LogoUpload({
         {canEdit && (
           <div className="flex items-center gap-2">
             <input
-              accept={ALLOWED_TYPES.join(",")}
+              accept={ALLOWED_IMAGE_TYPES.join(",")}
               className="hidden"
               disabled={isUploading}
               onChange={handleFileSelect}

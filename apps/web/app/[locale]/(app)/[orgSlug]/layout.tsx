@@ -44,7 +44,6 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   return (
     <SidebarProvider>
       <ActivityTracker />
-      {/* <SyncActiveOrganization organizationId={org.organizationId} /> */}
       <OrgSidebar
         activeOrganization={organizations.find(
           (item) => item.id === org.organizationId

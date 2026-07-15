@@ -16,11 +16,12 @@ export default async function OrgSettingsPage({
   params,
 }: OrgSettingsPageProps) {
   const { locale, orgSlug } = await params;
+  const dictPromise = getDictionary(locale);
   const orgContext = await getActiveOrganization(orgSlug);
 
   const [organization, dict] = await Promise.all([
     getOrgSettingsData(orgContext.organizationId),
-    getDictionary(locale),
+    dictPromise,
   ]);
 
   if (!organization) {

@@ -21,11 +21,8 @@ import {
   PLAN_NAMES,
   type PlanName,
 } from "@repo/utils/payment";
-import { ATTACHABLE_TYPE } from "@repo/utils/storage";
+import { ATTACHABLE_TYPE, BYTES_PER_MB } from "@repo/utils/storage";
 import { env } from "@/lib/env";
-
-const BYTES_PER_KILOBYTE = 1024;
-const BYTES_PER_MEGABYTE = BYTES_PER_KILOBYTE * BYTES_PER_KILOBYTE;
 
 /**
  * Get subscription for an organization by org ID
@@ -105,7 +102,7 @@ export async function getOrgStorageUsage(
   });
 
   const bytes = result._sum.size || 0;
-  return Math.round(bytes / BYTES_PER_MEGABYTE);
+  return Math.round(bytes / BYTES_PER_MB);
 }
 
 /**
