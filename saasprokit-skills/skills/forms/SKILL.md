@@ -67,7 +67,7 @@ Better Auth API route (transport 4) · Route Handler (transport 5).
 | **molecule form** | Design-system component; `onSubmit: (data) => Promise<void>` injected by the app. Reusable, app-agnostic. | `packages/design-system/components/molecules/auth/sign-in-form.tsx` |
 | **molecule + Better Auth client** | A molecule (or app wrapper) whose submit calls the BA client, not a server action. All auth + billing. | `apps/web/app/[locale]/auth/sign-in/components/password-sign-in.tsx` |
 | **dialog form** | RHF + zodResolver inside a Dialog, action wrapped in `startTransition`. | Recipe 2 — *no compliant example yet; the 5 existing dialogs are legacy (see below)* |
-| **confirmation form** | Fieldless. `<form action>`+`useActionState` (standalone/semi-public) or `startTransition` (menu/AlertDialog). | `apps/web/app/[locale]/(app)/invite/accept/accept-button.tsx` |
+| **confirmation form** | Fieldless. `<form action>`+`useActionState` for a fixed/public target, or `useTransition` for dynamic ids / menu items (see Recipe 3 for the ordered rule). | `apps/web/app/[locale]/(app)/invite/accept/accept-button.tsx` |
 | **hybrid public form** | Native `<form action>` fallback + RHF enhancement; `safeParse` + field errors. Public/no-JS surfaces. | Recipe 4 — *no public forms in the repo yet* |
 
 ## Recipe 1: colocated form (the default)
@@ -210,28 +210,44 @@ client-side zod and only surfaces errors after a server round-trip.
 
 ## Recipe 3: confirmation form (fieldless)
 
-No fields → no RHF. Two transports, pick by where the trigger lives:
+No fields → no RHF. Two transports — `<form action>` + `useActionState` or
+`useTransition`. The deciding axis is the **action's argument shape**, NOT where
+the trigger sits (an AlertDialog can hold either — `downgrade-button.tsx` uses
+`<form action>` inside one). Apply in order:
 
-- **Standalone confirm button / its own form / semi-public (invite accept,
-  join):** `<form action={fn}>` + `useActionState`. Progressive enhancement,
-  auto-transition, a slot for the returned error.
+1. **Public / semi-public surface** (must work pre-hydration — invite accept,
+   join-via-link, sign-out) → **`<form action>` + `useActionState`, mandatory**.
+   Progressive enhancement for free, and the target is a fixed token/id anyway.
+2. **Dropdown / menu item** → **`useTransition`** even if the target is fixed.
+   One-way tie-breaker: a `<form>` nested in a `DropdownMenuItem` fights Radix
+   focus/close, and a row firing 2–3 actions shouldn't become 2–3 forms.
+3. **Otherwise, by argument shape:**
+   - Nullary, or a single **fixed** target (hidden input / `.bind` — this
+     account, this plan, this token) → **`<form action>` + `useActionState`**.
+   - **Dynamic** args the client holds as state (selected row ids, a per-row id
+     from a map) → **`useTransition`**.
 
-  ```tsx
-  const [state, formAction, pending] = useActionState(acceptInvitationFormAction, null);
-  // <form action={formAction}><input type="hidden" name="invitationId" value={id} />
-  //   <button disabled={pending}>Accept</button>{state?.error && <p role="alert">{state.error}</p>}
-  ```
+Errors: toast from either (repo norm). Optimistic UI: `useOptimistic` composes
+inside `startTransition`. Neither overrides the rule; a *persistent inline*
+error beside the button is the only soft nudge toward `useActionState`.
 
-- **Button inside a dropdown menu / AlertDialog, passing a typed id:**
-  `startTransition` — avoids FormData plumbing, reads cleaner when one row fires
-  several actions (resend / cancel / remove).
+```tsx
+// Fixed target → <form action> + useActionState (accept-button.tsx)
+const [state, formAction, pending] = useActionState(acceptInvitationFormAction, null);
+// <form action={formAction}><input type="hidden" name="invitationId" value={id} />
+//   <button disabled={pending}>Accept</button>{state?.error && <p role="alert">{state.error}</p>}
 
-  ```tsx
-  const [isPending, startTransition] = useTransition();
-  // onClick={() => startTransition(async () => {
-  //   const r = await removeMembersAction({ ids }); if (!r.success) toast.error(r.error);
-  // })}
-  ```
+// Dynamic ids / menu item → useTransition (remove-members-dialog.tsx)
+const [isPending, startTransition] = useTransition();
+// onClick={() => startTransition(async () => {
+//   const r = await removeMembersAction({ ids }); if (!r.success) toast.error(r.error);
+// })}
+```
+
+Existing confirmations by rule — `<form action>`: delete-account (nullary),
+accept-button / join-button (hidden id/token), downgrade-button (bound planId).
+`useTransition`: remove/cancel/revoke dialogs (selected ids), sessions-manager,
+billing-actions, invitation-actions / invite-link-actions (menu tie-breaker).
 
 ## Recipe 4: hybrid public form (public / no-JS surfaces)
 

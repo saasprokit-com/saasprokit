@@ -243,10 +243,19 @@ Operational caveats:
 | Form reused across apps / design system | **molecule form** — injected `onSubmit` |
 | Auth / billing flows | **molecule + Better Auth client** (not a server action) |
 | Dialog with fields | **dialog form** — RHF + zodResolver + `startTransition` |
-| Fieldless confirm / cancel / accept | **confirmation form** — `<form action>`+`useActionState` or `startTransition` |
+| Fieldless confirm / cancel / accept | **confirmation form** — `<form action>`+`useActionState` for a fixed/public target, `useTransition` for dynamic ids / menu items |
 | Public / marketing / no-JS-critical form | **hybrid public form** — native `<form action>` fallback + RHF |
 
 (Full decision tree and recipes in `SKILL.md`.)
+
+For a fieldless confirmation, the transport is decided by the action's
+**argument shape**, not the trigger's container: a fixed/nullary target
+(hidden-input-able, `.bind`) → `<form action>` + `useActionState`; dynamic args
+the client holds (selected ids) → `useTransition`; public/semi-public surfaces
+mandate `<form action>` (progressive enhancement); dropdown/menu items use
+`useTransition` regardless. Proof the container doesn't decide: `downgrade-button.tsx`
+uses `<form action>` inside an AlertDialog. See `SKILL.md` Recipe 3 for the
+ordered rule.
 
 Notes when touching form code:
 
