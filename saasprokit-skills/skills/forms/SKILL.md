@@ -1,32 +1,79 @@
 ---
 name: forms
-description: Form patterns and scaffold recipes for this repo — RHF + zod + server actions, the three form patterns, and step-by-step recipes to create a new form (schema → action → component). Read before creating or modifying any form.
+description: How to build any form in this repo — the ways to submit to the server, the six named form patterns, a decision tree, and step-by-step scaffold recipes (schema → action → component). Read before creating or modifying any form.
 ---
 
-# Form Patterns & Scaffold Recipes
+# Forms: ways to submit, patterns, and recipes
 
-Full background and official-docs comparison: `reference.md` in this skill's
-directory. This skill is the build recipe.
+New here? This skill answers three questions: **how many ways can a form reach
+the server, which pattern do I pick, and how do I build it.** Rationale and the
+official-docs comparison live in `reference.md` beside this file.
 
-## Choosing a pattern
+The whole system rests on one idea: **one zod schema does three jobs** — client
+validation (via `zodResolver`), TypeScript types (via `z.infer`), and the
+server-side security check (re-parsed inside the action). You define it once in
+`schemas.ts`; everything else consumes it.
 
-| Situation | Pattern |
-| --- | --- |
-| Multi-field form in the app (default) | **A** — RHF + zodResolver + server action, colocated with the feature |
-| Form reused across apps / lives in design system | **B** — molecule with injected `onSubmit: (data) => Promise<void>` prop |
-| Auth flows (sign-in/up, social) | **B** + Better Auth client (`signIn.email(...)` from `@repo/auth/client`), NOT a server action |
-| Small dialog (1–2 fields) | **A inside a Dialog** with `startTransition` (see recipe 2). Legacy plain-`useState` dialogs exist (Pattern C) — upgrade them when touched |
-| Public / no-JS-critical form | Official `<form action>` + `useActionState` + FormData (rare here) |
+## Decision tree (start here)
 
-Canonical examples:
-- Pattern A: `apps/web/app/[locale]/(app)/account/new-org/` (schema, action, `components/create-organization-form.tsx`)
-- Pattern B: `packages/design-system/components/molecules/auth/sign-in-form.tsx` + `apps/web/app/[locale]/auth/sign-in/components/password-sign-in.tsx`
-- Dialog + transition: `apps/web/app/[locale]/(app)/[orgSlug]/members/components/invite-member-dialog.tsx`
+```
+Is it an auth or billing action (sign in/up, password, subscription)?
+  └─ YES → molecule + Better Auth client        (transport: BA client)
+  └─ NO ↓
 
-## Recipe 1: new form (Pattern A)
+Does the form have input fields the user fills in?
+  └─ NO (just a confirm/cancel/accept button) → confirmation form
+  └─ YES ↓
 
-Three colocated files under the feature folder (see `saasprokit:data-access` for
-where features live, `saasprokit:workflows` for creating the page itself).
+Does it live in a Dialog / popover?
+  └─ YES → dialog form   (RHF + zodResolver + startTransition)
+  └─ NO ↓
+
+Is it a reusable UI component shared across apps / in the design system?
+  └─ YES → molecule form (injected onSubmit prop)
+  └─ NO ↓
+
+Is it a PUBLIC page that must work before hydration / without JS?
+  └─ YES → hybrid public form (native <form action> fallback + RHF)
+  └─ NO  → colocated form   ← the default for authenticated app forms
+```
+
+## The 5 ways to reach the server (client transports)
+
+| # | Transport | Use it for | Pending signal |
+|---|---|---|---|
+| 1 | `<form action={fn}>` + `useActionState` | fieldless confirmations; public forms (progressive enhancement) | `pending` from `useActionState` (auto-transition) |
+| 2 | Programmatic call in `startTransition` | dialogs, menu items, buttons that call a typed action | `isPending` from `useTransition` |
+| 3 | RHF `onSubmit` → `await action()` | colocated forms whose action does **not** revalidate/navigate | `formState.isSubmitting` |
+| 4 | Better Auth client (`signIn.email`, `changePassword`, `subscription.*`) | all auth + billing flows | `isSubmitting` / local pending |
+| 5 | `fetch()` → Route Handler (`/api/*`) | file uploads, non-mutation requests | local `useState`/`useTransition` |
+
+**`isSubmitting` vs `isPending` rule:** `formState.isSubmitting` ends when the
+action *returns*. If the action calls `revalidatePath`/`revalidateOrgPage`, the
+fresh page commits *after* that — so use `useTransition`'s `isPending` (or
+`useActionState`'s `pending`), which stays true "until the final state is shown
+to the user." Only rely on `isSubmitting` when the action neither revalidates
+nor navigates.
+
+**Server targets:** typed Server Action returning `ActionResult<T>` (the
+default) · FormData-shaped Server Action (for transports 1 & the hybrid) ·
+Better Auth API route (transport 4) · Route Handler (transport 5).
+
+## The 6 form patterns
+
+| Pattern | What it is | Canonical example |
+|---|---|---|
+| **colocated form** | RHF + zodResolver + typed server action, files colocated with the feature. The default. | `apps/web/app/[locale]/(app)/account/new-org/components/create-organization-form.tsx` |
+| **molecule form** | Design-system component; `onSubmit: (data) => Promise<void>` injected by the app. Reusable, app-agnostic. | `packages/design-system/components/molecules/auth/sign-in-form.tsx` |
+| **molecule + Better Auth client** | A molecule (or app wrapper) whose submit calls the BA client, not a server action. All auth + billing. | `apps/web/app/[locale]/auth/sign-in/components/password-sign-in.tsx` |
+| **dialog form** | RHF + zodResolver inside a Dialog, action wrapped in `startTransition`. | Recipe 2 — *no compliant example yet; the 5 existing dialogs are legacy (see below)* |
+| **confirmation form** | Fieldless. `<form action>`+`useActionState` (standalone/semi-public) or `startTransition` (menu/AlertDialog). | `apps/web/app/[locale]/(app)/invite/accept/accept-button.tsx` |
+| **hybrid public form** | Native `<form action>` fallback + RHF enhancement; `safeParse` + field errors. Public/no-JS surfaces. | Recipe 4 — *no public forms in the repo yet* |
+
+## Recipe 1: colocated form (the default)
+
+Three colocated files (see `saasprokit:data-access` for placement,
+`saasprokit:workflows` for the page).
 
 ### 1. `schemas.ts` — one schema, three jobs
 
@@ -40,9 +87,6 @@ export const createThingSchema = z.object({
 
 export type CreateThingInput = z.infer<typeof createThingSchema>;
 ```
-
-Export both the schema and the inferred type. The schema powers client
-validation, TypeScript types, AND the server-side security check.
 
 ### 2. `actions.ts` — the security boundary
 
@@ -59,38 +103,20 @@ export async function createThingAction(
   input: CreateThingInput
 ): Promise<ActionResult<{ id: string }>> {
   try {
-    // 1. Validate — the client check is UX only; this is the real one
-    const validated = createThingSchema.parse(input);
-
-    // 2. Authenticate — every action is a public POST endpoint
-    const { session, error } = await verifySession<{ id: string }>();
+    const validated = createThingSchema.parse(input);          // 1. validate (client check is UX only)
+    const { session, error } = await verifySession<{ id: string }>();  // 2. authenticate
     if (error) return error;
-
-    // 3. Authorize — org-scoped actions: checkOrgPermission(validated.organizationId, {...});
+    // 3. authorize — org-scoped: checkOrgPermission(validated.organizationId, {...})
     //    identity comes from the session, never from the input
-
-    // 4. Mutate
-
-    // 5. Revalidate so the response carries the fresh UI (single roundtrip)
-    //    org pages: await revalidateOrgPage(validated.orgSlug, ORG_PAGES.X);
-
+    // 4. mutate
+    // 5. revalidate so the response carries fresh UI (single roundtrip):
+    //    await revalidateOrgPage(validated.orgSlug, ORG_PAGES.X)
     return { success: true, data: { id: thing.id } };
   } catch (error) {
     return toActionError(error, { fallback: "invalidInput" });
   }
 }
 ```
-
-Non-negotiables inside EVERY action (rendering the form on a protected page is
-not a security boundary):
-
-- `schema.parse(input)` — validate shape server-side
-- `verifySession` / `checkOrgPermission` — authenticate + authorize
-- Ownership from the session, not the payload — a well-formed input can still
-  reference a row the caller doesn't own
-- Return typed `ActionResult<T>` shaped to what the UI renders — never raw DB
-  records; use `toActionError` in the catch
-- `redirect()` throws — put revalidation calls before it
 
 ### 3. `components/create-thing-form.tsx` — the UX layer
 
@@ -103,7 +129,6 @@ import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@repo/design-system/components/ui/form";
 import { Input } from "@repo/design-system/components/ui/input";
-import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createThingAction } from "../actions";
@@ -135,17 +160,12 @@ export function CreateThingForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input {...field} disabled={isSubmitting} />
-              </FormControl>
+              <FormControl><Input {...field} disabled={isSubmitting} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button disabled={isSubmitting} type="submit">
-          {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
-          Create
-        </Button>
+        <Button disabled={isSubmitting} type="submit">Create</Button>
       </form>
     </Form>
   );
@@ -154,45 +174,124 @@ export function CreateThingForm() {
 
 Conventions: disable inputs with `isSubmitting`; map server errors to
 `form.setError("field", ...)` when they belong to a field (see
-`create-organization-form.tsx:67-75` for the pattern), sonner toast otherwise.
+`create-organization-form.tsx` for the pattern), sonner toast otherwise. If the
+action revalidates, use Recipe 2's transition instead of `isSubmitting`.
 
 ## Recipe 2: dialog form (RHF + `startTransition`)
 
-Same schema/action files as Recipe 1. In the dialog component, keep RHF for
-validation but wrap the action call in a transition — when the action
-revalidates, `isPending` then covers the server roundtrip AND the router
-applying the fresh page, so the spinner doesn't stop before the table updates:
+Same `schemas.ts` / `actions.ts` as Recipe 1. Keep RHF for validation, wrap the
+action call in `startTransition` so `isPending` covers the server roundtrip AND
+the router applying the revalidated page (the spinner won't stop before the
+table updates).
 
 ```tsx
 const [isPending, startTransition] = useTransition();
-const form = useForm<InviteInput>({ resolver: zodResolver(inviteSchema), ... });
+const form = useForm<InviteInput>({ resolver: zodResolver(inviteSchema) });
 
 function onSubmit(values: InviteInput) {
   startTransition(async () => {
-    const result = await inviteAction(values);
-    if (result.success) {
-      toast.success("Sent");
-      setOpen(false);
-      form.reset();
-    } else {
-      toast.error(result.error ?? "Something went wrong");
-    }
+    const result = await inviteMemberAction(values);
+    // React limitation: state updates AFTER an await must be re-wrapped
+    startTransition(() => {
+      if (result.success) { setOpen(false); form.reset(); }
+    });
+    if (!result.success) toast.error(result.error ?? "Something went wrong");
   });
 }
-// disable inputs/buttons with isPending (not formState.isSubmitting)
+// gate the form on isPending (NOT formState.isSubmitting — the action is inside a transition)
 ```
 
-Do not use plain `useState` per field for new dialogs — that skips client-side
-zod and gives users errors only after a server round-trip.
+The nested `startTransition` after the `await` is required by React — miss it
+and the post-await updates fall out of the transition (treated as urgent),
+closing the dialog before the revalidated list commits.
+
+Do **not** use plain `useState` per field for new dialogs — that skips
+client-side zod and only surfaces errors after a server round-trip.
+
+## Recipe 3: confirmation form (fieldless)
+
+No fields → no RHF. Two transports, pick by where the trigger lives:
+
+- **Standalone confirm button / its own form / semi-public (invite accept,
+  join):** `<form action={fn}>` + `useActionState`. Progressive enhancement,
+  auto-transition, a slot for the returned error.
+
+  ```tsx
+  const [state, formAction, pending] = useActionState(acceptInvitationFormAction, null);
+  // <form action={formAction}><input type="hidden" name="invitationId" value={id} />
+  //   <button disabled={pending}>Accept</button>{state?.error && <p role="alert">{state.error}</p>}
+  ```
+
+- **Button inside a dropdown menu / AlertDialog, passing a typed id:**
+  `startTransition` — avoids FormData plumbing, reads cleaner when one row fires
+  several actions (resend / cancel / remove).
+
+  ```tsx
+  const [isPending, startTransition] = useTransition();
+  // onClick={() => startTransition(async () => {
+  //   const r = await removeMembersAction({ ids }); if (!r.success) toast.error(r.error);
+  // })}
+  ```
+
+## Recipe 4: hybrid public form (public / no-JS surfaces)
+
+For public pages where a visitor may submit before hydration. RHF enhances
+after hydration; the native `<form action>` covers the gap. The action takes
+`FormData` and returns field errors via `safeParse` (transport 1).
+
+```ts
+"use server";
+export async function subscribeAction(_prev: unknown, formData: FormData) {
+  const parsed = subscribeSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
+  // mutate…
+  return { ok: true };
+}
+```
+
+```tsx
+const [state, formAction, pending] = useActionState(subscribeAction, {});
+// <form action={formAction}> renders/submits with no JS; RHF (zodResolver) enhances
+// the same fields for instant client validation once hydrated. Show state.errors per field.
+```
+
+## The server-action contract (non-negotiable in EVERY action)
+
+Rendering the form on a protected page is **not** a security boundary — every
+action is a public POST endpoint.
+
+- **Validate** — `schema.parse(input)` (or `safeParse` for field errors)
+- **Authenticate + authorize** — `verifySession` / `checkOrgPermission`
+- **Ownership from the session, not the payload** — a well-formed input can
+  still reference a row the caller doesn't own
+- **Return typed `ActionResult<T>`** shaped to what the UI renders (never raw DB
+  records); use `toActionError` in the catch
+- **`redirect()` throws** — put revalidation calls before it
+
+### Two-tier validation policy
+
+| Form type | Server validation |
+|---|---|
+| Authenticated (colocated, dialog, molecule) | `schema.parse` + `toActionError` — client zod already gives field errors; a server rejection means an attacker or schema drift, so a generic error is enough |
+| Hybrid public form | `schema.safeParse` + field errors via `useActionState` — a pre-hydration submitter has no client validation, so the server response is their only feedback |
+
+## Legacy — do not copy
+
+Five dialogs still use plain `useState` per field (no `zodResolver`). They are
+**legacy**; migrate to Recipe 2 when you next touch one:
+`invite-member-dialog.tsx`, `bulk-invite-dialog.tsx`, `member-actions.tsx`,
+`invite-links-toolbar.tsx` (create-link), and `two-factor-manager.tsx`. The
+last also needs its `account/security/actions.ts` actions brought onto the
+`ActionResult`/`toActionError` contract (they currently return a custom shape).
 
 ## Gotchas
 
 - Server actions dispatch **sequentially per client** — never `Promise.all`
   multiple actions from the browser; do parallel work inside one action.
-- Prefer `safeParse` + returned field errors over `parse` + catch when the form
-  benefits from per-field server messages.
+- State updates after an `await` inside `startTransition` must be re-wrapped in
+  a nested `startTransition` (Recipe 2).
 - No barrel imports; async params — see `saasprokit:conventions`.
 
-See `saasprokit:auth` for `verifySession` / `checkOrgPermission` details,
-`saasprokit:data-access` for file placement, and `reference.md` in this skill's
-directory for the rationale behind these choices.
+See `saasprokit:auth` for `verifySession` / `checkOrgPermission`,
+`saasprokit:data-access` for file placement, and `reference.md` here for the
+rationale and official-docs comparison.
