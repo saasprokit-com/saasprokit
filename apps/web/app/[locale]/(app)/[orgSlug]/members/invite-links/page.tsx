@@ -1,8 +1,11 @@
 import { TableSkeleton } from "@repo/design-system/components/data-table/table-skeleton";
+import { SetBreadcrumbs } from "@repo/design-system/components/layout/breadcrumb-context";
+import { ContentSection } from "@repo/design-system/components/layout/content-section";
 import { getDictionary } from "@repo/internationalization";
 import { Suspense } from "react";
 import { env } from "@/lib/env";
-import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
+import { orgRoutes } from "@/lib/routes";
+import { getActiveOrganization } from "@/servers/organization/queries";
 import { getMemberPermissions } from "../utils";
 import { InviteLinksTable } from "./components/invite-links-table";
 import { getInviteLinks } from "./queries";
@@ -22,7 +25,7 @@ export default async function InviteLinksPage({
     searchParams,
   ]);
   const [orgContext, dict] = await Promise.all([
-    validateOrgMembershipBySlug(orgSlug),
+    getActiveOrganization(orgSlug),
     getDictionary(locale),
   ]);
 
@@ -36,14 +39,27 @@ export default async function InviteLinksPage({
   const permissions = getMemberPermissions(orgContext.role);
 
   return (
-    <Suspense fallback={<TableSkeleton />}>
-      <InviteLinksTable
-        baseUrl={env.BETTER_AUTH_URL}
-        canManage={permissions.canManageInviteLinks}
-        errors={dict.errors.action}
-        inviteLinksPromise={inviteLinksPromise}
-        organizationId={orgContext.organizationId}
+    <>
+      <SetBreadcrumbs
+        items={[
+          { label: "Organization", href: orgRoutes.home(orgSlug) },
+          { label: "Invitations" },
+        ]}
       />
-    </Suspense>
+      <ContentSection
+        description="Manage your organization's invitations and invite links"
+        title="Invitations"
+      >
+        <Suspense fallback={<TableSkeleton />}>
+          <InviteLinksTable
+            baseUrl={env.BETTER_AUTH_URL}
+            canManage={permissions.canManageInviteLinks}
+            errors={dict.errors.action}
+            inviteLinksPromise={inviteLinksPromise}
+            organizationId={orgContext.organizationId}
+          />
+        </Suspense>
+      </ContentSection>
+    </>
   );
 }

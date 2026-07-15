@@ -1,6 +1,6 @@
 "use client";
 
-import { subscription, useActiveOrganization } from "@repo/auth/client";
+import { subscription } from "@repo/auth/client";
 import {
   PLAN_NAMES,
   type PlanName,
@@ -15,8 +15,8 @@ import { PLANS } from "./plans";
 import type { Subscription, SubscriptionWithPlan } from "./types";
 
 interface UseSubscriptionOptions {
-  /** Reference ID to fetch subscription for (org ID). If not provided, uses active organization */
-  referenceId?: string;
+  /** Organization ID to fetch the subscription for. Pass the server-resolved id from getActiveOrganization. */
+  referenceId: string;
 }
 
 interface UseSubscriptionReturn {
@@ -44,9 +44,8 @@ interface UseSubscriptionReturn {
  * Hook to get the current subscription for an organization
  */
 export function useSubscription(
-  options: UseSubscriptionOptions = {}
+  options: UseSubscriptionOptions
 ): UseSubscriptionReturn {
-  const { data: activeOrg } = useActiveOrganization();
   const [subscriptionData, setSubscriptionData] = useState<Subscription | null>(
     null
   );
@@ -60,7 +59,7 @@ export function useSubscription(
     referenceId: "",
   });
 
-  const referenceId = options.referenceId || activeOrg?.id;
+  const referenceId = options.referenceId;
 
   const isStaleRequest = useCallback(
     (requestId: number, requestReferenceId: string): boolean =>
@@ -194,6 +193,10 @@ interface UseCancelOptions {
   locale?: string;
   onError?: (error: Error) => void;
   onSuccess?: () => void;
+  /** Organization slug, used to build the Stripe return URL (server-resolved). */
+  organizationSlug: string;
+  /** Organization ID whose subscription is being cancelled (server-resolved). */
+  referenceId: string;
 }
 
 interface UseCancelReturn {
@@ -208,9 +211,11 @@ interface UseCancelReturn {
 /**
  * Hook to handle subscription cancellation
  */
-export function useCancel(options: UseCancelOptions = {}): UseCancelReturn {
-  const { data: activeOrg } = useActiveOrganization();
-  const { subscription: currentSubscription } = useSubscription();
+export function useCancel(options: UseCancelOptions): UseCancelReturn {
+  const { referenceId, organizationSlug } = options;
+  const { subscription: currentSubscription } = useSubscription({
+    referenceId,
+  });
   const [isCanceling, setIsCanceling] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -218,12 +223,6 @@ export function useCancel(options: UseCancelOptions = {}): UseCancelReturn {
   optionsRef.current = options;
 
   const cancel = useCallback(async () => {
-    if (!activeOrg) {
-      setError(new Error("No active organization"));
-      optionsRef.current.onError?.(new Error("No active organization"));
-      return;
-    }
-
     setIsCanceling(true);
     setError(null);
 
@@ -232,9 +231,9 @@ export function useCancel(options: UseCancelOptions = {}): UseCancelReturn {
         ? `/${optionsRef.current.locale}`
         : "";
       const { error: cancelError } = await subscription.cancel({
-        referenceId: activeOrg.id,
+        referenceId,
         subscriptionId: currentSubscription?.stripeSubscriptionId || undefined,
-        returnUrl: `${window.location.origin}${localePrefix}/${activeOrg.slug}/billing`,
+        returnUrl: `${window.location.origin}${localePrefix}/${organizationSlug}/billing`,
       });
 
       // Better Auth client methods resolve with { error } rather than throwing,
@@ -255,7 +254,7 @@ export function useCancel(options: UseCancelOptions = {}): UseCancelReturn {
     } finally {
       setIsCanceling(false);
     }
-  }, [activeOrg, currentSubscription]);
+  }, [referenceId, organizationSlug, currentSubscription]);
 
   return {
     cancel,

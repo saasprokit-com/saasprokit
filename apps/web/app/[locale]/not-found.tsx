@@ -1,8 +1,8 @@
 "use client";
 
+import { ErrorContent } from "@repo/design-system/components/molecules/error/error-content";
 import { Button } from "@repo/design-system/components/ui/button";
 import { useRouter } from "next/navigation";
-import { ErrorContent } from "@/components/error-content";
 
 export default function NotFound() {
   const router = useRouter();

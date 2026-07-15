@@ -35,7 +35,11 @@ function getBadgeVariant(
   return "destructive";
 }
 
-export function CurrentPlan() {
+interface CurrentPlanProps {
+  organizationId: string;
+}
+
+export function CurrentPlan({ organizationId }: CurrentPlanProps) {
   const {
     subscription,
     planName,
@@ -45,7 +49,7 @@ export function CurrentPlan() {
     isPaid,
     isActive,
     isCanceled,
-  } = useSubscription();
+  } = useSubscription({ referenceId: organizationId });
 
   if (isLoading) {
     return (

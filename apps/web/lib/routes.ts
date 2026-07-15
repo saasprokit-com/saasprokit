@@ -29,12 +29,23 @@ export const PAGE_ROUTES = {
 // ─── Middleware route prefixes ───────────────────────────────────────────────
 
 /**
- * Routes that are publicly accessible without authentication.
- * Everything NOT in this list (and not an auth route) requires a session.
- * This is a default-deny approach — safer than enumerating protected routes,
- * because dynamic org-slug routes (e.g. /acme/billing) are automatically protected.
+ * Publicly accessible paths matched by EXACT equality.
+ *
+ * HOME must be exact: as a prefix, "/" would match every path in the app.
  */
-export const PUBLIC_ROUTE_PREFIXES = [PAGE_ROUTES.HOME] as const;
+export const PUBLIC_ROUTE_EXACT = [PAGE_ROUTES.HOME] as const;
+
+/**
+ * Publicly accessible paths matched by `startsWith` — marketing/legal pages and
+ * anything else that must render (including its 404) without a session.
+ *
+ * Add new public routes here. Anything NOT listed in either allowlist, and not
+ * an auth route, still requires a session: the app's org pages live at the top
+ * level (`/[orgSlug]`), so at the edge an unknown `/typo` is indistinguishable
+ * from a real `/acme` without a database lookup, and default-deny is the safe
+ * answer for that ambiguity.
+ */
+export const PUBLIC_ROUTE_PREFIXES = [] as readonly string[];
 
 /**
  * Auth pages that should redirect logged-in users away.

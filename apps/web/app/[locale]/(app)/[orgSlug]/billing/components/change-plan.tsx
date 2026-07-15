@@ -35,7 +35,11 @@ export function ChangePlan({
     locale: string;
     orgSlug: string;
   }>();
-  const { planName: currentPlan, subscription, refetch } = useSubscription();
+  const {
+    planName: currentPlan,
+    subscription,
+    refetch,
+  } = useSubscription({ referenceId: organizationId });
   const [billingPeriod, setBillingPeriod] =
     useState<BillingInterval>("monthly");
 

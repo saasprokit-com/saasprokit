@@ -4,7 +4,7 @@ import {
   revalidateOrgPage,
 } from "@/lib/infrastructure/revalidation";
 import { ORG_PAGES, orgRoutes } from "@/lib/routes";
-import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
+import { getActiveOrganization } from "@/servers/organization/queries";
 import { CheckoutErrorCard } from "./components/checkout-error-card";
 import { CheckoutProcessingCard } from "./components/checkout-processing-card";
 import { CheckoutSuccessCard } from "./components/checkout-success-card";
@@ -22,7 +22,7 @@ export default async function CheckoutSuccessPage({
   const { locale, orgSlug } = await params;
   const { session_id: sessionId } = await searchParams;
 
-  const orgContext = await validateOrgMembershipBySlug(orgSlug);
+  const orgContext = await getActiveOrganization(orgSlug);
   const billingHref = buildLocalePath(locale, orgRoutes.billing(orgSlug));
   const dashboardHref = buildLocalePath(locale, `/${orgSlug}`);
 

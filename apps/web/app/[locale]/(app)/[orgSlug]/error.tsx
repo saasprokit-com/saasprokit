@@ -1,0 +1,49 @@
+"use client";
+
+import { ErrorContent } from "@repo/design-system/components/molecules/error/error-content";
+import { Button } from "@repo/design-system/components/ui/button";
+import { logger } from "@repo/logger/client";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+interface OrgErrorProps {
+  error: Error & { digest?: string };
+  reset: () => void;
+}
+
+/**
+ * Renders inside the org shell, so the sidebar and header survive a failing
+ * page. Errors thrown by [orgSlug]/layout.tsx itself bubble past this boundary
+ * to [locale]/error.tsx, which is correct — there is no shell left to keep.
+ */
+export default function OrgError({ error, reset }: OrgErrorProps) {
+  const router = useRouter();
+
+  useEffect(() => {
+    logger.error("Organization page error", {
+      message: error.message,
+      digest: error.digest,
+    });
+  }, [error]);
+
+  return (
+    <ErrorContent
+      className="h-auto min-h-[60vh] flex-1"
+      code="500"
+      description={
+        <>
+          We could not load this page. <br /> Please try again.
+        </>
+      }
+      digest={error.digest}
+      title={`Oops! Something went wrong :')`}
+    >
+      <Button onClick={() => router.back()} type="button" variant="outline">
+        Go Back
+      </Button>
+      <Button onClick={reset} type="button">
+        Try Again
+      </Button>
+    </ErrorContent>
+  );
+}

@@ -1,3 +1,4 @@
+import { canOrg } from "@repo/auth/permissions";
 import { BreadcrumbProvider } from "@repo/design-system/components/layout/breadcrumb-context";
 import { Main } from "@repo/design-system/components/layout/main";
 import { SiteHeader } from "@repo/design-system/components/layout/site-header";
@@ -7,11 +8,10 @@ import {
 } from "@repo/design-system/components/ui/sidebar";
 import type { ReactNode } from "react";
 import { ActivityTracker } from "@/components/activity-tracker";
-import { SyncActiveOrganization } from "@/components/sync-active-organization";
-import { checkOrgPermission, requireAuth } from "@/lib/auth/auth";
+import { requireAuth } from "@/lib/auth/auth";
 import {
+  getActiveOrganization,
   getUserOrganizations,
-  validateOrgMembershipBySlug,
 } from "@/servers/organization/queries";
 import { OrgSidebar } from "./components/org-sidebar";
 
@@ -23,18 +23,17 @@ interface OrgLayoutProps {
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { locale, orgSlug } = await params;
 
-  // requireAuth() is independent — run it in parallel with org queries
+  // getActiveOrganization() reuses the memoized getUserOrganizations(),
+  // so these three resolve against a single membership query.
   const [org, { organizations, defaultOrganizationId }, session] =
     await Promise.all([
-      validateOrgMembershipBySlug(orgSlug),
+      getActiveOrganization(orgSlug),
       getUserOrganizations(),
       requireAuth(),
     ]);
 
-  // checkOrgPermission depends on org.organizationId, must run after
-  const canManageBilling = await checkOrgPermission(org.organizationId, {
-    organization: ["update"],
-  }).then((r) => !!r);
+  // In-memory check against the role we already hold — no extra query.
+  const canManageBilling = canOrg(org.role, { organization: ["update"] });
 
   const user = {
     name: session.user.name,
@@ -45,13 +44,11 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   return (
     <SidebarProvider>
       <ActivityTracker />
-      <SyncActiveOrganization organizationId={org.organizationId} />
+      {/* <SyncActiveOrganization organizationId={org.organizationId} /> */}
       <OrgSidebar
-        activeOrganization={{
-          id: org.organizationId,
-          name: org.organizationName,
-          slug: org.organizationSlug,
-        }}
+        activeOrganization={organizations.find(
+          (item) => item.id === org.organizationId
+        )}
         canManageBilling={canManageBilling}
         defaultOrganizationId={defaultOrganizationId}
         locale={locale}

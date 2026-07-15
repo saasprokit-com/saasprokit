@@ -106,7 +106,8 @@
       "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.scripts,null,2\\)\\); console.log\\('--- pnpm.onlyBuiltDependencies / hooks ---'\\); console.log\\(JSON.stringify\\(p.pnpm||{},null,2\\)\\)\")",
       "Skill(deep-research)",
       "Skill(deep-research:*)",
-      "Workflow(deep-research)"
+      "Workflow(deep-research)",
+      "WebFetch(domain:developers.google.com)"
     ],
     "deny": [],
     "ask": []

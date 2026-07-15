@@ -8,6 +8,7 @@ import {
   JsonLd,
 } from "@repo/seo";
 import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type { ReactNode } from "react";
 // Import seo-config to initialize SEO configuration
@@ -39,7 +40,12 @@ interface LocaleLayoutProps {
 }
 
 const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
-  await params;
+  const { locale } = await params;
+
+  if (!(locales as readonly string[]).includes(locale)) {
+    notFound();
+  }
+
   const headersList = await headers();
   const nonce = headersList.get("x-nonce") ?? undefined;
 

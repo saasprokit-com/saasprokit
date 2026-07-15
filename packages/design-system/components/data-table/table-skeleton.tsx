@@ -1,8 +1,8 @@
 import { Skeleton } from "@repo/design-system/components/ui/skeleton";
 
 export function TableSkeleton({ totalRow = 8, totalCol = 5 }) {
-  const colKeys = new Array(totalCol).map((c) => `c${c}`);
-  const rowKeys = new Array(totalRow).map((r) => `r${r}`);
+  const colKeys = Array.from({ length: totalCol }, (_, c) => `c${c}`);
+  const rowKeys = Array.from({ length: totalRow }, (_, r) => `r${r}`);
 
   return (
     <div className="flex flex-col gap-4">

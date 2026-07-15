@@ -1,22 +1,51 @@
 import "server-only";
 
 import type { OrgRoleName } from "@repo/auth/permissions";
+import type { Prisma } from "@repo/database";
 import { database } from "@repo/database";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { cache } from "react";
-import { getServerSession } from "@/lib/auth/auth";
+import { getServerSession, requireAuth } from "@/lib/auth/auth";
 
-interface OrganizationContext {
+export interface OrganizationContext {
   organizationId: string;
   organizationName: string;
+  organizationSlug: string;
   role: OrgRoleName;
   userId: string;
 }
 
-/**
- * Validate that a user is a member of an organization.
- * Returns true if the user is a member, false otherwise.
- */
+const memberWithOrgSelect = {
+  role: true,
+  organization: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      logo: true,
+    },
+  },
+} satisfies Prisma.MemberSelect;
+
+type MemberWithOrg = Prisma.MemberGetPayload<{
+  select: typeof memberWithOrgSelect;
+}>;
+
+export interface UserOrganization {
+  id: string;
+  logo: string | null;
+  name: string;
+  role: OrgRoleName;
+  slug: string;
+}
+
+function toUserOrganization(member: MemberWithOrg): UserOrganization {
+  return {
+    ...member.organization,
+    role: member.role as OrgRoleName,
+  };
+}
+
 export async function validateOrganizationMembership(
   organizationId: string,
   userId: string
@@ -32,170 +61,95 @@ export async function validateOrganizationMembership(
   return !!member;
 }
 
-/**
- * Validate user membership for an organization by slug.
- * Enforces authentication and membership requirements.
- *
- * Behavior:
- * - Redirects to sign-in if not authenticated
- * - Redirects to home if user is not a member
- * - Returns 404 if organization doesn't exist
- * - Returns organization context on success
- *
- * Wrapped with React.cache() to deduplicate across layout + page in a single request.
- */
-export const validateOrgMembershipBySlug = cache(
-  async (
-    slug: string,
-    returnTo?: string
-  ): Promise<OrganizationContext & { organizationSlug: string }> => {
+export const getUserOrganizations = cache(
+  async (): Promise<{
+    defaultOrganizationId: string | null;
+    organizations: UserOrganization[];
+  }> => {
     const session = await getServerSession();
 
-    // Check if user is authenticated
     if (!session?.user?.id) {
-      const returnUrl = returnTo
-        ? encodeURIComponent(returnTo)
-        : encodeURIComponent(`/${slug}`);
-      redirect(`/auth/sign-in?returnTo=${returnUrl}`);
+      return { organizations: [], defaultOrganizationId: null };
     }
 
-    // Single query: find membership by org slug (happy path = 1 DB call)
-    const member = await database.member.findFirst({
-      where: {
-        userId: session.user.id,
-        organization: { slug },
-        suspendedAt: null,
-      },
-      select: {
-        role: true,
-        organization: {
-          select: { id: true, name: true, slug: true },
+    const [user, memberships] = await Promise.all([
+      database.user.findUnique({
+        where: { id: session.user.id },
+        select: { defaultOrganizationId: true },
+      }),
+      database.member.findMany({
+        where: {
+          userId: session.user.id,
+          suspendedAt: null,
         },
-      },
-    });
-
-    if (!member) {
-      // Distinguish 404 (org doesn't exist) from 403 (not a member)
-      const orgExists = await database.organization.findUnique({
-        where: { slug },
-        select: { id: true },
-      });
-      if (!orgExists) {
-        notFound();
-      }
-      redirect("/");
-    }
+        select: memberWithOrgSelect,
+        orderBy: { createdAt: "asc" },
+      }),
+    ]);
 
     return {
-      organizationId: member.organization.id,
-      organizationName: member.organization.name,
-      organizationSlug: member.organization.slug,
-      userId: session.user.id,
-      role: member.role as OrgRoleName,
+      organizations: memberships.map(toUserOrganization),
+      defaultOrganizationId: user?.defaultOrganizationId ?? null,
     };
   }
 );
 
 /**
- * Get all organizations the current user is a member of.
- * Also returns the user's defaultOrganizationId for marking the default.
+ * Resolve the org addressed by a URL slug and confirm the caller is a member of it.
  *
- * Wrapped with React.cache() to deduplicate across layout + page in a single request.
+ * Every org-scoped page must call this: layouts are not re-rendered on client-side
+ * navigation between sibling pages, so the layout's check alone would let a removed
+ * member keep browsing.
+ *
+ * Behavior:
+ * - Redirects to sign-in if not authenticated
+ * - Returns 404 if the org does not exist OR the user is not a member (identical
+ *   responses, so org slugs cannot be enumerated)
+ *
+ * Reuses the memoized getUserOrganizations(), so it costs no additional query.
  */
-export const getUserOrganizations = cache(async () => {
-  const session = await getServerSession();
+export const getActiveOrganization = cache(
+  async (slug: string): Promise<OrganizationContext> => {
+    const session = await requireAuth(`/${slug}`);
+    const { organizations } = await getUserOrganizations();
 
-  if (!session?.user?.id) {
-    return { organizations: [], defaultOrganizationId: null };
+    const active = organizations.find((org) => org.slug === slug);
+    if (!active) {
+      notFound();
+    }
+
+    return {
+      organizationId: active.id,
+      organizationName: active.name,
+      organizationSlug: active.slug,
+      role: active.role,
+      userId: session.user.id,
+    };
   }
-
-  const [user, memberships] = await Promise.all([
-    database.user.findUnique({
-      where: { id: session.user.id },
-      select: { defaultOrganizationId: true },
-    }),
-    database.member.findMany({
-      where: {
-        userId: session.user.id,
-        suspendedAt: null,
-      },
-      select: {
-        role: true,
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            logo: true,
-          },
-        },
-      },
-    }),
-  ]);
-
-  const organizations = memberships.map((m) => ({
-    id: m.organization.id,
-    name: m.organization.name,
-    slug: m.organization.slug,
-    logo: m.organization.logo,
-    role: m.role as OrgRoleName,
-  }));
-
-  return {
-    organizations,
-    defaultOrganizationId: user?.defaultOrganizationId ?? null,
-  };
-});
+);
 
 /**
- * Get the user's default organization.
- * Falls back to the first organization if no default is set.
- *
- * Wrapped with React.cache() to deduplicate across layout + page in a single request.
+ * Get the user's default organization, falling back to their oldest membership.
  */
-export const getDefaultOrganization = cache(async () => {
-  const session = await getServerSession();
+export const getDefaultOrganization = cache(
+  async (): Promise<UserOrganization | null> => {
+    const { organizations, defaultOrganizationId } =
+      await getUserOrganizations();
 
-  if (!session?.user?.id) {
-    return null;
-  }
-
-  const [user, memberships] = await Promise.all([
-    database.user.findUnique({
-      where: { id: session.user.id },
-      select: { defaultOrganizationId: true },
-    }),
-    database.member.findMany({
-      where: { userId: session.user.id, suspendedAt: null },
-      select: {
-        organization: {
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "asc" },
-    }),
-  ]);
-
-  if (memberships.length === 0) {
-    return null;
-  }
-
-  // If user has a default set and is still a member, use it.
-  // Safety: user can be null only if DB row was deleted between session check and query,
-  // which is prevented by FK constraints (session → user). Falls through to first org.
-  if (user?.defaultOrganizationId) {
-    const defaultMembership = memberships.find(
-      (m) => m.organization.id === user.defaultOrganizationId
-    );
-    if (defaultMembership) {
-      return defaultMembership.organization;
+    if (organizations.length === 0) {
+      return null;
     }
-  }
 
-  // Fallback to first organization
-  return memberships[0].organization;
-});
+    // Use the stored default only while the user is still a member of it.
+    if (defaultOrganizationId) {
+      const defaultOrg = organizations.find(
+        (org) => org.id === defaultOrganizationId
+      );
+      if (defaultOrg) {
+        return defaultOrg;
+      }
+    }
+
+    return organizations[0];
+  }
+);

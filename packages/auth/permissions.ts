@@ -164,3 +164,28 @@ export const orgRoleDefinitions = {
   [ORG_ROLES.ADMIN]: orgAdminRole,
   [ORG_ROLES.MEMBER]: orgMemberRole,
 } as const;
+
+/**
+ * Check an org role against a permission map, in memory.
+ *
+ * This is the same evaluation better-auth's `hasPermission` endpoint runs once its
+ * own membership query returns the role — so callers that already hold the role
+ * (pages, via getActiveOrganization) can skip that query entirely.
+ *
+ * Only pass a role read from the database. Never one supplied by the client: this
+ * function trusts its argument completely.
+ */
+export function canOrg(
+  role: string,
+  permissions: Record<string, string[]>
+): boolean {
+  // A member's role column may hold several comma-separated roles; holding any one
+  // that grants the permission is enough (matches better-auth's own semantics).
+  return role
+    .split(",")
+    .some(
+      (name) =>
+        orgRoleDefinitions[name as OrgRoleName]?.authorize(permissions)
+          .success === true
+    );
+}

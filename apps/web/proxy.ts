@@ -7,6 +7,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import {
   AUTH_ROUTE_PREFIXES,
   PAGE_ROUTES,
+  PUBLIC_ROUTE_EXACT,
   PUBLIC_ROUTE_PREFIXES,
 } from "@/lib/routes";
 
@@ -81,9 +82,9 @@ export async function proxy(request: NextRequest) {
     normalizedPath.startsWith(route)
   );
 
-  const isPublicRoute = PUBLIC_ROUTE_PREFIXES.some(
-    (route) => normalizedPath === route
-  );
+  const isPublicRoute =
+    PUBLIC_ROUTE_EXACT.some((route) => route === normalizedPath) ||
+    PUBLIC_ROUTE_PREFIXES.some((route) => normalizedPath.startsWith(route));
 
   // Public routes don't need session checks
   if (isPublicRoute && !isAuthRoute) {
