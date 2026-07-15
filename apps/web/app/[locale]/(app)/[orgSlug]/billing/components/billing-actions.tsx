@@ -42,9 +42,14 @@ export function BillingActions({
   const { locale } = useParams<{ locale: string }>();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  const { planName, isPaid, isCanceled, refetch } = useSubscription();
+  const { planName, isPaid, isCanceled, refetch } = useSubscription({
+    referenceId: organizationId,
+  });
 
   const { cancel, isCanceling } = useCancel({
+    locale,
+    organizationSlug,
+    referenceId: organizationId,
     onSuccess: () => {
       setShowCancelDialog(false);
       toast.success("Subscription canceled", {

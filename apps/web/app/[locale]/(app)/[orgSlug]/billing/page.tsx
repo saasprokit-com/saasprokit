@@ -58,7 +58,7 @@ export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
           permissions={{ organization: ["update"] }}
           role={orgContext.role}
         >
-          <CurrentPlan />
+          <CurrentPlan organizationId={orgContext.organizationId} />
           <ChangePlan
             errors={dict.errors.action}
             memberCount={usageData.usageStats.members.current}
