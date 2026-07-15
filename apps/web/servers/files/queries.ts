@@ -28,13 +28,13 @@ export async function validateUploadedFile(
         filename: file.name,
         fileSize: file.size,
         fileType: file.type,
-        rule: issue?.path[0],
+        rule: issue?.path[0] ?? "file",
       },
       "Uploaded file failed validation"
     );
     return {
       valid: false,
-      error: issue?.message,
+      error: issue?.message ?? "Invalid file",
       status: 400,
     };
   }

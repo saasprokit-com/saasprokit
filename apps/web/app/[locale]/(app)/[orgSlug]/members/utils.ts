@@ -18,6 +18,8 @@ export interface MemberPermissions {
 
 export function getMemberPermissions(role: OrgRoleName): MemberPermissions {
   const { statements } = orgRoleDefinitions[role];
+  // better-auth narrows default statements to ["read"]; @repo/auth/permissions
+  // extends them with create/update/delete at runtime.
   const memberPerms = (statements.member ?? []) as readonly string[];
   const invitationPerms = (statements.invitation ?? []) as readonly string[];
 

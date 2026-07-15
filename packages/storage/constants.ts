@@ -7,7 +7,7 @@ import {
 import { z } from "zod";
 
 export const imageFileSchema = z
-  .instanceof(File)
+  .instanceof(File, { message: "Please upload a valid image file." })
   .refine(
     (file) => ALLOWED_IMAGE_TYPES.includes(file.type as AllowedImageType),
     {

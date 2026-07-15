@@ -21,6 +21,8 @@ import {
 export async function removeOrganizationLogoAction(
   input: z.infer<typeof removeLogoSchema>
 ): Promise<ActionResult> {
+  const logger = createRequestLogger({ action: "removeOrganizationLogo" });
+
   try {
     const validated = removeLogoSchema.parse(input);
 
@@ -60,13 +62,15 @@ export async function removeOrganizationLogoAction(
 
     return { success: true };
   } catch (error) {
-    return toActionError(error, { fallback: "removeLogo" });
+    return toActionError(error, { fallback: "removeLogo", logger });
   }
 }
 
 export async function updateOrganizationAction(
   input: z.infer<typeof updateOrgActionSchema>
 ): Promise<ActionResult> {
+  const logger = createRequestLogger({ action: "updateOrganization" });
+
   try {
     const validated = updateOrgActionSchema.parse(input);
 
@@ -98,7 +102,7 @@ export async function updateOrganizationAction(
 
     return { success: true };
   } catch (error) {
-    return toActionError(error, { fallback: "updateOrganization" });
+    return toActionError(error, { fallback: "updateOrganization", logger });
   }
 }
 
