@@ -39,9 +39,11 @@ schema validates on the client (via `zodResolver`) **and** on the server (via
 
 `SKILL.md` names six patterns; the three below are the ones with interesting
 mechanics worth explaining. They share a submission target (server actions) and
-differ in who owns the form state and where the component lives. The other three
-— **confirmation form** (fieldless), **molecule + Better Auth client**, and
-**hybrid public form** — are covered by their recipes in `SKILL.md`.
+differ in who owns the form state and where the component lives. Of the other
+three, **confirmation form** (fieldless) and **hybrid public form** have their
+own recipes in `SKILL.md` (Recipes 3 and 4), and **molecule + Better Auth
+client** is a molecule form whose injected handler calls the Better Auth client
+— see the molecule form section below.
 
 ### colocated form — RHF + zodResolver + server action (the default)
 

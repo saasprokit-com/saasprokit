@@ -282,7 +282,8 @@ Five dialogs still use plain `useState` per field (no `zodResolver`). They are
 `invite-member-dialog.tsx`, `bulk-invite-dialog.tsx`, `member-actions.tsx`,
 `invite-links-toolbar.tsx` (create-link), and `two-factor-manager.tsx`. The
 last also needs its `account/security/actions.ts` actions brought onto the
-`ActionResult`/`toActionError` contract (they currently return a custom shape).
+`ActionResult`/`toActionError` contract (none use `toActionError` in their
+catch blocks, and `enable2FAAction` returns a custom shape).
 
 ## Gotchas
 
