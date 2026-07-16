@@ -3,8 +3,7 @@
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
-import { verifySession } from "@/lib/auth/action-auth";
-import { type ActionResult, getServerSession } from "@/lib/auth/auth";
+import type { ActionResult } from "@/lib/auth/auth";
 import { revalidateAccountPage } from "@/lib/infrastructure/revalidation";
 
 type Enable2FAResult =
@@ -20,11 +19,6 @@ export async function enable2FAAction(
   const logger = createRequestLogger({ action: "enable2FA" });
 
   try {
-    const session = await getServerSession();
-    if (!session?.user?.id) {
-      return { success: false, error: "Unauthorized" };
-    }
-
     const data = await auth.api.enableTwoFactor({
       headers: await headers(),
       body: { password },
@@ -55,11 +49,6 @@ export async function verify2FAAction(code: string): Promise<ActionResult> {
   const logger = createRequestLogger({ action: "verify2FA" });
 
   try {
-    const { error } = await verifySession();
-    if (error) {
-      return error;
-    }
-
     await auth.api.verifyTOTP({
       headers: await headers(),
       body: { code },
@@ -86,11 +75,6 @@ export async function disable2FAAction(
   const logger = createRequestLogger({ action: "disable2FA" });
 
   try {
-    const { error } = await verifySession();
-    if (error) {
-      return error;
-    }
-
     await auth.api.disableTwoFactor({
       headers: await headers(),
       body: { password },
@@ -113,10 +97,6 @@ export async function disable2FAAction(
  */
 export async function revalidateSecurityPageAction(): Promise<ActionResult> {
   try {
-    const { error } = await verifySession();
-    if (error) {
-      return error;
-    }
     await revalidateAccountPage("security");
     return { success: true };
   } catch {

@@ -1,7 +1,9 @@
 "use server";
 
+import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
 import { createRequestLogger } from "@repo/logger/server";
+import { headers } from "next/headers";
 import { verifySession } from "@/lib/auth/action-auth";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
@@ -59,50 +61,39 @@ export async function updateProfileAction(formData: FormData) {
 }
 
 /**
- * Logout a specific session
+ * Logout a specific session, identified by its Better Auth session token.
+ * No verifySession needed: revokeSession authenticates the caller itself and
+ * only revokes sessions owned by that caller.
  */
-export async function logoutSessionAction(sessionId: string) {
+export async function logoutSessionAction(token: string) {
   const logger = createRequestLogger({
     action: "logoutSession",
-    sessionId,
   });
 
   try {
-    const { session, error } = await verifySession();
-    if (error) {
-      return error;
-    }
-
-    const userLogger = logger.child({ userId: session.user.id });
-
-    // Verify the session belongs to the current user
-    const targetSession = await database.session.findUnique({
-      where: { id: sessionId },
+    await auth.api.revokeSession({
+      headers: await headers(),
+      body: { token },
     });
 
-    if (!targetSession || targetSession.userId !== session.user.id) {
-      userLogger.warn({ sessionId }, "Session not found or unauthorized");
-      return actionError("sessionNotFound");
-    }
-
-    // Delete the session
-    await database.session.delete({
-      where: { id: sessionId },
-    });
-
-    userLogger.info({ sessionId }, "Session logged out");
+    logger.info("Session logged out");
 
     await revalidateAccountPage("security");
 
     return { success: true };
   } catch (error) {
-    return toActionError(error, { fallback: "logoutSession", logger });
+    return toActionError(error, {
+      fallback: "logoutSession",
+      baFallback: "unknownError",
+      logger,
+    });
   }
 }
 
 /**
  * Logout all other sessions
  * Keeps current session active
+ * No verifySession needed: revokeOtherSessions authenticates the caller itself.
  */
 export async function logoutAllOtherSessionsAction() {
   const logger = createRequestLogger({
@@ -110,44 +101,39 @@ export async function logoutAllOtherSessionsAction() {
   });
 
   try {
-    const { session, error } = await verifySession();
-    if (error) {
-      return error;
-    }
-
-    const userLogger = logger.child({ userId: session.user.id });
-
-    // PERFORMANCE: Use deleteMany without loading data to avoid memory overhead
-    // If user has many sessions (e.g., due to compromised token generation),
-    // loading all sessions into memory could cause memory exhaustion
-    const deleteResult = await database.session.deleteMany({
-      where: {
-        userId: session.user.id,
-        NOT: { id: session.session.id },
-      },
+    // Revoke every session except the current one via Better Auth.
+    await auth.api.revokeOtherSessions({
+      headers: await headers(),
     });
 
-    userLogger.info(
-      {
-        sessionCount: deleteResult.count,
-      },
-      "All other sessions logged out"
-    );
+    logger.info("All other sessions logged out");
 
     await revalidateAccountPage("security");
 
     return { success: true };
   } catch (error) {
-    return toActionError(error, { fallback: "logoutAllSessions", logger });
+    return toActionError(error, {
+      fallback: "logoutAllSessions",
+      baFallback: "unknownError",
+      logger,
+    });
   }
 }
 
 /**
- * Permanently delete the user account immediately
- * This action:
- * 1. Verifies the user session
- * 2. Deletes the user (cascades delete all related data)
- * 3. Returns success for redirect to logout
+ * Permanently delete the user account immediately.
+ *
+ * Goes through Better Auth's deleteUser API, which:
+ * - authenticates the caller itself (authoritative session re-read from the DB,
+ *   bypassing the cookie cache) — no verifySession needed;
+ * - requires a fresh session (freshAge, default 1 day) since no password is
+ *   supplied — a stale session yields a SESSION_EXPIRED error;
+ * - runs the `deleteUser.beforeDelete` hook (cancels the user's Stripe
+ *   subscription, deletes solo-owned orgs, or blocks when the user still solely
+ *   owns an org with other members);
+ * - deletes the user + sessions and clears the auth cookie server-side.
+ * The Prisma schema cascade removes the remaining related rows (members,
+ * invitations, 2FA, accounts, audit logs; files keep the row with a null owner).
  *
  * SECURITY: CSRF protection is enforced by Next.js via allowedOrigins validation on the Origin header
  */
@@ -157,26 +143,20 @@ export async function deleteAccountAction() {
   });
 
   try {
-    const { session, error } = await verifySession();
-    if (error) {
-      logger.warn("Unauthorized account deletion attempt");
-      return error;
-    }
-
-    const userLogger = logger.child({ userId: session.user.id });
-
-    // Delete user (cascades to all related records via Prisma schema)
-    // CASCADE deletes: sessions, members, invitations, files, twofactor, accounts, auditlogs
-    await database.user.delete({
-      where: { id: session.user.id },
+    await auth.api.deleteUser({
+      headers: await headers(),
+      body: {},
     });
 
-    userLogger.info({}, "Account deleted permanently");
+    logger.info("Account deleted permanently");
 
-    // Session is already deleted via cascade, so next request will be unauthenticated
     return { success: true };
   } catch (error) {
-    return toActionError(error, { fallback: "deleteAccount", logger });
+    return toActionError(error, {
+      fallback: "deleteAccount",
+      baFallback: "unknownError",
+      logger,
+    });
   }
 }
 

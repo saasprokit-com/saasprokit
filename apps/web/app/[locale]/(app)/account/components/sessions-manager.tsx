@@ -29,6 +29,7 @@ interface SessionInfo {
   createdAt: Date;
   id: string;
   ipAddress: string | null;
+  token: string;
   updatedAt: Date;
   userAgent: string | null;
 }
@@ -48,9 +49,9 @@ export function SessionsManager({
   const [showLogoutAllDialog, setShowLogoutAllDialog] = useState(false);
   const [isLoggingOutAll, startLogoutAllTransition] = useTransition();
 
-  const handleLogoutSession = async (sessionId: string) => {
-    setPendingSessionId(sessionId);
-    const result = await logoutSessionAction(sessionId);
+  const handleLogoutSession = async (session: SessionInfo) => {
+    setPendingSessionId(session.id);
+    const result = await logoutSessionAction(session.token);
 
     if (result.success) {
       toast.success("Session logged out successfully");
@@ -143,7 +144,7 @@ export function SessionsManager({
                         {!isCurrent && (
                           <Button
                             disabled={pendingSessionId === session.id}
-                            onClick={() => handleLogoutSession(session.id)}
+                            onClick={() => handleLogoutSession(session)}
                             size="sm"
                             variant="outline"
                           >
@@ -163,7 +164,6 @@ export function SessionsManager({
                 {sessions.length > 1 && (
                   <div className="flex gap-2 pt-4">
                     <Button
-                      disabled={sessions.length <= 1}
                       onClick={() => setShowLogoutAllDialog(true)}
                       variant="destructive"
                     >

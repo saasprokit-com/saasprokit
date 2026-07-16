@@ -1,6 +1,5 @@
 "use client";
 
-import { signOut } from "@repo/auth/client";
 import {
   Alert,
   AlertDescription,
@@ -57,10 +56,10 @@ export function DeleteAccountForm({ errors }: DeleteAccountFormProps) {
     if (state.success) {
       toast.success("Your account has been permanently deleted.");
 
-      // CRITICAL: Invalidate session on client side
-      signOut().then(() => {
-        router.push("/");
-      });
+      // The server action (auth.api.deleteUser) already cleared the auth cookie,
+      // so just leave the account area and refresh server components.
+      router.push("/");
+      router.refresh();
     } else if (state.error) {
       toast.error(state.error || errors.deleteAccount);
     }
@@ -82,10 +81,17 @@ export function DeleteAccountForm({ errors }: DeleteAccountFormProps) {
           <p className="text-red-900 text-sm">Deleting your account will:</p>
           <ul className="list-inside list-disc space-y-2 text-red-900 text-sm">
             <li>Permanently delete all your personal data</li>
-            <li>Cancel any active subscriptions</li>
-            <li>Remove you from all organizations</li>
+            <li>Cancel your active subscription</li>
+            <li>
+              Delete organizations you solely own and remove you from the rest
+            </li>
             <li>Delete all files and content you created</li>
           </ul>
+
+          <p className="text-red-800 text-xs">
+            If you solely own an organization that has other members, transfer
+            ownership before deleting your account.
+          </p>
 
           <Alert className="border-red-300 bg-red-100">
             <AlertTriangle className="h-4 w-4 text-red-600" />
