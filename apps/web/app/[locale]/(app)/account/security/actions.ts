@@ -91,15 +91,3 @@ export async function disable2FAAction(
     return { success: false, error: "Failed to disable 2FA" };
   }
 }
-
-/**
- * Revalidate security page after client-side mutations.
- */
-export async function revalidateSecurityPageAction(): Promise<ActionResult> {
-  try {
-    await revalidateAccountPage("security");
-    return { success: true };
-  } catch {
-    return { success: false, error: "Failed to revalidate" };
-  }
-}

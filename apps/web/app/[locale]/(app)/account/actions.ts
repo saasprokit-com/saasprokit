@@ -1,26 +1,23 @@
 "use server";
 
 import { auth } from "@repo/auth/server";
-import { database } from "@repo/database";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
-import { verifySession } from "@/lib/auth/action-auth";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
 import { revalidateAccountPage } from "@/lib/infrastructure/revalidation";
 import { profileSchema } from "./schemas";
 
 /**
- * Update user profile (name and avatar)
- * Email cannot be changed for security reasons
+ * Update user profile (name and avatar).
+ *
+ * Routes through Better Auth's updateUser API, which authenticates the caller
+ * from the forwarded headers, updates only name/image (email changes are
+ * rejected), and refreshes the session cookie — so no verifySession pre-check is
+ * needed.
  */
 export async function updateProfileAction(formData: FormData) {
   try {
-    const { session, error } = await verifySession();
-    if (error) {
-      return error;
-    }
-
     const rawName = formData.get("name") as string;
     const image = formData.get("image") as string | null;
 
@@ -43,10 +40,9 @@ export async function updateProfileAction(formData: FormData) {
       }
     }
 
-    // Update user profile
-    await database.user.update({
-      where: { id: session.user.id },
-      data: {
+    await auth.api.updateUser({
+      headers: await headers(),
+      body: {
         name,
         ...(image && { image }),
       },
@@ -56,7 +52,10 @@ export async function updateProfileAction(formData: FormData) {
 
     return { success: true };
   } catch (error) {
-    return toActionError(error, { fallback: "updateProfile" });
+    return toActionError(error, {
+      fallback: "updateProfile",
+      baFallback: "unknownError",
+    });
   }
 }
 
