@@ -23,8 +23,6 @@ interface OrgLayoutProps {
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { locale, orgSlug } = await params;
 
-  // getActiveOrganization() reuses the memoized getUserOrganizations(),
-  // so these three resolve against a single membership query.
   const [org, { organizations, defaultOrganizationId }, session] =
     await Promise.all([
       getActiveOrganization(orgSlug),
@@ -34,12 +32,6 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
 
   // In-memory check against the role we already hold — no extra query.
   const canManageBilling = canOrg(org.role, { organization: ["update"] });
-
-  const user = {
-    name: session.user.name,
-    email: session.user.email,
-    avatar: session.user.image ?? undefined,
-  };
 
   return (
     <SidebarProvider>
@@ -53,7 +45,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
         locale={locale}
         organizations={organizations}
         orgSlug={orgSlug}
-        user={user}
+        user={session.user}
       />
       <SidebarInset>
         <BreadcrumbProvider>

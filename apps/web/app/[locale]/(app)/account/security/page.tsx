@@ -4,8 +4,8 @@ import { getDictionary } from "@repo/internationalization";
 import { getServerSession } from "@/lib/auth/auth";
 import { accountRoutes } from "@/lib/routes";
 import { ChangePasswordForm } from "../components/change-password-form";
-import { SessionsManager } from "../components/sessions-manager";
 import { TwoFactorManager } from "../components/two-factor-manager";
+import { SessionsManager } from "./components/sessions-manager";
 import { getSecurityPageData } from "./queries";
 
 export const metadata = {

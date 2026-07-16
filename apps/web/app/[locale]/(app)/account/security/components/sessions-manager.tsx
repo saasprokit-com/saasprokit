@@ -21,22 +21,18 @@ import { formatDistanceToNow } from "date-fns";
 import { Loader2, LogOut, Monitor, Smartphone } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { logoutAllOtherSessionsAction, logoutSessionAction } from "../actions";
+import {
+  logoutAllOtherSessionsAction,
+  logoutSessionAction,
+} from "../../actions";
+import type { SecuritySession } from "../queries";
 
 const MOBILE_DEVICE_PATTERN = /mobile|android|iphone|ipad/i;
-
-interface SessionInfo {
-  createdAt: Date;
-  id: string;
-  ipAddress: string | null;
-  updatedAt: Date;
-  userAgent: string | null;
-}
 
 interface SessionsManagerProps {
   currentSessionId: string;
   errors: ActionErrorMessages;
-  sessions: SessionInfo[];
+  sessions: SecuritySession[];
 }
 
 export function SessionsManager({

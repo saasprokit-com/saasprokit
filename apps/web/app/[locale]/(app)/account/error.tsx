@@ -11,10 +11,6 @@ interface AccountErrorProps {
   reset: () => void;
 }
 
-/**
- * In-shell 500 for the account section — keeps the account sidebar and header
- * mounted when a page below fails.
- */
 export default function AccountError({ error, reset }: AccountErrorProps) {
   const router = useRouter();
 

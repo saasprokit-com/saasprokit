@@ -7,7 +7,6 @@ import { actionError, toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
 import { revalidateAccountPage } from "@/lib/infrastructure/revalidation";
 import { profileSchema } from "./schemas";
-
 /**
  * Update user profile (name and avatar)
  * Email cannot be changed for security reasons

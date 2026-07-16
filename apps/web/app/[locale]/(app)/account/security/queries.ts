@@ -1,6 +1,8 @@
 import "server-only";
 
+import { auth } from "@repo/auth/server";
 import { database, type Prisma } from "@repo/database";
+import { headers } from "next/headers";
 
 const sessionSelect = {
   id: true,
@@ -16,10 +18,8 @@ export type SecuritySession = Prisma.SessionGetPayload<{
 
 export async function getSecurityPageData(userId: string) {
   const [sessions, twoFactorRecord] = await Promise.all([
-    database.session.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      select: sessionSelect,
+    auth.api.listSessions({
+      headers: await headers(),
     }),
     database.twoFactor.findFirst({
       where: { userId },

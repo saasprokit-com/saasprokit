@@ -19,20 +19,12 @@ export default async function AccountLayout({
   children,
   params,
 }: AccountLayoutProps) {
-  const { locale } = await params;
-  const session = await requireAuth();
-
-  // Build user object for sidebar
-  const user = {
-    name: session.user.name || "User",
-    email: session.user.email || "",
-    avatar: session.user.image || undefined,
-  };
+  const [{ locale }, session] = await Promise.all([params, requireAuth()]);
 
   return (
     <SidebarProvider>
       <ActivityTracker />
-      <AccountSidebar locale={locale} user={user} />
+      <AccountSidebar locale={locale} user={session.user} />
 
       <SidebarInset>
         <BreadcrumbProvider>
