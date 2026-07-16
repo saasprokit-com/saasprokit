@@ -11,8 +11,8 @@ export const invitationsSearchParamsCache = createSearchParamsCache({
   perPage: parseAsInteger.withDefault(10),
   sort: sortingStateParser.withDefault([]),
   q: parseAsString.withDefault(""),
-  role: parseAsArrayOf(parseAsString).withDefault([]),
-  status: parseAsArrayOf(parseAsString).withDefault([]),
+  roles: parseAsArrayOf(parseAsString).withDefault([]),
+  statuses: parseAsArrayOf(parseAsString).withDefault([]),
 });
 
 export type InvitationsSearchParams = Awaited<

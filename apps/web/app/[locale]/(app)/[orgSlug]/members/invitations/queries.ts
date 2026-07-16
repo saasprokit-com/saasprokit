@@ -31,8 +31,8 @@ export async function getInvitations({
   perPage,
   sort,
   q,
-  role,
-  status,
+  roles,
+  statuses,
 }: GetInvitationsInput): Promise<GetListPayload<Invitation>> {
   const skip = (page - 1) * perPage;
   const take = perPage;
@@ -42,8 +42,8 @@ export async function getInvitations({
   };
 
   // Status filter
-  if (status.length > 0) {
-    where.status = { in: status };
+  if (statuses.length > 0) {
+    where.status = { in: statuses };
   }
 
   // Search filter (email, case-insensitive)
@@ -52,8 +52,8 @@ export async function getInvitations({
   }
 
   // Role filter
-  if (role.length > 0) {
-    where.role = { in: role };
+  if (roles.length > 0) {
+    where.role = { in: roles };
   }
 
   const orderBy = buildOrderBy(sort);
