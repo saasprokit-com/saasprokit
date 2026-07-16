@@ -699,6 +699,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.705.0
         version: 3.965.0
+      '@repo/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@t3-oss/env-nextjs':
         specifier: ^0.13.10
         version: 0.13.10(arktype@2.1.20)(typescript@5.9.3)(valibot@1.2.0(typescript@5.9.3))(zod@4.3.6)

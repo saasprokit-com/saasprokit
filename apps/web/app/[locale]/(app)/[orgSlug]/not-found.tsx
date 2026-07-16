@@ -4,11 +4,6 @@ import { ErrorContent } from "@repo/design-system/components/molecules/error/err
 import { Button } from "@repo/design-system/components/ui/button";
 import { useRouter } from "next/navigation";
 
-/**
- * In-shell 404 for notFound() raised by a page under the org shell (e.g.
- * settings/page.tsx, or getActiveOrganization). The sidebar stays mounted
- * so the user can navigate elsewhere in the org.
- */
 export default function OrgNotFound() {
   const router = useRouter();
 

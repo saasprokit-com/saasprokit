@@ -7,20 +7,17 @@ import "server-only";
 
 import type { createRequestLogger } from "@repo/logger/server";
 import { getPlanLimits } from "@repo/payment/plans";
+import { BYTES_PER_MB } from "@repo/utils/storage";
 import {
   getCurrentPlanForReference,
   getOrgStorageUsage,
 } from "@/lib/billing/subscription-queries";
 
-const KILOBYTES_PER_MEGABYTE = 1024;
-const BYTES_PER_KILOBYTE = 1024;
-const BYTES_PER_MEGABYTE = KILOBYTES_PER_MEGABYTE * BYTES_PER_KILOBYTE;
-
 async function getOrganizationStorageUsageBytes(
   organizationId: string
 ): Promise<number> {
   const usageMB = await getOrgStorageUsage(organizationId);
-  return usageMB * BYTES_PER_MEGABYTE;
+  return usageMB * BYTES_PER_MB;
 }
 
 async function getOrganizationStorageQuota(
@@ -31,7 +28,7 @@ async function getOrganizationStorageQuota(
   if (limits.maxStorageMB === -1) {
     return -1;
   }
-  return limits.maxStorageMB * BYTES_PER_MEGABYTE;
+  return limits.maxStorageMB * BYTES_PER_MB;
 }
 
 async function checkStorageQuota(
@@ -85,9 +82,9 @@ export async function validateStorageQuota(
     const quotaCheck = await checkStorageQuota(organizationId, fileSizeBytes);
 
     if (!quotaCheck.allowed) {
-      const quotaMB = quotaCheck.quota / BYTES_PER_MEGABYTE;
-      const usageMB = quotaCheck.usage / BYTES_PER_MEGABYTE;
-      const fileMB = fileSizeBytes / BYTES_PER_MEGABYTE;
+      const quotaMB = quotaCheck.quota / BYTES_PER_MB;
+      const usageMB = quotaCheck.usage / BYTES_PER_MB;
+      const fileMB = fileSizeBytes / BYTES_PER_MB;
 
       logger.warn(
         {

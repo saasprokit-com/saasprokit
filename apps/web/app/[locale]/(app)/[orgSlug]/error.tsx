@@ -11,11 +11,6 @@ interface OrgErrorProps {
   reset: () => void;
 }
 
-/**
- * Renders inside the org shell, so the sidebar and header survive a failing
- * page. Errors thrown by [orgSlug]/layout.tsx itself bubble past this boundary
- * to [locale]/error.tsx, which is correct — there is no shell left to keep.
- */
 export default function OrgError({ error, reset }: OrgErrorProps) {
   const router = useRouter();
 

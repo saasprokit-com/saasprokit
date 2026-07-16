@@ -32,6 +32,7 @@ import {
   FormMessage,
 } from "@repo/design-system/components/ui/form";
 import { Input } from "@repo/design-system/components/ui/input";
+import { formatDate } from "@repo/design-system/lib/date";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -63,6 +64,7 @@ export function OrgSettingsForm({
   userRole,
 }: OrgSettingsFormProps) {
   const router = useRouter();
+  const [isSaving, startSaveTransition] = useTransition();
   const [isDeleting, startDeleteTransition] = useTransition();
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -74,24 +76,24 @@ export function OrgSettingsForm({
     },
   });
 
-  const isSubmitting = form.formState.isSubmitting;
   const isDirty = form.formState.isDirty;
   const canDelete = userRole === ORG_ROLES.OWNER;
 
-  async function onSubmit(values: UpdateOrgFormValues) {
-    const result = await updateOrganizationAction({
-      organizationId: organization.id,
-      name: values.name,
+  function onSubmit(values: UpdateOrgFormValues) {
+    startSaveTransition(async () => {
+      const result = await updateOrganizationAction({
+        organizationId: organization.id,
+        name: values.name,
+      });
+
+      if (!result.success) {
+        toast.error(result.error || errors.updateOrganization);
+        return;
+      }
+
+      toast.success("Organization updated successfully");
+      form.reset({ name: values.name });
     });
-
-    if (!result.success) {
-      toast.error(result.error || errors.updateOrganization);
-      return;
-    }
-
-    toast.success("Organization updated successfully");
-    form.reset({ name: values.name });
-    router.refresh();
   }
 
   function handleDelete() {
@@ -159,7 +161,7 @@ export function OrgSettingsForm({
                     <FormControl>
                       <Input
                         {...field}
-                        disabled={!canEdit || isSubmitting}
+                        disabled={!canEdit || isSaving}
                         placeholder="Enter organization name"
                       />
                     </FormControl>
@@ -186,7 +188,7 @@ export function OrgSettingsForm({
                     Created
                   </span>
                   <p className="mt-1 text-sm">
-                    {new Date(organization.createdAt).toLocaleDateString()}
+                    {formatDate(organization.createdAt)}
                   </p>
                 </div>
               </div>
@@ -203,8 +205,8 @@ export function OrgSettingsForm({
               </div>
 
               {canEdit && (
-                <Button disabled={isSubmitting || !isDirty} type="submit">
-                  {isSubmitting && (
+                <Button disabled={isSaving || !isDirty} type="submit">
+                  {isSaving && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
                   Save Changes

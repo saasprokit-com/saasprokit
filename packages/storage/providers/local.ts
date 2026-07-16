@@ -4,7 +4,7 @@ import {
   DEFAULT_FOLDER,
   DEFAULT_VISIBILITY,
   MIME_TO_EXTENSION,
-} from "../constants";
+} from "@repo/utils/storage";
 import { keys } from "../keys";
 import type {
   DeleteOptions,

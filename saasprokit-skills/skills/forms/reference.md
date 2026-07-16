@@ -1,7 +1,8 @@
-# Form Handling
+# Form Handling — rationale
 
-How forms work in this repo, the three patterns in use, and how our approach
-compares to the official React 19 / Next.js 16 guidance.
+Why the forms system is shaped the way it is, and how our approach compares to
+the official React 19 / Next.js 16 guidance. The build recipes and the full
+pattern list live in `SKILL.md`; this file is the reasoning behind them.
 
 ## Stack
 
@@ -34,12 +35,17 @@ Each schema file exports both the zod schema and its inferred type. The same
 schema validates on the client (via `zodResolver`) **and** on the server (via
 `schema.parse()` inside the action) — defense in depth from one definition.
 
-## The three patterns
+## The patterns
 
-All three share the same submission target (server actions); they differ in who
-owns the form state and where the component lives.
+`SKILL.md` names six patterns; the three below are the ones with interesting
+mechanics worth explaining. They share a submission target (server actions) and
+differ in who owns the form state and where the component lives. Of the other
+three, **confirmation form** (fieldless) and **hybrid public form** have their
+own recipes in `SKILL.md` (Recipes 3 and 4), and **molecule + Better Auth
+client** is a molecule form whose injected handler calls the Better Auth client
+— see the molecule form section below.
 
-### Pattern A — RHF + zodResolver + server action (the default)
+### colocated form — RHF + zodResolver + server action (the default)
 
 Example: `apps/web/app/[locale]/(app)/account/new-org/components/create-organization-form.tsx`
 
@@ -69,12 +75,12 @@ async function onSubmit(values: CreateOrgInput) {
 
 **Use for:** any multi-field form inside the app.
 
-### Pattern B — RHF form as a design-system molecule (dependency-injected)
+### molecule form — RHF form as a design-system molecule (dependency-injected)
 
 Example: `packages/design-system/components/molecules/auth/sign-in-form.tsx`,
 consumed by `apps/web/app/[locale]/auth/sign-in/components/password-sign-in.tsx`.
 
-Same RHF + zodResolver mechanics as Pattern A — the difference is **who owns the
+Same RHF + zodResolver mechanics as the colocated form — the difference is **who owns the
 submit logic**. The molecule takes `onSubmit: (data) => Promise<void>` as a prop,
 catches whatever it throws, and surfaces it via `form.setError("root", ...)`. It
 knows nothing about server actions, routes, or auth libraries, which is what lets
@@ -86,11 +92,17 @@ client directly (`signIn.email(...)`) — not a server action — then routes vi
 
 **Use for:** forms reused across apps, or forms that must stay decoupled from
 app-specific transport (the prop is transport-agnostic — an app could pass a
-server action to it).
+server action to it). When the injected handler calls the Better Auth client
+instead of a server action, this is the **molecule + Better Auth client**
+pattern used by all auth and billing flows.
 
-### Pattern C — plain controlled form + `useTransition` (small dialogs)
+### dialog form — RHF + `startTransition`; and the legacy `useState` dialogs
 
-Example: `apps/web/app/[locale]/(app)/[orgSlug]/members/components/invite-member-dialog.tsx`
+The prescribed **dialog form** keeps RHF + zodResolver for validation and wraps
+the action call in `startTransition` (see `SKILL.md` Recipe 2). Five dialogs
+predate this rule and use plain `useState` per field — they are **legacy**. This
+section explains why the transition matters, using the legacy
+`invite-member-dialog.tsx` as the example:
 
 ```tsx
 const [isPending, startTransition] = useTransition();
@@ -119,12 +131,16 @@ members page. Because the call runs inside a transition:
    `await` would drop the spinner before the new row appears.
 2. The revalidation re-render is non-blocking; the dialog stays interactive.
 
-**The weakness** is the validation UX: users only see real validation errors
-after a server round-trip, and it's a second form idiom to maintain.
+**The weakness** of the *legacy* form is the validation UX: users only see real
+validation errors after a server round-trip, and it's a second form idiom to
+maintain. That's why the current rule is RHF + zodResolver **while keeping**
+`startTransition` around the action call — the strongest hybrid, and the
+`dialog form` pattern. Migrate legacy `useState` dialogs to it when touched.
 
-**Use for:** one-or-two-field dialogs, grudgingly. When touching one, prefer
-upgrading it to RHF + zodResolver *while keeping* `startTransition` around the
-action call — that's the strongest hybrid.
+One React gotcha in this pattern: state updates *after* the `await` inside
+`startTransition` (e.g. `setOpen(false)`) must be re-wrapped in a nested
+`startTransition`, or they fall out of the transition and close the dialog
+before the revalidated list commits.
 
 ## Validation: two layers, one schema
 
@@ -137,6 +153,15 @@ Client-side validation is a convenience, never verification. Anyone can invoke a
 server action directly with a crafted request, bypassing RHF entirely. The server
 re-parse must exist even though the client already validated — the elegance of
 this setup is that both layers cost one schema definition.
+
+### Two-tier server validation
+
+The server re-parse comes in two flavors, chosen by form type:
+
+| Form type | Server validation | Why |
+| --- | --- | --- |
+| Authenticated (colocated, dialog, molecule) | `schema.parse` + `toActionError` (generic) | client zod already gives field errors; a server rejection means an attacker or schema drift — a generic error is enough |
+| Hybrid public form | `schema.safeParse` + field errors via `useActionState` | a pre-hydration submitter has no client validation, so the server response is their only feedback |
 
 ## How this compares to the official docs
 
@@ -170,13 +195,17 @@ const [state, formAction, pending] = useActionState(createUser, initialState);
 | Type safety | ❌ `formData.get()` is stringly-typed, needs coercion | ✅ `z.infer` types shared end-to-end |
 | Typed returns | via `prevState` reducer shape | ✅ `ActionResult<T>` with inference |
 
-The tradeoff is near-free **for this app**: it's a dashboard behind
-authentication, and sign-in itself requires JS (Better Auth client), so no-JS
-users can't reach these forms anyway. The only exposure is the hydration gap.
+The tradeoff is near-free **for authenticated app forms**: sign-in itself
+requires JS (Better Auth client), so no-JS users can't reach the dashboard
+anyway. The only exposure is the hydration gap.
 
 **When the calculus flips:** public marketing pages, lead-capture, anything
-first-visit-critical. There, the hydration gap is exactly when users interact —
-use the official `<form action>` + `useActionState` + FormData path instead.
+first-visit-critical. There, the hydration gap is exactly when users interact.
+We don't switch authoring stacks for it — instead the **hybrid public form**
+pattern keeps RHF for the enhanced experience but adds a native
+`<form action={serverAction}>` fallback so a pre-hydration submit still POSTs
+(with `safeParse` + field errors via `useActionState`). Universal RHF authoring,
+gap covered. See `SKILL.md` Recipe 4.
 
 ## Server action security checklist
 
@@ -210,18 +239,30 @@ Operational caveats:
 
 | Situation | Pattern |
 | --- | --- |
-| Multi-field form in the app | **A** — RHF + zodResolver + server action |
-| Form reused across apps / design system | **B** — molecule with injected `onSubmit` |
-| Auth flows (sign-in/up, social) | **B** + Better Auth client (not a server action) |
-| Tiny dialog (1–2 fields) | **C** is accepted; prefer upgrading to A + `startTransition` |
-| Public / marketing / no-JS-critical form | Official `<form action>` + `useActionState` + FormData |
+| Multi-field form in the app | **colocated form** — RHF + zodResolver + server action |
+| Form reused across apps / design system | **molecule form** — injected `onSubmit` |
+| Auth / billing flows | **molecule + Better Auth client** (not a server action) |
+| Dialog with fields | **dialog form** — RHF + zodResolver + `startTransition` |
+| Fieldless confirm / cancel / accept | **confirmation form** — `<form action>`+`useActionState` for a fixed/public target, `useTransition` for dynamic ids / menu items |
+| Public / marketing / no-JS-critical form | **hybrid public form** — native `<form action>` fallback + RHF |
 
-Improvement notes when touching form code:
+(Full decision tree and recipes in `SKILL.md`.)
 
-1. Prefer `safeParse` + returned field errors over `parse` + catch in actions —
-   users get per-field messages instead of a generic toast.
-2. Migrate Pattern C dialogs to RHF for client-side validation, keeping
-   `startTransition` around the action call.
+For a fieldless confirmation, the transport is decided by the action's
+**argument shape**, not the trigger's container: a fixed/nullary target
+(hidden-input-able, `.bind`) → `<form action>` + `useActionState`; dynamic args
+the client holds (selected ids) → `useTransition`; public/semi-public surfaces
+mandate `<form action>` (progressive enhancement); dropdown/menu items use
+`useTransition` regardless. Proof the container doesn't decide: `downgrade-button.tsx`
+uses `<form action>` inside an AlertDialog. See `SKILL.md` Recipe 3 for the
+ordered rule.
+
+Notes when touching form code:
+
+1. Authenticated forms use `parse` + `toActionError`; only hybrid public forms
+   need `safeParse` + field errors (two-tier policy above).
+2. Migrate legacy `useState` dialogs to the **dialog form** pattern (RHF +
+   `startTransition`) when touched — the five are listed in `SKILL.md`.
 
 ## References
 
@@ -235,6 +276,7 @@ Improvement notes when touching form code:
 **Repo examples**
 
 - Form primitives: `packages/design-system/components/ui/form.tsx`
-- Pattern A: `apps/web/app/[locale]/(app)/account/new-org/components/create-organization-form.tsx` (+ `../actions.ts`, `../schemas.ts`)
-- Pattern B: `packages/design-system/components/molecules/auth/sign-in-form.tsx`, `apps/web/app/[locale]/auth/sign-in/components/password-sign-in.tsx`
-- Pattern C: `apps/web/app/[locale]/(app)/[orgSlug]/members/components/invite-member-dialog.tsx` (+ `../actions.ts` → `inviteMemberAction`)
+- colocated form: `apps/web/app/[locale]/(app)/account/new-org/components/create-organization-form.tsx` (+ `../actions.ts`, `../schemas.ts`)
+- molecule form / + Better Auth client: `packages/design-system/components/molecules/auth/sign-in-form.tsx`, `apps/web/app/[locale]/auth/sign-in/components/password-sign-in.tsx`
+- confirmation form: `apps/web/app/[locale]/(app)/invite/accept/accept-button.tsx`
+- legacy `useState` dialog (do not copy): `apps/web/app/[locale]/(app)/[orgSlug]/members/components/invite-member-dialog.tsx` (+ `../actions.ts` → `inviteMemberAction`)

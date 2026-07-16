@@ -2,14 +2,11 @@ import "server-only";
 
 import { database } from "@repo/database";
 import type { createRequestLogger } from "@repo/logger/server";
-import { ALLOWED_IMAGE_TYPES, MAX_FILE_SIZE } from "@repo/storage";
+import { imageFileSchema } from "@repo/storage";
 import { ATTACHABLE_TYPE } from "@repo/utils/storage";
 import { NextResponse } from "next/server";
 import { checkOrgPermission } from "@/lib/auth/auth";
 import { validateStorageQuota } from "@/lib/files/storage-quota";
-
-const BYTES_PER_KILOBYTE = 1024;
-const BYTES_PER_MEGABYTE = BYTES_PER_KILOBYTE * BYTES_PER_KILOBYTE;
 
 /**
  * Validate uploaded file for security and content requirements
@@ -23,38 +20,21 @@ export async function validateUploadedFile(
   status?: number;
   buffer?: Buffer;
 }> {
-  if (file.size > MAX_FILE_SIZE) {
+  const validation = imageFileSchema.safeParse(file);
+  if (!validation.success) {
+    const issue = validation.error.issues[0];
     logger.warn(
       {
+        filename: file.name,
         fileSize: file.size,
-        maxSize: MAX_FILE_SIZE,
-        filename: file.name,
-      },
-      "File size exceeds limit"
-    );
-    return {
-      valid: false,
-      error: `File too large. Maximum size is ${MAX_FILE_SIZE / BYTES_PER_MEGABYTE}MB`,
-      status: 400,
-    };
-  }
-
-  if (
-    !ALLOWED_IMAGE_TYPES.includes(
-      file.type as (typeof ALLOWED_IMAGE_TYPES)[number]
-    )
-  ) {
-    logger.warn(
-      {
         fileType: file.type,
-        allowedTypes: ALLOWED_IMAGE_TYPES,
-        filename: file.name,
+        rule: issue?.path[0] ?? "file",
       },
-      "Invalid file type submitted"
+      "Uploaded file failed validation"
     );
     return {
       valid: false,
-      error: "Invalid file type. Allowed: JPEG, PNG, WebP, GIF",
+      error: issue?.message ?? "Invalid file",
       status: 400,
     };
   }

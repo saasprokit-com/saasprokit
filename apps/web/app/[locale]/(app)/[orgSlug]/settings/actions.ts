@@ -18,9 +18,6 @@ import {
   updateOrgActionSchema,
 } from "./schemas";
 
-/**
- * Remove organization logo
- */
 export async function removeOrganizationLogoAction(
   input: z.infer<typeof removeLogoSchema>
 ): Promise<ActionResult> {
@@ -36,7 +33,6 @@ export async function removeOrganizationLogoAction(
       return actionError("unauthorized");
     }
 
-    // Get organization to find the slug for revalidation
     const organization = await database.organization.findUnique({
       where: { id: validated.organizationId },
       select: { slug: true },
@@ -70,9 +66,6 @@ export async function removeOrganizationLogoAction(
   }
 }
 
-/**
- * Update organization name
- */
 export async function updateOrganizationAction(
   input: z.infer<typeof updateOrgActionSchema>
 ): Promise<ActionResult> {
@@ -113,9 +106,6 @@ export async function updateOrganizationAction(
   }
 }
 
-/**
- * Delete organization (owner only)
- */
 export async function deleteOrganizationAction(
   input: z.infer<typeof deleteOrgActionSchema>
 ): Promise<ActionResult> {
@@ -142,9 +132,6 @@ export async function deleteOrganizationAction(
   }
 }
 
-/**
- * Revalidate org settings page after client-side mutations (logo upload).
- */
 export async function revalidateOrgSettingsAction(
   input: z.infer<typeof revalidateOrgSettingsSchema>
 ): Promise<ActionResult> {
