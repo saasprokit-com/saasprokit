@@ -33,9 +33,9 @@ export async function getInviteLinks({
   page,
   perPage,
   sort,
-  search,
-  role,
-  status,
+  q,
+  roles,
+  statuses,
 }: GetInviteLinksInput): Promise<GetListPayload<InviteLink>> {
   const skip = (page - 1) * perPage;
   const take = perPage;
@@ -45,25 +45,25 @@ export async function getInviteLinks({
   };
 
   // Search filter (token prefix, case-insensitive)
-  if (search) {
-    where.token = { contains: search, mode: "insensitive" };
+  if (q) {
+    where.token = { contains: q, mode: "insensitive" };
   }
 
   // Role filter
-  if (role.length > 0) {
-    where.role = { in: role };
+  if (roles.length > 0) {
+    where.role = { in: roles };
   }
 
   // Status filter (active / revoked)
-  if (status.length > 0) {
+  if (statuses.length > 0) {
     if (
-      status.includes(INVITE_LINK_STATUS.ACTIVE) &&
-      !status.includes(INVITE_LINK_STATUS.REVOKED)
+      statuses.includes(INVITE_LINK_STATUS.ACTIVE) &&
+      !statuses.includes(INVITE_LINK_STATUS.REVOKED)
     ) {
       where.isActive = true;
     } else if (
-      status.includes(INVITE_LINK_STATUS.REVOKED) &&
-      !status.includes(INVITE_LINK_STATUS.ACTIVE)
+      statuses.includes(INVITE_LINK_STATUS.REVOKED) &&
+      !statuses.includes(INVITE_LINK_STATUS.ACTIVE)
     ) {
       where.isActive = false;
     }

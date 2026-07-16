@@ -52,7 +52,7 @@ export const thingsSearchParamsCache = createSearchParamsCache({
   perPage: parseAsInteger.withDefault(10),
   sort: sortingStateParser.withDefault([]),
   q: parseAsString.withDefault(""),                       // text search — always "q"
-  status: parseAsArrayOf(parseAsString).withDefault([]),  // one per faceted filter
+  statuses: parseAsArrayOf(parseAsString).withDefault([]),// one per faceted filter; array params are plural (roles, statuses)
 });
 export type ThingsSearchParams = Awaited<ReturnType<typeof thingsSearchParamsCache.parse>>;
 ```
@@ -108,7 +108,7 @@ Render toolbar → bordered `<Table>` with `flexRender` + empty-state row → `<
 
 - **Never await the query in the RSC** — that serializes rendering and defeats the `TableSkeleton` streaming.
 - **No client row models** (`getFilteredRowModel`/`getSortedRowModel`/`getPaginationRowModel`) and no local sort/filter state — everything routes through `useDataTable`'s `filterFields`, or the URL and the server query drift apart.
-- **Three-way alignment**: column `accessorKey` (columns) = `filterFields.id` (table) = query param the server consumes (validations/queries). Text search URL key is `q` — `invite-links/` uses `search`, the outlier; don't copy that.
+- **Three-way alignment**: column `accessorKey` (columns) = `filterFields.id` (table) = query param the server consumes (validations/queries). Naming convention: text search URL key is always `q`, and every multi-value (array) filter param is plural (`roles`/`statuses`, not `role`/`status`).
 - **Allow-list sortable fields** in `buildOrderBy` — `?sort=` ids come from the URL; an unknown field makes Prisma throw at runtime. The canonical `invitations/queries.ts` predates this rule and writes any URL id into `orderBy` — don't copy its `buildOrderBy` verbatim.
 - `pageCount: totalPage || 1` — TanStack misbehaves with `pageCount: 0`.
 - New action error keys: `toActionError`'s `fallback` is typed against `errors.action` — add the key to every `packages/internationalization/dictionaries/*.json` (English is fine; `languine` translates later).

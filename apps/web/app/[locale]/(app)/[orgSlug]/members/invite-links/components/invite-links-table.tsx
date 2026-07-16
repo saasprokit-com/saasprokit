@@ -23,9 +23,9 @@ interface InviteLinksTableProps {
 }
 
 const filterFields = [
-  { id: "token", urlKey: "search", type: "string" as const },
-  { id: "role", urlKey: "role", type: "array" as const },
-  { id: "isActive", urlKey: "status", type: "array" as const },
+  { id: "token", urlKey: "q", type: "string" as const },
+  { id: "role", urlKey: "roles", type: "array" as const },
+  { id: "isActive", urlKey: "statuses", type: "array" as const },
 ];
 
 export function InviteLinksTable({
