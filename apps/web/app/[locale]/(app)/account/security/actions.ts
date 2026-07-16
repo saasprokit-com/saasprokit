@@ -3,6 +3,7 @@
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
+import { toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
 import { revalidateAccountPage } from "@/lib/infrastructure/revalidation";
 
@@ -89,5 +90,65 @@ export async function disable2FAAction(
       "Failed to disable 2FA"
     );
     return { success: false, error: "Failed to disable 2FA" };
+  }
+}
+
+/**
+ * Logout a specific session, identified by its Better Auth session token.
+ * No verifySession needed: revokeSession authenticates the caller itself and
+ * only revokes sessions owned by that caller.
+ */
+export async function logoutSessionAction(token: string) {
+  const logger = createRequestLogger({
+    action: "logoutSession",
+  });
+
+  try {
+    await auth.api.revokeSession({
+      headers: await headers(),
+      body: { token },
+    });
+
+    logger.info("Session logged out");
+
+    await revalidateAccountPage("security");
+
+    return { success: true };
+  } catch (error) {
+    return toActionError(error, {
+      fallback: "logoutSession",
+      baFallback: "unknownError",
+      logger,
+    });
+  }
+}
+
+/**
+ * Logout all other sessions
+ * Keeps current session active
+ * No verifySession needed: revokeOtherSessions authenticates the caller itself.
+ */
+export async function logoutAllOtherSessionsAction() {
+  const logger = createRequestLogger({
+    action: "logoutAllOtherSessions",
+  });
+
+  try {
+    // Revoke every session except the current one via Better Auth.
+    await auth.api.revokeOtherSessions({
+      headers: await headers(),
+    });
+
+    logger.info("All other sessions logged out");
+
+    await revalidateAccountPage("security");
+
+    return { success: true };
+  } catch (error) {
+    return toActionError(error, {
+      fallback: "logoutAllSessions",
+      baFallback: "unknownError",
+      logger,
+    });
   }
 }

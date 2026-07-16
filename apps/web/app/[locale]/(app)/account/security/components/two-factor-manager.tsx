@@ -33,7 +33,7 @@ import {
   disable2FAAction,
   enable2FAAction,
   verify2FAAction,
-} from "../security/actions";
+} from "../actions";
 
 const TWO_FACTOR_CODE_LENGTH = 6;
 
