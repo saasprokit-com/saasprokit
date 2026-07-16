@@ -11,7 +11,11 @@ import {
 } from "@repo/utils/payment";
 import { headers } from "next/headers";
 import { actionError, toActionError } from "@/lib/auth/action-error";
-import { type ActionResult, checkOrgPermission } from "@/lib/auth/auth";
+import {
+  type ActionResult,
+  getServerSession,
+  hasOrgPermission,
+} from "@/lib/auth/auth";
 import {
   getActiveSubscription,
   getOrgMemberCount,
@@ -34,14 +38,19 @@ export async function changePlanAction(
   try {
     const validated = changePlanRequestSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       organization: ["update"],
     });
-    if (!caller) {
+    if (!allowed) {
       return actionError("unauthorized");
     }
 
-    const userLogger = logger.child({ userId: caller.userId });
+    const session = await getServerSession();
+    if (!session) {
+      return actionError("unauthorized");
+    }
+
+    const userLogger = logger.child({ userId: session.user.id });
 
     const currentSubscription = await getActiveSubscription(
       validated.organizationId

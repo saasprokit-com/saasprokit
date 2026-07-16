@@ -37,7 +37,7 @@ npx playwright test e2e/payment/ --project=topics --list
 flowchart TD
     Start([User navigates to<br/>/{orgSlug}/billing]) --> AuthCheck{Authenticated?}
     AuthCheck -->|No| Redirect[Redirect to /auth/sign-in]
-    AuthCheck -->|Yes| RBACCheck{checkOrgPermission<br/>organization: update}
+    AuthCheck -->|Yes| RBACCheck{hasOrgPermission<br/>organization: update}
 
     RBACCheck -->|Member role| Restricted[🔒 Access Restricted card<br/>"Only owners and admins<br/>can manage billing"]
     RBACCheck -->|Owner/Admin| LoadBilling[Load billing page]
@@ -155,7 +155,7 @@ sequenceDiagram
     UP->>SA: POST form data<br/>{planName, billingInterval,<br/>organizationId, locale}
 
     SA->>SA: Zod validate<br/>(checkoutRequestSchema.strict)
-    SA->>SA: checkOrgPermission<br/>(organization: update)
+    SA->>SA: hasOrgPermission<br/>(organization: update)
 
     SA->>DB: Find organization by ID<br/>(slug, name)
     DB-->>SA: organization
@@ -255,7 +255,7 @@ sequenceDiagram
 
     DB->>SA: Submit changePlanAction<br/>{targetPlan, organizationId}
     SA->>SA: Zod validate<br/>(changePlanRequestSchema.strict)
-    SA->>SA: checkOrgPermission
+    SA->>SA: hasOrgPermission
     SA->>SA: comparePlans(current, target)
 
     alt Target = "free"
@@ -337,7 +337,7 @@ sequenceDiagram
 
     MF->>SA: Submit form<br/>{organizationId}
     SA->>SA: Zod validate<br/>(billingPortalRequestSchema.strict)
-    SA->>SA: checkOrgPermission
+    SA->>SA: hasOrgPermission
 
     SA->>DB: subscription.findFirst<br/>(where: {organizationId})
     DB-->>SA: subscription.stripeCustomerId
@@ -417,7 +417,7 @@ Covers: billing page rendering, current plan display, plan comparison grid, usag
 
 **Route:** `/{orgSlug}/billing`
 **Components tested:** `CurrentPlan`, `ChangePlan`, `UsageStats`, `BillingActions`
-**Permission gate:** `checkOrgPermission(orgId, { organization: ["update"] })`
+**Permission gate:** `hasOrgPermission(orgId, { organization: ["update"] })`
 
 ---
 
@@ -1200,7 +1200,7 @@ Clicking triggers `openBillingPortalAction()` which reads `stripeCustomerId` fro
 
 Covers: RBAC (billing page access control), organization creation limits, downgrade guard UI.
 
-**Permission check:** `checkOrgPermission(orgId, { organization: ["update"] })`
+**Permission check:** `hasOrgPermission(orgId, { organization: ["update"] })`
 **Org creation guard:** `canUserCreateOrg()` → `checkOrgCreationEligibility()` in `@repo/utils/payment`
 **Downgrade guard:** `guardDowngrade()` in `@repo/payment/guards`
 
@@ -1226,7 +1226,7 @@ The current E2E infrastructure only creates one test user (the org owner). Testi
 3. A separate storage state file (e.g., `e2e/.auth/member.json`)
 
 #### What it tests
-- Server-side permission check: `checkOrgPermission(orgId, { organization: ["update"] })`
+- Server-side permission check: `hasOrgPermission(orgId, { organization: ["update"] })`
 - Non-admin users cannot see billing information or trigger billing actions
 - Defense-in-depth: even if the page somehow rendered, server actions also check permissions
 
@@ -1246,7 +1246,7 @@ The current E2E infrastructure only creates one test user (the org owner). Testi
 - "Usage" section is visible
 
 #### What it tests
-- Owner role passes `checkOrgPermission(orgId, { organization: ["update"] })`
+- Owner role passes `hasOrgPermission(orgId, { organization: ["update"] })`
 - All billing sections render for authorized users
 - Positive path complements GD-01's negative path
 

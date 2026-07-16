@@ -41,7 +41,7 @@ flowchart TD
 Downgrades are a **server action**, not a client plugin call, because they must be guarded against resource over-use. `DowngradeButton` binds `changePlanAction` (in `actions.ts`) via `useActionState`. The action:
 
 1. Validates input with `changePlanRequestSchema` (`schemas.ts`) — `organizationId`, `targetPlan` enum, optional `billingInterval` defaulting to monthly.
-2. Authorizes with `checkOrgPermission(organizationId, { organization: ["update"] })`.
+2. Authorizes with `hasOrgPermission(organizationId, { organization: ["update"] })`.
 3. Loads the active subscription via `getActiveSubscription` and re-runs `comparePlans`; if the direction is **not** `"downgrade"` it rejects with `actionError("changePlan")` (defense in depth — the UI already filtered).
 4. Runs `guardDowngrade(subscription, targetPlan, memberCount, storageMB)` from `packages/payment/guards.ts`.
 5. If `targetPlan === free`, returns `{ action: "cancel" }` — downgrade to free is expressed as a **cancellation**, not a plan swap.

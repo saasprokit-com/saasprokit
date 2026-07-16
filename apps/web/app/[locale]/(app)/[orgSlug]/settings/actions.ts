@@ -8,7 +8,7 @@ import { headers } from "next/headers";
 import type { z } from "zod";
 import { verifySession } from "@/lib/auth/action-auth";
 import { actionError, toActionError } from "@/lib/auth/action-error";
-import { type ActionResult, checkOrgPermission } from "@/lib/auth/auth";
+import { type ActionResult, hasOrgPermission } from "@/lib/auth/auth";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
 import { ORG_PAGES } from "@/lib/routes";
 import {
@@ -26,10 +26,10 @@ export async function removeOrganizationLogoAction(
   try {
     const validated = removeLogoSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       organization: ["update"],
     });
-    if (!caller) {
+    if (!allowed) {
       return actionError("unauthorized");
     }
 
@@ -74,10 +74,10 @@ export async function updateOrganizationAction(
   try {
     const validated = updateOrgActionSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       organization: ["update"],
     });
-    if (!caller) {
+    if (!allowed) {
       return actionError("unauthorized");
     }
 
@@ -114,10 +114,10 @@ export async function deleteOrganizationAction(
   try {
     const validated = deleteOrgActionSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       organization: ["delete"],
     });
-    if (!caller) {
+    if (!allowed) {
       return actionError("unauthorized");
     }
 

@@ -56,7 +56,7 @@ One pattern: **TanStack Table (manual mode) + nuqs URL state + Prisma**. The URL
 
 7. **`components/x-toolbar.tsx`** — debounced search → `column.setFilterValue(v || undefined)` (never a router push); `DataTableFacetedFilter` per facet; Reset when filtered; bulk dialog on `getSelectedRowModel()`; `DataTableViewOptions`. Copy `invitations-toolbar.tsx`.
 
-8. **`actions.ts` + `schemas.ts`** — server actions (`saasprokit:forms`): `schema.parse` → `checkOrgPermission` (else `actionError("unauthorized")`) → mutate scoped by `organizationId` → **`revalidateOrgPage(orgSlug, ORG_PAGES.X)`**. Destructive per-row actions get a confirm `AlertDialog`. Add new `errors.action.*` keys to every `dictionaries/*.json`.
+8. **`actions.ts` + `schemas.ts`** — server actions (`saasprokit:forms`): `schema.parse` → `hasOrgPermission` (else `actionError("unauthorized")`) → mutate scoped by `organizationId` → **`revalidateOrgPage(orgSlug, ORG_PAGES.X)`**. Destructive per-row actions get a confirm `AlertDialog`. Add new `errors.action.*` keys to every `dictionaries/*.json`.
 
 9. **Wiring** — `ORG_PAGES.X` **and** `orgRoutes.x(slug)` in `@/lib/routes` (one often exists without the other); sidebar item in `org-sidebar.tsx`; `layout.tsx` (`SetBreadcrumbs` + `ContentSection`) for a new section. See `saasprokit:workflows`.
 

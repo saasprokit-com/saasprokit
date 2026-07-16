@@ -44,8 +44,8 @@ const session = await getServerSession();
 const session = await requireAuth();
 
 // Check org-level permissions
-import { checkOrgPermission } from "@/lib/auth/auth";
-const result = await checkOrgPermission(orgId, { member: ["read"] });
+import { hasOrgPermission } from "@/lib/auth/auth";
+const result = await hasOrgPermission(orgId, { member: ["read"] });
 ```
 
 ## Organization Access (`apps/web/servers/organization/queries.ts`)
@@ -71,6 +71,37 @@ if (error) return error;
 // Unified error handler for catch blocks (handles ZodError, APIError, generic)
 try { ... } catch (err) { return toActionError(err); }
 ```
+
+### When you DON'T need `verifySession()`
+
+Any `auth.api.*({ headers: await headers() })` call authenticates the caller
+itself from the session cookie in those headers — sensitive endpoints
+(`deleteUser`, 2FA, password) even re-read the session authoritatively from the
+DB (bypassing the cookie cache) and enforce freshness. So a `verifySession()`
+pre-check adds **no security** when the action's work goes entirely through
+Better Auth. Pass `headers` and skip the guard.
+
+```typescript
+// ✅ No verifySession — revokeOtherSessions verifies the caller and scopes to them
+export async function logoutAllOtherSessionsAction() {
+  try {
+    await auth.api.revokeOtherSessions({ headers: await headers() });
+    return { success: true };
+  } catch (err) {
+    return toActionError(err, { fallback: "logoutAllSessions", baFallback: "unknownError" });
+  }
+}
+```
+
+Keep `verifySession()` when the action:
+- reads/writes **outside** Better Auth (raw Prisma) and needs `session.user.id`
+  (e.g. `updateProfileAction`), or
+- wants a localized early-return error / `session.user.id` for a log line
+  before the call.
+
+When routing a `toActionError` catch to a Better Auth call, pass `baFallback`
+so `APIError` codes map through `errors.ba[code]` (e.g. `SESSION_EXPIRED`,
+`UNAUTHORIZED`).
 
 ## Client-side Usage (React components)
 

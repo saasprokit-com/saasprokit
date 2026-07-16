@@ -94,7 +94,7 @@ export type CreateThingInput = z.infer<typeof createThingSchema>;
 "use server";
 
 import { verifySession } from "@/lib/auth/action-auth";           // personal-scoped
-// OR: import { checkOrgPermission } from "...";                  // org-scoped — see saasprokit:auth
+// OR: import { hasOrgPermission } from "...";                  // org-scoped — see saasprokit:auth
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
 import { type CreateThingInput, createThingSchema } from "./schemas";
@@ -106,7 +106,7 @@ export async function createThingAction(
     const validated = createThingSchema.parse(input);          // 1. validate (client check is UX only)
     const { session, error } = await verifySession<{ id: string }>();  // 2. authenticate
     if (error) return error;
-    // 3. authorize — org-scoped: checkOrgPermission(validated.organizationId, {...})
+    // 3. authorize — org-scoped: hasOrgPermission(validated.organizationId, {...})
     //    identity comes from the session, never from the input
     // 4. mutate
     // 5. revalidate so the response carries fresh UI (single roundtrip):
@@ -277,7 +277,7 @@ Rendering the form on a protected page is **not** a security boundary — every
 action is a public POST endpoint.
 
 - **Validate** — `schema.parse(input)` (or `safeParse` for field errors)
-- **Authenticate + authorize** — `verifySession` / `checkOrgPermission`
+- **Authenticate + authorize** — `verifySession` / `hasOrgPermission`
 - **Ownership from the session, not the payload** — a well-formed input can
   still reference a row the caller doesn't own
 - **Return typed `ActionResult<T>`** shaped to what the UI renders (never raw DB
@@ -309,6 +309,6 @@ catch blocks, and `enable2FAAction` returns a custom shape).
   a nested `startTransition` (Recipe 2).
 - No barrel imports; async params — see `saasprokit:conventions`.
 
-See `saasprokit:auth` for `verifySession` / `checkOrgPermission`,
+See `saasprokit:auth` for `verifySession` / `hasOrgPermission`,
 `saasprokit:data-access` for file placement, and `reference.md` here for the
 rationale and official-docs comparison.

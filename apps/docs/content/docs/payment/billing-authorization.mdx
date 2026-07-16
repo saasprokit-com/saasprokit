@@ -3,7 +3,7 @@ title: Billing Authorization
 description: Which roles can view and manage billing, enforced via Better Auth org permissions and the Stripe plugin's authorizeReference hook
 ---
 
-Billing in this monorepo is mounted by the `@better-auth/stripe` plugin (not hand-rolled API routes). Every subscription action the plugin exposes — listing, upgrading, cancelling, restoring, and opening the billing portal — is gated by a single authorization function, `authorizeBillingAction`, defined in `packages/auth/billing-authorize.ts`. The same gate is enforced a second time in web Server Actions via `checkOrgPermission`.
+Billing in this monorepo is mounted by the `@better-auth/stripe` plugin (not hand-rolled API routes). Every subscription action the plugin exposes — listing, upgrading, cancelling, restoring, and opening the billing portal — is gated by a single authorization function, `authorizeBillingAction`, defined in `packages/auth/billing-authorize.ts`. The same gate is enforced a second time in web Server Actions via `hasOrgPermission`.
 
 The core rule: **billing is organization-scoped, and only active org owners and admins can mutate it.** Plain members get read-only visibility into the subscription; suspended members get nothing.
 
@@ -100,10 +100,10 @@ The `billing: ["manage", "view"]` statements in `permissions.ts` belong to the *
 
 ## Second enforcement layer: Server Actions
 
-Web Server Actions that mutate billing re-check authorization before calling the plugin API, so the gate holds even outside the plugin's own endpoints. In `apps/web/app/[locale]/(app)/[orgSlug]/billing/actions.ts`, `changePlanAction` calls `checkOrgPermission` before invoking `auth.api.upgradeSubscription`:
+Web Server Actions that mutate billing re-check authorization before calling the plugin API, so the gate holds even outside the plugin's own endpoints. In `apps/web/app/[locale]/(app)/[orgSlug]/billing/actions.ts`, `changePlanAction` calls `hasOrgPermission` before invoking `auth.api.upgradeSubscription`:
 
 ```ts
-const caller = await checkOrgPermission(validated.organizationId, {
+const caller = await hasOrgPermission(validated.organizationId, {
   organization: ["update"],
 });
 if (!caller) {
@@ -111,13 +111,13 @@ if (!caller) {
 }
 ```
 
-`checkOrgPermission` (in `apps/web/lib/auth/auth.ts`) reuses the cached session and calls `auth.api.hasPermission`, requiring the `organization: ["update"]` capability — which only `owner` and `admin` org roles hold per `permissions.ts`. This aligns the Server Action gate with the `canManageBilling` gate: members are excluded from billing mutations at both layers. The subsequent `auth.api.upgradeSubscription` call then passes through `authorizeBillingAction` again inside the plugin.
+`hasOrgPermission` (in `apps/web/lib/auth/auth.ts`) reuses the cached session and calls `auth.api.hasPermission`, requiring the `organization: ["update"]` capability — which only `owner` and `admin` org roles hold per `permissions.ts`. This aligns the Server Action gate with the `canManageBilling` gate: members are excluded from billing mutations at both layers. The subsequent `auth.api.upgradeSubscription` call then passes through `authorizeBillingAction` again inside the plugin.
 
 ```mermaid
 sequenceDiagram
     participant C as Billing UI
     participant SA as changePlanAction (Server Action)
-    participant CP as checkOrgPermission
+    participant CP as hasOrgPermission
     participant P as Stripe plugin (auth.api.upgradeSubscription)
     participant AZ as authorizeBillingAction
 
@@ -142,4 +142,4 @@ sequenceDiagram
 - `packages/auth/permissions.ts` — `ORG_ROLES`, org and admin access-control role definitions
 - `packages/auth/server.ts` — `subscription.authorizeReference` wiring into the Stripe plugin
 - `apps/web/app/[locale]/(app)/[orgSlug]/billing/actions.ts` — `changePlanAction`, the Server Action billing gate
-- `apps/web/lib/auth/auth.ts` — `checkOrgPermission` helper
+- `apps/web/lib/auth/auth.ts` — `hasOrgPermission` helper

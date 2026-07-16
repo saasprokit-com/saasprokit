@@ -6,7 +6,7 @@ test.describe("Payment: Guards & Access Control", () => {
   // ---------------------------------------------------------------------------
   // RBAC — Billing Page Access
   //
-  // The billing page checks: checkOrgPermission(orgId, { organization: ["update"] })
+  // The billing page checks: hasOrgPermission(orgId, { organization: ["update"] })
   // Non-owner/admin users see "Access Restricted" instead of billing components.
   //
   // NOTE: GD-01 (member sees "Access Restricted") requires a second test user

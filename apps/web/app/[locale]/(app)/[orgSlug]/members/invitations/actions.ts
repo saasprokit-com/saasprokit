@@ -6,7 +6,7 @@ import { database } from "@repo/database";
 import { INVITATION_STATUS } from "@repo/utils/organization";
 import { headers } from "next/headers";
 import { actionError, toActionError } from "@/lib/auth/action-error";
-import { type ActionResult, checkOrgPermission } from "@/lib/auth/auth";
+import { type ActionResult, hasOrgPermission } from "@/lib/auth/auth";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
 import { ORG_PAGES } from "@/lib/routes";
 import {
@@ -28,10 +28,10 @@ export async function resendInvitationAction(
   try {
     const validated = invitationIdSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       invitation: ["create"],
     });
-    if (!caller) {
+    if (!allowed) {
       return actionError("unauthorized");
     }
 
@@ -86,10 +86,10 @@ export async function cancelInvitationAction(
   try {
     const validated = invitationIdSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       invitation: ["cancel"],
     });
-    if (!caller) {
+    if (!allowed) {
       return actionError("unauthorized");
     }
 
@@ -131,10 +131,10 @@ export async function cancelInvitationsAction(
   try {
     const validated = cancelInvitationsSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       invitation: ["cancel"],
     });
-    if (!caller) {
+    if (!allowed) {
       return actionError("unauthorized");
     }
 

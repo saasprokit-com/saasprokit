@@ -70,7 +70,7 @@ async function onSubmit(values: CreateOrgInput) {
 - Client-side zod validation with instant field-level errors.
 - Loading state from `form.formState.isSubmitting`.
 - Failures map to `form.setError(...)` (field-level) or a sonner toast.
-- The action re-parses the schema, calls `verifySession` / `checkOrgPermission`,
+- The action re-parses the schema, calls `verifySession` / `hasOrgPermission`,
   and returns `ActionResult<T>`.
 
 **Use for:** any multi-field form inside the app.
@@ -147,7 +147,7 @@ before the revalidated list commits.
 | Layer | Mechanism | Purpose | Trustworthy? |
 | --- | --- | --- | --- |
 | Client | RHF + `zodResolver(schema)` | UX: instant field errors, fewer wasted round-trips | **No** — skippable (JS disabled, edited bundle, direct POST) |
-| Server | `schema.parse(input)` inside the action + `verifySession` / `checkOrgPermission` | Security: the actual boundary | **Yes** — the only layer that counts |
+| Server | `schema.parse(input)` inside the action + `verifySession` / `hasOrgPermission` | Security: the actual boundary | **Yes** — the only layer that counts |
 
 Client-side validation is a convenience, never verification. Anyone can invoke a
 server action directly with a crafted request, bypassing RHF entirely. The server
@@ -214,7 +214,7 @@ action is a public POST endpoint regardless of where the form renders.
 
 Inside **every** action:
 
-- [ ] **Authenticate & authorize** — `verifySession` / `checkOrgPermission`.
+- [ ] **Authenticate & authorize** — `verifySession` / `hasOrgPermission`.
       Rendering the form only on an authenticated page is *not* a security
       boundary.
 - [ ] **Validate input** — `schema.parse(input)` (or `safeParse` for field
@@ -222,7 +222,7 @@ Inside **every** action:
 - [ ] **Send IDs, verify ownership server-side** — schema validation only checks
       *shape*; a well-formed object can still reference a row the caller doesn't
       own. Derive identity from the session, look rows up by ownership
-      (e.g. `checkOrgPermission(organizationId, ...)`).
+      (e.g. `hasOrgPermission(organizationId, ...)`).
 - [ ] **Constrain return values** — returns are serialized to the client; shape
       them to what the UI renders (`ActionResult<T>`), never raw DB records.
 - [ ] **Revalidate in the action** — `revalidateOrgPage(...)` /
