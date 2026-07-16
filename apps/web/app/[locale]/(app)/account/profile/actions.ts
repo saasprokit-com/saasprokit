@@ -3,7 +3,6 @@
 import { auth } from "@repo/auth/server";
 import { headers } from "next/headers";
 import { actionError, toActionError } from "@/lib/auth/action-error";
-import type { ActionResult } from "@/lib/auth/auth";
 import { revalidateAccountPage } from "@/lib/infrastructure/revalidation";
 import { profileSchema } from "./schemas";
 
