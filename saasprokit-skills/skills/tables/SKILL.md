@@ -5,112 +5,67 @@ description: Server-driven data table pages for this repo — the one pattern be
 
 # Table Page Patterns & Scaffold Recipe
 
-One pattern powers every data table: **TanStack Table in fully-manual mode + nuqs URL state + Prisma**. The URL is the single source of truth — page, sort, and filters are query params; `useDataTable` writes them with `{ shallow: false }`, which re-runs the server component, so all row math happens in Prisma. Nothing is filtered, sorted, or paginated client-side.
+One pattern: **TanStack Table (manual mode) + nuqs URL state + Prisma**. The URL is the single source of truth — `useDataTable` writes params with `{ shallow: false }`, re-running the server component so every filter/sort/page happens in Prisma. Nothing runs client-side.
 
-Canonical examples, all under `apps/web/app/[locale]/(app)/[orgSlug]/members/`: `members/` (root), `invitations/`, `invite-links/`. **Copy from `invitations/`** — it exercises everything: search, two faceted filters, conditional row selection, bulk + per-row actions.
+**Copy from `apps/web/app/[locale]/(app)/[orgSlug]/members/invitations/`** — the fullest example (search + two faceted filters + row selection + bulk & per-row actions). Siblings: `members/`, `members/invite-links/`.
 
-## Shared infrastructure — reuse, never recreate
+## Reuse — never recreate
 
-| Piece | Path | Provides |
-| --- | --- | --- |
-| `useDataTable` | `apps/web/hooks/use-data-table.ts` | Binds table state to URL params; sets `manualPagination/Sorting/Filtering`; resets to page 1 on sort/filter change. `filterFields: {id, urlKey, type: "string" \| "array"}[]` maps column ids → URL keys |
-| `sortingStateParser` | `apps/web/lib/parsers.ts` | `SortingState` ⇄ `"createdAt.desc"` in the URL |
-| `GetListPayload<T>` | `apps/web/types/queries.ts` | Query return shape `{ data, total, totalPage, limit }` |
-| Table pieces | `packages/design-system/components/data-table/` | `column-header`, `pagination`, `faceted-filter`, `view-options`, `table-skeleton` |
-| Debounce | `apps/web/hooks/use-debounced-callback.ts` | Search input debouncing (`SEARCH_DEBOUNCE_MS`, see `members/utils.ts`) |
+| Piece | Path |
+| --- | --- |
+| `useDataTable` — URL binding, manual modes, page-reset on sort/filter | `apps/web/hooks/use-data-table.ts` |
+| `sortingStateParser` — `SortingState` ⇄ `createdAt.desc` | `apps/web/lib/parsers.ts` |
+| `GetListPayload<T>` = `{ data, total, totalPage, limit }` | `apps/web/types/queries.ts` |
+| `column-header` · `pagination` · `faceted-filter` · `view-options` · `table-skeleton` | `packages/design-system/components/data-table/` |
+| `useDebouncedCallback`, `SEARCH_DEBOUNCE_MS` | `apps/web/hooks/`, `members/utils.ts` |
 
-**Never import** `data-table/data-table.tsx` or `data-table/toolbar.tsx` from the design system — unused legacy client-side implementations (`getFilteredRowModel` etc.) that silently break the server-driven pattern.
+**Never import** `data-table/data-table.tsx` or `data-table/toolbar.tsx` — dead client-side implementations (`getFilteredRowModel` etc.) that break the pattern.
 
-## File layout (colocated with the feature)
+## Steps — one file each, in build order
 
-```
-your-feature/
-├── page.tsx            # RSC: auth → parse URL → start query promise → Suspense
-├── validations.ts      # nuqs search-params cache — THE URL contract
-├── queries.ts          # server-only Prisma query → GetListPayload<T>
-├── schemas.ts          # zod schemas for mutation inputs
-├── actions.ts          # server actions (see saasprokit:forms)
-├── utils.ts            # permission flags + SEARCH_DEBOUNCE_MS (redeclare per feature; don't cross-import from members/)
-└── components/
-    ├── x-table.tsx     # use(promise) + useDataTable + render
-    ├── x-columns.tsx   # getXColumns() factory + filter options
-    ├── x-toolbar.tsx   # search, faceted filters, bulk actions
-    ├── x-actions.tsx   # per-row dropdown
-    └── *-dialog.tsx    # confirm/bulk dialogs
-```
+1. **`validations.ts`** — the URL contract; its parsed type is what `queries.ts` consumes:
+   ```ts
+   export const thingsSearchParamsCache = createSearchParamsCache({
+     page: parseAsInteger.withDefault(1),
+     perPage: parseAsInteger.withDefault(10),
+     sort: sortingStateParser.withDefault([]),
+     q: parseAsString.withDefault(""),                     // text search — always "q"
+     roles: parseAsArrayOf(parseAsString).withDefault([]), // array filters — always plural
+   });
+   export type ThingsSearchParams = Awaited<ReturnType<typeof thingsSearchParamsCache.parse>>;
+   ```
 
-## Recipe
+2. **`queries.ts`** (`import "server-only"`) — input `ThingsSearchParams & { organizationId }`. `select` via `satisfies Prisma.ThingSelect`, row type via `GetPayload`. Build `where` (`q` → `{ contains, mode: "insensitive" }`; arrays → `{ in }`). `Promise.all([findMany, count])` → `GetListPayload<T>`. **Allow-list** sortable fields in `buildOrderBy` — `?sort=` ids come from the URL, and an unknown field throws at runtime.
 
-**1. `validations.ts`** — write this first; its parsed type IS the contract `queries.ts` consumes:
+3. **`page.tsx`** (RSC) — `validateOrgMembershipBySlug(orgSlug)` + `getDictionary(locale)`, `cache.parse(searchParams)`, then **start the query promise without awaiting** and stream it:
+   ```tsx
+   const thingsPromise = getThings({ ...parsed, organizationId }); // no await
+   <Suspense fallback={<TableSkeleton />}><ThingsTable thingsPromise={thingsPromise} …/></Suspense>
+   ```
 
-```ts
-import { createSearchParamsCache, parseAsArrayOf, parseAsInteger, parseAsString } from "nuqs/server";
-import { sortingStateParser } from "@/lib/parsers";
+4. **`utils.ts`** — per-feature `SEARCH_DEBOUNCE_MS` and permission flags from `orgRoleDefinitions[role].statements` (copy `getMemberPermissions`). Type trap: use `"team" in statements ? statements.team : []` — a bare `statements.team` fails on roles that omit it.
 
-export const thingsSearchParamsCache = createSearchParamsCache({
-  page: parseAsInteger.withDefault(1),
-  perPage: parseAsInteger.withDefault(10),
-  sort: sortingStateParser.withDefault([]),
-  q: parseAsString.withDefault(""),                       // text search — always "q"
-  statuses: parseAsArrayOf(parseAsString).withDefault([]),// one per faceted filter; array params are plural (roles, statuses)
-});
-export type ThingsSearchParams = Awaited<ReturnType<typeof thingsSearchParamsCache.parse>>;
-```
+5. **`components/x-columns.tsx`** — a `getThingColumns({ canManage, … })` **factory**, not a static array: push the select-checkbox (`id: "id"`) and actions columns only when `canManage`; sortable headers via `DataTableColumnHeader` with `accessorKey` ∈ `SORTABLE_FIELDS`; export `xFilterOptions` for facets. Copy `invitations-columns.tsx`.
 
-**2. `queries.ts`** — starts with `import "server-only"`; input is `ThingsSearchParams & { organizationId: string }`:
+6. **`components/x-table.tsx`** (`"use client"`) — `use(thingsPromise)`, `useMemo` the columns, then:
+   ```ts
+   useDataTable({ data, columns, pageCount: totalPage || 1,
+     filterFields: [{ id: "email", urlKey: "q", type: "string" }], enableRowSelection: canManage });
+   ```
+   Copy `invitations-table.tsx` for the render markup + empty-state row.
 
-```ts
-const thingSelect = { id: true, name: true, createdAt: true } satisfies Prisma.ThingSelect;
-export type Thing = Prisma.ThingGetPayload<{ select: typeof thingSelect }>;
-const SORTABLE_FIELDS = new Set(["name", "createdAt"]); // allow-list — sort ids come from the URL
+7. **`components/x-toolbar.tsx`** — debounced search → `column.setFilterValue(v || undefined)` (never a router push); `DataTableFacetedFilter` per facet; Reset when filtered; bulk dialog on `getSelectedRowModel()`; `DataTableViewOptions`. Copy `invitations-toolbar.tsx`.
 
-// where: q → { contains: q, mode: "insensitive" }; enum arrays → { in: [...] }
-const [data, total] = await Promise.all([
-  database.thing.findMany({ where, select: thingSelect, skip: (page - 1) * perPage, take: perPage, orderBy }),
-  database.thing.count({ where }),
-]);
-return { data, total, totalPage: Math.ceil(total / perPage), limit: perPage };
-```
+8. **`actions.ts` + `schemas.ts`** — server actions (`saasprokit:forms`): `schema.parse` → `checkOrgPermission` (else `actionError("unauthorized")`) → mutate scoped by `organizationId` → **`revalidateOrgPage(orgSlug, ORG_PAGES.X)`**. Destructive per-row actions get a confirm `AlertDialog`. Add new `errors.action.*` keys to every `dictionaries/*.json`.
 
-**3. `page.tsx`** — `validateOrgMembershipBySlug(orgSlug)` + `getDictionary(locale)`, then parse and stream. **Start the query promise WITHOUT awaiting it** — the client resolves it with `use()` inside Suspense, so the shell streams and `TableSkeleton` shows:
-
-```tsx
-const parsed = thingsSearchParamsCache.parse(resolvedSearchParams);
-const thingsPromise = getThings({ ...parsed, organizationId: orgContext.organizationId }); // no await
-return (
-  <Suspense fallback={<TableSkeleton />}>
-    <ThingsTable thingsPromise={thingsPromise} errors={dict.errors.action} /* + permissions, orgId */ />
-  </Suspense>
-);
-```
-
-Derive page-level permission flags in `utils.ts` from `orgContext.role` via `orgRoleDefinitions[role].statements` — copy `getMemberPermissions` in `members/utils.ts`. Type trap: `statements.member ?? []` typechecks because every role declares `member`; for a resource missing from some role (e.g. `team`), the property access itself fails on the union — guard with `"team" in statements ? statements.team : []`.
-
-**4. `x-columns.tsx`** — a `getThingColumns({ canManage, errors, organizationId })` **factory**, not a static array: conditionally `push` the select-checkbox column (`id: "id"` — must not collide with an accessor) and the actions column when `canManage`. Sortable headers use `DataTableColumnHeader`; the column's `accessorKey` must be a Prisma field in `SORTABLE_FIELDS`. Export `xFilterOptions` arrays for faceted filters. Copy `invitations-columns.tsx`.
-
-**5. `x-table.tsx`** — `"use client"`: `use(thingsPromise)`, `useMemo` the columns, then
-
-```ts
-const { table } = useDataTable({ data, columns, pageCount: totalPage || 1,
-  filterFields: [{ id: "name", urlKey: "q", type: "string" }], // ids/urlKeys mirror validations.ts
-  enableRowSelection: canManage });
-```
-
-Render toolbar → bordered `<Table>` with `flexRender` + empty-state row → `<DataTablePagination>`. Copy `invitations-table.tsx`.
-
-**6. `x-toolbar.tsx`** — search `Input` with local `useState` synced from URL, `useDebouncedCallback` → `column.setFilterValue(value || undefined)` (never a router push); `DataTableFacetedFilter` per enum column; Reset button when `columnFilters.length > 0`; bulk-action dialog when `table.getSelectedRowModel()` has rows; `DataTableViewOptions`. Copy `invitations-toolbar.tsx`.
-
-**7. Mutations** — standard server actions (`saasprokit:forms`): `schema.parse` → `checkOrgPermission` (early-return `actionError("unauthorized")` from `@/lib/auth/action-error` when it fails) → mutate → **`revalidateOrgPage(orgSlug, ORG_PAGES.X)`** so the table refreshes in the same roundtrip. Scope every write by `organizationId` in the `where`. Dialogs use the RHF + `startTransition` recipe; irreversible per-row actions (deletes) get a confirm `AlertDialog` — invitations' instant cancel is not the model for destructive ops.
-
-**8. Wiring** — BOTH halves of the route: `orgRoutes.x(slug)` helper AND `ORG_PAGES.X` constant (`@/lib/routes` — one sometimes exists without the other); sidebar nav item in `org-sidebar.tsx`; `layout.tsx` with `SetBreadcrumbs` + `ContentSection` if it's a new section — copy `members/layout.tsx` (see `saasprokit:workflows`).
+9. **Wiring** — `ORG_PAGES.X` **and** `orgRoutes.x(slug)` in `@/lib/routes` (one often exists without the other); sidebar item in `org-sidebar.tsx`; `layout.tsx` (`SetBreadcrumbs` + `ContentSection`) for a new section. See `saasprokit:workflows`.
 
 ## Gotchas
 
-- **Never await the query in the RSC** — that serializes rendering and defeats the `TableSkeleton` streaming.
-- **No client row models** (`getFilteredRowModel`/`getSortedRowModel`/`getPaginationRowModel`) and no local sort/filter state — everything routes through `useDataTable`'s `filterFields`, or the URL and the server query drift apart.
-- **Three-way alignment**: column `accessorKey` (columns) = `filterFields.id` (table) = query param the server consumes (validations/queries). Naming convention: text search URL key is always `q`, and every multi-value (array) filter param is plural (`roles`/`statuses`, not `role`/`status`).
-- **Allow-list sortable fields** in `buildOrderBy` — `?sort=` ids come from the URL; an unknown field makes Prisma throw at runtime. The canonical `invitations/queries.ts` predates this rule and writes any URL id into `orderBy` — don't copy its `buildOrderBy` verbatim.
-- `pageCount: totalPage || 1` — TanStack misbehaves with `pageCount: 0`.
-- New action error keys: `toActionError`'s `fallback` is typed against `errors.action` — add the key to every `packages/internationalization/dictionaries/*.json` (English is fine; `languine` translates later).
+- **Never await the query in the RSC** — it kills the `TableSkeleton` stream.
+- **No client row models** (`getFilteredRowModel`/`getSortedRowModel`/`getPaginationRowModel`) and no local sort/filter state — route everything through `filterFields`.
+- **Three-way alignment**: `filterFields.urlKey` (table) = cache key (validations) = destructured param (queries). Not typecheck-caught — a mismatch silently breaks filtering. Column `id`/`accessorKey` is separate and stays.
+- **Naming**: text search = `q`; array filter params are plural (`roles`, `statuses`).
+- `pageCount: totalPage || 1` — TanStack misbehaves on `0`.
 
-See `saasprokit:workflows` (new-page skeleton), `saasprokit:auth` (`validateOrgMembershipBySlug`, `checkOrgPermission`), `saasprokit:data-access` (file placement), `saasprokit:forms` (actions + dialogs).
+See `saasprokit:workflows`, `saasprokit:auth`, `saasprokit:data-access`, `saasprokit:forms`.
