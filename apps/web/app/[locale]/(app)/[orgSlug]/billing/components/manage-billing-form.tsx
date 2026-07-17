@@ -1,11 +1,11 @@
 "use client";
 
-import { subscription } from "@repo/auth/client";
 import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { CreditCard, Loader2 } from "lucide-react";
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { openBillingPortalAction } from "../actions";
 
 interface ManageBillingFormProps {
   errors: ActionErrorMessages;
@@ -24,15 +24,18 @@ export function ManageBillingForm({
 
   const handleOpenPortal = () => {
     startTransition(async () => {
-      const { error } = await subscription.billingPortal({
-        referenceId: organizationId,
-        returnUrl: `${window.location.origin}/${locale}/${organizationSlug}/billing`,
+      const result = await openBillingPortalAction({
+        organizationId,
+        organizationSlug,
+        locale,
       });
 
-      if (error) {
-        toast.error(errors.openBillingPortal, { description: error.message });
+      if (result.success && result.data?.url) {
+        window.location.href = result.data.url;
+        return;
       }
-      // On success, subscription.billingPortal redirects the browser to Stripe.
+
+      toast.error(errors.openBillingPortal, { description: result.error });
     });
   };
 

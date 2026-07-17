@@ -20,12 +20,13 @@ import {
   CardTitle,
 } from "@repo/design-system/components/ui/card";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { useCancel, useSubscription } from "@repo/payment/hooks";
+import { useSubscription } from "@repo/payment/hooks";
 import { PLAN_NAMES } from "@repo/utils/payment";
 import { Loader2, XCircle } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { cancelSubscriptionAction } from "../actions";
 import { ManageBillingForm } from "./manage-billing-form";
 
 interface BillingActionsProps {
@@ -41,32 +42,43 @@ export function BillingActions({
 }: BillingActionsProps) {
   const { locale } = useParams<{ locale: string }>();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [isCanceling, startTransition] = useTransition();
 
-  const { planName, isPaid, isCanceled, refetch } = useSubscription({
-    referenceId: organizationId,
-  });
+  const { planName, isPaid, isCanceled, refetch, subscription } =
+    useSubscription({
+      referenceId: organizationId,
+    });
 
-  const { cancel, isCanceling } = useCancel({
-    locale,
-    organizationSlug,
-    referenceId: organizationId,
-    onSuccess: () => {
-      setShowCancelDialog(false);
-      toast.success("Subscription canceled", {
-        description:
-          "Your subscription will end at the current billing period.",
+  const handleCancelSubscription = () => {
+    startTransition(async () => {
+      const result = await cancelSubscriptionAction({
+        organizationId,
+        organizationSlug,
+        locale,
+        subscriptionId: subscription?.stripeSubscriptionId ?? undefined,
       });
-      refetch();
-    },
-    onError: (error) => {
-      toast.error(errors.cancelSubscription, {
-        description: error.message,
-      });
-    },
-  });
 
-  const handleCancelSubscription = async () => {
-    await cancel();
+      // Stripe confirms cancellation via its hosted portal — redirect there.
+      if (result.success && result.data?.url) {
+        window.location.href = result.data.url;
+        return;
+      }
+
+      if (result.success) {
+        // Immediate cancel (or benign already-canceling) — settle the UI.
+        startTransition(() => {
+          setShowCancelDialog(false);
+        });
+        toast.success("Subscription canceled", {
+          description:
+            "Your subscription will end at the current billing period.",
+        });
+        refetch();
+        return;
+      }
+
+      toast.error(errors.cancelSubscription, { description: result.error });
+    });
   };
 
   // Don't show billing actions on free plan

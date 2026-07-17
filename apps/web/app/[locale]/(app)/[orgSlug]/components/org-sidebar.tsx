@@ -1,6 +1,5 @@
 "use client";
 
-import { signOut } from "@repo/auth/client";
 import { NavGroup } from "@repo/design-system/components/layout/nav-group";
 import { NavUser } from "@repo/design-system/components/layout/nav-user";
 import { OrgSwitcher } from "@repo/design-system/components/layout/org-switcher";
@@ -26,6 +25,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { signOutAction } from "@/lib/auth/actions";
 import { orgRoutes, PAGE_ROUTES } from "@/lib/routes";
 import type { UserOrganization } from "@/servers/organization/queries";
 import { setDefaultWorkspaceAction } from "../actions";
@@ -123,8 +123,9 @@ export function OrgSidebar({
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    router.push("/");
+    await signOutAction();
+    router.push(`/${locale}`);
+    router.refresh();
   };
 
   return (

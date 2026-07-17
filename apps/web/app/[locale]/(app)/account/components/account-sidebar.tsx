@@ -1,6 +1,5 @@
 "use client";
 
-import { signOut } from "@repo/auth/client";
 import { NavGroup } from "@repo/design-system/components/layout/nav-group";
 import type {
   NavGroup as NavGroupType,
@@ -38,6 +37,8 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signOutAction } from "@/lib/auth/actions";
 import { accountRoutes, PAGE_ROUTES } from "@/lib/routes";
 
 interface AccountSidebarProps {
@@ -46,6 +47,8 @@ interface AccountSidebarProps {
 }
 
 export function AccountSidebar({ user, locale }: AccountSidebarProps) {
+  const router = useRouter();
+
   // Build navigation items with locale-aware URLs
   const accountNavGroups: NavGroupType[] = [
     {
@@ -71,7 +74,9 @@ export function AccountSidebar({ user, locale }: AccountSidebarProps) {
   ];
 
   const handleSignOut = async () => {
-    await signOut();
+    await signOutAction();
+    router.push(`/${locale}`);
+    router.refresh();
   };
 
   return (
