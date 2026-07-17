@@ -14,13 +14,23 @@ validation (via `zodResolver`), TypeScript types (via `z.infer`), and the
 server-side security check (re-parsed inside the action). You define it once in
 `schemas.ts`; everything else consumes it.
 
+**Architecture default: server-render + server actions.** Every mutation is a
+**server action** (`auth.api.*` / typed action returning `ActionResult<T>`)
+unless a hard constraint forbids it. Client-side API calls are the exception,
+not a choice — there are exactly two, and both are documented below: the
+**Better Auth client** for the **rate-limited pre-auth flows** (sign-in/up,
+social, magic-link, OTP, forgot/reset password, verify-email, 2FA, and
+change-password — these keep Better Auth's per-route rate limits, which a direct
+`auth.api.*` call from a server action **bypasses**), and **`fetch()` → Route
+Handler** for **file uploads**. Everything else — including all billing — is a
+server action. For the pending signal, reach for **`useTransition`**
+(programmatic / dialog / confirmation) or **`useActionState`** (fieldless /
+public); `formState.isSubmitting` is valid only when the action neither
+revalidates nor navigates — rare here, so treat it as an exception too.
+
 ## Decision tree (start here)
 
 ```
-Is it an auth or billing action (sign in/up, password, subscription)?
-  └─ YES → molecule + Better Auth client        (transport: BA client)
-  └─ NO ↓
-
 Does the form have input fields the user fills in?
   └─ NO (just a confirm/cancel/accept button) → confirmation form
   └─ YES ↓
@@ -45,8 +55,12 @@ Is it a PUBLIC page that must work before hydration / without JS?
 | 1 | `<form action={fn}>` + `useActionState` | fieldless confirmations; public forms (progressive enhancement) | `pending` from `useActionState` (auto-transition) |
 | 2 | Programmatic call in `startTransition` | dialogs, menu items, buttons that call a typed action | `isPending` from `useTransition` |
 | 3 | RHF `onSubmit` → `await action()` | colocated forms whose action does **not** revalidate/navigate | `formState.isSubmitting` |
-| 4 | Better Auth client (`signIn.email`, `changePassword`, `subscription.*`) | all auth + billing flows | `isSubmitting` / local pending |
-| 5 | `fetch()` → Route Handler (`/api/*`) | file uploads, non-mutation requests | local `useState`/`useTransition` |
+| 4 | Better Auth client (`signIn.*`, `changePassword`, 2FA, OTP, magic-link, password reset) | **rate-limited pre-auth flows ONLY** — keeps BA's per-route rate limits that `auth.api.*` bypasses. **Not billing** (server actions now). | `isSubmitting` / local pending |
+| 5 | `fetch()` → Route Handler (`/api/*`) | **file uploads ONLY** | local `useState`/`useTransition` |
+
+Rows 1–3 are **server actions — the default**. Rows 4–5 are the two client-API
+**exceptions**; don't reach for them unless the constraint in the "Use it for"
+column applies.
 
 **`isSubmitting` vs `isPending` rule:** `formState.isSubmitting` ends when the
 action *returns*. If the action calls `revalidatePath`/`revalidateOrgPage`, the
@@ -65,7 +79,7 @@ Better Auth API route (transport 4) · Route Handler (transport 5).
 |---|---|---|
 | **colocated form** | RHF + zodResolver + typed server action, files colocated with the feature. The default. | `apps/web/app/[locale]/(app)/account/new-org/components/create-organization-form.tsx` |
 | **molecule form** | Design-system component; `onSubmit: (data) => Promise<void>` injected by the app. Reusable, app-agnostic. | `packages/design-system/components/molecules/auth/sign-in-form.tsx` |
-| **molecule + Better Auth client** | A molecule (or app wrapper) whose submit calls the BA client, not a server action. All auth + billing. | `apps/web/app/[locale]/auth/sign-in/components/password-sign-in.tsx` |
+| **molecule + Better Auth client** | A molecule (or app wrapper) whose submit calls the BA client. **Rate-limited pre-auth flows only** (keeps BA's rate limits); **not billing** — billing is now server actions. | `apps/web/app/[locale]/auth/sign-in/components/password-sign-in.tsx` |
 | **dialog form** | RHF + zodResolver inside a Dialog, action wrapped in `startTransition`. | Recipe 2 — *no compliant example yet; the 5 existing dialogs are legacy (see below)* |
 | **confirmation form** | Fieldless. `<form action>`+`useActionState` for a fixed/public target, or `useTransition` for dynamic ids / menu items (see Recipe 3 for the ordered rule). | `apps/web/app/[locale]/(app)/invite/accept/accept-button.tsx` |
 | **hybrid public form** | Native `<form action>` fallback + RHF enhancement; `safeParse` + field errors. Public/no-JS surfaces. | Recipe 4 — *no public forms in the repo yet* |

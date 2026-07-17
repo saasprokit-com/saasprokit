@@ -1,6 +1,5 @@
 "use client";
 
-import { authClient } from "@repo/auth/client";
 import {
   EmailOtpRequestForm,
   type SendOtpFormValues,
@@ -13,6 +12,7 @@ import type { ActionErrorMessages } from "@repo/internationalization";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PAGE_ROUTES } from "@/lib/routes";
+import { sendSignInOtpAction, verifySignInOtpAction } from "../actions";
 
 interface EmailOtpSignInProps {
   errors: ActionErrorMessages;
@@ -24,29 +24,21 @@ export function EmailOtpSignIn({ errors }: EmailOtpSignInProps) {
   const [email, setEmail] = useState("");
 
   async function handleSendOtp(data: SendOtpFormValues) {
-    const normalizedEmail = data.email.toLowerCase().trim();
+    const result = await sendSignInOtpAction(data);
 
-    const result = await authClient.emailOtp.sendVerificationOtp({
-      email: normalizedEmail,
-      type: "sign-in",
-    });
-
-    if (result.error) {
-      throw new Error(result.error.message || errors.sendOtp);
+    if (!result.success) {
+      throw new Error(result.error || errors.sendOtp);
     }
 
-    setEmail(normalizedEmail);
+    setEmail(data.email.toLowerCase().trim());
     setOtpSent(true);
   }
 
   async function handleVerifyOtp(data: VerifyOtpFormValues) {
-    const result = await authClient.signIn.emailOtp({
-      email,
-      otp: data.code,
-    });
+    const result = await verifySignInOtpAction({ email, code: data.code });
 
-    if (result.error) {
-      throw new Error(result.error.message || errors.invalidOtp);
+    if (!result.success) {
+      throw new Error(result.error || errors.invalidOtp);
     }
 
     router.push(PAGE_ROUTES.ORG);

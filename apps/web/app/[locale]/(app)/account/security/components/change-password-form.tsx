@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { changePassword } from "@repo/auth/client";
 import { Button } from "@repo/design-system/components/ui/button";
 import {
   Card,
@@ -23,6 +22,7 @@ import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { changePasswordAction } from "../actions";
 import {
   type ChangePasswordFormValues,
   changePasswordSchema,
@@ -45,17 +45,13 @@ export function ChangePasswordForm({ errors }: ChangePasswordFormProps) {
   const isPending = form.formState.isSubmitting;
 
   const onSubmit = async (values: ChangePasswordFormValues) => {
-    const { error } = await changePassword({
-      currentPassword: values.currentPassword,
-      newPassword: values.newPassword,
-      revokeOtherSessions: true,
-    });
+    const result = await changePasswordAction(values);
 
-    if (error) {
-      toast.error(error.message || errors.changePassword);
-    } else {
+    if (result.success) {
       toast.success("Password changed successfully");
       form.reset();
+    } else {
+      toast.error(result.error || errors.changePassword);
     }
   };
 

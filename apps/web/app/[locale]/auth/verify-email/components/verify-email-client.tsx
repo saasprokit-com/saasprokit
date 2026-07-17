@@ -1,10 +1,9 @@
 "use client";
 
-import { authClient } from "@repo/auth/client";
 import { VerifyEmailCard } from "@repo/design-system/components/molecules/auth/verify-email-card";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { PAGE_ROUTES } from "@/lib/routes";
+import { resendVerificationEmailAction } from "../actions";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 const COUNTDOWN_INTERVAL_MS = 1000;
@@ -40,20 +39,13 @@ export function VerifyEmailClient({ email, errors }: VerifyEmailClientProps) {
     setResendSuccess(false);
 
     startResendTransition(async () => {
-      try {
-        const { error } = await authClient.sendVerificationEmail({
-          email,
-          callbackURL: PAGE_ROUTES.ORG,
-        });
-        if (error) {
-          setResendError(error.message || errors.resendVerificationEmail);
-          return;
-        }
-        setResendSuccess(true);
-        setCooldown(RESEND_COOLDOWN_SECONDS);
-      } catch {
-        setResendError(errors.resendVerificationEmail);
+      const result = await resendVerificationEmailAction({ email });
+      if (!result.success) {
+        setResendError(result.error || errors.resendVerificationEmail);
+        return;
       }
+      setResendSuccess(true);
+      setCooldown(RESEND_COOLDOWN_SECONDS);
     });
   }, [email, cooldown, errors.resendVerificationEmail]);
 

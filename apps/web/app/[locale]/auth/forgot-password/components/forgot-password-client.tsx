@@ -1,6 +1,5 @@
 "use client";
 
-import { authClient } from "@repo/auth/client";
 import {
   ForgotPasswordForm,
   type ForgotPasswordFormValues,
@@ -8,7 +7,7 @@ import {
 import { ForgotPasswordSuccess } from "@repo/design-system/components/molecules/auth/forgot-password-success";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useState } from "react";
-import { PAGE_ROUTES } from "@/lib/routes";
+import { requestPasswordResetAction } from "../actions";
 
 interface ForgotPasswordClientProps {
   errors: ActionErrorMessages;
@@ -18,13 +17,10 @@ export function ForgotPasswordClient({ errors }: ForgotPasswordClientProps) {
   const [success, setSuccess] = useState(false);
 
   async function handleSubmit(data: ForgotPasswordFormValues) {
-    const { error } = await authClient.requestPasswordReset({
-      email: data.email,
-      redirectTo: PAGE_ROUTES.RESET_PASSWORD,
-    });
+    const result = await requestPasswordResetAction(data);
 
-    if (error) {
-      throw new Error(error.message || errors.sendResetEmail);
+    if (!result.success) {
+      throw new Error(result.error || errors.sendResetEmail);
     }
 
     setSuccess(true);

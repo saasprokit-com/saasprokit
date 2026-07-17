@@ -21,10 +21,7 @@ import { useRouter } from "next/navigation";
 import { type ChangeEvent, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import {
-  removeOrganizationLogoAction,
-  revalidateOrgSettingsAction,
-} from "../actions";
+import { removeOrganizationLogoAction } from "../actions";
 
 interface LogoUploadProps {
   canEdit: boolean;
@@ -32,13 +29,11 @@ interface LogoUploadProps {
   errors: ActionErrorMessages;
   organizationId: string;
   organizationName: string;
-  orgSlug: string;
 }
 
 export function LogoUpload({
   organizationId,
   organizationName,
-  orgSlug,
   currentLogo,
   canEdit,
   errors,
@@ -92,17 +87,14 @@ export function LogoUpload({
 
         toast.success("Logo updated successfully");
         setPreviewUrl(result.file.publicUrl);
-        await revalidateOrgSettingsAction({ orgSlug });
         router.refresh();
       } catch (error) {
         toast.error(errors.uploadLogo, {
           description:
             error instanceof Error ? error.message : "Please try again",
         });
-        // Revert preview on error
         setPreviewUrl(currentLogo);
       } finally {
-        // Reset input
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
@@ -118,8 +110,6 @@ export function LogoUpload({
         if (result.success) {
           toast.success("Logo removed");
           setPreviewUrl(null);
-          await revalidateOrgSettingsAction({ orgSlug });
-          router.refresh();
         } else {
           toast.error(result.error || errors.removeLogo);
         }

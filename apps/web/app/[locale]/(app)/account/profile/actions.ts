@@ -8,11 +8,6 @@ import { profileSchema } from "./schemas";
 
 /**
  * Update user profile (name and avatar).
- *
- * Routes through Better Auth's updateUser API, which authenticates the caller
- * from the forwarded headers, updates only name/image (email changes are
- * rejected), and refreshes the session cookie — so no verifySession pre-check is
- * needed.
  */
 export async function updateProfileAction(formData: FormData) {
   try {

@@ -94,7 +94,10 @@ client directly (`signIn.email(...)`) — not a server action — then routes vi
 app-specific transport (the prop is transport-agnostic — an app could pass a
 server action to it). When the injected handler calls the Better Auth client
 instead of a server action, this is the **molecule + Better Auth client**
-pattern used by all auth and billing flows.
+pattern — used ONLY by the rate-limited pre-auth flows (sign-in/up, social,
+magic-link, OTP, password reset, verify-email, 2FA), which keep Better Auth's
+per-route rate limits that a server-side `auth.api.*` call bypasses. Billing is
+**not** here — it moved to server actions returning a redirect URL.
 
 ### dialog form — RHF + `startTransition`; and the legacy `useState` dialogs
 
@@ -241,7 +244,8 @@ Operational caveats:
 | --- | --- |
 | Multi-field form in the app | **colocated form** — RHF + zodResolver + server action |
 | Form reused across apps / design system | **molecule form** — injected `onSubmit` |
-| Auth / billing flows | **molecule + Better Auth client** (not a server action) |
+| Rate-limited pre-auth flow (sign-in/up, password reset, OTP, 2FA) | **molecule + Better Auth client** (not a server action — keeps BA's rate limits) |
+| Billing (upgrade / portal / cancel) | **server action** returning a Stripe redirect URL |
 | Dialog with fields | **dialog form** — RHF + zodResolver + `startTransition` |
 | Fieldless confirm / cancel / accept | **confirmation form** — `<form action>`+`useActionState` for a fixed/public target, `useTransition` for dynamic ids / menu items |
 | Public / marketing / no-JS-critical form | **hybrid public form** — native `<form action>` fallback + RHF |

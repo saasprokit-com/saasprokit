@@ -3,9 +3,12 @@
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
-import { toActionError } from "@/lib/auth/action-error";
+import type { z } from "zod";
+import { actionError, toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
+import { enforceRateLimit, RateLimitError } from "@/lib/auth/rate-limit";
 import { revalidateAccountPage } from "@/lib/infrastructure/revalidation";
+import { changePasswordSchema } from "./schemas";
 
 type Enable2FAResult =
   | { success: true; totpURI: string; backupCodes: string[] }
@@ -126,7 +129,6 @@ export async function logoutSessionAction(token: string) {
 /**
  * Logout all other sessions
  * Keeps current session active
- * No verifySession needed: revokeOtherSessions authenticates the caller itself.
  */
 export async function logoutAllOtherSessionsAction() {
   const logger = createRequestLogger({
@@ -147,6 +149,37 @@ export async function logoutAllOtherSessionsAction() {
   } catch (error) {
     return toActionError(error, {
       fallback: "logoutAllSessions",
+      baFallback: "unknownError",
+      logger,
+    });
+  }
+}
+
+/**
+ * Change the current user's password and revoke other sessions.
+ * auth.api.changePassword authenticates the caller from the forwarded headers.
+ */
+export async function changePasswordAction(
+  input: z.infer<typeof changePasswordSchema>
+): Promise<ActionResult> {
+  const logger = createRequestLogger({ action: "changePassword" });
+
+  try {
+    const { currentPassword, newPassword } = changePasswordSchema.parse(input);
+    await enforceRateLimit("change-password");
+
+    await auth.api.changePassword({
+      headers: await headers(),
+      body: { currentPassword, newPassword, revokeOtherSessions: true },
+    });
+
+    return { success: true };
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return actionError("tooManyRequests");
+    }
+    return toActionError(error, {
+      fallback: "changePassword",
       baFallback: "unknownError",
       logger,
     });

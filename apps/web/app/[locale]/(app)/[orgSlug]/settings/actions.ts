@@ -6,7 +6,6 @@ import { createRequestLogger } from "@repo/logger/server";
 import { ATTACHABLE_TYPE } from "@repo/utils/storage";
 import { headers } from "next/headers";
 import type { z } from "zod";
-import { verifySession } from "@/lib/auth/action-auth";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import { type ActionResult, hasOrgPermission } from "@/lib/auth/auth";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
@@ -14,7 +13,6 @@ import { ORG_PAGES } from "@/lib/routes";
 import {
   deleteOrgActionSchema,
   removeLogoSchema,
-  revalidateOrgSettingsSchema,
   updateOrgActionSchema,
 } from "./schemas";
 
@@ -129,22 +127,5 @@ export async function deleteOrganizationAction(
     return { success: true };
   } catch (error) {
     return toActionError(error, { fallback: "deleteOrganization", logger });
-  }
-}
-
-export async function revalidateOrgSettingsAction(
-  input: z.infer<typeof revalidateOrgSettingsSchema>
-): Promise<ActionResult> {
-  try {
-    const { error } = await verifySession();
-    if (error) {
-      return error;
-    }
-
-    const validated = revalidateOrgSettingsSchema.parse(input);
-    await revalidateOrgPage(validated.orgSlug, ORG_PAGES.SETTINGS);
-    return { success: true };
-  } catch {
-    return { success: false, error: "Failed to revalidate" };
   }
 }

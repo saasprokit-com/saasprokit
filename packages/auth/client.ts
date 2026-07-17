@@ -43,13 +43,7 @@ export const authClient = createAuthClient({
     emailOTPClient(),
 
     // Two-factor authentication client
-    twoFactorClient({
-      onTwoFactorRedirect() {
-        if (typeof window !== "undefined") {
-          window.location.href = "/auth/2fa";
-        }
-      },
-    }),
+    twoFactorClient(),
 
     // Multi-session client (device tracking)
     multiSessionClient(),

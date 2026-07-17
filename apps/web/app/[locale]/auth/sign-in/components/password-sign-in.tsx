@@ -1,6 +1,5 @@
 "use client";
 
-import { signIn } from "@repo/auth/client";
 import {
   SignInForm,
   type SignInFormValues,
@@ -8,7 +7,10 @@ import {
 import type { SocialProvider } from "@repo/design-system/components/molecules/auth/social-providers";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { PAGE_ROUTES } from "@/lib/routes";
+import { signInSocialAction } from "../../actions";
+import { signInEmailAction } from "../actions";
 
 interface PasswordSignInProps {
   errors: ActionErrorMessages;
@@ -18,24 +20,30 @@ export function PasswordSignIn({ errors }: PasswordSignInProps) {
   const router = useRouter();
 
   async function handleSubmit(data: SignInFormValues) {
-    const normalizedEmail = data.email.toLowerCase().trim();
+    const result = await signInEmailAction(data);
 
-    const result = await signIn.email({
-      email: normalizedEmail,
-      password: data.password,
-      rememberMe: data.rememberMe,
-    });
+    if (!result.success) {
+      throw new Error(result.error || errors.signIn);
+    }
 
-    if (result.error) {
-      throw new Error(result.error.message || errors.signIn);
+    if (result.data?.twoFactorRequired) {
+      router.push(PAGE_ROUTES.TWO_FACTOR);
+      return;
     }
 
     router.push(PAGE_ROUTES.ORG);
     router.refresh();
   }
 
-  function handleSocialLogin(provider: SocialProvider) {
-    signIn.social({ provider, callbackURL: PAGE_ROUTES.ORG });
+  async function handleSocialLogin(provider: SocialProvider) {
+    const result = await signInSocialAction(provider);
+
+    if (result.success && result.data?.url) {
+      window.location.href = result.data.url;
+      return;
+    }
+
+    toast.error(result.error || errors.signIn);
   }
 
   return (

@@ -28,7 +28,3 @@ export const deleteOrgActionSchema = z.object({
 export const removeLogoSchema = z.object({
   organizationId: z.string().min(1, "Organization ID required"),
 });
-
-export const revalidateOrgSettingsSchema = z.object({
-  orgSlug: z.string().min(1, "Organization slug required"),
-});
