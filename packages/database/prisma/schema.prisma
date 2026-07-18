@@ -320,7 +320,7 @@ model TeamMember {
 
 model RateLimit {
   id          String @id @default(cuid())
-  key         String
+  key         String @unique
   count       Int
   lastRequest BigInt
 

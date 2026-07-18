@@ -23,6 +23,8 @@ export async function enable2FAAction(
   const logger = createRequestLogger({ action: "enable2FA" });
 
   try {
+    await enforceRateLimit("change-password");
+
     const data = await auth.api.enableTwoFactor({
       headers: await headers(),
       body: { password },
@@ -38,6 +40,13 @@ export async function enable2FAAction(
       backupCodes: data.backupCodes ?? [],
     };
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      const limited = await actionError("tooManyRequests");
+      return {
+        success: false,
+        error: limited.error ?? "Too many attempts. Please try again shortly.",
+      };
+    }
     logger.error(
       { err: error instanceof Error ? error : new Error(String(error)) },
       "Failed to enable 2FA"
@@ -53,6 +62,8 @@ export async function verify2FAAction(code: string): Promise<ActionResult> {
   const logger = createRequestLogger({ action: "verify2FA" });
 
   try {
+    await enforceRateLimit("2fa");
+
     await auth.api.verifyTOTP({
       headers: await headers(),
       body: { code },
@@ -62,6 +73,9 @@ export async function verify2FAAction(code: string): Promise<ActionResult> {
 
     return { success: true };
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      return actionError("tooManyRequests");
+    }
     logger.error(
       { err: error instanceof Error ? error : new Error(String(error)) },
       "Failed to verify 2FA"
@@ -79,6 +93,8 @@ export async function disable2FAAction(
   const logger = createRequestLogger({ action: "disable2FA" });
 
   try {
+    await enforceRateLimit("change-password");
+
     await auth.api.disableTwoFactor({
       headers: await headers(),
       body: { password },
@@ -88,6 +104,9 @@ export async function disable2FAAction(
 
     return { success: true };
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      return actionError("tooManyRequests");
+    }
     logger.error(
       { err: error instanceof Error ? error : new Error(String(error)) },
       "Failed to disable 2FA"

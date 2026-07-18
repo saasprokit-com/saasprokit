@@ -1,21 +1,7 @@
-import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from "@repo/utils/user";
+import { passwordSchema } from "@repo/utils/user";
 import { z } from "zod";
 
 const emailSchema = z.email("Please enter a valid email address");
-
-const strongPasswordSchema = z
-  .string()
-  .min(
-    MIN_PASSWORD_LENGTH,
-    `Password must be at least ${MIN_PASSWORD_LENGTH} characters`
-  )
-  .max(
-    MAX_PASSWORD_LENGTH,
-    `Password cannot exceed ${MAX_PASSWORD_LENGTH} characters`
-  )
-  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-  .regex(/[0-9]/, "Password must contain at least one number");
 
 export const TWO_FA_CODE_LENGTH = 6;
 
@@ -38,7 +24,7 @@ export const signUpSchema = withPasswordConfirmation(
   z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: emailSchema,
-    password: strongPasswordSchema,
+    password: passwordSchema,
     confirmPassword: z.string(),
   })
 );
@@ -49,7 +35,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = withPasswordConfirmation(
   z.object({
-    password: strongPasswordSchema,
+    password: passwordSchema,
     confirmPassword: z.string(),
   })
 );

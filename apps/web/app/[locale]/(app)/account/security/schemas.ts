@@ -1,22 +1,10 @@
-import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from "@repo/utils/user";
+import { passwordSchema } from "@repo/utils/user";
 import { z } from "zod";
 
 export const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: z
-      .string()
-      .min(
-        MIN_PASSWORD_LENGTH,
-        `Password must be at least ${MIN_PASSWORD_LENGTH} characters`
-      )
-      .max(
-        MAX_PASSWORD_LENGTH,
-        `Password cannot exceed ${MAX_PASSWORD_LENGTH} characters`
-      )
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number"),
+    newPassword: passwordSchema,
     confirmPassword: z.string().min(1, "Confirm password is required"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
