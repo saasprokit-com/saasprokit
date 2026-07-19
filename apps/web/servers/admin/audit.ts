@@ -35,29 +35,51 @@ interface RecordAdminAuditInput {
  * ever aborting the mutation it records. `actorId` is the acting staff member
  * (AuditLog.userId), which is why deleting that admin later cascades their entries.
  */
+/**
+ * Build the AuditLog row for an admin mutation, reading IP / User-Agent from the
+ * request headers. Exposed so a caller can enlist `database.auditLog.create({ data })`
+ * in its own `$transaction` — making the audit atomic with the mutation it records
+ * (see deleteOrganizationAction) — instead of the fire-and-log path in recordAdminAudit.
+ */
+export async function buildAdminAuditData(input: RecordAdminAuditInput) {
+  const requestHeaders = await headers();
+  const ipAddress =
+    requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  const userAgent = requestHeaders.get("user-agent") ?? null;
+
+  return {
+    userId: input.actorId,
+    action: input.action,
+    changes: input.changes ? JSON.stringify(input.changes) : null,
+    ipAddress,
+    userAgent,
+  };
+}
+
 export async function recordAdminAudit(
   input: RecordAdminAuditInput
 ): Promise<void> {
   const logger = createRequestLogger({ action: "recordAdminAudit" });
+  // Captured before the insert so the catch can log the same forensic context the
+  // row would have carried, if the AuditLog insert itself is what fails.
+  let data: Awaited<ReturnType<typeof buildAdminAuditData>> | null = null;
   try {
-    const requestHeaders = await headers();
-    const ipAddress =
-      requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
-    const userAgent = requestHeaders.get("user-agent") ?? null;
-
-    await database.auditLog.create({
-      data: {
-        userId: input.actorId,
-        action: input.action,
-        changes: input.changes ? JSON.stringify(input.changes) : null,
-        ipAddress,
-        userAgent,
-      },
-    });
+    data = await buildAdminAuditData(input);
+    await database.auditLog.create({ data });
   } catch (error) {
+    // Never rejects, but preserve the full record so the app log can stand in as a
+    // fallback audit trail: without actor/target/context there is no way to
+    // reconstruct who acted on whom when the AuditLog insert is itself what failed.
     logger.error(
-      { err: error instanceof Error ? error : new Error(String(error)) },
-      `Failed to record admin audit entry for ${input.action}`
+      {
+        err: error instanceof Error ? error : new Error(String(error)),
+        auditAction: input.action,
+        actorId: input.actorId,
+        changes: input.changes,
+        ipAddress: data?.ipAddress ?? null,
+        userAgent: data?.userAgent ?? null,
+      },
+      "Failed to record admin audit entry"
     );
   }
 }

@@ -19,15 +19,14 @@ export default async function AdminUsersPage({
   params,
   searchParams,
 }: AdminUsersPageProps) {
-  const ctx = await requireAdminArea();
-  if (!ctx.isAdmin) {
-    notFound();
-  }
-
-  const [{ locale }, resolvedSearchParams] = await Promise.all([
+  const [ctx, { locale }, resolvedSearchParams] = await Promise.all([
+    requireAdminArea(),
     params,
     searchParams,
   ]);
+  if (!ctx.isAdmin) {
+    notFound();
+  }
   const dict = await getDictionary(locale);
 
   const parsedParams = usersSearchParamsCache.parse(resolvedSearchParams);

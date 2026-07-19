@@ -36,12 +36,14 @@ interface AdminUserDetailPageProps {
 export default async function AdminUserDetailPage({
   params,
 }: AdminUserDetailPageProps) {
-  const ctx = await requireAdminArea();
+  const [ctx, { locale, userId }] = await Promise.all([
+    requireAdminArea(),
+    params,
+  ]);
   if (!ctx.isAdmin) {
     notFound();
   }
 
-  const { locale, userId } = await params;
   const [dict, user] = await Promise.all([
     getDictionary(locale),
     getAdminUserDetail(userId),

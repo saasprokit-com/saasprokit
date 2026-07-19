@@ -9,7 +9,10 @@ import { hasAdminPermission } from "@/lib/auth/admin";
 import { type ActionResult, getServerSession } from "@/lib/auth/auth";
 import { revalidateAdminPage } from "@/lib/infrastructure/revalidation";
 import { ADMIN_PAGES } from "@/lib/routes";
-import { ADMIN_AUDIT_ACTIONS, recordAdminAudit } from "@/servers/admin/audit";
+import {
+  ADMIN_AUDIT_ACTIONS,
+  buildAdminAuditData,
+} from "@/servers/admin/audit";
 import {
   type DeleteOrganizationInput,
   deleteOrganizationSchema,
@@ -59,6 +62,16 @@ export async function deleteOrganizationAction(
       return actionError("orgHasActiveSubscription");
     }
 
+    // Built before the transaction (reads request headers), then inserted inside it
+    // so the org cannot be deleted without its audit row committing atomically —
+    // unlike the Better Auth mutations, whose statements have already committed
+    // before we regain control and so can only be audited log-and-continue.
+    const auditData = await buildAdminAuditData({
+      actorId,
+      action: ADMIN_AUDIT_ACTIONS.DELETE_ORG,
+      changes: { organizationId, slug: org.slug },
+    });
+
     await database.$transaction([
       // No FK on referenceId — would orphan otherwise.
       database.subscription.deleteMany({
@@ -83,13 +96,9 @@ export async function deleteOrganizationAction(
       }),
       // FK cascades: Member, Invitation, InviteLink, Team → TeamMember.
       database.organization.delete({ where: { id: organizationId } }),
+      // Atomic audit — rolls back with the delete if anything above fails.
+      database.auditLog.create({ data: auditData }),
     ]);
-
-    await recordAdminAudit({
-      actorId,
-      action: ADMIN_AUDIT_ACTIONS.DELETE_ORG,
-      changes: { organizationId, slug: org.slug },
-    });
 
     await revalidateAdminPage(ADMIN_PAGES.ORGANIZATIONS);
     return { success: true };

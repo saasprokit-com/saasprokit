@@ -79,31 +79,38 @@ export async function getAdminOrgs({
   if (plans.length > 0) {
     const paidPlans = plans.filter((name) => name !== PLAN_NAMES.FREE);
     const includeFree = plans.includes(PLAN_NAMES.FREE);
-    const planConditions: Prisma.OrganizationWhereInput[] = [];
 
+    // The paid-plan and free (no-active-subscription) lookups are independent, so
+    // fetch them together; each side resolves to [] when its filter isn't active.
+    const [paidSubs, activeSubs] = await Promise.all([
+      paidPlans.length > 0
+        ? database.subscription.findMany({
+            where: {
+              status: { in: [...ACTIVE_STATUSES] },
+              plan: { in: paidPlans },
+            },
+            select: { referenceId: true },
+          })
+        : Promise.resolve<{ referenceId: string }[]>([]),
+      includeFree
+        ? database.subscription.findMany({
+            where: { status: { in: [...ACTIVE_STATUSES] } },
+            select: { referenceId: true },
+          })
+        : Promise.resolve<{ referenceId: string }[]>([]),
+    ]);
+
+    const planConditions: Prisma.OrganizationWhereInput[] = [];
     if (paidPlans.length > 0) {
-      const paidSubs = await database.subscription.findMany({
-        where: {
-          status: { in: [...ACTIVE_STATUSES] },
-          plan: { in: paidPlans },
-        },
-        select: { referenceId: true },
-      });
       planConditions.push({
         id: { in: [...new Set(paidSubs.map((sub) => sub.referenceId))] },
       });
     }
-
     if (includeFree) {
-      const activeSubs = await database.subscription.findMany({
-        where: { status: { in: [...ACTIVE_STATUSES] } },
-        select: { referenceId: true },
-      });
       planConditions.push({
         id: { notIn: [...new Set(activeSubs.map((sub) => sub.referenceId))] },
       });
     }
-
     if (planConditions.length > 0) {
       andConditions.push({ OR: planConditions });
     }
@@ -209,30 +216,32 @@ export interface AdminOrgDetail extends AdminOrgDetailBase {
 export async function getAdminOrgDetail(
   orgId: string
 ): Promise<AdminOrgDetail | null> {
-  const org = await database.organization.findUnique({
-    where: { id: orgId },
-    select: adminOrgDetailSelect,
-  });
+  // Both reads key off orgId alone (subscriptions link by referenceId, not an FK),
+  // so run them in parallel instead of gating the subscription query on the org.
+  const [org, subscriptions] = await Promise.all([
+    database.organization.findUnique({
+      where: { id: orgId },
+      select: adminOrgDetailSelect,
+    }),
+    database.subscription.findMany({
+      where: { referenceId: orgId },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        plan: true,
+        status: true,
+        periodStart: true,
+        periodEnd: true,
+        seats: true,
+        cancelAtPeriodEnd: true,
+        stripeCustomerId: true,
+      },
+    }),
+  ]);
 
   if (!org) {
     return null;
   }
-
-  // Subscriptions link by referenceId (no FK relation) — fetched separately.
-  const subscriptions = await database.subscription.findMany({
-    where: { referenceId: orgId },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      plan: true,
-      status: true,
-      periodStart: true,
-      periodEnd: true,
-      seats: true,
-      cancelAtPeriodEnd: true,
-      stripeCustomerId: true,
-    },
-  });
 
   return { ...org, subscriptions };
 }

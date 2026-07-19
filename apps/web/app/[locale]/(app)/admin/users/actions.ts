@@ -62,8 +62,10 @@ export async function setUserRoleAction(
       changes: { targetUserId: data.userId, role: data.role },
     });
 
-    await revalidateAdminPage(ADMIN_PAGES.USERS);
-    await revalidateAdminPage(`users/${data.userId}`);
+    await Promise.all([
+      revalidateAdminPage(ADMIN_PAGES.USERS),
+      revalidateAdminPage(`users/${data.userId}`),
+    ]);
     return { success: true };
   } catch (error) {
     return toActionError(error, {
@@ -124,8 +126,10 @@ export async function banUserAction(
       },
     });
 
-    await revalidateAdminPage(ADMIN_PAGES.USERS);
-    await revalidateAdminPage(`users/${data.userId}`);
+    await Promise.all([
+      revalidateAdminPage(ADMIN_PAGES.USERS),
+      revalidateAdminPage(`users/${data.userId}`),
+    ]);
     return { success: true };
   } catch (error) {
     return toActionError(error, {
@@ -167,8 +171,10 @@ export async function unbanUserAction(
       changes: { targetUserId: data.userId },
     });
 
-    await revalidateAdminPage(ADMIN_PAGES.USERS);
-    await revalidateAdminPage(`users/${data.userId}`);
+    await Promise.all([
+      revalidateAdminPage(ADMIN_PAGES.USERS),
+      revalidateAdminPage(`users/${data.userId}`),
+    ]);
     return { success: true };
   } catch (error) {
     return toActionError(error, {
@@ -261,8 +267,10 @@ export async function revokeUserSessionsAction(
       changes: { targetUserId: data.userId },
     });
 
-    await revalidateAdminPage(ADMIN_PAGES.USERS);
-    await revalidateAdminPage(`users/${data.userId}`);
+    await Promise.all([
+      revalidateAdminPage(ADMIN_PAGES.USERS),
+      revalidateAdminPage(`users/${data.userId}`),
+    ]);
     return { success: true };
   } catch (error) {
     return toActionError(error, {
@@ -313,8 +321,10 @@ export async function removeUserAction(
       changes: { targetUserId: data.userId },
     });
 
-    await revalidateAdminPage(ADMIN_PAGES.USERS);
-    await revalidateAdminPage(`users/${data.userId}`);
+    await Promise.all([
+      revalidateAdminPage(ADMIN_PAGES.USERS),
+      revalidateAdminPage(`users/${data.userId}`),
+    ]);
     return { success: true };
   } catch (error) {
     return toActionError(error, {

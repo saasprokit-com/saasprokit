@@ -47,10 +47,9 @@ function initialsOf(value: string): string {
 export default async function AdminOrganizationDetailPage({
   params,
 }: AdminOrganizationDetailPageProps) {
-  const ctx = await requireAdminArea();
-  const { orgId } = await params;
-
+  const [ctx, { orgId }] = await Promise.all([requireAdminArea(), params]);
   const org = await getAdminOrgDetail(orgId);
+
   if (!org) {
     notFound();
   }

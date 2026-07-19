@@ -116,7 +116,7 @@ import { canAdmin, isAdminAreaRole } from "@repo/auth/permissions";
 import { requireAdminArea, hasAdminPermission } from "@/lib/auth/admin";
 
 // Layout AND every /admin page (layouts don't re-run on soft nav):
-const ctx = await requireAdminArea(); // → {userId, role, isAdmin}; redirects anon, notFound() non-staff
+const ctx = await requireAdminArea(); // → {userId, isAdmin}; redirects anon, notFound() non-staff
 if (!ctx.isAdmin) notFound();         // moderators can't reach user-management pages
 
 // First line of every admin server action — boolean gate (mirrors hasOrgPermission).

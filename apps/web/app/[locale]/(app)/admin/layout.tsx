@@ -20,9 +20,9 @@ export default async function AdminLayout({
   children,
   params,
 }: AdminLayoutProps) {
-  // requireAdminArea gates the whole subtree (redirect anon, 404 non-staff) and
-  // returns the fresh role; getServerSession is React.cache-deduped with it, so the
-  // extra call is free and supplies the user object the sidebar footer needs.
+  // requireAdminArea gates the whole subtree (redirect anon, 404 non-staff) using the
+  // fresh DB role; getServerSession is React.cache-deduped with it, so the extra call
+  // is free and supplies the user object the sidebar footer needs.
   const [{ locale }, ctx, session] = await Promise.all([
     params,
     requireAdminArea(),

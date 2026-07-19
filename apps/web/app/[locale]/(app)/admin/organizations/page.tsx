@@ -19,8 +19,8 @@ export default async function AdminOrganizationsPage({
   searchParams,
 }: AdminOrganizationsPageProps) {
   // Both admin and moderator may view organizations.
-  const ctx = await requireAdminArea();
-  const [{ locale }, resolvedSearchParams] = await Promise.all([
+  const [ctx, { locale }, resolvedSearchParams] = await Promise.all([
+    requireAdminArea(),
     params,
     searchParams,
   ]);

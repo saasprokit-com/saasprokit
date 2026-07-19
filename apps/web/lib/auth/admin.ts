@@ -10,8 +10,6 @@ import { getServerSession, requireAuth } from "./auth";
 export interface AdminContext {
   /** True for admin, false for moderator (canAdmin(role, { user: ["list"] })). */
   isAdmin: boolean;
-  /** Fresh from the DB — may be a comma-separated list, so not narrowed to AdminRoleName. */
-  role: string;
   userId: string;
 }
 
@@ -43,7 +41,6 @@ export const requireAdminArea = cache(async (): Promise<AdminContext> => {
 
   return {
     userId: session.user.id,
-    role: user.role ?? "",
     isAdmin: canAdmin(user.role, { user: ["list"] }),
   };
 });
