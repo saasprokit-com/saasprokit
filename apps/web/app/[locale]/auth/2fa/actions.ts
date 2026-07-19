@@ -31,7 +31,6 @@ export async function verifyTwoFactorAction(
     }
     return toActionError(error, {
       fallback: "verify2fa",
-      baFallback: "unknownError",
       logger,
     });
   }

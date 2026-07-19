@@ -44,7 +44,6 @@ export async function createOrganizationAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "createOrganization",
-      baFallback: "unknownError",
       logger,
     });
   }

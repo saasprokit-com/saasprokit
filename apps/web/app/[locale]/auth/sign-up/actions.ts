@@ -40,7 +40,6 @@ export async function signUpEmailAction(
     }
     return toActionError(error, {
       fallback: "signUp",
-      baFallback: "unknownError",
       logger,
     });
   }

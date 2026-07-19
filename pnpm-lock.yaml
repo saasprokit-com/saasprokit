@@ -371,6 +371,9 @@ importers:
       '@repo/email':
         specifier: workspace:*
         version: link:../email
+      '@repo/internationalization':
+        specifier: workspace:*
+        version: link:../internationalization
       '@repo/utils':
         specifier: workspace:*
         version: link:../utils

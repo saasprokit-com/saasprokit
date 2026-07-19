@@ -19,26 +19,6 @@
     }
   },
   "errors": {
-    "ba": {
-      "USER_IS_ALREADY_A_MEMBER_OF_THIS_ORGANIZATION": "O usuário já é membro",
-      "USER_IS_ALREADY_INVITED_TO_THIS_ORGANIZATION": "Convite já enviado para este e-mail",
-      "YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_ORGANIZATION": "Você não tem permissão para convidar membros",
-      "INVITATION_NOT_FOUND": "Convite não encontrado",
-      "YOU_ARE_NOT_THE_RECIPIENT_OF_THE_INVITATION": "Este convite foi enviado para outro endereço de e-mail",
-      "ORGANIZATION_NOT_FOUND": "Organização não encontrada",
-      "ORGANIZATION_MEMBERSHIP_LIMIT_REACHED": "Limite de membros da organização atingido",
-      "SLUG_IS_ALREADY_TAKEN": "This slug is already taken. Please choose another.",
-      "ORGANIZATION_ALREADY_EXISTS": "An organization with this name already exists",
-      "BANNED_USER": "Your account has been suspended. Contact support if you believe this is an error.",
-      "YOU_CANNOT_IMPERSONATE_ADMINS": "You cannot impersonate another administrator."
-    },
-    "fallback": {
-      "inviteMember": "Falha ao enviar o convite",
-      "resendInvitation": "Falha ao reenviar o convite",
-      "cancelInvitation": "Falha ao cancelar o convite",
-      "bulkInvite": "Falha no convite em massa",
-      "unknownError": "Ocorreu um erro"
-    },
     "action": {
       "unauthorized": "Unauthorized",
       "invalidInput": "Invalid input",
@@ -125,7 +105,8 @@
       "deleteUser": "Failed to delete user",
       "cannotBanSelf": "You cannot ban your own account",
       "cannotDeleteSelf": "You cannot delete your own account",
-      "orgHasActiveSubscription": "Cancel the organization's active subscription in Stripe before deleting it"
+      "orgHasActiveSubscription": "Cancel the organization's active subscription in Stripe before deleting it",
+      "unknownError": "Ocorreu um erro"
     }
   }
 }

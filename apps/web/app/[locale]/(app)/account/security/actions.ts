@@ -139,7 +139,6 @@ export async function logoutSessionAction(token: string) {
   } catch (error) {
     return toActionError(error, {
       fallback: "logoutSession",
-      baFallback: "unknownError",
       logger,
     });
   }
@@ -168,7 +167,6 @@ export async function logoutAllOtherSessionsAction() {
   } catch (error) {
     return toActionError(error, {
       fallback: "logoutAllSessions",
-      baFallback: "unknownError",
       logger,
     });
   }
@@ -199,7 +197,6 @@ export async function changePasswordAction(
     }
     return toActionError(error, {
       fallback: "changePassword",
-      baFallback: "unknownError",
       logger,
     });
   }

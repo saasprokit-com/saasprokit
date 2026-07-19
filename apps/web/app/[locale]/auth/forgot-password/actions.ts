@@ -35,7 +35,6 @@ export async function requestPasswordResetAction(
     }
     return toActionError(error, {
       fallback: "sendResetEmail",
-      baFallback: "unknownError",
       logger,
     });
   }

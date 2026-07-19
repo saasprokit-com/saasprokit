@@ -70,7 +70,6 @@ export async function setUserRoleAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "updateRole",
-      baFallback: "unknownError",
       logger,
     });
   }
@@ -134,7 +133,6 @@ export async function banUserAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "banUser",
-      baFallback: "unknownError",
       logger,
     });
   }
@@ -179,7 +177,6 @@ export async function unbanUserAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "unbanUser",
-      baFallback: "unknownError",
       logger,
     });
   }
@@ -230,7 +227,6 @@ export async function impersonateUserAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "impersonateUser",
-      baFallback: "unknownError",
       logger,
     });
   }
@@ -275,7 +271,6 @@ export async function revokeUserSessionsAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "revokeUserSessions",
-      baFallback: "unknownError",
       logger,
     });
   }
@@ -329,7 +324,6 @@ export async function removeUserAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "deleteUser",
-      baFallback: "unknownError",
       logger,
     });
   }

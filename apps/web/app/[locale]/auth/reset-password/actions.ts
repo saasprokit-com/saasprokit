@@ -39,7 +39,6 @@ export async function resetPasswordAction(
     }
     return toActionError(error, {
       fallback: "resetPassword",
-      baFallback: "unknownError",
       logger,
     });
   }

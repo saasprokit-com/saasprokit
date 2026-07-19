@@ -12,6 +12,7 @@ import { verifySession } from "@/lib/auth/action-auth";
 import {
   type ActionErrorCode,
   actionError,
+  baErrorMessage,
   toActionError,
 } from "@/lib/auth/action-error";
 import {
@@ -19,7 +20,6 @@ import {
   getServerSession,
   hasOrgPermission,
 } from "@/lib/auth/auth";
-import { mapBAError } from "@/lib/auth/ba-error";
 import { canOrgAddMember } from "@/lib/billing/subscription-queries";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
 import { ORG_PAGES } from "@/lib/routes";
@@ -112,7 +112,6 @@ export async function inviteMemberAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "invalidInput",
-      baFallback: "inviteMember",
     });
   }
 }
@@ -241,7 +240,7 @@ async function processBulkInviteEmail(
     });
     return null; // Success
   } catch (error) {
-    const message = await mapBAError(error, "unknownError");
+    const message = await baErrorMessage(error, "unknownError");
     return `${email} (failed - ${message})`;
   }
 }
@@ -410,7 +409,6 @@ export async function bulkInviteAction(
     }
     return toActionError(error, {
       fallback: "invalidInput",
-      baFallback: "bulkInvite",
     });
   }
 }

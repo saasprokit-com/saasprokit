@@ -19,29 +19,6 @@
     }
   },
   "errors": {
-    "ba": {
-      "USER_IS_ALREADY_A_MEMBER_OF_THIS_ORGANIZATION": "User is already a member",
-      "USER_IS_ALREADY_INVITED_TO_THIS_ORGANIZATION": "Invitation already sent to this email",
-      "YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_ORGANIZATION": "You don't have permission to invite members",
-      "INVITATION_NOT_FOUND": "Invitation not found",
-      "YOU_ARE_NOT_THE_RECIPIENT_OF_THE_INVITATION": "This invitation was sent to a different email address",
-      "ORGANIZATION_NOT_FOUND": "Organization not found",
-      "ORGANIZATION_MEMBERSHIP_LIMIT_REACHED": "Organization membership limit reached",
-      "SLUG_IS_ALREADY_TAKEN": "This slug is already taken. Please choose another.",
-      "ORGANIZATION_ALREADY_EXISTS": "An organization with this name already exists",
-      "SESSION_EXPIRED": "Your session has expired. Please sign in again to delete your account.",
-      "TRANSFER_ORGANIZATION_OWNERSHIP": "Transfer ownership of your organizations before deleting your account.",
-      "UNAUTHORIZED": "Unauthorized",
-      "BANNED_USER": "Your account has been suspended. Contact support if you believe this is an error.",
-      "YOU_CANNOT_IMPERSONATE_ADMINS": "You cannot impersonate another administrator."
-    },
-    "fallback": {
-      "inviteMember": "Failed to send invitation",
-      "resendInvitation": "Failed to resend invitation",
-      "cancelInvitation": "Failed to cancel invitation",
-      "bulkInvite": "Failed to bulk invite",
-      "unknownError": "An error occurred"
-    },
     "action": {
       "unauthorized": "Unauthorized",
       "invalidInput": "Invalid input",
@@ -128,7 +105,8 @@
       "deleteUser": "Failed to delete user",
       "cannotBanSelf": "You cannot ban your own account",
       "cannotDeleteSelf": "You cannot delete your own account",
-      "orgHasActiveSubscription": "Cancel the organization's active subscription in Stripe before deleting it"
+      "orgHasActiveSubscription": "Cancel the organization's active subscription in Stripe before deleting it",
+      "unknownError": "An error occurred"
     }
   }
 }
