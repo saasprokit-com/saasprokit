@@ -14,10 +14,13 @@ pattern list live in `SKILL.md`; this file is the reasoning behind them.
 | Mutations | Next.js Server Actions returning typed `ActionResult<T>` (`{ success, data }` or `{ success: false, error }`) |
 | Notifications | `sonner` toasts |
 
-Forms submit to **Server Actions**, not client fetches to API routes. The one
-exception: **auth flows** call the Better Auth client (`signIn.email(...)` from
-`@repo/auth/client`), because the Better Auth client owns the cookie/CSRF/social
-redirect lifecycle.
+Forms submit to **Server Actions**, not client fetches to API routes — including
+all **auth flows** (sign-in/up, social, magic-link, OTP, forgot/reset password,
+verify-email, 2FA, change-password), which call `auth.api.*` inside server
+actions. Because `auth.api.*` bypasses Better Auth's HTTP-path rate limiter,
+those actions re-apply brute-force protection server-side via `enforceRateLimit`
+(`apps/web/lib/auth/rate-limit.ts`). The one exception is **`fetch()` → Route
+Handler** for file uploads.
 
 ## File layout convention
 
@@ -41,9 +44,9 @@ schema validates on the client (via `zodResolver`) **and** on the server (via
 mechanics worth explaining. They share a submission target (server actions) and
 differ in who owns the form state and where the component lives. Of the other
 three, **confirmation form** (fieldless) and **hybrid public form** have their
-own recipes in `SKILL.md` (Recipes 3 and 4), and **molecule + Better Auth
-client** is a molecule form whose injected handler calls the Better Auth client
-— see the molecule form section below.
+own recipes in `SKILL.md` (Recipes 3 and 4), and **molecule + server action** is
+a molecule form whose injected handler calls a server action — see the molecule
+form section below.
 
 ### colocated form — RHF + zodResolver + server action (the default)
 
@@ -70,7 +73,7 @@ async function onSubmit(values: CreateOrgInput) {
 - Client-side zod validation with instant field-level errors.
 - Loading state from `form.formState.isSubmitting`.
 - Failures map to `form.setError(...)` (field-level) or a sonner toast.
-- The action re-parses the schema, calls `verifySession` / `checkOrgPermission`,
+- The action re-parses the schema, calls `verifySession` / `hasOrgPermission`,
   and returns `ActionResult<T>`.
 
 **Use for:** any multi-field form inside the app.
@@ -86,15 +89,17 @@ catches whatever it throws, and surfaces it via `form.setError("root", ...)`. It
 knows nothing about server actions, routes, or auth libraries, which is what lets
 it live in `packages/design-system`.
 
-The app injects the handler. For auth pages that handler calls the Better Auth
-client directly (`signIn.email(...)`) — not a server action — then routes via
+The app injects the handler. For auth pages that handler calls a **server
+action** (`signInEmailAction(...)` → `auth.api.signInEmail`), throws on
+`!result.success` so the molecule's root-error banner fires, then routes via
 `PAGE_ROUTES`.
 
 **Use for:** forms reused across apps, or forms that must stay decoupled from
-app-specific transport (the prop is transport-agnostic — an app could pass a
-server action to it). When the injected handler calls the Better Auth client
-instead of a server action, this is the **molecule + Better Auth client**
-pattern used by all auth and billing flows.
+app-specific transport (the prop is transport-agnostic). This is the **molecule
++ server action** pattern, used by every auth flow. Brute-force protection is
+re-applied inside the action via `enforceRateLimit` (`apps/web/lib/auth/rate-limit.ts`),
+because a direct `auth.api.*` call bypasses Better Auth's HTTP-path limiter — so
+do **not** delete those calls thinking the client transport still covers them.
 
 ### dialog form — RHF + `startTransition`; and the legacy `useState` dialogs
 
@@ -147,7 +152,7 @@ before the revalidated list commits.
 | Layer | Mechanism | Purpose | Trustworthy? |
 | --- | --- | --- | --- |
 | Client | RHF + `zodResolver(schema)` | UX: instant field errors, fewer wasted round-trips | **No** — skippable (JS disabled, edited bundle, direct POST) |
-| Server | `schema.parse(input)` inside the action + `verifySession` / `checkOrgPermission` | Security: the actual boundary | **Yes** — the only layer that counts |
+| Server | `schema.parse(input)` inside the action + `verifySession` / `hasOrgPermission` | Security: the actual boundary | **Yes** — the only layer that counts |
 
 Client-side validation is a convenience, never verification. Anyone can invoke a
 server action directly with a crafted request, bypassing RHF entirely. The server
@@ -196,7 +201,7 @@ const [state, formAction, pending] = useActionState(createUser, initialState);
 | Typed returns | via `prevState` reducer shape | ✅ `ActionResult<T>` with inference |
 
 The tradeoff is near-free **for authenticated app forms**: sign-in itself
-requires JS (Better Auth client), so no-JS users can't reach the dashboard
+requires JS (the RHF molecule), so no-JS users can't reach the dashboard
 anyway. The only exposure is the hydration gap.
 
 **When the calculus flips:** public marketing pages, lead-capture, anything
@@ -214,7 +219,7 @@ action is a public POST endpoint regardless of where the form renders.
 
 Inside **every** action:
 
-- [ ] **Authenticate & authorize** — `verifySession` / `checkOrgPermission`.
+- [ ] **Authenticate & authorize** — `verifySession` / `hasOrgPermission`.
       Rendering the form only on an authenticated page is *not* a security
       boundary.
 - [ ] **Validate input** — `schema.parse(input)` (or `safeParse` for field
@@ -222,7 +227,7 @@ Inside **every** action:
 - [ ] **Send IDs, verify ownership server-side** — schema validation only checks
       *shape*; a well-formed object can still reference a row the caller doesn't
       own. Derive identity from the session, look rows up by ownership
-      (e.g. `checkOrgPermission(organizationId, ...)`).
+      (e.g. `hasOrgPermission(organizationId, ...)`).
 - [ ] **Constrain return values** — returns are serialized to the client; shape
       them to what the UI renders (`ActionResult<T>`), never raw DB records.
 - [ ] **Revalidate in the action** — `revalidateOrgPage(...)` /
@@ -241,7 +246,8 @@ Operational caveats:
 | --- | --- |
 | Multi-field form in the app | **colocated form** — RHF + zodResolver + server action |
 | Form reused across apps / design system | **molecule form** — injected `onSubmit` |
-| Auth / billing flows | **molecule + Better Auth client** (not a server action) |
+| Auth flow (sign-in/up, social, magic-link, OTP, reset, verify-email, 2FA) | **molecule + server action** — injected handler calls `auth.api.*` inside an action with server-side `enforceRateLimit` |
+| Billing (upgrade / portal / cancel) | **server action** returning a Stripe redirect URL |
 | Dialog with fields | **dialog form** — RHF + zodResolver + `startTransition` |
 | Fieldless confirm / cancel / accept | **confirmation form** — `<form action>`+`useActionState` for a fixed/public target, `useTransition` for dynamic ids / menu items |
 | Public / marketing / no-JS-critical form | **hybrid public form** — native `<form action>` fallback + RHF |
@@ -277,6 +283,6 @@ Notes when touching form code:
 
 - Form primitives: `packages/design-system/components/ui/form.tsx`
 - colocated form: `apps/web/app/[locale]/(app)/account/new-org/components/create-organization-form.tsx` (+ `../actions.ts`, `../schemas.ts`)
-- molecule form / + Better Auth client: `packages/design-system/components/molecules/auth/sign-in-form.tsx`, `apps/web/app/[locale]/auth/sign-in/components/password-sign-in.tsx`
+- molecule form / + server action: `packages/design-system/components/molecules/auth/sign-in-form.tsx`, `apps/web/app/[locale]/auth/sign-in/components/password-sign-in.tsx`
 - confirmation form: `apps/web/app/[locale]/(app)/invite/accept/accept-button.tsx`
 - legacy `useState` dialog (do not copy): `apps/web/app/[locale]/(app)/[orgSlug]/members/components/invite-member-dialog.tsx` (+ `../actions.ts` → `inviteMemberAction`)

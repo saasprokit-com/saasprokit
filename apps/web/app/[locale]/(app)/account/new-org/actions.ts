@@ -3,17 +3,17 @@
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
-import { verifySession } from "@/lib/auth/action-auth";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
-import { canUserCreateOrg } from "@/lib/billing/subscription-queries";
 import { type CreateOrgInput, createOrgSchema } from "./schemas";
 
 /**
  * Create a new organization via Better Auth server API.
  *
- * Defense-in-depth: re-checks eligibility even though the page already gates access.
- * The server action must be independently secure since it's a public RPC endpoint.
+ * Better Auth authenticates the caller from the forwarded headers and enforces
+ * org-creation eligibility itself (the org plugin's `allowUserToCreateOrganization`
+ * hook + `organizationLimit`), so no verifySession pre-check is needed. An
+ * ineligible caller surfaces as a Better Auth error mapped through toActionError.
  */
 export async function createOrganizationAction(
   input: CreateOrgInput
@@ -23,24 +23,12 @@ export async function createOrganizationAction(
   try {
     const validated = createOrgSchema.parse(input);
 
-    const { session, error } = await verifySession<{ slug: string }>();
-    if (error) {
-      return error;
-    }
-
-    const { allowed } = await canUserCreateOrg(session.user.id);
-    if (!allowed) {
-      return actionError("createOrganization");
-    }
-
-    const reqHeaders = await headers();
-
     const result = await auth.api.createOrganization({
       body: {
         name: validated.name,
         slug: validated.slug,
       },
-      headers: reqHeaders,
+      headers: await headers(),
     });
 
     if (!result) {

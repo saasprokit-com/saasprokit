@@ -2,7 +2,7 @@ import { SetBreadcrumbs } from "@repo/design-system/components/layout/breadcrumb
 import { ContentSection } from "@repo/design-system/components/layout/content-section";
 import { getDictionary } from "@repo/internationalization";
 import { accountRoutes } from "@/lib/routes";
-import { DeleteAccountForm } from "../components/delete-account-form";
+import { DeleteAccountForm } from "./components/delete-account-form";
 
 export const metadata = {
   title: "Delete Account",

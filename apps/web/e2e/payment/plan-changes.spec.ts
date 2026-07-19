@@ -211,7 +211,7 @@ test.describe("Payment: Plan Changes", () => {
       const confirmBtn = page.getByRole("button", { name: /yes, cancel/i });
       await expect(confirmBtn).toBeVisible();
 
-      // Click triggers useCancel() hook → subscription.cancel() via Better Auth
+      // Click triggers cancelSubscriptionAction() → auth.api.cancelSubscription
       await confirmBtn.click();
 
       // Should show "Canceling..." loading state

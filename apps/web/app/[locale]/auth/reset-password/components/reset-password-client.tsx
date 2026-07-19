@@ -1,6 +1,5 @@
 "use client";
 
-import { authClient } from "@repo/auth/client";
 import {
   ResetPasswordForm,
   type ResetPasswordFormValues,
@@ -9,6 +8,7 @@ import { ResetPasswordInvalidLink } from "@repo/design-system/components/molecul
 import { ResetPasswordSuccess } from "@repo/design-system/components/molecules/auth/reset-password-success";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useState } from "react";
+import { resetPasswordAction } from "../actions";
 
 interface ResetPasswordClientProps {
   errors: ActionErrorMessages;
@@ -26,13 +26,13 @@ export function ResetPasswordClient({
       throw new Error(errors.resetPassword);
     }
 
-    const { error } = await authClient.resetPassword({
-      newPassword: data.password,
+    const result = await resetPasswordAction({
       token,
+      newPassword: data.password,
     });
 
-    if (error) {
-      throw new Error(error.message || errors.resetPassword);
+    if (!result.success) {
+      throw new Error(result.error || errors.resetPassword);
     }
 
     setSuccess(true);

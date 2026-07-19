@@ -135,7 +135,6 @@ export function OrgSettingsForm({
             errors={errors}
             organizationId={organization.id}
             organizationName={organization.name}
-            orgSlug={organization.slug}
           />
         </CardContent>
       </Card>

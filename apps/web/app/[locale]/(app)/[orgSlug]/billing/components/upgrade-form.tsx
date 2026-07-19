@@ -1,10 +1,8 @@
 "use client";
 
-import { subscription } from "@repo/auth/client";
 import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import {
-  BILLING_INTERVALS,
   type BillingInterval,
   PLAN_DISPLAY_NAMES,
   type PlanName,
@@ -12,6 +10,7 @@ import {
 import { ArrowUp, Loader2 } from "lucide-react";
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { upgradeSubscriptionAction } from "../actions";
 
 interface UpgradeFormProps {
   billingInterval: BillingInterval;
@@ -19,7 +18,7 @@ interface UpgradeFormProps {
   locale: string;
   organizationId: string;
   organizationSlug: string;
-  planName: PlanName;
+  planName: Exclude<PlanName, "free">;
 }
 
 export function UpgradeForm({
@@ -34,27 +33,22 @@ export function UpgradeForm({
 
   const handleUpgrade = () => {
     startTransition(async () => {
-      const orgBase = `${window.location.origin}/${locale}/${organizationSlug}`;
-      const checkoutBase = `${orgBase}/checkout`;
-      const { error } = await subscription.upgrade({
-        plan: planName,
-        annual: billingInterval === BILLING_INTERVALS.YEARLY,
-        referenceId: organizationId,
-        // free→paid goes through Stripe Checkout (uses success/cancel URLs).
-        successUrl: `${checkoutBase}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${checkoutBase}/canceled`,
-        // paid→paid (e.g. pro→enterprise) updates the existing subscription via
-        // a Stripe-hosted confirm flow and redirects here afterward — without
-        // this it would fall back to the site root ("/").
-        returnUrl: `${orgBase}/billing`,
+      const result = await upgradeSubscriptionAction({
+        planName,
+        organizationId,
+        organizationSlug,
+        locale,
+        billingInterval,
       });
 
-      if (error) {
-        toast.error(errors.startCheckout, { description: error.message });
+      if (result.success && result.data?.url) {
+        // Redirect to Stripe Checkout (new subscription) or the plan-change
+        // confirm flow (existing subscription).
+        window.location.href = result.data.url;
+        return;
       }
-      // On success, subscription.upgrade redirects the browser — to Stripe
-      // Checkout for a new subscription, or the plan-change confirm flow for
-      // an existing one.
+
+      toast.error(errors.startCheckout, { description: result.error });
     });
   };
 

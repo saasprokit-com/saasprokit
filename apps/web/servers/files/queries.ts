@@ -5,7 +5,7 @@ import type { createRequestLogger } from "@repo/logger/server";
 import { imageFileSchema } from "@repo/storage";
 import { ATTACHABLE_TYPE } from "@repo/utils/storage";
 import { NextResponse } from "next/server";
-import { checkOrgPermission } from "@/lib/auth/auth";
+import { hasOrgPermission } from "@/lib/auth/auth";
 import { validateStorageQuota } from "@/lib/files/storage-quota";
 
 /**
@@ -84,10 +84,10 @@ async function validateOrgLogoPermissions(
   }
 
   // Check permission via BA permission system
-  const caller = await checkOrgPermission(organizationId, {
+  const allowed = await hasOrgPermission(organizationId, {
     organization: ["update"],
   });
-  if (!caller) {
+  if (!allowed) {
     logger.warn(
       {
         organizationId,

@@ -4,6 +4,7 @@ import { database, type Prisma } from "@repo/database";
 
 const sessionSelect = {
   id: true,
+  token: true,
   ipAddress: true,
   userAgent: true,
   createdAt: true,

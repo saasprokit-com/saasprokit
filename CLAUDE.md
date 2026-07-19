@@ -51,7 +51,7 @@ pnpm --filter internationalization translate   # Machine-translate locale files 
 
 Detailed architecture docs live as skills in the `saasprokit` plugin at `saasprokit-skills/skills/*/SKILL.md`. Once the plugin is installed they are invocable as `/saasprokit:<name>`; either way, read the relevant SKILL.md BEFORE writing code in its area:
 
-- `saasprokit:auth` — Better Auth setup, role systems, server-side session helpers (`getServerSession`, `requireAuth`, `checkOrgPermission`), `validateOrgMembershipBySlug`, server action auth (`verifySession`, `toActionError`), client-side usage
+- `saasprokit:auth` — Better Auth setup, role systems, server-side session helpers (`getServerSession`, `requireAuth`, `hasOrgPermission`), `validateOrgMembershipBySlug`, server action auth (`verifySession`, `toActionError`), client-side usage
 - `saasprokit:routing` — Route structure, edge middleware (`apps/web/proxy.ts`), centralized routes (`@/lib/routes`), locale handling
 - `saasprokit:data-access` — `servers/` vs `lib/` split in `apps/web`, Prisma workflow
 - `saasprokit:forms` — Form patterns (RHF + zod + server actions), scaffold recipes for new forms and dialogs
@@ -87,7 +87,7 @@ Detailed architecture docs live as skills in the `saasprokit` plugin at `saaspro
 - `saasprokit-skills/skills/` — SaaSProKit-owned skills, tracked in git and shipped as the `saasprokit` plugin (see list above). Also symlinked into `.agents/skills/` so other agents (Codex, Cursor, etc.) discover the same skills; `AGENTS.md` at the repo root carries the equivalent guidance for those tools.
 - `.agents/skills/` — third-party skills managed by `skills-lock.json`, restored on demand via `pnpm skills:install` (Better Auth, Prisma, Stripe, Vercel/React, shadcn, Turborepo, web design). Not automatic on `pnpm install` — it shells out to `git`, which the Docker images lack. Update with `npx skills check` then `npx skills update`.
 
-**When the user requests a review**, read the relevant SKILL.md files before starting. For auth-related reviews, read the Better Auth skills. For database/schema reviews, read the Prisma skills.
+**When the user requests a review**, read the relevant SKILL.md files before starting. For auth-related reviews, read the Better Auth skills. For database/schema reviews, read the Prisma skills. Include a subtractive pass: flag redundant checks (confirm what callees already guarantee by reading their installed source) and copy that overpromises.
 
 ## Skill routing
 

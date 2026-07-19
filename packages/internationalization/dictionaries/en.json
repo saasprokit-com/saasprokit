@@ -28,7 +28,10 @@
       "ORGANIZATION_NOT_FOUND": "Organization not found",
       "ORGANIZATION_MEMBERSHIP_LIMIT_REACHED": "Organization membership limit reached",
       "SLUG_IS_ALREADY_TAKEN": "This slug is already taken. Please choose another.",
-      "ORGANIZATION_ALREADY_EXISTS": "An organization with this name already exists"
+      "ORGANIZATION_ALREADY_EXISTS": "An organization with this name already exists",
+      "SESSION_EXPIRED": "Your session has expired. Please sign in again to delete your account.",
+      "TRANSFER_ORGANIZATION_OWNERSHIP": "Transfer ownership of your organizations before deleting your account.",
+      "UNAUTHORIZED": "Unauthorized"
     },
     "fallback": {
       "inviteMember": "Failed to send invitation",
@@ -80,6 +83,8 @@
       "resetPassword": "Failed to reset password",
       "sendResetEmail": "Failed to send reset email",
       "changePassword": "Failed to change password",
+      "signOut": "Failed to sign out",
+      "tooManyRequests": "Too many attempts. Please try again shortly.",
       "enable2fa": "Failed to enable 2FA",
       "verify2fa": "Invalid authentication code",
       "disable2fa": "Failed to disable 2FA",

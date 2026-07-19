@@ -32,23 +32,14 @@ export async function requireAuth(returnTo?: string) {
   return session;
 }
 
-export async function checkOrgPermission(
+export async function hasOrgPermission(
   organizationId: string,
   permissions: Record<string, string[]>
-): Promise<{ userId: string } | null> {
-  const session = await getServerSession();
-  if (!session?.user?.id) {
-    return null;
-  }
-
+): Promise<boolean> {
   const result = await auth.api.hasPermission({
     headers: await headers(),
     body: { organizationId, permissions },
   });
 
-  if (!result?.success) {
-    return null;
-  }
-
-  return { userId: session.user.id };
+  return result?.success ?? false;
 }

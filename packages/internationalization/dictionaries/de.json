@@ -80,6 +80,8 @@
       "resetPassword": "Failed to reset password",
       "sendResetEmail": "Failed to send reset email",
       "changePassword": "Failed to change password",
+      "signOut": "Failed to sign out",
+      "tooManyRequests": "Too many attempts. Please try again shortly.",
       "enable2fa": "Failed to enable 2FA",
       "verify2fa": "Invalid authentication code",
       "disable2fa": "Failed to disable 2FA",

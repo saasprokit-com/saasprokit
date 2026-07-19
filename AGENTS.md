@@ -23,7 +23,7 @@ pnpm migrate                  # Format, generate, and push Prisma schema
 
 Detailed architecture docs and recipes live as Agent Skills (SKILL.md format) in `.agents/skills/` — symlinked to their canonical home in `saasprokit-skills/skills/`. Codex and Cursor discover them automatically; invoke explicitly with `$<name>` (Codex) or `/` in Agent chat (Cursor), or let the description trigger them. **Read the relevant skill BEFORE writing code in its area:**
 
-- `auth` — Better Auth setup, role systems, session helpers (`getServerSession`, `requireAuth`, `checkOrgPermission`), server action auth (`verifySession`, `toActionError`)
+- `auth` — Better Auth setup, role systems, session helpers (`getServerSession`, `requireAuth`, `hasOrgPermission`), server action auth (`verifySession`, `toActionError`)
 - `routing` — Route structure, edge middleware (`apps/web/proxy.ts`), centralized routes (`@/lib/routes`), locale handling
 - `data-access` — `servers/` vs `lib/` split in `apps/web`, Prisma workflow
 - `forms` — Form patterns (react-hook-form + zod + server actions), scaffold recipes for new forms and dialogs

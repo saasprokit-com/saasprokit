@@ -3,9 +3,12 @@
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
-import { verifySession } from "@/lib/auth/action-auth";
-import { type ActionResult, getServerSession } from "@/lib/auth/auth";
+import type { z } from "zod";
+import { actionError, toActionError } from "@/lib/auth/action-error";
+import type { ActionResult } from "@/lib/auth/auth";
+import { enforceRateLimit, RateLimitError } from "@/lib/auth/rate-limit";
 import { revalidateAccountPage } from "@/lib/infrastructure/revalidation";
+import { changePasswordSchema } from "./schemas";
 
 type Enable2FAResult =
   | { success: true; totpURI: string; backupCodes: string[] }
@@ -20,10 +23,7 @@ export async function enable2FAAction(
   const logger = createRequestLogger({ action: "enable2FA" });
 
   try {
-    const session = await getServerSession();
-    if (!session?.user?.id) {
-      return { success: false, error: "Unauthorized" };
-    }
+    await enforceRateLimit("change-password");
 
     const data = await auth.api.enableTwoFactor({
       headers: await headers(),
@@ -40,6 +40,13 @@ export async function enable2FAAction(
       backupCodes: data.backupCodes ?? [],
     };
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      const limited = await actionError("tooManyRequests");
+      return {
+        success: false,
+        error: limited.error ?? "Too many attempts. Please try again shortly.",
+      };
+    }
     logger.error(
       { err: error instanceof Error ? error : new Error(String(error)) },
       "Failed to enable 2FA"
@@ -55,10 +62,7 @@ export async function verify2FAAction(code: string): Promise<ActionResult> {
   const logger = createRequestLogger({ action: "verify2FA" });
 
   try {
-    const { error } = await verifySession();
-    if (error) {
-      return error;
-    }
+    await enforceRateLimit("2fa");
 
     await auth.api.verifyTOTP({
       headers: await headers(),
@@ -69,6 +73,9 @@ export async function verify2FAAction(code: string): Promise<ActionResult> {
 
     return { success: true };
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      return actionError("tooManyRequests");
+    }
     logger.error(
       { err: error instanceof Error ? error : new Error(String(error)) },
       "Failed to verify 2FA"
@@ -86,10 +93,7 @@ export async function disable2FAAction(
   const logger = createRequestLogger({ action: "disable2FA" });
 
   try {
-    const { error } = await verifySession();
-    if (error) {
-      return error;
-    }
+    await enforceRateLimit("change-password");
 
     await auth.api.disableTwoFactor({
       headers: await headers(),
@@ -100,6 +104,9 @@ export async function disable2FAAction(
 
     return { success: true };
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      return actionError("tooManyRequests");
+    }
     logger.error(
       { err: error instanceof Error ? error : new Error(String(error)) },
       "Failed to disable 2FA"
@@ -109,17 +116,91 @@ export async function disable2FAAction(
 }
 
 /**
- * Revalidate security page after client-side mutations.
+ * Logout a specific session, identified by its Better Auth session token.
+ * No verifySession needed: revokeSession authenticates the caller itself and
+ * only revokes sessions owned by that caller.
  */
-export async function revalidateSecurityPageAction(): Promise<ActionResult> {
+export async function logoutSessionAction(token: string) {
+  const logger = createRequestLogger({
+    action: "logoutSession",
+  });
+
   try {
-    const { error } = await verifySession();
-    if (error) {
-      return error;
-    }
+    await auth.api.revokeSession({
+      headers: await headers(),
+      body: { token },
+    });
+
+    logger.info("Session logged out");
+
     await revalidateAccountPage("security");
+
     return { success: true };
-  } catch {
-    return { success: false, error: "Failed to revalidate" };
+  } catch (error) {
+    return toActionError(error, {
+      fallback: "logoutSession",
+      baFallback: "unknownError",
+      logger,
+    });
+  }
+}
+
+/**
+ * Logout all other sessions
+ * Keeps current session active
+ */
+export async function logoutAllOtherSessionsAction() {
+  const logger = createRequestLogger({
+    action: "logoutAllOtherSessions",
+  });
+
+  try {
+    // Revoke every session except the current one via Better Auth.
+    await auth.api.revokeOtherSessions({
+      headers: await headers(),
+    });
+
+    logger.info("All other sessions logged out");
+
+    await revalidateAccountPage("security");
+
+    return { success: true };
+  } catch (error) {
+    return toActionError(error, {
+      fallback: "logoutAllSessions",
+      baFallback: "unknownError",
+      logger,
+    });
+  }
+}
+
+/**
+ * Change the current user's password and revoke other sessions.
+ * auth.api.changePassword authenticates the caller from the forwarded headers.
+ */
+export async function changePasswordAction(
+  input: z.infer<typeof changePasswordSchema>
+): Promise<ActionResult> {
+  const logger = createRequestLogger({ action: "changePassword" });
+
+  try {
+    const { currentPassword, newPassword } = changePasswordSchema.parse(input);
+    await enforceRateLimit("change-password");
+
+    await auth.api.changePassword({
+      headers: await headers(),
+      body: { currentPassword, newPassword, revokeOtherSessions: true },
+    });
+
+    return { success: true };
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return actionError("tooManyRequests");
+    }
+    return toActionError(error, {
+      fallback: "changePassword",
+      baFallback: "unknownError",
+      logger,
+    });
   }
 }

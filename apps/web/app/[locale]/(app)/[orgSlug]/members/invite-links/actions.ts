@@ -5,7 +5,11 @@ import { database } from "@repo/database";
 import { MILLISECONDS_PER_DAY } from "@repo/utils/date";
 import { INVITE_TOKEN_BYTES } from "@repo/utils/organization";
 import { actionError, toActionError } from "@/lib/auth/action-error";
-import { type ActionResult, checkOrgPermission } from "@/lib/auth/auth";
+import {
+  type ActionResult,
+  getServerSession,
+  hasOrgPermission,
+} from "@/lib/auth/auth";
 import { env } from "@/lib/env";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
 import { ORG_PAGES } from "@/lib/routes";
@@ -27,10 +31,15 @@ export async function createInviteLinkAction(
   try {
     const validated = createInviteLinkSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       invitation: ["create"],
     });
-    if (!caller) {
+    if (!allowed) {
+      return actionError("unauthorized");
+    }
+
+    const session = await getServerSession();
+    if (!session) {
       return actionError("unauthorized");
     }
 
@@ -46,7 +55,7 @@ export async function createInviteLinkAction(
         role: validated.role,
         expiresAt,
         maxUses: validated.maxUses || null,
-        createdById: caller.userId,
+        createdById: session.user.id,
       },
     });
 
@@ -68,10 +77,10 @@ export async function revokeInviteLinkAction(
   try {
     const validated = inviteLinkIdSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       invitation: ["cancel"],
     });
-    if (!caller) {
+    if (!allowed) {
       return actionError("unauthorized");
     }
 
@@ -108,10 +117,10 @@ export async function revokeInviteLinksAction(
   try {
     const validated = revokeInviteLinksSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       invitation: ["cancel"],
     });
-    if (!caller) {
+    if (!allowed) {
       return actionError("unauthorized");
     }
 

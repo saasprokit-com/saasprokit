@@ -3,7 +3,7 @@ import { ContentSection } from "@repo/design-system/components/layout/content-se
 import { getDictionary } from "@repo/internationalization";
 import { getServerSession } from "@/lib/auth/auth";
 import { accountRoutes } from "@/lib/routes";
-import { ProfileForm } from "../components/profile-form";
+import { ProfileForm } from "./components/profile-form";
 
 export const metadata = {
   title: "Profile Settings",

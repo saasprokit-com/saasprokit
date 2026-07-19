@@ -29,11 +29,7 @@ import { useState, useTransition } from "react";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
 
-import {
-  disable2FAAction,
-  enable2FAAction,
-  verify2FAAction,
-} from "../security/actions";
+import { disable2FAAction, enable2FAAction, verify2FAAction } from "../actions";
 
 const TWO_FACTOR_CODE_LENGTH = 6;
 

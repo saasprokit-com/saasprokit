@@ -14,7 +14,11 @@ import {
   actionError,
   toActionError,
 } from "@/lib/auth/action-error";
-import { type ActionResult, checkOrgPermission } from "@/lib/auth/auth";
+import {
+  type ActionResult,
+  getServerSession,
+  hasOrgPermission,
+} from "@/lib/auth/auth";
 import { mapBAError } from "@/lib/auth/ba-error";
 import { canOrgAddMember } from "@/lib/billing/subscription-queries";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
@@ -82,10 +86,10 @@ export async function inviteMemberAction(
     const validated = inviteMemberSchema.parse(input);
 
     // Defense-in-depth: verify permission before delegating to BA API
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       invitation: ["create"],
     });
-    if (!caller) {
+    if (!allowed) {
       return actionError("unauthorized");
     }
 
@@ -122,10 +126,15 @@ export async function removeMembersAction(
   try {
     const validated = removeMembersSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       member: ["delete"],
     });
-    if (!caller) {
+    if (!allowed) {
+      return actionError("unauthorized");
+    }
+
+    const session = await getServerSession();
+    if (!session) {
       return actionError("unauthorized");
     }
 
@@ -140,7 +149,7 @@ export async function removeMembersAction(
 
     // Filter out owners and self
     const validMembers = membersToRemove.filter(
-      (m) => m.role !== ORG_ROLES.OWNER && m.userId !== caller.userId
+      (m) => m.role !== ORG_ROLES.OWNER && m.userId !== session.user.id
     );
 
     if (validMembers.length === 0) {
@@ -173,10 +182,15 @@ export async function updateMemberRoleAction(
   try {
     const validated = updateRoleSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       member: ["update"],
     });
-    if (!caller) {
+    if (!allowed) {
+      return actionError("unauthorized");
+    }
+
+    const session = await getServerSession();
+    if (!session) {
       return actionError("unauthorized");
     }
 
@@ -187,7 +201,7 @@ export async function updateMemberRoleAction(
         id: validated.memberId,
         organizationId: validated.organizationId,
         role: { not: ORG_ROLES.OWNER },
-        userId: { not: caller.userId },
+        userId: { not: session.user.id },
       },
       data: { role: validated.newRole },
     });
@@ -196,7 +210,7 @@ export async function updateMemberRoleAction(
       const errorCode = await diagnoseMemberUpdateFailure(
         validated.memberId,
         validated.organizationId,
-        caller.userId,
+        session.user.id,
         "role change"
       );
       return actionError(errorCode);
@@ -367,10 +381,10 @@ export async function bulkInviteAction(
   try {
     const validated = bulkInviteSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       invitation: ["create"],
     });
-    if (!caller) {
+    if (!allowed) {
       return actionError("unauthorized");
     }
 
@@ -410,10 +424,15 @@ export async function suspendMemberAction(
   try {
     const validated = suspendMemberSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       member: ["update"],
     });
-    if (!caller) {
+    if (!allowed) {
+      return actionError("unauthorized");
+    }
+
+    const session = await getServerSession();
+    if (!session) {
       return actionError("unauthorized");
     }
 
@@ -424,12 +443,12 @@ export async function suspendMemberAction(
         id: validated.memberId,
         organizationId: validated.organizationId,
         role: { not: ORG_ROLES.OWNER },
-        userId: { not: caller.userId },
+        userId: { not: session.user.id },
         suspendedAt: null,
       },
       data: {
         suspendedAt: new Date(),
-        suspendedBy: caller.userId,
+        suspendedBy: session.user.id,
         suspendReason: validated.reason || null,
       },
     });
@@ -438,7 +457,7 @@ export async function suspendMemberAction(
       const errorCode = await diagnoseMemberUpdateFailure(
         validated.memberId,
         validated.organizationId,
-        caller.userId,
+        session.user.id,
         "suspension"
       );
       return actionError(errorCode);
@@ -460,10 +479,10 @@ export async function reactivateMemberAction(
   try {
     const validated = reactivateMemberSchema.parse(input);
 
-    const caller = await checkOrgPermission(validated.organizationId, {
+    const allowed = await hasOrgPermission(validated.organizationId, {
       member: ["update"],
     });
-    if (!caller) {
+    if (!allowed) {
       return actionError("unauthorized");
     }
 

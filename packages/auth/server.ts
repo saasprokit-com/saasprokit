@@ -28,6 +28,7 @@ import {
 } from "@repo/utils/payment";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { admin } from "better-auth/plugins/admin";
 import { emailOTP } from "better-auth/plugins/email-otp";
@@ -90,6 +91,112 @@ async function canUserCreateOrg(userId: string): Promise<boolean> {
     freePlanCount,
     MAX_ORGS_PER_USER
   ).allowed;
+}
+
+// Stripe subscription statuses that are already inactive and need no cancelling.
+const INACTIVE_STRIPE_STATUSES = new Set([
+  "canceled",
+  "incomplete",
+  "incomplete_expired",
+]);
+
+/**
+ * Cancel every still-active Stripe subscription for a customer.
+ * No-op when Stripe isn't configured or the customer id is missing.
+ */
+async function cancelActiveStripeSubscriptions(
+  customerId: string | null
+): Promise<void> {
+  if (!(stripeClient && customerId)) {
+    return;
+  }
+
+  for await (const sub of stripeClient.subscriptions.list({
+    customer: customerId,
+    status: "all",
+  })) {
+    if (!INACTIVE_STRIPE_STATUSES.has(sub.status)) {
+      await stripeClient.subscriptions.cancel(sub.id);
+    }
+  }
+}
+
+/**
+ * Cleanup run by Better Auth's `deleteUser.beforeDelete` hook, BEFORE the user
+ * row (and its Prisma-cascaded members/invitations/etc.) is removed. Throwing an
+ * APIError here aborts the deletion.
+ *
+ * - Validation runs first and is side-effect-free: blocks deletion (throws
+ *   TRANSFER_ORGANIZATION_OWNERSHIP) when the user is the sole owner of an org
+ *   that still has other members.
+ * - DB cleanup (personal + solo-owned-org subscription rows, which have no FK
+ *   cascade, and the solo-owned orgs themselves) runs in a single transaction,
+ *   so a failure mid-way rolls everything back together.
+ * - Stripe cancellations run LAST, after the DB is consistent, so a failed DB
+ *   delete can never leave a cancelled subscription behind; cancelling an
+ *   already-inactive subscription is a no-op.
+ *
+ * Note: Better Auth deletes the user row itself AFTER this hook returns, outside
+ * this transaction — a failure in that later step is outside our control.
+ */
+async function cleanUpUserBeforeDelete(user: {
+  id: string;
+  stripeCustomerId?: string | null;
+}): Promise<void> {
+  const userId = user.id;
+
+  const ownedOrgs = await database.member.findMany({
+    where: { userId, role: ORG_ROLES.OWNER },
+    select: { organizationId: true },
+  });
+
+  // Validate first (no irreversible work yet), capturing each solo-owned org's
+  // Stripe customer id before the org row is deleted.
+  const soloOrgs: { id: string; stripeCustomerId: string | null }[] = [];
+  for (const { organizationId } of ownedOrgs) {
+    const otherOwners = await database.member.count({
+      where: { organizationId, role: ORG_ROLES.OWNER, userId: { not: userId } },
+    });
+    if (otherOwners > 0) {
+      continue; // Org keeps an owner after this user leaves.
+    }
+
+    const otherMembers = await database.member.count({
+      where: { organizationId, userId: { not: userId } },
+    });
+    if (otherMembers > 0) {
+      throw new APIError("BAD_REQUEST", {
+        code: "TRANSFER_ORGANIZATION_OWNERSHIP",
+        message:
+          "Transfer ownership of your organizations before deleting your account.",
+      });
+    }
+
+    const org = await database.organization.findUnique({
+      where: { id: organizationId },
+      select: { stripeCustomerId: true },
+    });
+    soloOrgs.push({
+      id: organizationId,
+      stripeCustomerId: org?.stripeCustomerId ?? null,
+    });
+  }
+
+  // Atomic DB cleanup — all deletes roll back together on any failure.
+  // Subscription rows have no FK to user/org, so remove them explicitly.
+  await database.$transaction([
+    database.subscription.deleteMany({ where: { referenceId: userId } }),
+    ...soloOrgs.flatMap((org) => [
+      database.organization.delete({ where: { id: org.id } }),
+      database.subscription.deleteMany({ where: { referenceId: org.id } }),
+    ]),
+  ]);
+
+  // Irreversible Stripe cancellations run AFTER the DB is consistent.
+  await cancelActiveStripeSubscriptions(user.stripeCustomerId ?? null);
+  for (const org of soloOrgs) {
+    await cancelActiveStripeSubscriptions(org.stripeCustomerId);
+  }
 }
 
 export const auth = betterAuth({
@@ -181,6 +288,15 @@ export const auth = betterAuth({
         type: "string",
         required: false,
       },
+    },
+    // Account deletion goes through auth.api.deleteUser. Immediate (no email
+    // verification) — Better Auth still requires a fresh session (freshAge,
+    // default 1 day) since no password is supplied. Cleanup that Better Auth
+    // and the Prisma cascade don't cover (Stripe, orphaned orgs) runs in the
+    // beforeDelete hook.
+    deleteUser: {
+      enabled: true,
+      beforeDelete: (user) => cleanUpUserBeforeDelete(user),
     },
   },
 
