@@ -1,10 +1,6 @@
 import "server-only";
 
-import {
-  type AdminRoleName,
-  canAdmin,
-  isAdminAreaRole,
-} from "@repo/auth/permissions";
+import { canAdmin, isAdminAreaRole } from "@repo/auth/permissions";
 import { database } from "@repo/database";
 import { notFound } from "next/navigation";
 import { cache } from "react";
@@ -52,23 +48,18 @@ export const requireAdminArea = cache(async (): Promise<AdminContext> => {
   };
 });
 
-/**
- * First line of every admin server action. Returns the acting staff member (actions
- * need the id for self-guards and audit) when they hold `permissions`, or null →
- * the caller returns actionError("unauthorized"). Re-reads the role from the DB.
- */
-export async function checkAdminPermission(
+export async function hasAdminPermission(
   permissions: Record<string, string[]>
-): Promise<{ userId: string; role: AdminRoleName | string } | null> {
+): Promise<boolean> {
   const session = await getServerSession();
   if (!session?.user?.id) {
-    return null;
+    return false;
   }
 
   const user = await getFreshRole(session.user.id);
-  if (!user || user.banned === true || !canAdmin(user.role, permissions)) {
-    return null;
+  if (!user || user.banned === true) {
+    return false;
   }
 
-  return { userId: session.user.id, role: user.role ?? "" };
+  return canAdmin(user.role, permissions);
 }

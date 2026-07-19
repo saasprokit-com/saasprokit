@@ -112,16 +112,19 @@ SaaS at `/admin` — distinct from org-scoped roles. Helpers:
 // packages/auth/permissions.ts — in-memory role checks (mirror canOrg)
 import { canAdmin, isAdminAreaRole } from "@repo/auth/permissions";
 
-// apps/web/lib/auth/admin.ts — server-side gates (pass DB-fresh roles only)
-import { requireAdminArea, checkAdminPermission } from "@/lib/auth/admin";
+// apps/web/lib/auth/admin.ts — server-side gates (read DB-fresh roles internally)
+import { requireAdminArea, hasAdminPermission } from "@/lib/auth/admin";
 
 // Layout AND every /admin page (layouts don't re-run on soft nav):
 const ctx = await requireAdminArea(); // → {userId, role, isAdmin}; redirects anon, notFound() non-staff
 if (!ctx.isAdmin) notFound();         // moderators can't reach user-management pages
 
-// First line of every admin server action (returns the caller or null):
-const caller = await checkAdminPermission({ user: ["ban"] });
-if (!caller) return actionError("unauthorized");
+// First line of every admin server action — boolean gate (mirrors hasOrgPermission).
+// Read the actor's id from getServerSession() when you need it for audit/self-guards.
+const session = await getServerSession();
+if (!session?.user?.id) return actionError("unauthorized");
+if (!(await hasAdminPermission({ user: ["ban"] }))) return actionError("unauthorized");
+const actorId = session.user.id;
 ```
 
 **Freshness:** admin gates re-read `role`/`banned` from the DB every request
@@ -132,10 +135,13 @@ mutations are defended twice. The rest of the app accepts the read-only stale wi
 
 **Guardrails:** a pure `guardUserMutation` (admin/users/guards.ts) blocks self
 set-role/ban/delete/impersonate; peer model otherwise (admins may act on other
-admins). Better Auth blocks self-ban/self-delete and admin→admin **impersonation**
-(its `adminRole` lacks `user:["impersonate-admins"]`) — keep the `admin()` plugin's
-`adminRoles` option **unset** or that block breaks. Moderators hold no `user`/`session`
-statements, so `checkAdminPermission` denies them every user mutation.
+admins). Better Auth authoritatively blocks self-ban/self-delete and admin→admin
+**impersonation** (its `adminRole` lacks `user:["impersonate-admins"]`) — keep the
+`admin()` plugin's `adminRoles` option **unset** or that block breaks. `setRole` has
+no built-in self-guard, so a `before` hook on `/admin/set-role` (server.ts) throws
+`CANNOT_CHANGE_OWN_ROLE` — making self-demotion bypass-proof at the auth layer, with
+`guardUserMutation` as the friendly first-line message. Moderators hold no
+`user`/`session` statements, so `hasAdminPermission` denies them every user mutation.
 
 **Impersonation:** 1-hour session with `impersonatedBy`; an amber banner mounts in
 `(app)/layout.tsx`; exit via the `stopImpersonatingAction` server action. Admin

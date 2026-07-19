@@ -1,3 +1,4 @@
+import { stripeCustomerDashboardUrl } from "@repo/auth/stripe-client";
 import { SetBreadcrumbs } from "@repo/design-system/components/layout/breadcrumb-context";
 import {
   Avatar,
@@ -21,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/design-system/components/ui/table";
+import { formatDate } from "@repo/utils/date";
 import { PLAN_DISPLAY_NAMES, type PlanName } from "@repo/utils/payment";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
@@ -40,10 +42,6 @@ function initialsOf(value: string): string {
     .join("")
     .toUpperCase()
     .slice(0, 2);
-}
-
-function formatDate(date: Date | null): string {
-  return date ? new Date(date).toLocaleDateString() : "—";
 }
 
 export default async function AdminOrganizationDetailPage({
@@ -155,7 +153,7 @@ export default async function AdminOrganizationDetailPage({
               {stripeCustomerId && (
                 <Button asChild size="sm" variant="outline">
                   <a
-                    href={`https://dashboard.stripe.com/customers/${stripeCustomerId}`}
+                    href={stripeCustomerDashboardUrl(stripeCustomerId)}
                     rel="noreferrer"
                     target="_blank"
                   >

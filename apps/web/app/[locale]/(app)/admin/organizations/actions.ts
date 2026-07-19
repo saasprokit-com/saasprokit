@@ -5,8 +5,8 @@ import { createRequestLogger } from "@repo/logger/server";
 import { ACTIVE_STATUSES } from "@repo/utils/payment";
 import { ATTACHABLE_TYPE } from "@repo/utils/storage";
 import { actionError, toActionError } from "@/lib/auth/action-error";
-import { checkAdminPermission } from "@/lib/auth/admin";
-import type { ActionResult } from "@/lib/auth/auth";
+import { hasAdminPermission } from "@/lib/auth/admin";
+import { type ActionResult, getServerSession } from "@/lib/auth/auth";
 import { revalidateAdminPage } from "@/lib/infrastructure/revalidation";
 import { ADMIN_PAGES } from "@/lib/routes";
 import { ADMIN_AUDIT_ACTIONS, recordAdminAudit } from "@/servers/admin/audit";
@@ -31,10 +31,14 @@ export async function deleteOrganizationAction(
   try {
     const { organizationId } = deleteOrganizationSchema.parse(input);
 
-    const caller = await checkAdminPermission({ organization: ["delete"] });
-    if (!caller) {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
       return actionError("unauthorized");
     }
+    if (!(await hasAdminPermission({ organization: ["delete"] }))) {
+      return actionError("unauthorized");
+    }
+    const actorId = session.user.id;
 
     const org = await database.organization.findUnique({
       where: { id: organizationId },
@@ -82,7 +86,7 @@ export async function deleteOrganizationAction(
     ]);
 
     await recordAdminAudit({
-      actorId: caller.userId,
+      actorId,
       action: ADMIN_AUDIT_ACTIONS.DELETE_ORG,
       changes: { organizationId, slug: org.slug },
     });

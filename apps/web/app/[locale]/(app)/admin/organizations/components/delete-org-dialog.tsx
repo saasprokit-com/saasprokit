@@ -111,7 +111,7 @@ export function DeleteOrgDialog({
             variant="destructive"
           >
             {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-            Delete organization
+            Delete
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,15 +1,3 @@
-/**
- * Pure self-target guards for platform-admin user mutations.
- *
- * Peer model (D5): admins may set-role/ban/delete/impersonate OTHER admins; only
- * targeting yourself is blocked, to prevent an admin locking themselves out. These
- * checks run in the server action before the Better Auth call. Kept I/O-free so they
- * can be unit-tested exhaustively — the "moderators cannot manage users" guarantee is
- * enforced separately by checkAdminPermission.
- *
- * The returned `code` is an errors.action dictionary key, so callers can hand it
- * straight to actionError() with no cast.
- */
 import type { ActionErrorCode } from "@/lib/auth/action-error";
 
 export type UserMutationKind =

@@ -4,8 +4,8 @@ import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
 import { actionError, toActionError } from "@/lib/auth/action-error";
-import { checkAdminPermission } from "@/lib/auth/admin";
-import type { ActionResult } from "@/lib/auth/auth";
+import { hasAdminPermission } from "@/lib/auth/admin";
+import { type ActionResult, getServerSession } from "@/lib/auth/auth";
 import { revalidateAdminPage } from "@/lib/infrastructure/revalidation";
 import { ADMIN_PAGES } from "@/lib/routes";
 import { ADMIN_AUDIT_ACTIONS, recordAdminAudit } from "@/servers/admin/audit";
@@ -22,8 +22,9 @@ import {
 const SECONDS_PER_DAY = 86_400;
 
 /**
- * Set a user's platform role. Better Auth has no self-guard on setRole, so the
- * pure guard blocks an admin from demoting themselves.
+ * Set a user's platform role. Self-demotion is blocked at the auth layer by a
+ * `before` hook on `/admin/set-role` (packages/auth/server.ts); the pure guard
+ * here is the friendly first-line message before the round-trip.
  */
 export async function setUserRoleAction(
   input: SetUserRoleInput
@@ -32,13 +33,17 @@ export async function setUserRoleAction(
   try {
     const data = setUserRoleSchema.parse(input);
 
-    const caller = await checkAdminPermission({ user: ["set-role"] });
-    if (!caller) {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
       return actionError("unauthorized");
     }
+    if (!(await hasAdminPermission({ user: ["set-role"] }))) {
+      return actionError("unauthorized");
+    }
+    const actorId = session.user.id;
 
     const guard = guardUserMutation({
-      actorId: caller.userId,
+      actorId,
       targetId: data.userId,
       mutation: "set-role",
     });
@@ -52,7 +57,7 @@ export async function setUserRoleAction(
     });
 
     await recordAdminAudit({
-      actorId: caller.userId,
+      actorId,
       action: ADMIN_AUDIT_ACTIONS.SET_ROLE,
       changes: { targetUserId: data.userId, role: data.role },
     });
@@ -80,13 +85,17 @@ export async function banUserAction(
   try {
     const data = banUserSchema.parse(input);
 
-    const caller = await checkAdminPermission({ user: ["ban"] });
-    if (!caller) {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
       return actionError("unauthorized");
     }
+    if (!(await hasAdminPermission({ user: ["ban"] }))) {
+      return actionError("unauthorized");
+    }
+    const actorId = session.user.id;
 
     const guard = guardUserMutation({
-      actorId: caller.userId,
+      actorId,
       targetId: data.userId,
       mutation: "ban",
     });
@@ -106,7 +115,7 @@ export async function banUserAction(
     });
 
     await recordAdminAudit({
-      actorId: caller.userId,
+      actorId,
       action: ADMIN_AUDIT_ACTIONS.BAN,
       changes: {
         targetUserId: data.userId,
@@ -138,10 +147,14 @@ export async function unbanUserAction(
   try {
     const data = targetUserSchema.parse(input);
 
-    const caller = await checkAdminPermission({ user: ["ban"] });
-    if (!caller) {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
       return actionError("unauthorized");
     }
+    if (!(await hasAdminPermission({ user: ["ban"] }))) {
+      return actionError("unauthorized");
+    }
+    const actorId = session.user.id;
 
     await auth.api.unbanUser({
       body: { userId: data.userId },
@@ -149,7 +162,7 @@ export async function unbanUserAction(
     });
 
     await recordAdminAudit({
-      actorId: caller.userId,
+      actorId,
       action: ADMIN_AUDIT_ACTIONS.UNBAN,
       changes: { targetUserId: data.userId },
     });
@@ -178,13 +191,17 @@ export async function impersonateUserAction(
   try {
     const data = targetUserSchema.parse(input);
 
-    const caller = await checkAdminPermission({ user: ["impersonate"] });
-    if (!caller) {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
       return actionError("unauthorized");
     }
+    if (!(await hasAdminPermission({ user: ["impersonate"] }))) {
+      return actionError("unauthorized");
+    }
+    const actorId = session.user.id;
 
     const guard = guardUserMutation({
-      actorId: caller.userId,
+      actorId,
       targetId: data.userId,
       mutation: "impersonate",
     });
@@ -198,7 +215,7 @@ export async function impersonateUserAction(
     });
 
     await recordAdminAudit({
-      actorId: caller.userId,
+      actorId,
       action: ADMIN_AUDIT_ACTIONS.IMPERSONATE,
       changes: { targetUserId: data.userId },
     });
@@ -224,10 +241,14 @@ export async function revokeUserSessionsAction(
   try {
     const data = targetUserSchema.parse(input);
 
-    const caller = await checkAdminPermission({ session: ["revoke"] });
-    if (!caller) {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
       return actionError("unauthorized");
     }
+    if (!(await hasAdminPermission({ session: ["revoke"] }))) {
+      return actionError("unauthorized");
+    }
+    const actorId = session.user.id;
 
     await auth.api.revokeUserSessions({
       body: { userId: data.userId },
@@ -235,7 +256,7 @@ export async function revokeUserSessionsAction(
     });
 
     await recordAdminAudit({
-      actorId: caller.userId,
+      actorId,
       action: ADMIN_AUDIT_ACTIONS.REVOKE_SESSIONS,
       changes: { targetUserId: data.userId },
     });
@@ -263,13 +284,17 @@ export async function removeUserAction(
   try {
     const data = targetUserSchema.parse(input);
 
-    const caller = await checkAdminPermission({ user: ["delete"] });
-    if (!caller) {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
       return actionError("unauthorized");
     }
+    if (!(await hasAdminPermission({ user: ["delete"] }))) {
+      return actionError("unauthorized");
+    }
+    const actorId = session.user.id;
 
     const guard = guardUserMutation({
-      actorId: caller.userId,
+      actorId,
       targetId: data.userId,
       mutation: "delete",
     });
@@ -283,7 +308,7 @@ export async function removeUserAction(
     });
 
     await recordAdminAudit({
-      actorId: caller.userId,
+      actorId,
       action: ADMIN_AUDIT_ACTIONS.DELETE_USER,
       changes: { targetUserId: data.userId },
     });

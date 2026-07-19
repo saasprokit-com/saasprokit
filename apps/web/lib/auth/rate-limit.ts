@@ -2,6 +2,7 @@ import "server-only";
 
 import { database } from "@repo/database";
 import { createRequestLogger } from "@repo/logger/server";
+import { MILLISECONDS_PER_SECOND } from "@repo/utils/date";
 import { getIp } from "better-auth/api";
 import { headers } from "next/headers";
 
@@ -18,8 +19,6 @@ import { headers } from "next/headers";
  * `${ip}|${path}` HTTP keys. Keep every window <= 60s: Better Auth's
  * key-agnostic prune deletes rows older than its own max window (60s).
  */
-
-const MS_PER_SECOND = 1000;
 
 /** Per-scope limits, kept in sync with `packages/auth/server.ts` `rateLimit.customRules`. */
 export const RATE_LIMITS = {
@@ -73,7 +72,7 @@ async function getClientIp(): Promise<string> {
 
 function getRetryAfter(lastRequest: bigint, windowMs: number): number {
   return Math.ceil(
-    (Number(lastRequest) + windowMs - Date.now()) / MS_PER_SECOND
+    (Number(lastRequest) + windowMs - Date.now()) / MILLISECONDS_PER_SECOND
   );
 }
 
@@ -153,5 +152,5 @@ async function consume(
 export async function enforceRateLimit(scope: RateLimitScope): Promise<void> {
   const { max, window } = RATE_LIMITS[scope];
   const ip = await getClientIp();
-  await consume(`sa:${scope}:${ip}`, max, window * MS_PER_SECOND);
+  await consume(`sa:${scope}:${ip}`, max, window * MILLISECONDS_PER_SECOND);
 }
