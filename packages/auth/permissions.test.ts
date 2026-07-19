@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  ADMIN_AREA_ROLES,
   ADMIN_ROLES,
   ORG_ROLES,
   PERMISSIONS,
@@ -7,7 +8,9 @@ import {
   ac,
   adminRole,
   adminRoleDefinitions,
+  canAdmin,
   canOrg,
+  isAdminAreaRole,
   moderatorRole,
   orgAc,
   orgAdminRole,
@@ -235,5 +238,99 @@ describe("canOrg", () => {
     // better-auth stores multi-role members as "a,b" and ORs across them
     expect(canOrg("member,admin", { organization: ["update"] })).toBe(true);
     expect(canOrg("member,admin", { organization: ["delete"] })).toBe(false);
+  });
+});
+
+describe("canAdmin", () => {
+  // These maps gate every platform-admin mutation. moderatorRole holds NO user/session
+  // statements, so a regression that grants any of them to a moderator is a
+  // privilege escalation — the whole "moderators cannot manage users" guarantee.
+  const USER_MUTATIONS = [
+    { user: ["list"] },
+    { user: ["set-role"] },
+    { user: ["ban"] },
+    { user: ["impersonate"] },
+    { user: ["delete"] },
+    { session: ["revoke"] },
+  ];
+
+  it("should grant every user/session mutation to admin", () => {
+    for (const permissions of USER_MUTATIONS) {
+      expect(canAdmin(ADMIN_ROLES.ADMIN, permissions)).toBe(true);
+    }
+  });
+
+  it("should deny every user/session mutation to moderator", () => {
+    for (const permissions of USER_MUTATIONS) {
+      expect(canAdmin(ADMIN_ROLES.MODERATOR, permissions)).toBe(false);
+    }
+  });
+
+  it("should deny every user/session mutation to user", () => {
+    for (const permissions of USER_MUTATIONS) {
+      expect(canAdmin(ADMIN_ROLES.USER, permissions)).toBe(false);
+    }
+  });
+
+  it("should deny impersonate-admins even to admin", () => {
+    // adminAc omits "impersonate-admins", so better-auth blocks admin→admin
+    // impersonation. This pins that block: never grant it in our role map.
+    expect(canAdmin(ADMIN_ROLES.ADMIN, { user: ["impersonate-admins"] })).toBe(
+      false
+    );
+  });
+
+  it("should let admin read organizations and moderator read but not delete", () => {
+    expect(canAdmin(ADMIN_ROLES.MODERATOR, { organization: ["read"] })).toBe(
+      true
+    );
+    expect(canAdmin(ADMIN_ROLES.MODERATOR, { organization: ["delete"] })).toBe(
+      false
+    );
+    expect(canAdmin(ADMIN_ROLES.ADMIN, { organization: ["delete"] })).toBe(true);
+  });
+
+  it("should treat null/undefined/empty role as the default user role", () => {
+    expect(canAdmin(null, { user: ["list"] })).toBe(false);
+    expect(canAdmin(undefined, { user: ["list"] })).toBe(false);
+    expect(canAdmin("", { user: ["list"] })).toBe(false);
+    expect(canAdmin(null, { organization: ["read"] })).toBe(true);
+  });
+
+  it("should OR across a comma-separated role list", () => {
+    expect(canAdmin("user,moderator", { organization: ["read"] })).toBe(true);
+    expect(canAdmin("user,admin", { user: ["ban"] })).toBe(true);
+    expect(canAdmin("user,moderator", { user: ["ban"] })).toBe(false);
+  });
+
+  it("should deny an unknown role or resource rather than throwing", () => {
+    expect(canAdmin("nonexistent", { user: ["list"] })).toBe(false);
+    expect(canAdmin(ADMIN_ROLES.ADMIN, { nonexistent: ["read"] })).toBe(false);
+  });
+});
+
+describe("isAdminAreaRole", () => {
+  it("should admit admin and moderator, reject user", () => {
+    expect(isAdminAreaRole(ADMIN_ROLES.ADMIN)).toBe(true);
+    expect(isAdminAreaRole(ADMIN_ROLES.MODERATOR)).toBe(true);
+    expect(isAdminAreaRole(ADMIN_ROLES.USER)).toBe(false);
+  });
+
+  it("should reject null, undefined, and empty as non-staff", () => {
+    expect(isAdminAreaRole(null)).toBe(false);
+    expect(isAdminAreaRole(undefined)).toBe(false);
+    expect(isAdminAreaRole("")).toBe(false);
+  });
+
+  it("should admit a comma-separated list containing a staff role", () => {
+    expect(isAdminAreaRole("user,moderator")).toBe(true);
+    expect(isAdminAreaRole("user")).toBe(false);
+  });
+
+  it("should expose admin and moderator as the area allowlist", () => {
+    expect([...ADMIN_AREA_ROLES]).toEqual([
+      ADMIN_ROLES.ADMIN,
+      ADMIN_ROLES.MODERATOR,
+    ]);
   });
 });

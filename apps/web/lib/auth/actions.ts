@@ -20,3 +20,23 @@ export async function signOutAction(): Promise<ActionResult> {
     });
   }
 }
+
+/**
+ * End an active impersonation and restore the admin's own session. Better Auth's
+ * stopImpersonating deletes the impersonated session and swaps the parked admin
+ * cookie back in; nextCookies() propagates that Set-Cookie from this server action.
+ */
+export async function stopImpersonatingAction(): Promise<ActionResult> {
+  const logger = createRequestLogger({ action: "stopImpersonating" });
+
+  try {
+    await auth.api.stopImpersonating({ headers: await headers() });
+    return { success: true };
+  } catch (error) {
+    return toActionError(error, {
+      fallback: "unauthorized",
+      baFallback: "unknownError",
+      logger,
+    });
+  }
+}

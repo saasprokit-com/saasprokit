@@ -26,6 +26,7 @@ import {
   ChevronsUpDown,
   LogOut,
   Shield,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
@@ -33,6 +34,8 @@ import type { User } from "./types";
 
 interface NavUserProps {
   accountUrl?: string;
+  /** When set, shows an "Admin" entry linking to the platform-admin area. */
+  adminUrl?: string;
   dangerUrl?: string;
   onSignOut?: () => void;
   onUpgrade?: () => void;
@@ -47,6 +50,7 @@ export function NavUser({
   accountUrl = "/account/profile",
   securityUrl = "/account/security",
   dangerUrl = "/account/danger",
+  adminUrl,
 }: NavUserProps) {
   const { isMobile } = useSidebar();
 
@@ -106,6 +110,19 @@ export function NavUser({
                   <DropdownMenuItem onClick={onUpgrade}>
                     <Sparkles />
                     Upgrade to Pro
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            {adminUrl && (
+              <>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem asChild>
+                    <Link href={adminUrl}>
+                      <ShieldCheck />
+                      Admin
+                    </Link>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />

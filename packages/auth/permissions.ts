@@ -189,3 +189,49 @@ export function canOrg(
           .success === true
     );
 }
+
+/**
+ * Platform-tier analogue of {@link canOrg}: evaluate a User.role against an admin
+ * permission map in memory.
+ *
+ * This is the same evaluation better-auth's admin `userHasPermission` endpoint runs,
+ * so callers that already hold the fresh DB role can skip that round-trip. `User.role`
+ * is nullable and defaults to "user"; a null/empty role is treated as the user role.
+ *
+ * Only pass a role read from the database — never one supplied by the client: this
+ * function trusts its argument completely.
+ */
+export function canAdmin(
+  role: string | null | undefined,
+  permissions: Record<string, string[]>
+): boolean {
+  return (role || ADMIN_ROLES.USER)
+    .split(",")
+    .some(
+      (name) =>
+        adminRoleDefinitions[name as AdminRoleName]?.authorize(permissions)
+          .success === true
+    );
+}
+
+/**
+ * Roles allowed to enter the /admin area at all.
+ *
+ * An explicit allowlist rather than a permission check: no single statement cleanly
+ * separates moderator from user (both hold `organization: ["read"]`), so membership
+ * of the staff area is defined by role name, and finer capabilities inside it are
+ * gated per-action with {@link canAdmin}.
+ */
+export const ADMIN_AREA_ROLES: readonly AdminRoleName[] = [
+  ADMIN_ROLES.ADMIN,
+  ADMIN_ROLES.MODERATOR,
+];
+
+/**
+ * Whether a User.role grants access to the /admin area. Pass a DB-sourced role only.
+ */
+export function isAdminAreaRole(role: string | null | undefined): boolean {
+  return (role || ADMIN_ROLES.USER)
+    .split(",")
+    .some((name) => ADMIN_AREA_ROLES.includes(name as AdminRoleName));
+}

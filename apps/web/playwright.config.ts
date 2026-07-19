@@ -43,10 +43,10 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
       },
     },
-    // Authenticated pages: account, dashboard, members, payment
+    // Authenticated pages: account, admin, dashboard, members, payment
     {
       name: "authenticated",
-      testMatch: /(?:account|dashboard|members|payment)\/.*\.spec\.ts/,
+      testMatch: /(?:account|admin|dashboard|members|payment)\/.*\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         storageState: "e2e/.auth/user.json",

@@ -38,3 +38,10 @@ export async function revalidateAccountPage(subpath: string): Promise<void> {
   const locale = await getLocaleFromRequest();
   revalidatePath(buildLocalePath(locale, `/account/${subpath}`));
 }
+
+export async function revalidateAdminPage(subpath: string): Promise<void> {
+  const locale = await getLocaleFromRequest();
+  revalidatePath(
+    buildLocalePath(locale, subpath ? `/admin/${subpath}` : "/admin")
+  );
+}
