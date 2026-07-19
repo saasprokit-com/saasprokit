@@ -92,7 +92,7 @@ export const getServerSession = cache(async () =>
 
 - **`getServerSession()`** — wrapped in `React.cache`, so the layout, the page, and any helper share a **single** auth round-trip per request.
 - **`requireAuth(returnTo?)`** — returns the session or `redirect`s to `/auth/sign-in?returnTo=…`. Use it in protected pages/layouts.
-- **`hasOrgPermission(orgId, permissions)`** — reuses `getServerSession`, then calls `auth.api.hasPermission(...)`; returns `{ userId }` or `null`. The org-scoped authorization primitive, backed by the roles in `packages/auth/permissions.ts`.
+- **`hasOrgPermission(orgId, permissions)`** — calls `auth.api.hasPermission(...)`, which resolves the caller's session from the request headers via the org plugin's session middleware; returns a `boolean` (`result?.success ?? false`), true when the caller holds the requested capability. The org-scoped authorization primitive, backed by the roles in `packages/auth/permissions.ts`.
 
 The proxy is a coarse gate (is there *a* session?); these helpers are the fine-grained check (is *this* user allowed on *this* org/resource?). A protected page typically relies on the proxy for the redirect and `requireAuth`/`validateOrgMembershipBySlug` for the authoritative check.
 

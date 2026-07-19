@@ -124,14 +124,20 @@ async function cancelActiveStripeSubscriptions(
 /**
  * Cleanup run by Better Auth's `deleteUser.beforeDelete` hook, BEFORE the user
  * row (and its Prisma-cascaded members/invitations/etc.) is removed. Throwing an
- * APIError here aborts the whole deletion — so all validation happens before any
- * irreversible work, and no cancelled subscription is ever left behind on a block.
+ * APIError here aborts the deletion.
  *
- * - Blocks deletion when the user is the sole owner of an organization that still
- *   has other members (they must transfer ownership first).
- * - Deletes organizations where the user is the only member (cancelling the org's
- *   Stripe subscription first) so no orphaned org/subscription is left.
- * - Cancels the user's personal Stripe subscription.
+ * - Validation runs first and is side-effect-free: blocks deletion (throws
+ *   TRANSFER_ORGANIZATION_OWNERSHIP) when the user is the sole owner of an org
+ *   that still has other members.
+ * - DB cleanup (personal + solo-owned-org subscription rows, which have no FK
+ *   cascade, and the solo-owned orgs themselves) runs in a single transaction,
+ *   so a failure mid-way rolls everything back together.
+ * - Stripe cancellations run LAST, after the DB is consistent, so a failed DB
+ *   delete can never leave a cancelled subscription behind; cancelling an
+ *   already-inactive subscription is a no-op.
+ *
+ * Note: Better Auth deletes the user row itself AFTER this hook returns, outside
+ * this transaction — a failure in that later step is outside our control.
  */
 async function cleanUpUserBeforeDelete(user: {
   id: string;
@@ -144,8 +150,9 @@ async function cleanUpUserBeforeDelete(user: {
     select: { organizationId: true },
   });
 
-  // Validate first (no irreversible work yet).
-  const soloOrgIds: string[] = [];
+  // Validate first (no irreversible work yet), capturing each solo-owned org's
+  // Stripe customer id before the org row is deleted.
+  const soloOrgs: { id: string; stripeCustomerId: string | null }[] = [];
   for (const { organizationId } of ownedOrgs) {
     const otherOwners = await database.member.count({
       where: { organizationId, role: ORG_ROLES.OWNER, userId: { not: userId } },
@@ -165,24 +172,30 @@ async function cleanUpUserBeforeDelete(user: {
       });
     }
 
-    soloOrgIds.push(organizationId);
-  }
-
-  // Mutations — past this point nothing throws for validation reasons.
-  await cancelActiveStripeSubscriptions(user.stripeCustomerId ?? null);
-  // Subscription rows have no FK to user/org, so remove them explicitly.
-  await database.subscription.deleteMany({ where: { referenceId: userId } });
-
-  for (const organizationId of soloOrgIds) {
     const org = await database.organization.findUnique({
       where: { id: organizationId },
       select: { stripeCustomerId: true },
     });
-    await cancelActiveStripeSubscriptions(org?.stripeCustomerId ?? null);
-    await database.organization.delete({ where: { id: organizationId } });
-    await database.subscription.deleteMany({
-      where: { referenceId: organizationId },
+    soloOrgs.push({
+      id: organizationId,
+      stripeCustomerId: org?.stripeCustomerId ?? null,
     });
+  }
+
+  // Atomic DB cleanup — all deletes roll back together on any failure.
+  // Subscription rows have no FK to user/org, so remove them explicitly.
+  await database.$transaction([
+    database.subscription.deleteMany({ where: { referenceId: userId } }),
+    ...soloOrgs.flatMap((org) => [
+      database.organization.delete({ where: { id: org.id } }),
+      database.subscription.deleteMany({ where: { referenceId: org.id } }),
+    ]),
+  ]);
+
+  // Irreversible Stripe cancellations run AFTER the DB is consistent.
+  await cancelActiveStripeSubscriptions(user.stripeCustomerId ?? null);
+  for (const org of soloOrgs) {
+    await cancelActiveStripeSubscriptions(org.stripeCustomerId);
   }
 }
 

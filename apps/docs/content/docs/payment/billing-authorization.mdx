@@ -103,15 +103,15 @@ The `billing: ["manage", "view"]` statements in `permissions.ts` belong to the *
 Web Server Actions that mutate billing re-check authorization before calling the plugin API, so the gate holds even outside the plugin's own endpoints. In `apps/web/app/[locale]/(app)/[orgSlug]/billing/actions.ts`, `changePlanAction` calls `hasOrgPermission` before invoking `auth.api.upgradeSubscription`:
 
 ```ts
-const caller = await hasOrgPermission(validated.organizationId, {
+const allowed = await hasOrgPermission(validated.organizationId, {
   organization: ["update"],
 });
-if (!caller) {
+if (!allowed) {
   return actionError("unauthorized");
 }
 ```
 
-`hasOrgPermission` (in `apps/web/lib/auth/auth.ts`) reuses the cached session and calls `auth.api.hasPermission`, requiring the `organization: ["update"]` capability — which only `owner` and `admin` org roles hold per `permissions.ts`. This aligns the Server Action gate with the `canManageBilling` gate: members are excluded from billing mutations at both layers. The subsequent `auth.api.upgradeSubscription` call then passes through `authorizeBillingAction` again inside the plugin.
+`hasOrgPermission` (in `apps/web/lib/auth/auth.ts`) calls `auth.api.hasPermission` — which resolves the caller's session from the request headers via the org plugin's session middleware — and returns a `boolean`, requiring the `organization: ["update"]` capability, which only `owner` and `admin` org roles hold per `permissions.ts`. This aligns the Server Action gate with the `canManageBilling` gate: members are excluded from billing mutations at both layers. The subsequent `auth.api.upgradeSubscription` call then passes through `authorizeBillingAction` again inside the plugin.
 
 ```mermaid
 sequenceDiagram
@@ -123,7 +123,7 @@ sequenceDiagram
 
     C->>SA: change plan(orgId, targetPlan)
     SA->>CP: hasPermission(orgId, organization:[update])
-    CP-->>SA: { userId } or null
+    CP-->>SA: true / false
     alt not owner/admin
         SA-->>C: actionError("unauthorized")
     else owner/admin
