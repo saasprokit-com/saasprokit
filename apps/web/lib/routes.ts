@@ -21,6 +21,11 @@ export const PAGE_ROUTES = {
   ACCOUNT_DANGER: "/account/danger",
   ACCOUNT_NEW_ORG: "/account/new-org",
 
+  // Platform admin
+  ADMIN: "/admin",
+  ADMIN_USERS: "/admin/users",
+  ADMIN_ORGANIZATIONS: "/admin/organizations",
+
   // Invite
   INVITE: "/invite",
   INVITE_ACCEPT: "/invite/accept",
@@ -93,6 +98,28 @@ export const accountRoutes = {
   security: () => PAGE_ROUTES.ACCOUNT_SECURITY,
   danger: () => PAGE_ROUTES.ACCOUNT_DANGER,
   newOrg: () => PAGE_ROUTES.ACCOUNT_NEW_ORG,
+} as const;
+
+/**
+ * Platform-admin page subpaths for cache revalidation (mirrors ORG_PAGES).
+ * DASHBOARD is "" — the /admin index itself.
+ */
+export const ADMIN_PAGES = {
+  DASHBOARD: "",
+  USERS: "users",
+  ORGANIZATIONS: "organizations",
+} as const;
+
+/**
+ * Platform-admin route helpers.
+ */
+export const adminRoutes = {
+  dashboard: () => PAGE_ROUTES.ADMIN,
+  users: () => PAGE_ROUTES.ADMIN_USERS,
+  user: (userId: string) => `${PAGE_ROUTES.ADMIN_USERS}/${userId}`,
+  organizations: () => PAGE_ROUTES.ADMIN_ORGANIZATIONS,
+  organization: (orgId: string) =>
+    `${PAGE_ROUTES.ADMIN_ORGANIZATIONS}/${orgId}`,
 } as const;
 
 // ─── API routes ──────────────────────────────────────────────────────────────

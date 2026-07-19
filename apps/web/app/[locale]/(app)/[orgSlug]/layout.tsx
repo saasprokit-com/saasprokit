@@ -1,4 +1,4 @@
-import { canOrg } from "@repo/auth/permissions";
+import { canOrg, isAdminAreaRole } from "@repo/auth/permissions";
 import { BreadcrumbProvider } from "@repo/design-system/components/layout/breadcrumb-context";
 import { Main } from "@repo/design-system/components/layout/main";
 import { SiteHeader } from "@repo/design-system/components/layout/site-header";
@@ -9,6 +9,7 @@ import {
 import type { ReactNode } from "react";
 import { ActivityTracker } from "@/components/activity-tracker";
 import { requireAuth } from "@/lib/auth/auth";
+import { adminRoutes } from "@/lib/routes";
 import {
   getActiveOrganization,
   getUserOrganizations,
@@ -35,6 +36,11 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   // In-memory check against the role we already hold — no extra query.
   const canManageBilling = canOrg(org.role, { organization: ["update"] });
 
+  // Link visibility only; the /admin area re-gates on a fresh DB role.
+  const adminUrl = isAdminAreaRole(session.user.role)
+    ? `/${locale}${adminRoutes.dashboard()}`
+    : undefined;
+
   const user = {
     name: session.user.name,
     email: session.user.email,
@@ -48,6 +54,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
         activeOrganization={organizations.find(
           (item) => item.id === org.organizationId
         )}
+        adminUrl={adminUrl}
         canManageBilling={canManageBilling}
         defaultOrganizationId={defaultOrganizationId}
         locale={locale}

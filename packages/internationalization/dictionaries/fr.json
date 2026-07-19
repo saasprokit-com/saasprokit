@@ -28,7 +28,9 @@
       "ORGANIZATION_NOT_FOUND": "Organisation introuvable",
       "ORGANIZATION_MEMBERSHIP_LIMIT_REACHED": "Limite de membres de l'organisation atteinte",
       "SLUG_IS_ALREADY_TAKEN": "This slug is already taken. Please choose another.",
-      "ORGANIZATION_ALREADY_EXISTS": "An organization with this name already exists"
+      "ORGANIZATION_ALREADY_EXISTS": "An organization with this name already exists",
+      "BANNED_USER": "Your account has been suspended. Contact support if you believe this is an error.",
+      "YOU_CANNOT_IMPERSONATE_ADMINS": "You cannot impersonate another administrator."
     },
     "fallback": {
       "inviteMember": "Échec de l'envoi de l'invitation",
@@ -115,7 +117,15 @@
       "sessionNotFound": "Session not found",
       "slugAlreadyTaken": "This slug is already taken. Please choose another.",
       "memberLimitReached": "Cette organisation a atteint sa limite de membres",
-      "invalidImageUrl": "URL d'image invalide"
+      "invalidImageUrl": "URL d'image invalide",
+      "banUser": "Failed to ban user",
+      "unbanUser": "Failed to unban user",
+      "impersonateUser": "Failed to impersonate user",
+      "revokeUserSessions": "Failed to revoke user sessions",
+      "deleteUser": "Failed to delete user",
+      "cannotBanSelf": "You cannot ban your own account",
+      "cannotDeleteSelf": "You cannot delete your own account",
+      "orgHasActiveSubscription": "Cancel the organization's active subscription in Stripe before deleting it"
     }
   }
 }

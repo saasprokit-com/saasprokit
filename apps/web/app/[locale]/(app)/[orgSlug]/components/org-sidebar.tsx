@@ -32,6 +32,8 @@ import { setDefaultWorkspaceAction } from "../actions";
 
 interface OrgSidebarProps {
   activeOrganization?: UserOrganization;
+  /** Present when the signed-in user is platform staff; links to /admin. */
+  adminUrl?: string;
   canManageBilling: boolean;
   defaultOrganizationId?: string | null;
   locale: string;
@@ -48,6 +50,7 @@ export function OrgSidebar({
   locale,
   orgSlug,
   canManageBilling,
+  adminUrl,
 }: OrgSidebarProps) {
   const router = useRouter();
   const [_isPending, startTransition] = useTransition();
@@ -148,7 +151,7 @@ export function OrgSidebar({
       </SidebarContent>
 
       <SidebarFooter>
-        <NavUser onSignOut={handleSignOut} user={user} />
+        <NavUser adminUrl={adminUrl} onSignOut={handleSignOut} user={user} />
       </SidebarFooter>
 
       <SidebarRail />

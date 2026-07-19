@@ -5,6 +5,7 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@repo/design-system/components/ui/sidebar";
+import { isAdminAreaRole } from "@repo/auth/permissions";
 import type { ReactNode } from "react";
 import { ActivityTracker } from "@/components/activity-tracker";
 import { requireAuth } from "@/lib/auth/auth";
@@ -20,11 +21,16 @@ export default async function AccountLayout({
   params,
 }: AccountLayoutProps) {
   const [{ locale }, session] = await Promise.all([params, requireAuth()]);
+  const showAdmin = isAdminAreaRole(session.user.role);
 
   return (
     <SidebarProvider>
       <ActivityTracker />
-      <AccountSidebar locale={locale} user={session.user} />
+      <AccountSidebar
+        locale={locale}
+        showAdmin={showAdmin}
+        user={session.user}
+      />
 
       <SidebarInset>
         <BreadcrumbProvider>

@@ -18,3 +18,21 @@ export function requireStripeClient(): StripeInstance {
   }
   return stripeClient;
 }
+
+const STRIPE_DASHBOARD_URL = "https://dashboard.stripe.com";
+
+/**
+ * Whether the configured secret key is a Stripe test-mode key (`sk_test_…`).
+ * Test-mode dashboard deep links require a `/test` path segment; live keys and
+ * a missing key both resolve to live URLs.
+ */
+export const isStripeTestMode =
+  env.STRIPE_SECRET_KEY?.startsWith("sk_test_") ?? false;
+
+/**
+ * Deep link to a customer in the Stripe Dashboard for the configured mode
+ * (e.g. `.../test/customers/cus_…` in test mode, `.../customers/cus_…` in live).
+ */
+export function stripeCustomerDashboardUrl(customerId: string): string {
+  return `${STRIPE_DASHBOARD_URL}/${isStripeTestMode ? "test/" : ""}customers/${customerId}`;
+}

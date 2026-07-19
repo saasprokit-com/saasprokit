@@ -28,7 +28,11 @@ import {
 } from "@repo/utils/payment";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { APIError } from "better-auth/api";
+import {
+  APIError,
+  createAuthMiddleware,
+  getSessionFromCtx,
+} from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { admin } from "better-auth/plugins/admin";
 import { emailOTP } from "better-auth/plugins/email-otp";
@@ -214,6 +218,33 @@ export const auth = betterAuth({
 
   advanced: {
     useSecureCookies: process.env.NODE_ENV === "production",
+  },
+
+  // Central request hooks
+  hooks: {
+    // Better Auth's admin `setRole` endpoint has NO self-guard, so on its own an
+    // admin could strip their own role and lock themselves out. Enforce the
+    // invariant here — at the auth layer — so it holds for every caller (the
+    // /admin server action's guardUserMutation is only the friendly first-line
+    // message; this is the authoritative backstop, matching how Better Auth
+    // already self-blocks ban / delete / admin-impersonation).
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== "/admin/set-role") {
+        return;
+      }
+      const targetUserId = (ctx.body as { userId?: string } | null)?.userId;
+      const session = await getSessionFromCtx(ctx);
+      if (
+        session?.user?.id &&
+        targetUserId &&
+        session.user.id === targetUserId
+      ) {
+        throw new APIError("BAD_REQUEST", {
+          code: "CANNOT_CHANGE_OWN_ROLE",
+          message: "You cannot change your own role.",
+        });
+      }
+    }),
   },
 
   // Rate limiting — persistent storage for serverless (Vercel)

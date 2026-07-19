@@ -33,20 +33,27 @@ import {
   ChevronsUpDown,
   Lock,
   LogOut,
+  ShieldCheck,
   Trash2,
   User as UserIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOutAction } from "@/lib/auth/actions";
-import { accountRoutes, PAGE_ROUTES } from "@/lib/routes";
+import { accountRoutes, adminRoutes, PAGE_ROUTES } from "@/lib/routes";
 
 interface AccountSidebarProps {
   locale: string;
+  /** When true, the signed-in user is platform staff; shows an Administration link. */
+  showAdmin?: boolean;
   user: User;
 }
 
-export function AccountSidebar({ user, locale }: AccountSidebarProps) {
+export function AccountSidebar({
+  user,
+  locale,
+  showAdmin,
+}: AccountSidebarProps) {
   const router = useRouter();
 
   // Build navigation items with locale-aware URLs
@@ -71,6 +78,20 @@ export function AccountSidebar({ user, locale }: AccountSidebarProps) {
         },
       ],
     },
+    ...(showAdmin
+      ? [
+          {
+            title: "Administration",
+            items: [
+              {
+                title: "Admin Console",
+                url: `/${locale}${adminRoutes.dashboard()}`,
+                icon: ShieldCheck,
+              },
+            ],
+          },
+        ]
+      : []),
   ];
 
   const handleSignOut = async () => {

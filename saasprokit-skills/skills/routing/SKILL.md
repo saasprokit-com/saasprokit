@@ -41,12 +41,18 @@ It also generates a per-request CSP nonce and sets `x-nonce` on the response (vi
 All routes are defined in `apps/web/lib/routes.ts`:
 
 ```typescript
-import { PAGE_ROUTES, orgRoutes, API_ROUTES } from "@/lib/routes";
+import { PAGE_ROUTES, orgRoutes, adminRoutes, API_ROUTES } from "@/lib/routes";
 
 PAGE_ROUTES.SIGN_IN        // "/auth/sign-in"
 orgRoutes.billing("my-org") // "/my-org/billing"
+adminRoutes.user(userId)    // "/admin/users/{userId}"
 API_ROUTES.ORG_CHECKOUT(id) // "/api/organizations/{id}/checkout"
 ```
+
+`/admin` is a protected subtree: the default-deny middleware forces sign-in, and
+role gating happens **server-side** in the admin layout/pages via `requireAdminArea`
+(no `proxy.ts` change needed). `"admin"` is a reserved slug (`packages/utils/slug.ts`),
+so it never collides with a top-level org slug.
 
 ## Locale Handling
 
