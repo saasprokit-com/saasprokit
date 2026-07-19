@@ -9,6 +9,13 @@
  * Source files live in `ba-errors/[locale].json`, registered in
  * `languine.json` so `pnpm --filter internationalization translate` keeps
  * machine-translating them.
+ *
+ * Keys are the EXACT error codes Better Auth throws (its `$ERROR_CODES`
+ * tables + BASE_ERROR_CODES), covering every registered plugin: base auth,
+ * admin, email-otp, two-factor, organization, and stripe — plus the
+ * app-thrown `TRANSFER_ORGANIZATION_OWNERSHIP`. To keep parity, never rename
+ * a key away from its Better Auth code, and add new codes to all six files
+ * (enforced by `packages/auth/ba-i18n.test.ts`).
  */
 import de from "./ba-errors/de.json" with { type: "json" };
 import en from "./ba-errors/en.json" with { type: "json" };

@@ -16,7 +16,7 @@ import { baErrorMessage, toActionError } from "./action-error";
 /** Shape thrown by Better Auth after the @better-auth/i18n plugin translated it. */
 function translatedAPIError(message: string, originalMessage: string) {
   return Object.assign(new Error(message), {
-    body: { code: "SLUG_IS_ALREADY_TAKEN", message, originalMessage },
+    body: { code: "ORGANIZATION_SLUG_ALREADY_TAKEN", message, originalMessage },
   });
 }
 
