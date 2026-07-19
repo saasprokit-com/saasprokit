@@ -3,11 +3,7 @@
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
-import {
-  type ActionErrorCode,
-  actionError,
-  toActionError,
-} from "@/lib/auth/action-error";
+import { actionError, toActionError } from "@/lib/auth/action-error";
 import { checkAdminPermission } from "@/lib/auth/admin";
 import type { ActionResult } from "@/lib/auth/auth";
 import { revalidateAdminPage } from "@/lib/infrastructure/revalidation";
@@ -47,7 +43,7 @@ export async function setUserRoleAction(
       mutation: "set-role",
     });
     if (!guard.ok) {
-      return actionError(guard.code as ActionErrorCode);
+      return actionError(guard.code);
     }
 
     await auth.api.setRole({
@@ -95,7 +91,7 @@ export async function banUserAction(
       mutation: "ban",
     });
     if (!guard.ok) {
-      return actionError(guard.code as ActionErrorCode);
+      return actionError(guard.code);
     }
 
     await auth.api.banUser({
@@ -193,7 +189,7 @@ export async function impersonateUserAction(
       mutation: "impersonate",
     });
     if (!guard.ok) {
-      return actionError(guard.code as ActionErrorCode);
+      return actionError(guard.code);
     }
 
     await auth.api.impersonateUser({
@@ -278,7 +274,7 @@ export async function removeUserAction(
       mutation: "delete",
     });
     if (!guard.ok) {
-      return actionError(guard.code as ActionErrorCode);
+      return actionError(guard.code);
     }
 
     await auth.api.removeUser({

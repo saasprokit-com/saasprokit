@@ -30,8 +30,9 @@ interface RecordAdminAuditInput {
 /**
  * Write an audit entry for a platform-admin mutation.
  *
- * Log-and-continue: an audit failure must never abort the mutation it records, so
- * callers do not await a result that can throw. `actorId` is the acting staff member
+ * Log-and-continue: this swallows its own errors and never rejects, so a caller can
+ * await it (awaiting keeps the write alive on serverless) without an audit failure
+ * ever aborting the mutation it records. `actorId` is the acting staff member
  * (AuditLog.userId), which is why deleting that admin later cascades their entries.
  */
 export async function recordAdminAudit(

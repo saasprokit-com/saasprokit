@@ -35,14 +35,18 @@ export function RevokeSessionsDialog({
   const handleConfirm = () => {
     startTransition(async () => {
       const result = await revokeUserSessionsAction({ userId: user.id });
-      if (result.success) {
-        toast.success("Sessions revoked", {
-          description: `${user.name || user.email} has been signed out of all sessions.`,
-        });
-        onOpenChange(false);
-      } else {
+      if (!result.success) {
         toast.error(result.error || errors.revokeUserSessions);
+        return;
       }
+      toast.success("Sessions revoked", {
+        description: `${user.name || user.email} has been signed out of all sessions.`,
+      });
+      // Re-enter the transition: state updates after an await must be re-wrapped,
+      // or they fall out of it and close the dialog before the list revalidates.
+      startTransition(() => {
+        onOpenChange(false);
+      });
     });
   };
 

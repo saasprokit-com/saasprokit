@@ -7,8 +7,11 @@
  * can be unit-tested exhaustively — the "moderators cannot manage users" guarantee is
  * enforced separately by checkAdminPermission.
  *
- * The returned `code` is an errors.action dictionary key.
+ * The returned `code` is an errors.action dictionary key, so callers can hand it
+ * straight to actionError() with no cast.
  */
+import type { ActionErrorCode } from "@/lib/auth/action-error";
+
 export type UserMutationKind =
   | "set-role"
   | "ban"
@@ -22,9 +25,9 @@ interface GuardInput {
   targetId: string;
 }
 
-type GuardResult = { ok: true } | { ok: false; code: string };
+type GuardResult = { ok: true } | { ok: false; code: ActionErrorCode };
 
-const SELF_TARGET_CODES: Partial<Record<UserMutationKind, string>> = {
+const SELF_TARGET_CODES: Partial<Record<UserMutationKind, ActionErrorCode>> = {
   "set-role": "cannotChangeSelfRole",
   ban: "cannotBanSelf",
   delete: "cannotDeleteSelf",

@@ -52,18 +52,22 @@ export function DeleteOrgDialog({
     }
     startTransition(async () => {
       const result = await deleteOrganizationAction({ organizationId: org.id });
-      if (result.success) {
-        toast.success("Organization deleted", {
-          description: `${org.name} was permanently deleted.`,
-        });
-        setConfirmValue("");
-        onOpenChange(false);
-        router.refresh();
-      } else {
+      if (!result.success) {
         toast.error(errors.deleteOrganization, {
           description: result.error ?? "Something went wrong",
         });
+        return;
       }
+      toast.success("Organization deleted", {
+        description: `${org.name} was permanently deleted.`,
+      });
+      // Re-enter the transition: state updates after an await must be re-wrapped,
+      // or they fall out of it and close the dialog before the list revalidates.
+      startTransition(() => {
+        setConfirmValue("");
+        onOpenChange(false);
+        router.refresh();
+      });
     });
   };
 

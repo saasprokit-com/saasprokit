@@ -77,14 +77,18 @@ export function SetRoleDialog({
   const onSubmit = (values: SetUserRoleInput) => {
     startTransition(async () => {
       const result = await setUserRoleAction(values);
-      if (result.success) {
-        toast.success("Role updated", {
-          description: `${user.name || user.email} is now ${values.role}`,
-        });
-        onOpenChange(false);
-      } else {
+      if (!result.success) {
         toast.error(result.error || errors.updateRole);
+        return;
       }
+      toast.success("Role updated", {
+        description: `${user.name || user.email} is now ${values.role}`,
+      });
+      // Re-enter the transition: state updates after an await must be re-wrapped,
+      // or they fall out of it and close the dialog before the list revalidates.
+      startTransition(() => {
+        onOpenChange(false);
+      });
     });
   };
 

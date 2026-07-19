@@ -55,15 +55,19 @@ export function BanUserDialog({
   const onSubmit = (values: BanUserInput) => {
     startTransition(async () => {
       const result = await banUserAction(values);
-      if (result.success) {
-        toast.success("User banned", {
-          description: `${user.name || user.email} has been banned and their sessions revoked.`,
-        });
+      if (!result.success) {
+        toast.error(result.error || errors.banUser);
+        return;
+      }
+      toast.success("User banned", {
+        description: `${user.name || user.email} has been banned and their sessions revoked.`,
+      });
+      // Re-enter the transition: state updates after an await must be re-wrapped,
+      // or they fall out of it and close the dialog before the list revalidates.
+      startTransition(() => {
         onOpenChange(false);
         form.reset();
-      } else {
-        toast.error(result.error || errors.banUser);
-      }
+      });
     });
   };
 

@@ -50,12 +50,16 @@ export function DeleteUserDialog({
     }
     startTransition(async () => {
       const result = await removeUserAction({ userId: user.id });
-      if (result.success) {
-        toast.success("User deleted");
-        handleOpenChange(false);
-      } else {
+      if (!result.success) {
         toast.error(result.error || errors.deleteUser);
+        return;
       }
+      toast.success("User deleted");
+      // Re-enter the transition: state updates after an await must be re-wrapped,
+      // or they fall out of it and close the dialog before the list revalidates.
+      startTransition(() => {
+        handleOpenChange(false);
+      });
     });
   };
 
