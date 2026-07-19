@@ -59,7 +59,7 @@ export async function getAdminUsers({
   perPage,
   sort,
   q,
-  role,
+  roles,
   status,
 }: UsersSearchParams): Promise<GetListPayload<AdminUserRow>> {
   const skip = (page - 1) * perPage;
@@ -76,8 +76,8 @@ export async function getAdminUsers({
   }
 
   // Role filter
-  if (role.length > 0) {
-    where.role = { in: role };
+  if (roles.length > 0) {
+    where.role = { in: roles };
   }
 
   // Status filter — NOT covers the nullable `banned` column for "active".

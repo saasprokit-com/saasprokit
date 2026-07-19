@@ -19,7 +19,7 @@ interface OrgsTableProps {
 
 const filterFields = [
   { id: "name", urlKey: "q", type: "string" as const },
-  { id: "plan", urlKey: "plan", type: "array" as const },
+  { id: "plan", urlKey: "plans", type: "array" as const },
 ];
 
 export function OrgsTable({ orgsPromise, errors, isAdmin }: OrgsTableProps) {

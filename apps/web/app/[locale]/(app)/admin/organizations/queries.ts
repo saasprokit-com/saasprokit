@@ -57,7 +57,7 @@ export async function getAdminOrgs({
   perPage,
   sort,
   q,
-  plan,
+  plans,
 }: OrgsSearchParams): Promise<GetListPayload<AdminOrgRow>> {
   const skip = (page - 1) * perPage;
   const take = perPage;
@@ -76,9 +76,9 @@ export async function getAdminOrgs({
 
   // Plan filter. Subscriptions are not FK-related to organizations, so match by
   // pre-querying referenceIds. "free" means "no active subscription".
-  if (plan.length > 0) {
-    const paidPlans = plan.filter((name) => name !== PLAN_NAMES.FREE);
-    const includeFree = plan.includes(PLAN_NAMES.FREE);
+  if (plans.length > 0) {
+    const paidPlans = plans.filter((name) => name !== PLAN_NAMES.FREE);
+    const includeFree = plans.includes(PLAN_NAMES.FREE);
     const planConditions: Prisma.OrganizationWhereInput[] = [];
 
     if (paidPlans.length > 0) {

@@ -19,7 +19,7 @@ interface UsersTableProps {
 
 const filterFields = [
   { id: "name", urlKey: "q", type: "string" as const },
-  { id: "role", urlKey: "role", type: "array" as const },
+  { id: "role", urlKey: "roles", type: "array" as const },
   { id: "banned", urlKey: "status", type: "string" as const },
 ];
 

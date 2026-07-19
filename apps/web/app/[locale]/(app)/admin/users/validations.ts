@@ -12,7 +12,7 @@ export const usersSearchParamsCache = createSearchParamsCache({
   perPage: parseAsInteger.withDefault(10),
   sort: sortingStateParser.withDefault([]),
   q: parseAsString.withDefault(""),
-  role: parseAsArrayOf(parseAsString).withDefault([]),
+  roles: parseAsArrayOf(parseAsString).withDefault([]),
   status: parseAsStringLiteral([
     "all",
     "active",

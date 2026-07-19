@@ -22,6 +22,7 @@ import { Input } from "@repo/design-system/components/ui/input";
 import { Textarea } from "@repo/design-system/components/ui/textarea";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -47,19 +48,23 @@ export function BanUserDialog({
     defaultValues: { userId: user.id },
   });
 
-  const isPending = form.formState.isSubmitting;
+  const [isPending, startTransition] = useTransition();
 
-  const onSubmit = async (values: BanUserInput) => {
-    const result = await banUserAction(values);
-    if (result.success) {
-      toast.success("User banned", {
-        description: `${user.name || user.email} has been banned and their sessions revoked.`,
-      });
-      onOpenChange(false);
-      form.reset();
-    } else {
-      toast.error(result.error || errors.banUser);
-    }
+  // isPending (not formState.isSubmitting): the action revalidates, so the spinner
+  // must stay up until the refreshed table commits.
+  const onSubmit = (values: BanUserInput) => {
+    startTransition(async () => {
+      const result = await banUserAction(values);
+      if (result.success) {
+        toast.success("User banned", {
+          description: `${user.name || user.email} has been banned and their sessions revoked.`,
+        });
+        onOpenChange(false);
+        form.reset();
+      } else {
+        toast.error(result.error || errors.banUser);
+      }
+    });
   };
 
   return (

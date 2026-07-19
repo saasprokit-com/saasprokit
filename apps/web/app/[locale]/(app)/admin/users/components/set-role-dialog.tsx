@@ -28,6 +28,7 @@ import {
 } from "@repo/design-system/components/ui/select";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2, Shield, ShieldCheck, User } from "lucide-react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -69,18 +70,22 @@ export function SetRoleDialog({
     defaultValues: { userId: user.id, role: normalizeRole(user.role) },
   });
 
-  const isPending = form.formState.isSubmitting;
+  const [isPending, startTransition] = useTransition();
 
-  const onSubmit = async (values: SetUserRoleInput) => {
-    const result = await setUserRoleAction(values);
-    if (result.success) {
-      toast.success("Role updated", {
-        description: `${user.name || user.email} is now ${values.role}`,
-      });
-      onOpenChange(false);
-    } else {
-      toast.error(result.error || errors.updateRole);
-    }
+  // isPending (not formState.isSubmitting): the action revalidates, so the spinner
+  // must stay up until the refreshed table commits.
+  const onSubmit = (values: SetUserRoleInput) => {
+    startTransition(async () => {
+      const result = await setUserRoleAction(values);
+      if (result.success) {
+        toast.success("Role updated", {
+          description: `${user.name || user.email} is now ${values.role}`,
+        });
+        onOpenChange(false);
+      } else {
+        toast.error(result.error || errors.updateRole);
+      }
+    });
   };
 
   return (

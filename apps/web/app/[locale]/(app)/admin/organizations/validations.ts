@@ -11,7 +11,7 @@ export const orgsSearchParamsCache = createSearchParamsCache({
   perPage: parseAsInteger.withDefault(10),
   sort: sortingStateParser.withDefault([]),
   q: parseAsString.withDefault(""),
-  plan: parseAsArrayOf(parseAsString).withDefault([]),
+  plans: parseAsArrayOf(parseAsString).withDefault([]),
 });
 
 export type OrgsSearchParams = Awaited<
