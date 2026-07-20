@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
-import { PAGE_ROUTES } from "@/lib/routes";
+import { resolveCallbackUrl } from "@/lib/routes";
 
 const socialProviderSchema = z.enum(["google", "github"]);
 
@@ -16,7 +16,8 @@ const socialProviderSchema = z.enum(["google", "github"]);
  * client navigates there. The OAuth state cookie is set via `nextCookies`.
  */
 export async function signInSocialAction(
-  provider: string
+  provider: string,
+  callbackUrl?: string
 ): Promise<ActionResult<{ url?: string }>> {
   const logger = createRequestLogger({ action: "signInSocial" });
 
@@ -27,7 +28,7 @@ export async function signInSocialAction(
       headers: await headers(),
       body: {
         provider: validated,
-        callbackURL: PAGE_ROUTES.ORG,
+        callbackURL: resolveCallbackUrl(callbackUrl),
         disableRedirect: true,
       },
     });

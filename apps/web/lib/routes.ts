@@ -50,7 +50,22 @@ export const PUBLIC_ROUTE_EXACT = [PAGE_ROUTES.HOME] as const;
  * from a real `/acme` without a database lookup, and default-deny is the safe
  * answer for that ambiguity.
  */
-export const PUBLIC_ROUTE_PREFIXES = [] as readonly string[];
+export const PUBLIC_ROUTE_PREFIXES = [PAGE_ROUTES.INVITE] as readonly string[];
+
+/**
+ * Sanitize a post-auth redirect target. Only same-origin relative paths are
+ * allowed; anything else (absolute URLs, protocol-relative `//host`, backslash
+ * tricks, empty/invalid input) falls back to the org dashboard. Guards against
+ * open-redirect via the `callbackUrl` query param.
+ */
+export function resolveCallbackUrl(raw: string | null | undefined): string {
+  if (typeof raw !== "string" || raw.length === 0) {
+    return PAGE_ROUTES.ORG;
+  }
+  const safe =
+    raw.startsWith("/") && !raw.startsWith("//") && !raw.includes("\\");
+  return safe ? raw : PAGE_ROUTES.ORG;
+}
 
 /**
  * Auth pages that should redirect logged-in users away.

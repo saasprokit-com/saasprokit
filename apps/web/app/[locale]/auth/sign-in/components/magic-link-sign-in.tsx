@@ -10,14 +10,15 @@ import { useState } from "react";
 import { signInMagicLinkAction } from "../actions";
 
 interface MagicLinkSignInProps {
+  callbackUrl: string;
   errors: ActionErrorMessages;
 }
 
-export function MagicLinkSignIn({ errors }: MagicLinkSignInProps) {
+export function MagicLinkSignIn({ callbackUrl, errors }: MagicLinkSignInProps) {
   const [success, setSuccess] = useState(false);
 
   async function handleSubmit(data: MagicLinkFormValues) {
-    const result = await signInMagicLinkAction(data);
+    const result = await signInMagicLinkAction(data, callbackUrl);
 
     if (!result.success) {
       throw new Error(result.error || errors.sendMagicLink);

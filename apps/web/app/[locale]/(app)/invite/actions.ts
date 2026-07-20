@@ -1,5 +1,6 @@
 "use server";
 
+import type { OrgRoleName } from "@repo/auth/permissions";
 import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
 import { INVITATION_STATUS } from "@repo/utils/organization";
@@ -130,12 +131,12 @@ export async function acceptInvitationFormAction(
 }
 
 /**
- * Accept an invite link
+ * Accept an invite link.
  *
- * Complexity justified by:
- * - Multiple validation checks (expiry, active status, existing member)
- * - Transaction-based race condition prevention
- * - Comprehensive error handling with specific messages
+ * The invite-link rules (active, expiry, maxUses) are this app's own feature, so
+ * they are checked here; `canOrgAddMember` is the Stripe plan seat cap. Better
+ * Auth owns the membership write via `addMember`, which validates duplicates and
+ * its membership limit and runs member hooks.
  */
 export async function acceptInviteLinkAction(
   input: z.infer<typeof acceptInviteLinkSchema>
@@ -149,7 +150,6 @@ export async function acceptInviteLinkAction(
       return actionError("signInRequired");
     }
 
-    // Find the invite link
     const inviteLink = await database.inviteLink.findUnique({
       where: { token: validated.token },
       include: {
@@ -162,85 +162,41 @@ export async function acceptInviteLinkAction(
     if (!inviteLink) {
       return actionError("invalidInviteLink");
     }
-
-    // Check if active
     if (!inviteLink.isActive) {
       return actionError("inviteLinkRevoked");
     }
-
-    // Check expiry
     if (inviteLink.expiresAt && new Date(inviteLink.expiresAt) < new Date()) {
       return actionError("inviteLinkExpired");
     }
-
-    // Check if already a member (can be done outside transaction)
-    const existingMember = await database.member.findFirst({
-      where: {
-        organizationId: inviteLink.organizationId,
-        userId: session.user.id,
-      },
-    });
-
-    if (existingMember) {
-      return {
-        success: true,
-        data: { organizationSlug: inviteLink.organization.slug },
-      };
+    if (
+      inviteLink.maxUses !== null &&
+      inviteLink.usedCount >= inviteLink.maxUses
+    ) {
+      return actionError("inviteLinkUsageLimitReached");
     }
 
-    // Check member capacity before joining
+    // Plan seat cap (Stripe) — Better Auth has no billing concept.
     const memberCheck = await canOrgAddMember(inviteLink.organizationId);
     if (!memberCheck.allowed) {
       return actionError("memberLimitReached");
     }
 
-    // SECURITY: Move maxUses check INSIDE transaction to prevent race condition
-    // This ensures that between the check and the increment, no other request can slip through
-    // Issue: In original code, two concurrent requests could both read usedCount=0 before either increments
-    try {
-      await database.$transaction(async (tx) => {
-        // Re-fetch the link with latest count inside transaction
-        const latestLink = await tx.inviteLink.findUnique({
-          where: { id: inviteLink.id },
-        });
+    // Better Auth owns the membership: validates duplicates + its own
+    // membership limit and runs member-creation hooks.
+    await auth.api.addMember({
+      body: {
+        userId: session.user.id,
+        organizationId: inviteLink.organizationId,
+        // Validated to admin|member at link creation (invite-links schema).
+        role: inviteLink.role as OrgRoleName,
+      },
+      headers: await headers(),
+    });
 
-        if (!latestLink) {
-          throw new Error("Invite link not found");
-        }
-
-        // Now check maxUses with the current (locked) value
-        if (
-          latestLink.maxUses !== null &&
-          latestLink.usedCount >= latestLink.maxUses
-        ) {
-          throw new Error("Invite link usage limit reached");
-        }
-
-        // Create member
-        await tx.member.create({
-          data: {
-            organizationId: inviteLink.organizationId,
-            userId: session.user.id,
-            role: inviteLink.role,
-          },
-        });
-
-        // Increment count atomically
-        await tx.inviteLink.update({
-          where: { id: inviteLink.id },
-          data: { usedCount: { increment: 1 } },
-        });
-      });
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message === "Invite link usage limit reached"
-      ) {
-        return actionError("inviteLinkUsageLimitReached");
-      }
-
-      throw error;
-    }
+    await database.inviteLink.update({
+      where: { id: inviteLink.id },
+      data: { usedCount: { increment: 1 } },
+    });
 
     return {
       success: true,

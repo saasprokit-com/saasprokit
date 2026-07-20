@@ -19,6 +19,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { getServerSession } from "@/lib/auth/auth";
+import { PAGE_ROUTES } from "@/lib/routes";
 import { getInviteLinkDetails } from "../queries";
 import { JoinButton } from "./join-button";
 
@@ -238,13 +239,13 @@ export default async function InviteLinkPage({ params }: InviteLinkPageProps) {
             <div className="flex w-full flex-col gap-2">
               <Link
                 className="w-full rounded-md bg-primary px-4 py-2 text-center text-primary-foreground text-sm hover:bg-primary/90"
-                href={`/auth/sign-in?callbackUrl=${encodeURIComponent(`/invite/${token}`)}`}
+                href={`${PAGE_ROUTES.SIGN_IN}?callbackUrl=${encodeURIComponent(`/invite/${token}`)}`}
               >
                 Sign in to join
               </Link>
               <Link
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-center text-sm hover:bg-accent"
-                href={`/auth/sign-up?callbackUrl=${encodeURIComponent(`/invite/${token}`)}`}
+                href={`${PAGE_ROUTES.SIGN_UP}?callbackUrl=${encodeURIComponent(`/invite/${token}`)}`}
               >
                 Create an account
               </Link>

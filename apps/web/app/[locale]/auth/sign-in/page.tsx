@@ -6,6 +6,7 @@ import {
 } from "@repo/design-system/components/ui/tabs";
 import { getDictionary } from "@repo/internationalization";
 import { KeyRound, Mail, Sparkles } from "lucide-react";
+import { resolveCallbackUrl } from "@/lib/routes";
 import { EmailOtpSignIn } from "./components/email-otp-sign-in";
 import { MagicLinkSignIn } from "./components/magic-link-sign-in";
 import { PasswordSignIn } from "./components/password-sign-in";
@@ -21,16 +22,20 @@ function resolveTab(tab: string | undefined): SignInTab {
 
 interface SignInPageProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; callbackUrl?: string }>;
 }
 
 export default async function SignInPage({
   params,
   searchParams,
 }: SignInPageProps) {
-  const [{ locale }, { tab }] = await Promise.all([params, searchParams]);
+  const [{ locale }, { tab, callbackUrl: rawCallbackUrl }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const dict = await getDictionary(locale);
   const errors = dict.errors.action;
+  const callbackUrl = resolveCallbackUrl(rawCallbackUrl);
 
   return (
     <div className="w-full max-w-md">
@@ -51,15 +56,15 @@ export default async function SignInPage({
         </TabsList>
 
         <TabsContent className="mt-6" value="password">
-          <PasswordSignIn errors={errors} />
+          <PasswordSignIn callbackUrl={callbackUrl} errors={errors} />
         </TabsContent>
 
         <TabsContent className="mt-6" value="magic-link">
-          <MagicLinkSignIn errors={errors} />
+          <MagicLinkSignIn callbackUrl={callbackUrl} errors={errors} />
         </TabsContent>
 
         <TabsContent className="mt-6" value="otp">
-          <EmailOtpSignIn errors={errors} />
+          <EmailOtpSignIn callbackUrl={callbackUrl} errors={errors} />
         </TabsContent>
       </Tabs>
     </div>

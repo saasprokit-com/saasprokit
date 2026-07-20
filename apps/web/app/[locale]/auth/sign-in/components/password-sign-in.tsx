@@ -13,10 +13,11 @@ import { signInSocialAction } from "../../actions";
 import { signInEmailAction } from "../actions";
 
 interface PasswordSignInProps {
+  callbackUrl: string;
   errors: ActionErrorMessages;
 }
 
-export function PasswordSignIn({ errors }: PasswordSignInProps) {
+export function PasswordSignIn({ callbackUrl, errors }: PasswordSignInProps) {
   const router = useRouter();
 
   async function handleSubmit(data: SignInFormValues) {
@@ -31,12 +32,12 @@ export function PasswordSignIn({ errors }: PasswordSignInProps) {
       return;
     }
 
-    router.push(PAGE_ROUTES.ORG);
+    router.push(callbackUrl);
     router.refresh();
   }
 
   async function handleSocialLogin(provider: SocialProvider) {
-    const result = await signInSocialAction(provider);
+    const result = await signInSocialAction(provider, callbackUrl);
 
     if (result.success && result.data?.url) {
       window.location.href = result.data.url;

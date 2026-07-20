@@ -15,6 +15,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "@/lib/auth/auth";
+import { PAGE_ROUTES } from "@/lib/routes";
 
 import { getInvitationDetails } from "../queries";
 import { AcceptInvitationButton } from "./accept-button";
@@ -43,13 +44,13 @@ function InvitationFooter({
       <div className="flex w-full flex-col gap-2">
         <Link
           className="w-full rounded-md bg-primary px-4 py-2 text-center text-primary-foreground text-sm hover:bg-primary/90"
-          href={`/auth/sign-in?callbackUrl=${encodeURIComponent(`/invite/accept?token=${invitationId}`)}`}
+          href={`${PAGE_ROUTES.SIGN_IN}?callbackUrl=${encodeURIComponent(`/invite/accept?token=${invitationId}`)}`}
         >
           Sign in to accept
         </Link>
         <Link
           className="w-full rounded-md border border-input bg-background px-4 py-2 text-center text-sm hover:bg-accent"
-          href={`/auth/sign-up?callbackUrl=${encodeURIComponent(`/invite/accept?token=${invitationId}`)}`}
+          href={`${PAGE_ROUTES.SIGN_UP}?callbackUrl=${encodeURIComponent(`/invite/accept?token=${invitationId}`)}`}
         >
           Create account to accept
         </Link>
@@ -73,7 +74,7 @@ function InvitationFooter({
       </div>
       <Link
         className="block w-full rounded-md border border-input bg-background px-4 py-2 text-center text-sm hover:bg-accent"
-        href={`/auth/sign-in?callbackUrl=${encodeURIComponent(`/invite/accept?token=${invitationId}`)}`}
+        href={`${PAGE_ROUTES.SIGN_IN}?callbackUrl=${encodeURIComponent(`/invite/accept?token=${invitationId}`)}`}
       >
         Sign in with different account
       </Link>

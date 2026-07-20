@@ -6,6 +6,7 @@ import {
   PAGE_ROUTES,
   PUBLIC_ROUTE_EXACT,
   PUBLIC_ROUTE_PREFIXES,
+  resolveCallbackUrl,
 } from "./routes";
 
 describe("orgRoutes", () => {
@@ -80,5 +81,35 @@ describe("middleware route prefixes", () => {
         orgRoutes.home("acme").startsWith(route)
       )
     ).toBe(false);
+  });
+
+  it("exposes /invite so guests can preview and accept invitations", () => {
+    expect(
+      PUBLIC_ROUTE_PREFIXES.some((route) =>
+        PAGE_ROUTES.INVITE_ACCEPT.startsWith(route)
+      )
+    ).toBe(true);
+  });
+});
+
+describe("resolveCallbackUrl", () => {
+  it("passes through same-origin relative paths, query string included", () => {
+    expect(resolveCallbackUrl("/invite/accept?token=abc")).toBe(
+      "/invite/accept?token=abc"
+    );
+    expect(resolveCallbackUrl("/vi/invite/xyz")).toBe("/vi/invite/xyz");
+  });
+
+  it("rejects open-redirect vectors, falling back to the org dashboard", () => {
+    expect(resolveCallbackUrl("https://evil.com")).toBe(PAGE_ROUTES.ORG);
+    expect(resolveCallbackUrl("//evil.com")).toBe(PAGE_ROUTES.ORG);
+    expect(resolveCallbackUrl("/\\evil.com")).toBe(PAGE_ROUTES.ORG);
+    expect(resolveCallbackUrl("javascript:alert(1)")).toBe(PAGE_ROUTES.ORG);
+  });
+
+  it("falls back to the org dashboard for empty or missing input", () => {
+    expect(resolveCallbackUrl("")).toBe(PAGE_ROUTES.ORG);
+    expect(resolveCallbackUrl(undefined)).toBe(PAGE_ROUTES.ORG);
+    expect(resolveCallbackUrl(null)).toBe(PAGE_ROUTES.ORG);
   });
 });

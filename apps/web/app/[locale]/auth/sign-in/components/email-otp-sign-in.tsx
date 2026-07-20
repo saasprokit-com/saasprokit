@@ -11,14 +11,14 @@ import {
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { PAGE_ROUTES } from "@/lib/routes";
 import { sendSignInOtpAction, verifySignInOtpAction } from "../actions";
 
 interface EmailOtpSignInProps {
+  callbackUrl: string;
   errors: ActionErrorMessages;
 }
 
-export function EmailOtpSignIn({ errors }: EmailOtpSignInProps) {
+export function EmailOtpSignIn({ callbackUrl, errors }: EmailOtpSignInProps) {
   const router = useRouter();
   const [otpSent, setOtpSent] = useState(false);
   const [email, setEmail] = useState("");
@@ -41,7 +41,7 @@ export function EmailOtpSignIn({ errors }: EmailOtpSignInProps) {
       throw new Error(result.error || errors.invalidOtp);
     }
 
-    router.push(PAGE_ROUTES.ORG);
+    router.push(callbackUrl);
     router.refresh();
   }
 
