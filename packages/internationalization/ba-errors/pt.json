@@ -9,6 +9,7 @@
   "BODY_MUST_BE_AN_OBJECT": "O corpo da requisição deve ser um objeto",
   "CALLBACK_URL_REQUIRED": "callbackURL é obrigatório",
   "CANNOT_DELETE_A_PRE_DEFINED_ROLE": "Não é possível excluir uma função predefinida",
+  "CANNOT_CHANGE_OWN_ROLE": "Você não pode alterar seu próprio papel.",
   "CHANGE_EMAIL_DISABLED": "A alteração de e-mail está desabilitada",
   "CREDENTIAL_ACCOUNT_NOT_FOUND": "Nenhuma senha definida para esta conta. Faça login com seu provedor social.",
   "CROSS_SITE_NAVIGATION_LOGIN_BLOCKED": "Login por navegação entre sites bloqueado. Esta requisição parece ser um ataque CSRF.",

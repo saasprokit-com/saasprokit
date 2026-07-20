@@ -9,6 +9,7 @@
   "BODY_MUST_BE_AN_OBJECT": "Le corps de la requête doit être un objet",
   "CALLBACK_URL_REQUIRED": "callbackURL est requis",
   "CANNOT_DELETE_A_PRE_DEFINED_ROLE": "Impossible de supprimer un rôle prédéfini",
+  "CANNOT_CHANGE_OWN_ROLE": "Vous ne pouvez pas modifier votre propre rôle.",
   "CHANGE_EMAIL_DISABLED": "Le changement d'e-mail est désactivé",
   "CREDENTIAL_ACCOUNT_NOT_FOUND": "Aucun mot de passe n'est défini pour ce compte. Connectez-vous avec votre fournisseur social.",
   "CROSS_SITE_NAVIGATION_LOGIN_BLOCKED": "Connexion par navigation intersites bloquée. Cette requête semble être une attaque CSRF.",

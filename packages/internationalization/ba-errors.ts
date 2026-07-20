@@ -12,10 +12,12 @@
  *
  * Keys are the EXACT error codes Better Auth throws (its `$ERROR_CODES`
  * tables + BASE_ERROR_CODES), covering every registered plugin: base auth,
- * admin, email-otp, two-factor, organization, and stripe — plus the
- * app-thrown `TRANSFER_ORGANIZATION_OWNERSHIP`. To keep parity, never rename
- * a key away from its Better Auth code, and add new codes to all six files
- * (enforced by `packages/auth/ba-i18n.test.ts`).
+ * admin, email-otp, two-factor, organization, and stripe — plus app-thrown
+ * codes (`CANNOT_CHANGE_OWN_ROLE`, `TRANSFER_ORGANIZATION_OWNERSHIP`).
+ * To keep parity, never rename a key away from its Better Auth code, and add
+ * new codes to all six files (enforced by `packages/auth/ba-i18n.test.ts`).
+ * The exhaustiveness test validates all known codes are present; after
+ * upgrading Better Auth, run tests to catch any new codes that need addition.
  */
 import de from "./ba-errors/de.json" with { type: "json" };
 import en from "./ba-errors/en.json" with { type: "json" };

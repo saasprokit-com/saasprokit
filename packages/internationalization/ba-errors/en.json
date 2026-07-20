@@ -9,6 +9,7 @@
   "BODY_MUST_BE_AN_OBJECT": "Body must be an object",
   "CALLBACK_URL_REQUIRED": "callbackURL is required",
   "CANNOT_DELETE_A_PRE_DEFINED_ROLE": "Cannot delete a pre-defined role",
+  "CANNOT_CHANGE_OWN_ROLE": "You cannot change your own role.",
   "CHANGE_EMAIL_DISABLED": "Change email is disabled",
   "CREDENTIAL_ACCOUNT_NOT_FOUND": "No password is set for this account. Sign in with your social provider.",
   "CROSS_SITE_NAVIGATION_LOGIN_BLOCKED": "Cross-site navigation login blocked. This request appears to be a CSRF attack.",

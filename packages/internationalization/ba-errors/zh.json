@@ -9,6 +9,7 @@
   "BODY_MUST_BE_AN_OBJECT": "请求体必须是对象",
   "CALLBACK_URL_REQUIRED": "callbackURL 为必填项",
   "CANNOT_DELETE_A_PRE_DEFINED_ROLE": "无法删除预定义角色",
+  "CANNOT_CHANGE_OWN_ROLE": "您不能更改自己的角色。",
   "CHANGE_EMAIL_DISABLED": "已禁用更改邮箱",
   "CREDENTIAL_ACCOUNT_NOT_FOUND": "此账户未设置密码，请使用您的社交账号登录。",
   "CROSS_SITE_NAVIGATION_LOGIN_BLOCKED": "已阻止跨站导航登录。此请求疑似 CSRF 攻击。",

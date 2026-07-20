@@ -9,6 +9,7 @@
   "BODY_MUST_BE_AN_OBJECT": "Der Body muss ein Objekt sein",
   "CALLBACK_URL_REQUIRED": "callbackURL ist erforderlich",
   "CANNOT_DELETE_A_PRE_DEFINED_ROLE": "Eine vordefinierte Rolle kann nicht gelöscht werden",
+  "CANNOT_CHANGE_OWN_ROLE": "Sie können Ihre eigene Rolle nicht ändern.",
   "CHANGE_EMAIL_DISABLED": "Das Ändern der E-Mail-Adresse ist deaktiviert",
   "CREDENTIAL_ACCOUNT_NOT_FOUND": "Für dieses Konto ist kein Passwort festgelegt. Melden Sie sich über Ihren Social-Anbieter an.",
   "CROSS_SITE_NAVIGATION_LOGIN_BLOCKED": "Anmeldung über seitenübergreifende Navigation blockiert. Diese Anfrage scheint ein CSRF-Angriff zu sein.",
