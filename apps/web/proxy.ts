@@ -1,8 +1,6 @@
 import { auth } from "@repo/auth";
-import languine from "@repo/internationalization/languine.json" with {
-  type: "json",
-};
 import { internationalizationMiddleware } from "@repo/internationalization/proxy";
+import { locales } from "@repo/internationalization/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import {
   AUTH_ROUTE_PREFIXES,
@@ -12,8 +10,6 @@ import {
 } from "@/lib/routes";
 
 const HTTP_OK = 200;
-
-const locales = [languine.locale.source, ...languine.locale.targets];
 
 /**
  * Strip the locale prefix from a pathname so route matching

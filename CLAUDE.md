@@ -34,9 +34,6 @@ pnpm migrate                  # Format, generate, and push Prisma schema
 
 # Local infra (details: saasprokit:env-setup skill)
 docker compose up postgres maildev   # DB + mail catcher (recommended for app dev)
-
-# i18n
-pnpm --filter internationalization translate   # Machine-translate locale files via languine
 ```
 
 ## Monorepo Structure

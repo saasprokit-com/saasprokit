@@ -4,14 +4,10 @@
  */
 
 import type en from "./dictionaries/en.json";
-import languine from "./languine.json" with { type: "json" };
 
-export const DEFAULT_LOCALE = languine.locale.source;
+export const DEFAULT_LOCALE = "en";
 
-export const locales = [
-  languine.locale.source,
-  ...languine.locale.targets,
-] as const;
+export const locales = ["en", "es", "de", "zh", "fr", "pt"] as const;
 
 export type Dictionary = typeof en;
 export type ActionErrorMessages = Dictionary["errors"]["action"];

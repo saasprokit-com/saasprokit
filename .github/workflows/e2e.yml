@@ -2,15 +2,16 @@
 # Services: PostgreSQL (database) + Maildev (email capture)
 # Data: Prisma seed populates orgs, memberships, and subscriptions.
 # Auth: E2E user created via Better Auth API in auth.setup.ts.
+#
+# Opt-in: this run is gated behind the "e2e" PR label to save CI minutes.
+# Add the "e2e" label to a PR to trigger it; while labeled, it re-runs on
+# every new commit. Remove the label to stop future runs.
 name: E2E Tests
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     branches: [main, develop]
-    paths:
-      - "apps/web/**"
-      - "packages/**"
-      - ".github/workflows/e2e.yml"
 
 concurrency:
   group: e2e-${{ github.event.pull_request.number || github.ref }}
@@ -20,6 +21,7 @@ jobs:
   e2e:
     name: Playwright
     runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'e2e')
 
     services:
       postgres:

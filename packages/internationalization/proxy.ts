@@ -2,16 +2,18 @@ import { match as matchLocale } from "@formatjs/intl-localematcher";
 import Negotiator from "negotiator";
 import type { NextRequest } from "next/server";
 import { createI18nMiddleware } from "next-international/middleware";
-import languine from "./languine.json" with { type: "json" };
+import { DEFAULT_LOCALE, locales } from "./shared";
 
-const locales = [languine.locale.source, ...languine.locale.targets];
+// Widen to a mutable string[] so next-international infers a plain-string locale
+// type (matches the resolver's `string | null` return and matchLocale's signature).
+const localeList: string[] = [...locales];
 
 // Locale code validation pattern (e.g., "en", "en-US", "zh-Hans")
 const LOCALE_CODE_REGEX = /^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$/;
 
 const I18nMiddleware = createI18nMiddleware({
-  locales,
-  defaultLocale: "en",
+  locales: localeList,
+  defaultLocale: DEFAULT_LOCALE,
   urlMappingStrategy: "rewriteDefault",
   resolveLocaleFromRequest: (request: NextRequest): string | null => {
     try {
@@ -25,14 +27,18 @@ const I18nMiddleware = createI18nMiddleware({
       );
 
       if (validLanguages.length === 0) {
-        return "en";
+        return DEFAULT_LOCALE;
       }
 
-      const matchedLocale = matchLocale(validLanguages, locales, "en");
+      const matchedLocale = matchLocale(
+        validLanguages,
+        localeList,
+        DEFAULT_LOCALE
+      );
       return matchedLocale;
     } catch {
       // If locale matching fails, fall back to default
-      return "en";
+      return DEFAULT_LOCALE;
     }
   },
 });

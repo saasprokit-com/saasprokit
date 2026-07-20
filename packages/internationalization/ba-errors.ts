@@ -6,9 +6,8 @@
  * cannot feed it. No "server-only" guard — consumed at module scope by
  * `@repo/auth/server`.
  *
- * Source files live in `ba-errors/[locale].json`, registered in
- * `languine.json` so `pnpm --filter internationalization translate` keeps
- * machine-translating them.
+ * Source files live in `ba-errors/[locale].json`, translated by hand or with
+ * an AI coding agent to keep every locale in sync.
  *
  * Keys are the EXACT error codes Better Auth throws (its `$ERROR_CODES`
  * tables + BASE_ERROR_CODES), covering every registered plugin: base auth,

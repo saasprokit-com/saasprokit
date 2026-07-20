@@ -422,13 +422,6 @@ export async function suspendMemberAction(
   try {
     const validated = suspendMemberSchema.parse(input);
 
-    const allowed = await hasOrgPermission(validated.organizationId, {
-      member: ["update"],
-    });
-    if (!allowed) {
-      return actionError("unauthorized");
-    }
-
     const session = await getServerSession();
     if (!session) {
       return actionError("unauthorized");

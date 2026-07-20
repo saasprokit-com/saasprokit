@@ -93,15 +93,5 @@ export const {
   admin,
 } = authClient;
 
-// Re-export the client for direct access to all methods
-// Note: Password reset methods can be accessed via:
-// - authClient.forgotPassword() for requesting password reset
-// - authClient.resetPassword() for setting new password
-// Magic link can be accessed via:
-// - authClient.signIn.magicLink() for requesting magic link
-// Email OTP can be accessed via:
-// - authClient.emailOtp.sendVerificationOtp() for sending OTP
-// - authClient.signIn.emailOtp() for signing in with OTP
-
 export type Session = typeof authClient.$Infer.Session;
 export type User = typeof authClient.$Infer.Session.user;

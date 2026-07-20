@@ -36,5 +36,5 @@ pnpm --filter app test:e2e:app   # E2E "authenticated" project only
 
 - `build` depends on `^build` (dependency builds) — `test` is a **sibling** task, not a build prerequisite
 - `test` depends on `^test`
-- `dev` is uncached and persistent; `check`, `fix`, `translate`, `clean` are uncached
-- Additional tasks: `analyze`, `translate`, `clean`, `boundaries`
+- `dev` is uncached and persistent; `check`, `fix`, `clean` are uncached
+- Additional tasks: `analyze`, `clean`, `boundaries`

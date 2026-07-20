@@ -16,12 +16,6 @@ import {
   invitationIdSchema,
 } from "./schemas";
 
-/**
- * Resend invitation email
- *
- * Uses BA's inviteMember with resend: true, which extends expiry
- * and re-triggers the sendInvitationEmail callback.
- */
 export async function resendInvitationAction(
   input: InvitationIdInput
 ): Promise<ActionResult> {
@@ -73,12 +67,6 @@ export async function resendInvitationAction(
   }
 }
 
-/**
- * Cancel a pending invitation
- *
- * Delegates to BA's cancelInvitation API which handles permission checks.
- * Pre-checks pending status since BA doesn't validate status before canceling.
- */
 export async function cancelInvitationAction(
   input: InvitationIdInput
 ): Promise<ActionResult> {
