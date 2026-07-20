@@ -33,7 +33,6 @@ export async function resendVerificationEmailAction(
     }
     return toActionError(error, {
       fallback: "resendVerificationEmail",
-      baFallback: "unknownError",
       logger,
     });
   }

@@ -175,7 +175,6 @@ export async function upgradeSubscriptionAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "startCheckout",
-      baFallback: "unknownError",
       logger,
     });
   }
@@ -206,7 +205,6 @@ export async function openBillingPortalAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "openBillingPortal",
-      baFallback: "unknownError",
       logger,
     });
   }
@@ -246,7 +244,6 @@ export async function cancelSubscriptionAction(
     }
     return toActionError(error, {
       fallback: "cancelSubscription",
-      baFallback: "unknownError",
       logger,
     });
   }

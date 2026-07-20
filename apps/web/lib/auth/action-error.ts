@@ -3,21 +3,40 @@ import "server-only";
 import type { Dictionary } from "@repo/internationalization";
 import { getDictionary } from "@repo/internationalization";
 import type { ActionResult } from "@/lib/auth/auth";
-import { extractBAErrorCode } from "@/lib/auth/ba-error";
 import { getLocaleFromRequest } from "@/lib/infrastructure/revalidation";
 
 export type ActionErrorCode = keyof Dictionary["errors"]["action"];
-type BAFallbackKey = keyof Dictionary["errors"]["fallback"];
 
 interface ActionErrorOptions {
-  /** If the action calls Better Auth API, provide the BA fallback key */
-  baFallback?: BAFallbackKey;
   /** Error code key from errors.action dictionary */
   fallback: ActionErrorCode;
   /** Logger instance — if provided, error is logged before returning */
   logger?: { error: (obj: Record<string, unknown>, msg: string) => void };
   /** Custom log message (defaults to the fallback dictionary text) */
   logMessage?: string;
+}
+
+/**
+ * Better Auth errors are localized by the @better-auth/i18n plugin
+ * (packages/auth/server.ts), which stamps `body.originalMessage` only when it
+ * actually applied a translation. Untranslated codes, uncoded APIErrors, and
+ * non-APIError throws fall through to the localized generic fallback.
+ */
+function getPluginTranslatedMessage(error: unknown): string | null {
+  if (
+    error != null &&
+    typeof error === "object" &&
+    "body" in error &&
+    error.body != null &&
+    typeof error.body === "object" &&
+    "originalMessage" in error.body &&
+    typeof error.body.originalMessage === "string" &&
+    "message" in error.body &&
+    typeof error.body.message === "string"
+  ) {
+    return error.body.message;
+  }
+  return null;
 }
 
 /**
@@ -55,20 +74,10 @@ export async function toActionError<T = void>(
     );
   }
 
-  // 3. Better Auth APIError — map via BA code → i18n dictionary
-  if (options.baFallback) {
-    const code = extractBAErrorCode(error);
-    if (code) {
-      const baErrors = dict.errors.ba as Record<string, string>;
-      const translated = baErrors[code];
-      if (translated) {
-        return { success: false, error: translated };
-      }
-    }
-    return {
-      success: false,
-      error: dict.errors.fallback[options.baFallback],
-    };
+  // 3. Better Auth APIError already localized by the i18n plugin
+  const translated = getPluginTranslatedMessage(error);
+  if (translated) {
+    return { success: false, error: translated };
   }
 
   // 4. Generic fallback from action error dictionary
@@ -76,6 +85,25 @@ export async function toActionError<T = void>(
     success: false,
     error: dict.errors.action[options.fallback],
   };
+}
+
+/**
+ * Resolve a Better Auth error to a localized message string.
+ *
+ * For call sites that need the message itself (not an ActionResult), e.g.
+ * per-email failure reporting in bulk invites.
+ */
+export async function baErrorMessage(
+  error: unknown,
+  fallback: ActionErrorCode
+): Promise<string> {
+  const translated = getPluginTranslatedMessage(error);
+  if (translated) {
+    return translated;
+  }
+  const locale = await getLocaleFromRequest();
+  const dict = await getDictionary(locale);
+  return dict.errors.action[fallback];
 }
 
 /**

@@ -1,3 +1,4 @@
+import { i18n } from "@better-auth/i18n";
 import { stripe } from "@better-auth/stripe";
 import { database } from "@repo/database";
 import {
@@ -9,6 +10,8 @@ import {
   sendTwoFactorOTPEmail,
   sendVerificationOTPEmail,
 } from "@repo/email";
+import { baErrorTranslations } from "@repo/internationalization/ba-errors";
+import { localeFromReferer } from "@repo/internationalization/shared";
 import {
   COOKIE_CACHE_MAX_AGE_MINUTES,
   INVITATION_EXPIRES_IN_DAYS,
@@ -486,6 +489,22 @@ export const auth = betterAuth({
           }),
         ]
       : []),
+
+    // Translates APIError bodies into the request locale. Runs as an `after`
+    // hook on every endpoint (server-side auth.api.* AND HTTP /api/auth/*),
+    // rewriting error.body to { code, message: <translated>, originalMessage }.
+    // Detection order:
+    //   1. callback — referer path locale, same signal as getLocaleFromRequest
+    //   2. cookie   — "Next-Locale", set by next-international's middleware
+    //                 (SameSite=Strict, so absent on cross-site email links)
+    //   3. header   — Accept-Language, the only signal left on email links
+    i18n({
+      translations: baErrorTranslations,
+      defaultLocale: "en",
+      detection: ["callback", "cookie", "header"],
+      localeCookie: "Next-Locale",
+      getLocale: (ctx) => localeFromReferer(ctx.headers?.get("referer")),
+    }),
 
     // Next.js cookie handling
     nextCookies(),

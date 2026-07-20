@@ -47,7 +47,6 @@ export async function updateProfileAction(formData: FormData) {
   } catch (error) {
     return toActionError(error, {
       fallback: "updateProfile",
-      baFallback: "unknownError",
     });
   }
 }

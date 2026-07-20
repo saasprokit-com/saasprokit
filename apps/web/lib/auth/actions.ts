@@ -15,7 +15,6 @@ export async function signOutAction(): Promise<ActionResult> {
   } catch (error) {
     return toActionError(error, {
       fallback: "signOut",
-      baFallback: "unknownError",
       logger,
     });
   }
@@ -35,7 +34,6 @@ export async function stopImpersonatingAction(): Promise<ActionResult> {
   } catch (error) {
     return toActionError(error, {
       fallback: "unauthorized",
-      baFallback: "unknownError",
       logger,
     });
   }

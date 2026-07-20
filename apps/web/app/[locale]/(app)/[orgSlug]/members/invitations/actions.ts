@@ -69,7 +69,6 @@ export async function resendInvitationAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "invalidInput",
-      baFallback: "resendInvitation",
     });
   }
 }
@@ -117,7 +116,6 @@ export async function cancelInvitationAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "invalidInput",
-      baFallback: "cancelInvitation",
     });
   }
 }
@@ -174,7 +172,6 @@ export async function cancelInvitationsAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "cancelInvitations",
-      baFallback: "cancelInvitation",
     });
   }
 }

@@ -1,24 +1,13 @@
-import { DEFAULT_LOCALE, locales } from "@repo/internationalization";
+import { DEFAULT_LOCALE } from "@repo/internationalization";
+import { localeFromReferer } from "@repo/internationalization/shared";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
+// Shares localeFromReferer with the @better-auth/i18n plugin's getLocale
+// (packages/auth/server.ts) so both resolve the same locale per request.
 export async function getLocaleFromRequest(): Promise<string> {
   const referer = (await headers()).get("referer");
-  if (!referer) {
-    return DEFAULT_LOCALE;
-  }
-
-  try {
-    const url = new URL(referer);
-    const firstSegment = url.pathname.split("/")[1];
-    if (firstSegment && (locales as readonly string[]).includes(firstSegment)) {
-      return firstSegment;
-    }
-  } catch {
-    // Invalid URL — fallback
-  }
-
-  return DEFAULT_LOCALE;
+  return localeFromReferer(referer) ?? DEFAULT_LOCALE;
 }
 
 export function buildLocalePath(locale: string, path: string): string {

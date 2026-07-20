@@ -5,7 +5,7 @@
   },
   "files": {
     "json": {
-      "include": ["dictionaries/[locale].json"]
+      "include": ["dictionaries/[locale].json", "ba-errors/[locale].json"]
     }
   }
 }

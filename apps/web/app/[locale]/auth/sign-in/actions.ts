@@ -46,7 +46,6 @@ export async function signInEmailAction(
     }
     return toActionError(error, {
       fallback: "signIn",
-      baFallback: "unknownError",
       logger,
     });
   }
@@ -74,7 +73,6 @@ export async function signInMagicLinkAction(
     }
     return toActionError(error, {
       fallback: "sendMagicLink",
-      baFallback: "unknownError",
       logger,
     });
   }
@@ -102,7 +100,6 @@ export async function sendSignInOtpAction(
     }
     return toActionError(error, {
       fallback: "sendOtp",
-      baFallback: "unknownError",
       logger,
     });
   }
@@ -135,7 +132,6 @@ export async function verifySignInOtpAction(
     }
     return toActionError(error, {
       fallback: "invalidOtp",
-      baFallback: "unknownError",
       logger,
     });
   }

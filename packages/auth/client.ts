@@ -1,5 +1,6 @@
 "use client";
 
+import { i18nClient } from "@better-auth/i18n/client";
 import { stripeClient } from "@better-auth/stripe/client";
 import {
   adminClient,
@@ -65,6 +66,9 @@ export const authClient = createAuthClient({
     stripeClient({
       subscription: true,
     }),
+
+    // i18n type inference (server plugin translates error messages)
+    i18nClient(),
   ],
 });
 

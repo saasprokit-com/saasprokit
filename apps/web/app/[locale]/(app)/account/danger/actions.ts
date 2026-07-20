@@ -40,7 +40,6 @@ export async function deleteAccountAction() {
   } catch (error) {
     return toActionError(error, {
       fallback: "deleteAccount",
-      baFallback: "unknownError",
       logger,
     });
   }

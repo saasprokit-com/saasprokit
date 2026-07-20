@@ -88,7 +88,7 @@ export async function logoutAllOtherSessionsAction() {
     await auth.api.revokeOtherSessions({ headers: await headers() });
     return { success: true };
   } catch (err) {
-    return toActionError(err, { fallback: "logoutAllSessions", baFallback: "unknownError" });
+    return toActionError(err, { fallback: "logoutAllSessions" });
   }
 }
 ```
@@ -99,9 +99,12 @@ Keep `verifySession()` when the action:
 - wants a localized early-return error / `session.user.id` for a log line
   before the call.
 
-When routing a `toActionError` catch to a Better Auth call, pass `baFallback`
-so `APIError` codes map through `errors.ba[code]` (e.g. `SESSION_EXPIRED`,
-`UNAUTHORIZED`).
+Better Auth `APIError`s arrive already localized by the `@better-auth/i18n`
+plugin (registered in `packages/auth/server.ts`); `toActionError` surfaces the
+translated message automatically and falls back to `errors.action[fallback]`
+otherwise. To localize a new BA error code, add it to
+`packages/internationalization/ba-errors/[locale].json` (all six locales — a
+key-parity test in `packages/auth/ba-i18n.test.ts` enforces this).
 
 ## Platform Admin (`/admin`)
 

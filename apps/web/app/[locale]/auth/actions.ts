@@ -36,7 +36,6 @@ export async function signInSocialAction(
   } catch (error) {
     return toActionError(error, {
       fallback: "signIn",
-      baFallback: "unknownError",
       logger,
     });
   }
