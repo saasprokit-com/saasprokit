@@ -1,161 +1,69 @@
 ---
 name: auth
-description: Authentication & authorization patterns for this repo — Better Auth setup, role systems, server-side session helpers, org membership validation, server action auth, and client-side usage. Read before writing or reviewing any code that touches sessions, permissions, roles, or protected pages/actions.
+description: Authentication and authorization for this repo — Better Auth server/client setup, the dual admin + org RBAC systems, cached session helpers, org-slug access guards, the server-action auth contract, and platform /admin gates. Read before touching sessions, roles, permissions, protected pages, or auth server actions.
 ---
 
 # Authentication & Authorization
 
-## Better Auth Setup (`packages/auth`)
+Two independent RBAC systems run side by side: **platform admin roles** (staff who operate `/admin`) and **organization roles** (members inside one org). Every protected surface authenticates the caller from the session cookie carried in request headers — **pages** redirect/`notFound()`, **server actions** return a typed `ActionResult` error. Rendering a page on a protected route is never the security boundary; each page and each action re-asserts.
 
-- Adapter: Prisma (PostgreSQL)
-- Methods: Email/password, social (Google/GitHub), magic links, 2FA, email OTP
-- Dual RBAC system: platform-level admin roles + organization-scoped roles
+## Map of the area
 
-## Package Exports
+| Concern | Canonical file |
+| --- | --- |
+| Better Auth instance + all plugins | `packages/auth/server.ts:208` |
+| Client (`authClient`, `signIn`/`useSession`/…, `Session`/`User` types) | `packages/auth/client.ts:27` |
+| Role defs, `ac`/`orgAc`, `canOrg`/`canAdmin`/`isAdminAreaRole` | `packages/auth/permissions.ts` |
+| `ActionResult<T>`, `getServerSession`, `requireAuth`, `hasOrgPermission` | `apps/web/lib/auth/auth.ts` |
+| `verifySession()` (server-action guard) | `apps/web/lib/auth/action-auth.ts:9` |
+| `toActionError`/`actionError`/`baErrorMessage`, `ActionErrorCode` | `apps/web/lib/auth/action-error.ts` |
+| Org-slug access: `getActiveOrganization`, `validateOrganizationMembership` | `apps/web/servers/organization/queries.ts` |
+| Admin gates: `requireAdminArea`, `hasAdminPermission`, `AdminContext` | `apps/web/lib/auth/admin.ts` |
+| Server-side rate limiting for auth actions | `apps/web/lib/auth/rate-limit.ts` |
 
-- `@repo/auth` — Full exports (server + permissions)
-- `@repo/auth/server` — Server-only auth instance
-- `@repo/auth/client` — Client hooks and methods
-- `@repo/auth/permissions` — Role constants, access control, permission checks
+Exports: `@repo/auth/server` (auth instance), `@repo/auth/client` (hooks + `Session`/`User`), `@repo/auth/permissions` (roles + checks). Plugins on the instance: `admin`, `magicLink`, `emailOTP`, `twoFactor`, `multiSession`, `organization` (teams enabled), `stripe` (only when keys set), `@better-auth/i18n`, `nextCookies`.
 
-## Role Systems (`packages/auth/permissions.ts`)
+## Role systems (`packages/auth/permissions.ts`)
 
-Platform-level admin roles (`ADMIN_ROLES`):
-- `admin` — Full platform access
-- `moderator` — Content and member management, no billing
-- `user` — Basic access
+- **Admin** (`ADMIN_ROLES`, `permissions.ts:6`): `admin` (full), `moderator` (content/members, no billing/org), `user` (default). Area membership is a name allowlist — `ADMIN_AREA_ROLES` (`:225`) = admin + moderator.
+- **Org** (`ORG_ROLES`, `permissions.ts:14`): `owner` (incl. delete), `admin` (manage, no delete), `member` (read-only).
+- `canOrg(role, perms)` (`:178`) and `canAdmin(role, perms)` (`:204`) evaluate a **DB-sourced** role in memory (same result as Better Auth's `hasPermission`, no round-trip). They trust their argument — never pass a client-supplied role.
 
-Organization-scoped roles (`ORG_ROLES`):
-- `owner` — Full org control including deletion
-- `admin` — Org management without deletion
-- `member` — Read-only access
+## Server-side helpers (`apps/web/lib/auth/auth.ts`)
 
-## Server-side Auth Helpers (`apps/web/lib/auth/auth.ts`)
+- `getServerSession()` (`:15`) — `React.cache`-wrapped `auth.api.getSession`, deduped across layout + page in one request. Prefer over raw `auth.api.getSession`.
+- `requireAuth(returnTo?)` (`:22`) — session or redirect to sign-in.
+- `hasOrgPermission(orgId, { member: ["read"] })` (`:35`) → `Promise<boolean>` via `auth.api.hasPermission`.
 
-Prefer these cached helpers over raw `auth.api.getSession()`:
+## Org access (`apps/web/servers/organization/queries.ts`)
 
-```typescript
-import { getServerSession, requireAuth } from "@/lib/auth/auth";
+- `getActiveOrganization(slug)` (`:107`) is the **slug guard every org-scoped page calls**. Returns `OrganizationContext { organizationId, organizationName, organizationSlug, role, userId }`; redirects anon to sign-in, `notFound()` if the org is missing OR the user isn't a member (identical response so slugs can't be enumerated). (`validateOrgMembershipBySlug` does **not** exist.)
+- `validateOrganizationMembership(organizationId, userId)` (`:49`) → `Promise<boolean>` — a lower-level membership check, not the page guard.
 
-// Cached session (deduplicated across layout + page in one request)
-const session = await getServerSession();
+## The server-action auth contract (non-negotiable)
 
-// Require auth or redirect to sign-in
-const session = await requireAuth();
+1. **Validate** — `schema.parse(input)` (`saasprokit:forms`).
+2. **Authenticate** — `const { session, error } = await verifySession(); if (error) return error;`. Skip it when the action's work goes **entirely** through `auth.api.*({ headers: await headers() })`: those calls authenticate the caller from the cookie themselves (sensitive ones re-read the session DB-fresh), so a `verifySession` pre-check adds no security. Keep it when you touch raw Prisma or need `session.user.id`.
+3. **Authorize** — org: `hasOrgPermission`; admin: `hasAdminPermission`; else `actionError("unauthorized")`.
+4. **Identity from the session, never the payload.**
+5. **Return `ActionResult<T>`**; in `catch`, `return toActionError(error, { fallback })`.
 
-// Check org-level permissions
-import { hasOrgPermission } from "@/lib/auth/auth";
-const result = await hasOrgPermission(orgId, { member: ["read"] });
-```
+`auth.api.*` calls **bypass** Better Auth's HTTP rate limits (those run only on `/api/auth/*`), so brute-forceable auth flows re-apply `enforceRateLimit(scope)` from `rate-limit.ts` (`RATE_LIMITS`, `:24`) — do not remove it. BA `APIError`s arrive **pre-localized** by the i18n plugin (`server.ts:490`); `toActionError` surfaces that message, else the localized `errors.action[fallback]`. New BA codes go in `packages/internationalization/ba-errors/[locale].json` — **6 locales** (de, en, es, fr, pt, zh; no vi), key-parity enforced by `packages/auth/ba-i18n.test.ts`.
 
-## Organization Access (`apps/web/servers/organization/queries.ts`)
+## Platform admin (`/admin`, `apps/web/lib/auth/admin.ts`)
 
-```typescript
-import { validateOrgMembershipBySlug } from "@/servers/organization/queries";
+- `requireAdminArea()` (`:34`) gates the layout **and every page** (layouts don't re-run on soft nav) → `AdminContext { userId, isAdmin }`; redirects anon, `notFound()` for non-staff. `if (!ctx.isAdmin) notFound()` blocks moderators from user-management pages.
+- `hasAdminPermission(perms)` (`:48`) — first line of every admin action, mirrors `hasOrgPermission`.
+- **Freshness:** both re-read `role`/`banned` from the DB (`getFreshRole`, `:21`) because the cookie cache is stale up to `COOKIE_CACHE_MAX_AGE_MINUTES` — a just-demoted/banned admin loses access at once. The rest of the app accepts that stale window.
+- **Guardrails:** `guardUserMutation` (`admin/users/guards.ts:26`) is the friendly first-line block on self set-role/ban/delete/impersonate; Better Auth authoritatively blocks self-ban/delete and admin→admin impersonation, and a `before` hook on `/admin/set-role` throws `CANNOT_CHANGE_OWN_ROLE` (`server.ts:231`). Keep the `admin()` plugin's `adminRoles` option unset or the impersonation block breaks.
+- **Impersonation:** amber banner mounts in `(app)/layout.tsx:16`; exit via `stopImpersonatingAction`. Mutations write `AuditLog` via `recordAdminAudit`.
+- **Seed staff (dev):** `admin@example.com`, `moderator@example.com`, `banned@example.com` — password `Password@saaspro`.
 
-// Validate slug + membership (React.cache-wrapped, redirects if unauthorized)
-const { organizationId, userId, role, organizationSlug, organizationName } =
-  await validateOrgMembershipBySlug(orgSlug);
-```
+## Gotchas
 
-## Server Action Auth (`apps/web/lib/auth/action-auth.ts`)
+- The page guard is `getActiveOrganization(slug)`, not the nonexistent `validateOrgMembershipBySlug`.
+- `hasOrgPermission`/`hasAdminPermission` return `boolean`, not `ActionResult` — branch to `actionError("unauthorized")` yourself.
+- Don't remove `enforceRateLimit` from auth actions believing the client transport still protects them; these are server actions now.
+- Never pass a client-supplied role to `canOrg`/`canAdmin`.
 
-```typescript
-import { verifySession } from "@/lib/auth/action-auth";
-import { toActionError } from "@/lib/auth/action-error";
-
-// In server actions — returns error instead of redirecting
-const { session, error } = await verifySession();
-if (error) return error;
-
-// Unified error handler for catch blocks (handles ZodError, APIError, generic)
-try { ... } catch (err) { return toActionError(err); }
-```
-
-### When you DON'T need `verifySession()`
-
-Any `auth.api.*({ headers: await headers() })` call authenticates the caller
-itself from the session cookie in those headers — sensitive endpoints
-(`deleteUser`, 2FA, password) even re-read the session authoritatively from the
-DB (bypassing the cookie cache) and enforce freshness. So a `verifySession()`
-pre-check adds **no security** when the action's work goes entirely through
-Better Auth. Pass `headers` and skip the guard.
-
-```typescript
-// ✅ No verifySession — revokeOtherSessions verifies the caller and scopes to them
-export async function logoutAllOtherSessionsAction() {
-  try {
-    await auth.api.revokeOtherSessions({ headers: await headers() });
-    return { success: true };
-  } catch (err) {
-    return toActionError(err, { fallback: "logoutAllSessions" });
-  }
-}
-```
-
-Keep `verifySession()` when the action:
-- reads/writes **outside** Better Auth (raw Prisma) and needs `session.user.id`
-  (e.g. `updateProfileAction`), or
-- wants a localized early-return error / `session.user.id` for a log line
-  before the call.
-
-Better Auth `APIError`s arrive already localized by the `@better-auth/i18n`
-plugin (registered in `packages/auth/server.ts`); `toActionError` surfaces the
-translated message automatically and falls back to `errors.action[fallback]`
-otherwise. To localize a new BA error code, add it to
-`packages/internationalization/ba-errors/[locale].json` (all six locales — a
-key-parity test in `packages/auth/ba-i18n.test.ts` enforces this).
-
-## Platform Admin (`/admin`)
-
-Platform staff (Better Auth admin-plugin roles `admin` / `moderator`) operate the
-SaaS at `/admin` — distinct from org-scoped roles. Helpers:
-
-```typescript
-// packages/auth/permissions.ts — in-memory role checks (mirror canOrg)
-import { canAdmin, isAdminAreaRole } from "@repo/auth/permissions";
-
-// apps/web/lib/auth/admin.ts — server-side gates (read DB-fresh roles internally)
-import { requireAdminArea, hasAdminPermission } from "@/lib/auth/admin";
-
-// Layout AND every /admin page (layouts don't re-run on soft nav):
-const ctx = await requireAdminArea(); // → {userId, isAdmin}; redirects anon, notFound() non-staff
-if (!ctx.isAdmin) notFound();         // moderators can't reach user-management pages
-
-// First line of every admin server action — boolean gate (mirrors hasOrgPermission).
-// Read the actor's id from getServerSession() when you need it for audit/self-guards.
-const session = await getServerSession();
-if (!session?.user?.id) return actionError("unauthorized");
-if (!(await hasAdminPermission({ user: ["ban"] }))) return actionError("unauthorized");
-const actorId = session.user.id;
-```
-
-**Freshness:** admin gates re-read `role`/`banned` from the DB every request
-(`getFreshRole`), because the session cookie cache is up to
-`COOKIE_CACHE_MAX_AGE_MINUTES` stale — a just-demoted/banned admin must lose access
-at once. Better Auth's own admin endpoints re-check the authoritative session too, so
-mutations are defended twice. The rest of the app accepts the read-only stale window.
-
-**Guardrails:** a pure `guardUserMutation` (admin/users/guards.ts) blocks self
-set-role/ban/delete/impersonate; peer model otherwise (admins may act on other
-admins). Better Auth authoritatively blocks self-ban/self-delete and admin→admin
-**impersonation** (its `adminRole` lacks `user:["impersonate-admins"]`) — keep the
-`admin()` plugin's `adminRoles` option **unset** or that block breaks. `setRole` has
-no built-in self-guard, so a `before` hook on `/admin/set-role` (server.ts) throws
-`CANNOT_CHANGE_OWN_ROLE` — making self-demotion bypass-proof at the auth layer, with
-`guardUserMutation` as the friendly first-line message. Moderators hold no
-`user`/`session` statements, so `hasAdminPermission` denies them every user mutation.
-
-**Impersonation:** 1-hour session with `impersonatedBy`; an amber banner mounts in
-`(app)/layout.tsx`; exit via the `stopImpersonatingAction` server action. Admin
-mutations write to `AuditLog` via `recordAdminAudit` (view in Prisma Studio, port 3005).
-
-**Seed staff (dev):** `admin@example.com` / `moderator@example.com` /
-`banned@example.com`, password `Password@saaspro`.
-
-## Client-side Usage (React components)
-
-```typescript
-import { signIn, useSession, authClient } from "@repo/auth/client";
-const { data: session } = useSession();
-```
+See `saasprokit:forms`, `saasprokit:data-access`, `saasprokit:routing`.

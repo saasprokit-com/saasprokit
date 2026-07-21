@@ -34,8 +34,6 @@ export const PAGE_ROUTES = {
 // ─── Middleware route prefixes ───────────────────────────────────────────────
 
 /**
- * Publicly accessible paths matched by EXACT equality.
- *
  * HOME must be exact: as a prefix, "/" would match every path in the app.
  */
 export const PUBLIC_ROUTE_EXACT = [PAGE_ROUTES.HOME] as const;
@@ -105,9 +103,6 @@ export const orgRoutes = {
   billing: (slug: string) => `/${slug}/${ORG_PAGES.BILLING}`,
 } as const;
 
-/**
- * Account route helpers.
- */
 export const accountRoutes = {
   profile: () => PAGE_ROUTES.ACCOUNT_PROFILE,
   security: () => PAGE_ROUTES.ACCOUNT_SECURITY,
@@ -125,9 +120,6 @@ export const ADMIN_PAGES = {
   ORGANIZATIONS: "organizations",
 } as const;
 
-/**
- * Platform-admin route helpers.
- */
 export const adminRoutes = {
   dashboard: () => PAGE_ROUTES.ADMIN,
   users: () => PAGE_ROUTES.ADMIN_USERS,

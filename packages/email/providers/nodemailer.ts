@@ -9,7 +9,6 @@ import type {
 } from "./types";
 
 /**
- * Nodemailer email provider
  * Best for: Local development, self-hosted SMTP, or custom mail servers
  *
  * Features:
@@ -71,7 +70,6 @@ export class NodemailerProvider implements EmailProvider {
   }
 
   /**
-   * Verify SMTP connection
    * Useful for health checks
    */
   async verify(): Promise<boolean> {
@@ -83,9 +81,6 @@ export class NodemailerProvider implements EmailProvider {
     }
   }
 
-  /**
-   * Close the transporter connection
-   */
   close(): void {
     this.transporter.close();
   }

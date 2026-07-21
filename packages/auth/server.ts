@@ -108,7 +108,6 @@ const INACTIVE_STRIPE_STATUSES = new Set([
 ]);
 
 /**
- * Cancel every still-active Stripe subscription for a customer.
  * No-op when Stripe isn't configured or the customer id is missing.
  */
 async function cancelActiveStripeSubscriptions(
@@ -214,7 +213,6 @@ export const auth = betterAuth({
     ? env.BETTER_AUTH_TRUSTED_ORIGINS.split(",")
     : [],
 
-  // Database adapter
   database: prismaAdapter(database, {
     provider: "postgresql",
   }),
@@ -223,7 +221,6 @@ export const auth = betterAuth({
     useSecureCookies: process.env.NODE_ENV === "production",
   },
 
-  // Central request hooks
   hooks: {
     // Better Auth's admin `setRole` endpoint has NO self-guard, so on its own an
     // admin could strip their own role and lock themselves out. Enforce the
@@ -263,7 +260,6 @@ export const auth = betterAuth({
     },
   },
 
-  // Email and password authentication
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
@@ -289,7 +285,6 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
   },
 
-  // Social providers
   socialProviders: {
     google: {
       clientId: env.GOOGLE_CLIENT_ID || "",
@@ -301,7 +296,6 @@ export const auth = betterAuth({
     },
   },
 
-  // Session configuration
   session: {
     expiresIn: SESSION_EXPIRES_IN_DAYS * SECONDS_PER_DAY,
     updateAge: SESSION_UPDATE_AGE_DAYS * SECONDS_PER_DAY,
@@ -311,7 +305,6 @@ export const auth = betterAuth({
     },
   },
 
-  // User configuration
   user: {
     additionalFields: {
       firstName: {
@@ -342,7 +335,6 @@ export const auth = betterAuth({
     },
   },
 
-  // Plugins
   plugins: [
     // Admin plugin with three-tier roles (admin/moderator/user)
     admin({
@@ -355,7 +347,6 @@ export const auth = betterAuth({
       defaultRole: ADMIN_ROLES.USER,
     }),
 
-    // Magic link authentication
     magicLink({
       sendMagicLink: async ({ email, url }) => {
         await sendMagicLinkEmail({
@@ -366,7 +357,6 @@ export const auth = betterAuth({
       expiresIn: MAGIC_LINK_EXPIRES_IN_MINUTES * SECONDS_PER_MINUTE,
     }),
 
-    // Email OTP authentication
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
         if (type === "sign-in") {
@@ -394,7 +384,6 @@ export const auth = betterAuth({
       expiresIn: OTP_EXPIRES_IN_MINUTES * SECONDS_PER_MINUTE,
     }),
 
-    // Two-factor authentication
     twoFactor({
       issuer: env.NEXT_PUBLIC_APP_NAME,
       otpOptions: {
@@ -506,7 +495,6 @@ export const auth = betterAuth({
       getLocale: (ctx) => localeFromReferer(ctx.headers?.get("referer")),
     }),
 
-    // Next.js cookie handling
     nextCookies(),
   ],
 });

@@ -88,8 +88,6 @@ export async function toActionError<T = void>(
 }
 
 /**
- * Resolve a Better Auth error to a localized message string.
- *
  * For call sites that need the message itself (not an ActionResult), e.g.
  * per-email failure reporting in bulk invites.
  */

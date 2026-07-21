@@ -70,7 +70,6 @@ const FROM_EMAIL = emailEnv.EMAIL_FROM;
 // ============================================================================
 
 /**
- * Send an email using the configured provider
  * Abstracts the provider details from individual send functions
  */
 function sendEmail({
@@ -92,9 +91,6 @@ function sendEmail({
 // Auth & Security Email Functions
 // ============================================================================
 
-/**
- * Send password reset email
- */
 export async function sendPasswordResetEmail({
   email,
   resetUrl,
@@ -118,9 +114,6 @@ export async function sendPasswordResetEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send two-factor authentication OTP email
- */
 export async function sendTwoFactorOTPEmail({
   email,
   otp,
@@ -147,9 +140,6 @@ export async function sendTwoFactorOTPEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send magic link sign-in email
- */
 export async function sendMagicLinkEmail({
   email,
   magicLinkUrl,
@@ -176,9 +166,6 @@ export async function sendMagicLinkEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send sign-in OTP email
- */
 export async function sendSignInOTPEmail({
   email,
   otp,
@@ -234,9 +221,6 @@ export async function sendVerificationOTPEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send welcome email to new users
- */
 export async function sendWelcomeEmail({
   email,
   name,
@@ -285,9 +269,6 @@ export async function sendEmailVerificationEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send login from new device alert
- */
 export async function sendLoginNewDeviceEmail({
   email,
   userName,
@@ -325,9 +306,6 @@ export async function sendLoginNewDeviceEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send password changed confirmation
- */
 export async function sendPasswordChangedEmail({
   email,
   userName,
@@ -359,9 +337,6 @@ export async function sendPasswordChangedEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send account locked notification
- */
 export async function sendAccountLockedEmail({
   email,
   userName,
@@ -399,9 +374,6 @@ export async function sendAccountLockedEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send account deleted confirmation email
- */
 export async function sendAccountDeletedEmail({
   email,
   userName,
@@ -510,9 +482,6 @@ export async function sendInvitationAcceptedEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send role changed notification
- */
 export async function sendRoleChangedEmail({
   email,
   userName,
@@ -553,9 +522,6 @@ export async function sendRoleChangedEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send removed from organization notification
- */
 export async function sendRemovedFromOrgEmail({
   email,
   userName,
@@ -594,9 +560,6 @@ export async function sendRemovedFromOrgEmail({
 // Subscription & Billing Email Functions
 // ============================================================================
 
-/**
- * Send subscription started email
- */
 export async function sendSubscriptionStartedEmail({
   email,
   userName,
@@ -634,9 +597,6 @@ export async function sendSubscriptionStartedEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send payment receipt email
- */
 export async function sendPaymentReceiptEmail({
   email,
   userName,
@@ -680,9 +640,6 @@ export async function sendPaymentReceiptEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send subscription upgraded email
- */
 export async function sendSubscriptionUpgradedEmail({
   email,
   userName,
@@ -723,9 +680,6 @@ export async function sendSubscriptionUpgradedEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send subscription downgraded email
- */
 export async function sendSubscriptionDowngradedEmail({
   email,
   userName,
@@ -769,9 +723,6 @@ export async function sendSubscriptionDowngradedEmail({
   return { success: true, messageId: result.messageId };
 }
 
-/**
- * Send subscription cancelled email
- */
 export async function sendSubscriptionCancelledEmail({
   email,
   userName,
@@ -813,9 +764,6 @@ export async function sendSubscriptionCancelledEmail({
 // Content Email Functions
 // ============================================================================
 
-/**
- * Send article published notification
- */
 export async function sendArticlePublishedEmail({
   email,
   userName,

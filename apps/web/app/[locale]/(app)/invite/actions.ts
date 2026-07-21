@@ -12,9 +12,6 @@ import { getServerSession } from "@/lib/auth/auth";
 import { canOrgAddMember } from "@/lib/billing/subscription-queries";
 import { acceptInvitationSchema, acceptInviteLinkSchema } from "./schemas";
 
-/**
- * Handle the case where user is already a member — mark invitation accepted gracefully
- */
 async function handleExistingMember(
   invitationId: string,
   organizationId: string
@@ -37,8 +34,6 @@ async function handleExistingMember(
 }
 
 /**
- * Accept an email invitation
- *
  * Handles "already a member" gracefully before delegating to BA's acceptInvitation API.
  * BA handles: email match, expiry check, status check, member creation, invitation update.
  */
@@ -131,8 +126,6 @@ export async function acceptInvitationFormAction(
 }
 
 /**
- * Accept an invite link.
- *
  * The invite-link rules (active, expiry, maxUses) are this app's own feature, so
  * they are checked here; `canOrgAddMember` is the Stripe plan seat cap. Better
  * Auth owns the membership write via `addMember`, which validates duplicates and

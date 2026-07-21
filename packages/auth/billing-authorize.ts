@@ -3,7 +3,7 @@ import { database } from "@repo/database";
 import { ORG_ROLES } from "./permissions";
 
 /**
- * Check if a user is an active (non-suspended) member of an organization.
+ * Check if a user is a member of an organization.
  * Used for read-only subscription access (list-subscription).
  */
 export async function isOrgMember(
@@ -11,22 +11,21 @@ export async function isOrgMember(
   organizationId: string
 ): Promise<boolean> {
   const member = await database.member.findFirst({
-    where: { userId, organizationId, suspendedAt: null },
+    where: { userId, organizationId },
     select: { id: true },
   });
   return member !== null;
 }
 
 /**
- * Check if a user can manage billing for an organization.
- * Only active (non-suspended) org owners and admins are allowed.
+ * Only org owners and admins are allowed.
  */
 export async function canManageBilling(
   userId: string,
   organizationId: string
 ): Promise<boolean> {
   const member = await database.member.findFirst({
-    where: { userId, organizationId, suspendedAt: null },
+    where: { userId, organizationId },
     select: { role: true },
   });
   if (!member) {
@@ -38,8 +37,8 @@ export async function canManageBilling(
 /**
  * Authorize a Better Auth Stripe subscription action against an organization.
  *
- * - `list-subscription` (read) is allowed for any active member.
- * - All other actions (mutations + portal) require an active owner or admin.
+ * - `list-subscription` (read) is allowed for any member.
+ * - All other actions (mutations + portal) require an owner or admin.
  *
  * The exhaustive `switch` is type-checked against `AuthorizeReferenceAction`,
  * so a future BA Stripe plugin release that adds a new action will cause a

@@ -8,9 +8,6 @@ import { NextResponse } from "next/server";
 import { hasOrgPermission } from "@/lib/auth/auth";
 import { validateStorageQuota } from "@/lib/files/storage-quota";
 
-/**
- * Validate uploaded file for security and content requirements
- */
 export async function validateUploadedFile(
   file: File,
   logger: ReturnType<typeof createRequestLogger>
@@ -45,12 +42,8 @@ export async function validateUploadedFile(
   return { valid: true, buffer };
 }
 
-/**
- * Validate organization logo upload permissions
- */
 async function validateOrgLogoPermissions(
   organizationId: string | null,
-  userId: string,
   logger: ReturnType<typeof createRequestLogger>
 ) {
   if (!organizationId) {
@@ -101,27 +94,9 @@ async function validateOrgLogoPermissions(
     };
   }
 
-  // Defense-in-depth: check suspension (BA permissions don't check suspendedAt)
-  const suspended = await database.member.findFirst({
-    where: { organizationId, userId, suspendedAt: { not: null } },
-    select: { id: true },
-  });
-  if (suspended) {
-    logger.warn({ organizationId }, "Suspended member attempted logo upload");
-    return {
-      valid: false,
-      error: "You don't have permission to update this organization's logo",
-      status: 403,
-    };
-  }
-
   return { valid: true, organizationId };
 }
 
-/**
- * Handle file type-specific setup (folder, attachable type/id)
- * Returns early if validation fails
- */
 export async function setupFileType(options: {
   type: string | null;
   file: File;
@@ -159,7 +134,6 @@ export async function setupFileType(options: {
   } else if (fileType === "org-logo") {
     const validation = await validateOrgLogoPermissions(
       organizationId,
-      userId2,
       userLogger
     );
 

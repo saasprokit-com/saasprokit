@@ -12,8 +12,7 @@ import {
 const HTTP_OK = 200;
 
 /**
- * Strip the locale prefix from a pathname so route matching
- * works identically for `/org`, `/vi/org`, `/fr/org`, etc.
+ * Route matching must work identically for `/org`, `/vi/org`, `/fr/org`, etc.
  */
 function stripLocale(pathname: string): string {
   for (const locale of locales) {
@@ -28,7 +27,6 @@ function stripLocale(pathname: string): string {
 }
 
 /**
- * Apply a per-request nonce and Content-Security-Policy header to the response.
  * The nonce is also set as `x-nonce` so Server Components can read it via `headers()`.
  */
 function applyNonceCsp(response: NextResponse): NextResponse {

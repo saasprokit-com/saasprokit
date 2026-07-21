@@ -8,8 +8,6 @@ import type { ActionResult } from "@/lib/auth/auth";
 import { type CreateOrgInput, createOrgSchema } from "./schemas";
 
 /**
- * Create a new organization via Better Auth server API.
- *
  * Better Auth authenticates the caller from the forwarded headers and enforces
  * org-creation eligibility itself (the org plugin's `allowUserToCreateOrganization`
  * hook + `organizationLimit`), so no verifySession pre-check is needed. An

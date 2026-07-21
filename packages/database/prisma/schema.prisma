@@ -127,16 +127,12 @@ model Member {
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   role           String       @default("member")
   createdAt      DateTime     @default(now())
-  suspendedAt    DateTime?
-  suspendedBy    String?
-  suspendReason  String?
 
   @@index([organizationId])
   @@index([userId])
   @@index([userId, organizationId])
   @@index([organizationId, userId, role])
-  @@index([userId, organizationId, suspendedAt])
-  @@index([organizationId, role, suspendedAt])
+  @@index([organizationId, role])
   @@map("member")
 }
 

@@ -11,7 +11,7 @@ import { enforceRateLimit, RateLimitError } from "@/lib/auth/rate-limit";
 import { resolveCallbackUrl } from "@/lib/routes";
 
 /**
- * Create an account. Under `requireEmailVerification` this creates no session
+ * Under `requireEmailVerification` this creates no session
  * and sends a verification email — the client routes to the verify-email page.
  */
 export async function signUpEmailAction(

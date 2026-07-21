@@ -28,12 +28,8 @@ import {
   bulkInviteSchema,
   type InviteMemberInput,
   inviteMemberSchema,
-  type ReactivateMemberInput,
   type RemoveMembersInput,
-  reactivateMemberSchema,
   removeMembersSchema,
-  type SuspendMemberInput,
-  suspendMemberSchema,
   type TransferOwnershipInput,
   transferOwnershipSchema,
   type UpdateRoleInput,
@@ -43,36 +39,26 @@ import {
 async function diagnoseMemberUpdateFailure(
   memberId: string,
   organizationId: string,
-  callerId: string,
-  operation: "role change" | "suspension"
+  callerId: string
 ): Promise<ActionErrorCode> {
   const member = await database.member.findFirst({
     where: { id: memberId, organizationId },
-    select: { role: true, userId: true, suspendedAt: true },
+    select: { role: true, userId: true },
   });
 
   if (!member) {
     return "memberNotFound";
   }
   if (member.role === ORG_ROLES.OWNER) {
-    return operation === "suspension"
-      ? "cannotSuspendOwner"
-      : "cannotChangeOwnerRole";
+    return "cannotChangeOwnerRole";
   }
   if (member.userId === callerId) {
-    return operation === "suspension"
-      ? "cannotSuspendSelf"
-      : "cannotChangeSelfRole";
+    return "cannotChangeSelfRole";
   }
-  if (operation === "suspension" && member.suspendedAt) {
-    return "memberAlreadySuspended";
-  }
-  return operation === "suspension" ? "suspendMember" : "updateRole";
+  return "updateRole";
 }
 
 /**
- * Invite a new member to the organization
- *
  * Delegates to BA's inviteMember API which handles:
  * - Permission checks (via orgAc roles)
  * - Duplicate member/invitation detection
@@ -116,9 +102,6 @@ export async function inviteMemberAction(
   }
 }
 
-/**
- * Remove multiple members from the organization
- */
 export async function removeMembersAction(
   input: RemoveMembersInput
 ): Promise<ActionResult<{ removedCount: number }>> {
@@ -172,9 +155,6 @@ export async function removeMembersAction(
   }
 }
 
-/**
- * Update a member's role
- */
 export async function updateMemberRoleAction(
   input: UpdateRoleInput
 ): Promise<ActionResult> {
@@ -209,8 +189,7 @@ export async function updateMemberRoleAction(
       const errorCode = await diagnoseMemberUpdateFailure(
         validated.memberId,
         validated.organizationId,
-        session.user.id,
-        "role change"
+        session.user.id
       );
       return actionError(errorCode);
     }
@@ -223,8 +202,6 @@ export async function updateMemberRoleAction(
 }
 
 /**
- * Process invitation for one email in bulk invite via BA API
- *
  * RETURNS: null if success, error message if failed (for tracking failures)
  */
 async function processBulkInviteEmail(
@@ -258,7 +235,6 @@ function enforceCapacity(validCount: number, remaining: number): void {
 }
 
 /**
- * Process batch of emails for bulk invitation
  * Uses batch pre-check for performance, then delegates each invite to BA API
  */
 async function processBulkInviteEmails(
@@ -369,8 +345,6 @@ async function checkBulkInviteSkip(
 }
 
 /**
- * Bulk invite multiple members
- *
  * Uses batch pre-check for performance (3 queries vs N failed BA calls),
  * then delegates each valid invite to BA's inviteMember API.
  */
@@ -413,101 +387,6 @@ export async function bulkInviteAction(
   }
 }
 
-/**
- * Suspend a member
- */
-export async function suspendMemberAction(
-  input: SuspendMemberInput
-): Promise<ActionResult> {
-  try {
-    const validated = suspendMemberSchema.parse(input);
-
-    const session = await getServerSession();
-    if (!session) {
-      return actionError("unauthorized");
-    }
-
-    // Atomic update with constraints to prevent TOCTOU race conditions.
-    // Uses updateMany so all guards (not owner, not self, not already suspended) are enforced atomically.
-    const result = await database.member.updateMany({
-      where: {
-        id: validated.memberId,
-        organizationId: validated.organizationId,
-        role: { not: ORG_ROLES.OWNER },
-        userId: { not: session.user.id },
-        suspendedAt: null,
-      },
-      data: {
-        suspendedAt: new Date(),
-        suspendedBy: session.user.id,
-        suspendReason: validated.reason || null,
-      },
-    });
-
-    if (result.count === 0) {
-      const errorCode = await diagnoseMemberUpdateFailure(
-        validated.memberId,
-        validated.organizationId,
-        session.user.id,
-        "suspension"
-      );
-      return actionError(errorCode);
-    }
-
-    await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
-    return { success: true };
-  } catch (error) {
-    return toActionError(error, { fallback: "suspendMember" });
-  }
-}
-
-/**
- * Reactivate a suspended member
- */
-export async function reactivateMemberAction(
-  input: ReactivateMemberInput
-): Promise<ActionResult> {
-  try {
-    const validated = reactivateMemberSchema.parse(input);
-
-    const allowed = await hasOrgPermission(validated.organizationId, {
-      member: ["update"],
-    });
-    if (!allowed) {
-      return actionError("unauthorized");
-    }
-
-    const targetMember = await database.member.findFirst({
-      where: {
-        id: validated.memberId,
-        organizationId: validated.organizationId,
-        suspendedAt: { not: null },
-      },
-    });
-
-    if (!targetMember) {
-      return actionError("suspendedMemberNotFound");
-    }
-
-    await database.member.update({
-      where: { id: validated.memberId },
-      data: {
-        suspendedAt: null,
-        suspendedBy: null,
-        suspendReason: null,
-      },
-    });
-
-    await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
-    return { success: true };
-  } catch (error) {
-    return toActionError(error, { fallback: "reactivateMember" });
-  }
-}
-
-/**
- * Transfer organization ownership
- */
 export async function transferOwnershipAction(
   input: TransferOwnershipInput
 ): Promise<ActionResult> {
@@ -525,15 +404,11 @@ export async function transferOwnershipAction(
         id: validated.newOwnerMemberId,
         organizationId: validated.organizationId,
       },
-      select: { id: true, role: true, userId: true, suspendedAt: true },
+      select: { id: true, role: true, userId: true },
     });
 
     if (!newOwner) {
       return actionError("memberNotFound");
-    }
-
-    if (newOwner.suspendedAt) {
-      return actionError("cannotTransferToSuspended");
     }
 
     if (newOwner.userId === session.user.id) {

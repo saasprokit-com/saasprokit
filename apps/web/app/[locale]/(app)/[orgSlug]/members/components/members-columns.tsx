@@ -81,7 +81,6 @@ export function getColumns({
     ),
     cell: ({ row }) => {
       const member = row.original;
-      const isSuspended = !!member.suspendedAt;
       const initials = member?.user?.name
         ? member.user.name
             .split(" ")
@@ -93,7 +92,7 @@ export function getColumns({
 
       return (
         <div className="flex items-center gap-3">
-          <Avatar className={`size-8 ${isSuspended ? "opacity-50" : ""}`}>
+          <Avatar className="size-8">
             <AvatarImage
               alt={member.user.name ?? ""}
               src={member.user.image ?? undefined}
@@ -101,15 +100,10 @@ export function getColumns({
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span
-              className={`font-medium ${isSuspended ? "text-muted-foreground line-through" : ""}`}
-            >
+            <span className="font-medium">
               {(member.user.name || member?.user?.email.split("@")[0]) ??
                 "Unknown"}
             </span>
-            {isSuspended && (
-              <span className="text-destructive text-xs">Suspended</span>
-            )}
           </div>
           {member.userId === currentUserId && (
             <Badge className="text-xs" variant="secondary">
@@ -191,7 +185,7 @@ export function getColumns({
   });
 
   // Actions column
-  if (permissions.canRemove || permissions.canSuspend) {
+  if (permissions.canRemove) {
     columns.push({
       id: "actions",
       cell: ({ row }) => {

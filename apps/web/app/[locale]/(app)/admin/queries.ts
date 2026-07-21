@@ -16,9 +16,8 @@ export interface AdminKpis {
 const THIRTY_DAYS_MS = 30 * SECONDS_PER_DAY * 1000;
 
 /**
- * Platform KPIs for the /admin dashboard. User stats are gated: moderators lack
- * `user: ["list"]`, so their caller passes includeUserStats=false and never triggers
- * (or sees) the user counts.
+ * User stats are gated: moderators lack `user: ["list"]`, so their caller passes
+ * includeUserStats=false and never triggers (or sees) the user counts.
  */
 export async function getAdminKpis(opts: {
   includeUserStats: boolean;

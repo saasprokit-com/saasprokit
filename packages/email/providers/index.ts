@@ -23,9 +23,6 @@ export type {
  */
 let cachedProvider: EmailProvider | null = null;
 
-/**
- * Detect the appropriate provider based on environment
- */
 function detectProvider(): "resend" | "nodemailer" {
   // Production with Resend API key → use Resend
   if (process.env.NODE_ENV === "production" && env.RESEND_API_KEY) {
@@ -37,8 +34,6 @@ function detectProvider(): "resend" | "nodemailer" {
 }
 
 /**
- * Get the email provider instance
- *
  * Provider selection priority:
  * 1. Explicit EMAIL_PROVIDER env var
  * 2. Auto-detection based on environment

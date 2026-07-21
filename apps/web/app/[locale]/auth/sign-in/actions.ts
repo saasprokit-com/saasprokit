@@ -15,7 +15,7 @@ import { enforceRateLimit, RateLimitError } from "@/lib/auth/rate-limit";
 import { resolveCallbackUrl } from "@/lib/routes";
 
 /**
- * Password sign-in. Returns `{ twoFactorRequired: true }` when the account has
+ * Returns `{ twoFactorRequired: true }` when the account has
  * 2FA enabled (Better Auth responds with `twoFactorRedirect` and withholds the
  * session) so the client can route to the 2FA challenge.
  */
@@ -51,7 +51,6 @@ export async function signInEmailAction(
   }
 }
 
-/** Send a magic-link sign-in email. */
 export async function signInMagicLinkAction(
   input: z.infer<typeof magicLinkSchema>,
   callbackUrl?: string
@@ -82,7 +81,6 @@ export async function signInMagicLinkAction(
   }
 }
 
-/** Send a sign-in email OTP. */
 export async function sendSignInOtpAction(
   input: z.infer<typeof sendOtpSchema>
 ): Promise<ActionResult> {
@@ -114,7 +112,7 @@ const verifySignInOtpSchema = z.object({
   code: z.string().min(1),
 });
 
-/** Verify a sign-in email OTP; creates the session on success. */
+/** Creates the session on success. */
 export async function verifySignInOtpAction(
   input: z.infer<typeof verifySignInOtpSchema>
 ): Promise<ActionResult> {

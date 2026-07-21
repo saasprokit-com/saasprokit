@@ -11,9 +11,6 @@ import {
 } from "@/lib/infrastructure/revalidation";
 import { validateOrganizationMembership } from "@/servers/organization/queries";
 
-/**
- * Set a workspace as the user's default.
- */
 export async function setDefaultWorkspaceAction(
   organizationId: string
 ): Promise<ActionResult> {

@@ -11,9 +11,9 @@ import { resolveCallbackUrl } from "@/lib/routes";
 const socialProviderSchema = z.enum(["google", "github"]);
 
 /**
- * Begin a social (OAuth) sign-in. `disableRedirect: true` makes Better Auth
- * return the provider authorization URL instead of redirecting server-side; the
- * client navigates there. The OAuth state cookie is set via `nextCookies`.
+ * `disableRedirect: true` makes Better Auth return the provider authorization
+ * URL instead of redirecting server-side; the client navigates there. The OAuth
+ * state cookie is set via `nextCookies`.
  */
 export async function signInSocialAction(
   provider: string,

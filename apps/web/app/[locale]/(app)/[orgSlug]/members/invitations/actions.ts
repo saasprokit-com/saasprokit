@@ -108,9 +108,6 @@ export async function cancelInvitationAction(
   }
 }
 
-/**
- * Cancel multiple pending invitations
- */
 export async function cancelInvitationsAction(
   input: CancelInvitationsInput
 ): Promise<ActionResult<{ cancelledCount: number; failedCount: number }>> {

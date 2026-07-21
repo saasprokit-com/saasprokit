@@ -14,9 +14,6 @@ type Enable2FAResult =
   | { success: true; totpURI: string; backupCodes: string[] }
   | { success: false; error: string };
 
-/**
- * Enable two-factor authentication for the current user.
- */
 export async function enable2FAAction(
   password: string
 ): Promise<Enable2FAResult> {
@@ -55,9 +52,6 @@ export async function enable2FAAction(
   }
 }
 
-/**
- * Verify TOTP code to complete 2FA setup.
- */
 export async function verify2FAAction(code: string): Promise<ActionResult> {
   const logger = createRequestLogger({ action: "verify2FA" });
 
@@ -84,9 +78,6 @@ export async function verify2FAAction(code: string): Promise<ActionResult> {
   }
 }
 
-/**
- * Disable two-factor authentication for the current user.
- */
 export async function disable2FAAction(
   password: string
 ): Promise<ActionResult> {
@@ -116,7 +107,6 @@ export async function disable2FAAction(
 }
 
 /**
- * Logout a specific session, identified by its Better Auth session token.
  * No verifySession needed: revokeSession authenticates the caller itself and
  * only revokes sessions owned by that caller.
  */
@@ -144,10 +134,6 @@ export async function logoutSessionAction(token: string) {
   }
 }
 
-/**
- * Logout all other sessions
- * Keeps current session active
- */
 export async function logoutAllOtherSessionsAction() {
   const logger = createRequestLogger({
     action: "logoutAllOtherSessions",
@@ -173,7 +159,6 @@ export async function logoutAllOtherSessionsAction() {
 }
 
 /**
- * Change the current user's password and revoke other sessions.
  * auth.api.changePassword authenticates the caller from the forwarded headers.
  */
 export async function changePasswordAction(

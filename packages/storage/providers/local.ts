@@ -28,9 +28,6 @@ const RANDOM_SUBSTRING_LENGTH = 6;
 const PUBLIC_PREFIX_REGEX = /^\.?\/?public\/?/;
 const TRAILING_SLASH_REGEX = /\/$/;
 
-/**
- * Local storage configuration type
- */
 interface LocalConfig {
   basePath: string;
   baseUrl: string;
@@ -93,9 +90,6 @@ export class LocalStorageProvider implements StorageProvider {
       .replace(TRAILING_SLASH_REGEX, "");
   }
 
-  /**
-   * Upload a file to local filesystem
-   */
   async upload(options: UploadOptions): Promise<UploadResult> {
     const {
       filename: originalFilename,
@@ -137,9 +131,6 @@ export class LocalStorageProvider implements StorageProvider {
     };
   }
 
-  /**
-   * Delete a file from local filesystem
-   */
   async delete(options: DeleteOptions): Promise<void> {
     const { path: storagePath } = options;
 
@@ -158,18 +149,12 @@ export class LocalStorageProvider implements StorageProvider {
     }
   }
 
-  /**
-   * Get URL for accessing a file
-   */
   getUrl(options: GetUrlOptions): Promise<string> {
     const { path: storagePath } = options;
     // For local storage, return relative path (works with Next.js Image)
     return Promise.resolve(storagePath);
   }
 
-  /**
-   * Check if a file exists
-   */
   async exists(path: string): Promise<boolean> {
     const relativePath = path.replace(this.publicPrefix, "");
     const fullPath = join(this.basePath, relativePath);

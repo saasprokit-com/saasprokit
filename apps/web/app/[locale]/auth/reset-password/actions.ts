@@ -17,7 +17,6 @@ const resetPasswordActionSchema = z.object({
   newPassword: passwordSchema,
 });
 
-/** Consume a reset token and set a new password. */
 export async function resetPasswordAction(
   input: z.infer<typeof resetPasswordActionSchema>
 ): Promise<ActionResult> {

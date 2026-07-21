@@ -1,65 +1,82 @@
 ---
 name: routing
-description: Route structure, edge middleware (proxy.ts), and centralized route definitions for this repo. Read before adding pages or API routes, changing public/auth route allowlists, touching locale handling, or adjusting CSP.
+description: Route structure, edge middleware (apps/web/proxy.ts), and centralized route definitions (@/lib/routes) for this Next.js 16 web app — the [locale] route groups plus the top-level org route, the public/auth allowlists, locale handling, and the CSP nonce. Read before adding pages or API routes, editing route allowlists, or touching middleware, locale, or CSP handling.
 ---
 
 # Routing
 
+**Mental model:** one edge entry (`apps/web/proxy.ts`) runs i18n, strips the
+locale, then gates every path against allowlists — **default-deny**: anything not
+public and not an auth route needs a session. Route strings live in one file
+(`apps/web/lib/routes.ts`); import them, never hardcode.
+
 ## Route Structure
 
-The Next.js app uses grouped routes (parentheses in directory names) to organize different sections:
+`apps/web/app/[locale]/` — root holds `layout.tsx`, `loading.tsx`,
+`error.tsx`, `not-found.tsx` plus these groups (parenthesized = URL-invisible):
 
-**Locale-level routes** (`/[locale]/`):
-- `(app)` — Authenticated app pages
-  - `[orgSlug]` — Organization-scoped pages: `billing`, `members`, `settings`, and `checkout` (Stripe return URLs: `checkout/success`, `checkout/canceled`)
-  - `account` — Personal account management: `profile`, `security`, `danger` (delete account), `new-org`
-  - `invite` — Organization invitation handling (`invite/[token]`, `invite/accept`)
-  - `org` — Organization selection landing (post-login redirect target)
-- `(frontier)` — Public marketing home page (Hero, Features, Pricing blocks live on the single home route — there is no separate `/pricing` page)
-- `auth` — Authentication flows: `sign-in`, `sign-up`, `magic-link`, `forgot-password`, `reset-password`, `verify-email`, `2fa`
+- **`(app)`** — authenticated app; own `layout.tsx`/`loading.tsx`/`not-found.tsx`:
+  - `[orgSlug]/` — org-scoped: index, `billing`, `members` (+ `members/invitations`, `members/invite-links`), `settings`, `checkout/success`, `checkout/canceled`
+  - `account/` — `profile`, `security`, `danger`, `new-org`
+  - `admin/` — platform admin: index, `users` (+ `users/[userId]`), `organizations` (+ `organizations/[orgId]`)
+  - `invite/` — `invite/[token]`, `invite/accept`
+- **`org/`** — **top-level, OUTSIDE `(app)`** (`app/[locale]/org/page.tsx`): the post-login org-selection landing. `PAGE_ROUTES.ORG` = `/org`.
+- **`(frontier)`** — public marketing home (`page.tsx`); Hero/Features/Pricing are blocks on `/`, there is no `/pricing` page.
+- **`auth/`** — `sign-in`, `sign-up`, `forgot-password`, `reset-password`, `verify-email`, `2fa` (+ `layout.tsx`, `actions.ts`). `MAGIC_LINK` is defined and gated in routes but has no page dir yet.
 
-**API routes** (`/api/`):
-- `auth/[...all]/` — Better Auth handler (incl. Stripe webhooks via `@better-auth/stripe`)
-- `health/` — Health check endpoint (database + auth validation)
-- `upload/` — File uploads
-- `user/activity/` — User activity tracking
+Because org pages sit at the top level (`/[orgSlug]`), an unknown `/typo` is
+indistinguishable from a real `/acme` at the edge without a DB lookup — hence
+default-deny (`routes.ts:44`).
 
-## Edge Middleware (`apps/web/proxy.ts`)
+**API** (`app/api/`, all bypass the proxy): `auth/[...all]` (Better Auth handler,
+incl. Stripe webhook via `@better-auth/stripe`), `health`, `upload`, `user/activity`.
 
-Next.js 16 renamed `middleware.ts` → `proxy.ts`. Single entry point, executed in this order:
+## Edge middleware — `apps/web/proxy.ts`
 
-1. **Skip** `/api`, `/_next`, and any path containing a `.` (static files) — these bypass the proxy entirely (no CSP applied).
-2. **i18n first** — runs `internationalizationMiddleware` and returns immediately if it produces a non-200 (locale detection/redirect). Everything below only runs once the locale is settled.
-3. **Strip locale** — `stripLocale()` normalizes `/vi/org`, `/fr/org`, etc. to `/org` so route checks are locale-agnostic.
-4. **Gate routes** — matches the normalized path against `AUTH_ROUTE_PREFIXES` (`startsWith`) and `PUBLIC_ROUTE_PREFIXES` (exact `===`, currently just `HOME`) from `@/lib/routes`. Unauthenticated users on protected routes redirect to sign-in (with `callbackUrl`); authenticated users on auth routes redirect to `/org`.
-5. **Fail closed** — if the session check throws, protected routes still redirect to sign-in; only public/auth routes are allowed through.
+Next.js 16 renamed `middleware.ts` → `proxy.ts`. Ordered flow:
 
-It also generates a per-request CSP nonce and sets `x-nonce` on the response (via `applyNonceCsp`) so Server Components can read it via `headers()`. Touch this file whenever you add a new top-level route group, change the public/auth allowlists, or need to adjust CSP.
+1. **Skip** `/api`, `/_next`, or any path with a `.` — `NextResponse.next()`, no CSP (`proxy.ts:57`).
+2. **i18n first** — `internationalizationMiddleware(request)`; return immediately if `status !== 200` (locale redirect) (`proxy.ts:66`).
+3. **Strip locale** — `stripLocale()` maps `/vi/org` → `/org` so checks are locale-agnostic (`proxy.ts:17`).
+4. **Classify** — `isAuthRoute` = `AUTH_ROUTE_PREFIXES.some(startsWith)`; `isPublicRoute` = `PUBLIC_ROUTE_EXACT.some(===)` **or** `PUBLIC_ROUTE_PREFIXES.some(startsWith)` (`proxy.ts:75`).
+5. **Public short-circuit** — public-and-not-auth returns with CSP, no session check (`proxy.ts:84`).
+6. **Session gate** — `auth.api.getSession`: no session on a protected route → redirect to `SIGN_IN` with `?callbackUrl=<original pathname>`; session on an auth route → redirect to `ORG` (`proxy.ts:90`).
+7. **Fail closed** — on a thrown session check, protected routes still redirect to sign-in; only public/auth pass (`proxy.ts:106`).
 
-## Centralized Route Definitions
+CSP: `applyNonceCsp` mints a per-request nonce, sets `Content-Security-Policy`
+and `x-nonce` so Server Components read it via `headers()` (`proxy.ts:32`).
 
-All routes are defined in `apps/web/lib/routes.ts`:
+## Centralized routes — `apps/web/lib/routes.ts`
 
-```typescript
-import { PAGE_ROUTES, orgRoutes, adminRoutes, API_ROUTES } from "@/lib/routes";
+Exports: `PAGE_ROUTES` (`:1`), `PUBLIC_ROUTE_EXACT` = `[HOME]` (`:39`),
+`PUBLIC_ROUTE_PREFIXES` = `[INVITE]` i.e. `/invite` (`:51`), `resolveCallbackUrl`
+(open-redirect guard, `:59`), `AUTH_ROUTE_PREFIXES` (`:72`), `ORG_PAGES` (`:85`),
+`orgRoutes` (`:97`), `accountRoutes` (`:106`), `ADMIN_PAGES` (`:117`),
+`adminRoutes` (`:123`), `API_ROUTES` (`:134`).
 
-PAGE_ROUTES.SIGN_IN        // "/auth/sign-in"
-orgRoutes.billing("my-org") // "/my-org/billing"
-adminRoutes.user(userId)    // "/admin/users/{userId}"
-API_ROUTES.ORG_CHECKOUT(id) // "/api/organizations/{id}/checkout"
+```ts
+import { PAGE_ROUTES, orgRoutes, adminRoutes } from "@/lib/routes";
+PAGE_ROUTES.SIGN_IN          // "/auth/sign-in"
+orgRoutes.billing("acme")    // "/acme/billing"
+adminRoutes.user(userId)     // "/admin/users/{userId}"
 ```
 
-`/admin` is a protected subtree: the default-deny middleware forces sign-in, and
-role gating happens **server-side** in the admin layout/pages via `requireAdminArea`
-(no `proxy.ts` change needed). `"admin"` is a reserved slug (`packages/utils/slug.ts`),
-so it never collides with a top-level org slug.
+`ORG_PAGES` / `ADMIN_PAGES` values feed `revalidateOrgPage` and the route helpers.
 
-## Locale Handling
+## Locale handling
 
-```typescript
-import { locales } from "@repo/internationalization";
+`locales = ["en","es","de","zh","fr","pt"]`, `DEFAULT_LOCALE = "en"`
+(`packages/internationalization/shared.ts:10`). The i18n middleware wraps
+next-international with `urlMappingStrategy: "rewriteDefault"` (default locale
+served without a prefix) (`packages/internationalization/proxy.ts:46`). Pages
+pre-render locales via `generateStaticParams` returning `locales.map(...)`.
 
-export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
-}
-```
+## Gotchas
+
+- **`/admin` needs no `proxy.ts` change.** Default-deny forces sign-in; role gating is server-side in the admin layout via `requireAdminArea()` (`apps/web/lib/auth/admin.ts:34`, called at `app/[locale]/(app)/admin/layout.tsx:28`) — redirects anon, 404s non-staff.
+- **`admin`, `org`, `account`, `invite` (and more) are reserved slugs** (`packages/utils/slug.ts:7`, `isReservedSlug` at `:35`) so a top-level org slug never collides with a system route.
+- **Adding a new top-level route group?** Add it to `PUBLIC_ROUTE_PREFIXES` (public) or an auth/allowlist as needed — otherwise it is protected by default.
+- **`HOME` is exact, not a prefix** (`routes.ts:39`): `/` as a `startsWith` prefix would match every path.
+- **`callbackUrl` is sanitized** — only same-origin relative paths survive `resolveCallbackUrl`; everything else falls back to `/org`.
+
+See `saasprokit:workflows`, `saasprokit:auth`.

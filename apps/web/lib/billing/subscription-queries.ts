@@ -24,9 +24,6 @@ import {
 import { ATTACHABLE_TYPE, BYTES_PER_MB } from "@repo/utils/storage";
 import { env } from "@/lib/env";
 
-/**
- * Get subscription for an organization by org ID
- */
 export async function getOrgSubscription(
   organizationId: string
 ): Promise<Subscription | null> {
@@ -49,9 +46,6 @@ export async function getOrgSubscription(
   return validationResult.data as Subscription;
 }
 
-/**
- * Get active subscription for a reference (user or org)
- */
 export async function getActiveSubscription(
   referenceId: string
 ): Promise<Subscription | null> {
@@ -66,9 +60,6 @@ export async function getActiveSubscription(
   return subscription as Subscription | null;
 }
 
-/**
- * Get the current plan for a reference
- */
 export async function getCurrentPlanForReference(
   referenceId: string
 ): Promise<PlanName> {
@@ -79,9 +70,6 @@ export async function getCurrentPlanForReference(
   return (subscription.plan as PlanName) || PLAN_NAMES.FREE;
 }
 
-/**
- * Get organization member count
- */
 export function getOrgMemberCount(organizationId: string): Promise<number> {
   return database.member.count({ where: { organizationId } });
 }
@@ -106,7 +94,6 @@ export async function getOrgStorageUsage(
 }
 
 /**
- * Get count of pending invitations for an organization.
  * Pending invitations reserve seats toward the member limit.
  */
 function getOrgPendingInvitationCount(organizationId: string): Promise<number> {
@@ -116,7 +103,6 @@ function getOrgPendingInvitationCount(organizationId: string): Promise<number> {
 }
 
 /**
- * Get complete usage stats for an organization.
  * Fetches DB data, then delegates percentage/limit math to pure helper.
  */
 export async function getOrgUsageStats(organizationId: string) {
@@ -134,9 +120,8 @@ export async function getOrgUsageStats(organizationId: string) {
 }
 
 /**
- * Check if organization can add more members.
- * Counts both current members (including suspended) and pending invitations
- * toward the plan limit, since both represent reserved seats.
+ * Counts both current members and pending invitations toward the plan limit,
+ * since both represent reserved seats.
  */
 export async function canOrgAddMember(
   organizationId: string
@@ -169,8 +154,6 @@ export async function canOrgAddMember(
 }
 
 /**
- * Check if user can create more organizations.
- *
  * Rules:
  * 1. Every user gets 1 free organization (no payment required)
  * 2. To create additional orgs, all existing orgs must have paid subscriptions

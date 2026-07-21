@@ -3,9 +3,6 @@ import "server-only";
 import { database } from "@repo/database";
 import { ATTACHABLE_TYPE } from "@repo/utils/storage";
 
-/**
- * Handle post-upload file operations (set as avatar/logo, delete old files)
- */
 export async function handlePostUploadOperations(options: {
   type: string | null;
   fileRecord: { id: string };
