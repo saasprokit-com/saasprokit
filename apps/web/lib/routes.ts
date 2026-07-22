@@ -53,16 +53,28 @@ export const PUBLIC_ROUTE_PREFIXES = [PAGE_ROUTES.INVITE] as readonly string[];
 /**
  * Sanitize a post-auth redirect target. Only same-origin relative paths are
  * allowed; anything else (absolute URLs, protocol-relative `//host`, backslash
- * tricks, empty/invalid input) falls back to the org dashboard. Guards against
- * open-redirect via the `callbackUrl` query param.
+ * or control-character tricks, empty/invalid input) falls back to the org
+ * dashboard. Guards against open-redirect via the `callbackUrl` query param —
+ * the sole guard on the password/OTP sign-in path, where the client
+ * `router.push`es this value and Better Auth never sees it.
  */
 export function resolveCallbackUrl(raw: string | null | undefined): string {
-  if (typeof raw !== "string" || raw.length === 0) {
+  if (typeof raw !== "string" || !raw.startsWith("/") || raw.startsWith("//")) {
     return PAGE_ROUTES.ORG;
   }
-  const safe =
-    raw.startsWith("/") && !raw.startsWith("//") && !raw.includes("\\");
-  return safe ? raw : PAGE_ROUTES.ORG;
+  try {
+    // Resolve against a sentinel origin so the parser normalizes exactly as the
+    // browser will (strips tab/newline, folds `\` to `/`), then rebuild from the
+    // parsed parts so the raw string never reaches the redirect. A denylist misses
+    // `/\t/evil.com`, which the URL parser degrades to protocol-relative `//evil.com`.
+    const url = new URL(raw, "https://x.invalid");
+    if (url.origin !== "https://x.invalid") {
+      return PAGE_ROUTES.ORG;
+    }
+    return url.pathname + url.search;
+  } catch {
+    return PAGE_ROUTES.ORG;
+  }
 }
 
 /**

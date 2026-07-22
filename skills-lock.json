@@ -37,6 +37,12 @@
       "skillPath": "better-auth/organization/SKILL.md",
       "computedHash": "79a5a85b43d10e9fe37582b3506b051a33a991817b938f349099baa5ddba21aa"
     },
+    "playwright-best-practices": {
+      "source": "currents-dev/playwright-best-practices-skill",
+      "sourceType": "github",
+      "skillPath": "playwright-best-practices/SKILL.md",
+      "computedHash": "7eb144f734450fee649dc1d209114775ddda07cbf45be84fe969d3d4f3971dce"
+    },
     "prisma-cli": {
       "source": "prisma/skills",
       "sourceType": "github",

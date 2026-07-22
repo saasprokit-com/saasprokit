@@ -48,7 +48,7 @@ docker compose up postgres maildev   # DB + mail catcher (recommended for app de
 
 Detailed architecture docs live as skills in the `saasprokit` plugin at `saasprokit-skills/skills/*/SKILL.md`. Once the plugin is installed they are invocable as `/saasprokit:<name>`; either way, read the relevant SKILL.md BEFORE writing code in its area:
 
-- `saasprokit:auth` — Better Auth setup, role systems, server-side session helpers (`getServerSession`, `requireAuth`, `hasOrgPermission`), `validateOrgMembershipBySlug`, server action auth (`verifySession`, `toActionError`), client-side usage
+- `saasprokit:auth` — Better Auth setup, dual admin + org RBAC, server-side session helpers (`getServerSession`, `requireAuth`, `hasOrgPermission`), org-slug access (`getActiveOrganization`), server action auth (`verifySession`, `toActionError`), platform `/admin` gates
 - `saasprokit:routing` — Route structure, edge middleware (`apps/web/proxy.ts`), centralized routes (`@/lib/routes`), locale handling
 - `saasprokit:data-access` — `servers/` vs `lib/` split in `apps/web`, Prisma workflow
 - `saasprokit:forms` — Form patterns (RHF + zod + server actions), scaffold recipes for new forms and dialogs

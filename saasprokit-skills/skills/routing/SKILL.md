@@ -20,7 +20,7 @@ public and not an auth route needs a session. Route strings live in one file
   - `account/` — `profile`, `security`, `danger`, `new-org`
   - `admin/` — platform admin: index, `users` (+ `users/[userId]`), `organizations` (+ `organizations/[orgId]`)
   - `invite/` — `invite/[token]`, `invite/accept`
-- **`org/`** — **top-level, OUTSIDE `(app)`** (`app/[locale]/org/page.tsx`): the post-login org-selection landing. `PAGE_ROUTES.ORG` = `/org`.
+- **`org/`** — **top-level, OUTSIDE `(app)`** (`app/[locale]/org/page.tsx`): the post-login redirect hop — no UI; it `redirect()`s to the user's default org slug, or to `/account/new-org` when they have none. `PAGE_ROUTES.ORG` = `/org`.
 - **`(frontier)`** — public marketing home (`page.tsx`); Hero/Features/Pricing are blocks on `/`, there is no `/pricing` page.
 - **`auth/`** — `sign-in`, `sign-up`, `forgot-password`, `reset-password`, `verify-email`, `2fa` (+ `layout.tsx`, `actions.ts`). `MAGIC_LINK` is defined and gated in routes but has no page dir yet.
 
@@ -37,7 +37,7 @@ Next.js 16 renamed `middleware.ts` → `proxy.ts`. Ordered flow:
 
 1. **Skip** `/api`, `/_next`, or any path with a `.` — `NextResponse.next()`, no CSP (`proxy.ts:57`).
 2. **i18n first** — `internationalizationMiddleware(request)`; return immediately if `status !== 200` (locale redirect) (`proxy.ts:66`).
-3. **Strip locale** — `stripLocale()` maps `/vi/org` → `/org` so checks are locale-agnostic (`proxy.ts:17`).
+3. **Strip locale** — `stripLocale()` maps a supported-locale prefix like `/fr/org` → `/org` so checks are locale-agnostic (`proxy.ts:17`).
 4. **Classify** — `isAuthRoute` = `AUTH_ROUTE_PREFIXES.some(startsWith)`; `isPublicRoute` = `PUBLIC_ROUTE_EXACT.some(===)` **or** `PUBLIC_ROUTE_PREFIXES.some(startsWith)` (`proxy.ts:75`).
 5. **Public short-circuit** — public-and-not-auth returns with CSP, no session check (`proxy.ts:84`).
 6. **Session gate** — `auth.api.getSession`: no session on a protected route → redirect to `SIGN_IN` with `?callbackUrl=<original pathname>`; session on an auth route → redirect to `ORG` (`proxy.ts:90`).
@@ -68,7 +68,7 @@ adminRoutes.user(userId)     // "/admin/users/{userId}"
 `locales = ["en","es","de","zh","fr","pt"]`, `DEFAULT_LOCALE = "en"`
 (`packages/internationalization/shared.ts:10`). The i18n middleware wraps
 next-international with `urlMappingStrategy: "rewriteDefault"` (default locale
-served without a prefix) (`packages/internationalization/proxy.ts:46`). Pages
+served without a prefix) (`packages/internationalization/proxy.ts:17`). Pages
 pre-render locales via `generateStaticParams` returning `locales.map(...)`.
 
 ## Gotchas

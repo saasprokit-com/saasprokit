@@ -107,6 +107,12 @@ describe("resolveCallbackUrl", () => {
     expect(resolveCallbackUrl("javascript:alert(1)")).toBe(PAGE_ROUTES.ORG);
   });
 
+  it("rejects control-character tricks the browser strips before parsing", () => {
+    // Tab/newline degrade to protocol-relative `//evil.com` in the browser.
+    expect(resolveCallbackUrl("/\t/evil.com")).toBe(PAGE_ROUTES.ORG);
+    expect(resolveCallbackUrl("/\n/evil.com")).toBe(PAGE_ROUTES.ORG);
+  });
+
   it("falls back to the org dashboard for empty or missing input", () => {
     expect(resolveCallbackUrl("")).toBe(PAGE_ROUTES.ORG);
     expect(resolveCallbackUrl(undefined)).toBe(PAGE_ROUTES.ORG);
