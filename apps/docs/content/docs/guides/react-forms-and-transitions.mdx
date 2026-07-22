@@ -1,0 +1,201 @@
+---
+title: React Forms & Transitions
+description: How, where, and when to use forms, server actions, useActionState, and useTransition in React 19 + Next.js — a decision-tree cheatsheet
+---
+
+Five APIs — `<form action>`, `useActionState`, `useFormStatus`, `useOptimistic`,
+`useTransition` — plus Next.js Server Actions. This page tells you **which one
+to reach for and why**, starting from the question you actually have.
+
+## 1. The decision tree
+
+```
+Does the UI have input fields the user fills in?
+│
+├─ NO (a confirm / delete / accept button)
+│   │
+│   ├─ Target is FIXED (this account, this plan, a token — expressible
+│   │  as a hidden input or .bind)  ............... Setup A  <form action> + useActionState
+│   │
+│   └─ Args are DYNAMIC client state (selected row ids), or the button
+│      lives in a dropdown/menu item  ............. Setup C  useTransition
+│
+└─ YES (a real form)
+    │
+    ├─ Public / first-visit page where a pre-hydration submit
+    │  must still work (lead capture, invite accept) . Setup D  hybrid (A + B)
+    │
+    └─ Behind a login (dashboard, dialog, settings) .. Setup B  RHF + typed server action
+        └─ inside a Dialog? same setup, wrap the call
+           in startTransition (see Setup C's gotcha)
+```
+
+Two framework facts drive this tree:
+
+- A **server action is a public POST endpoint**. Wherever the tree lands you,
+  the action itself must validate input and check authorization — rendering the
+  form behind a guard is not a security boundary.
+- If the action calls `revalidatePath`/`revalidateTag` or navigates, the fresh
+  UI arrives **in the same response**, and only *transition-based* pending
+  signals stay true until it's on screen (section 3).
+
+## 2. The four setups
+
+### Setup A — `<form action>` + `useActionState` (fieldless / fixed target)
+
+Native form semantics, automatic transition, progressive enhancement — the form
+POSTs even before hydration.
+
+```tsx
+"use client";
+import { useActionState } from "react";
+import { acceptInviteAction } from "./actions";
+
+export function AcceptInvite({ inviteId }: { inviteId: string }) {
+  const [state, formAction, pending] = useActionState(acceptInviteAction, null);
+
+  return (
+    <form action={formAction}>
+      <input name="inviteId" type="hidden" value={inviteId} />
+      <button disabled={pending} type="submit">Accept</button>
+      {state?.error && <p role="alert">{state.error}</p>}
+    </form>
+  );
+}
+```
+
+```ts
+"use server";
+export async function acceptInviteAction(_prev: unknown, formData: FormData) {
+  const inviteId = String(formData.get("inviteId"));
+  // authorize! then mutate, then revalidatePath(...)
+  return { ok: true };
+}
+```
+
+Extra args without hidden inputs: `myAction.bind(null, { planId })`.
+Pending state in a nested child: `useFormStatus` (must be *inside* the `<form>`).
+
+### Setup B — react-hook-form + zodResolver + typed server action (fields, behind login)
+
+Instant field-level validation, end-to-end types from one zod schema — traded
+against progressive enhancement (irrelevant behind a login).
+
+```tsx
+const form = useForm<Input>({ resolver: zodResolver(schema) });
+
+async function onSubmit(values: Input) {
+  const result = await saveAction(values);      // typed args, typed result
+  if (!result.success) { toast.error(result.error); return; }
+}
+// <form onSubmit={form.handleSubmit(onSubmit)}> … gate on form.formState.isSubmitting
+// — ONLY if saveAction doesn't revalidate/navigate. If it does, wrap the call
+// in startTransition and gate on isPending instead (Setup C).
+```
+
+The **same schema is re-parsed inside the action** — client validation is UX,
+server validation is the boundary:
+
+```ts
+"use server";
+export async function saveAction(input: Input) {
+  const data = schema.parse(input);   // never trust the client — even your own
+  // authorize, mutate, revalidatePath(...)
+  return { success: true } as const;
+}
+```
+
+### Setup C — programmatic `useTransition` call (dynamic args, menus, dialogs)
+
+For invoking an action *outside* `<form action>`: dialog confirms, dropdown
+items, bulk operations on selected rows.
+
+```tsx
+const [isPending, startTransition] = useTransition();
+
+function onConfirm() {
+  startTransition(async () => {
+    const result = await removeRowsAction({ ids: selectedIds });
+
+    startTransition(() => {          // ⚠ the gotcha: state updates AFTER an
+      if (result.success) {          // await must be re-wrapped, or they fall
+        setOpen(false);              // out of the transition and commit before
+      }                              // the revalidated UI does
+    });
+    if (!result.success) toast.error(result.error);
+  });
+}
+// gate buttons/inputs on isPending
+```
+
+`isPending` stays `true` until the action **and** the revalidation re-render
+have committed — the spinner never lies.
+
+### Setup D — hybrid public form (fields + progressive enhancement)
+
+Public pages where a visitor may submit during the hydration gap: render the
+native `<form action>` (Setup A) so a pre-hydration submit still POSTs, and let
+RHF (Setup B) enhance the same fields after hydration. The action takes
+`FormData` and returns **field errors** via `safeParse` — the pre-hydration
+submitter has no client validation, so the server response is their only
+feedback:
+
+```ts
+"use server";
+export async function subscribeAction(_prev: unknown, formData: FormData) {
+  const parsed = schema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
+  // mutate…
+  return { ok: true };
+}
+```
+
+## 3. Pending semantics — the table that prevents lying spinners
+
+| Signal | Comes from | Goes `false`… | Covers revalidation re-render? |
+| --- | --- | --- | --- |
+| `pending` | `useActionState` / `useFormStatus` | when the transition completes | ✅ (auto-transition) |
+| `isPending` | `useTransition` | when *all* updates in the transition, including the router applying fresh RSC payload, have committed | ✅ |
+| `formState.isSubmitting` | react-hook-form | the moment your `onSubmit` promise resolves | ❌ — action returns *before* the fresh UI paints |
+
+**Rule:** action revalidates or navigates → gate on a transition-based signal
+(`pending`/`isPending`). Action only returns data (toast and done) →
+`isSubmitting` is fine. And inside `startTransition(async () => …)`,
+`isSubmitting` measures nothing at all — `startTransition` returns
+synchronously.
+
+## 4. The five APIs — how / where / when
+
+| API | How | Where | When |
+| --- | --- | --- | --- |
+| `<form action={fn}>` | pass a (server) function; receives `FormData`; runs in a transition; no `preventDefault` | any real form | fieldless confirms with fixed targets; public forms (PE); whenever native form semantics suffice |
+| `useActionState` | `[state, formAction, pending] = useActionState(action, init)`; action gets `(prevState, formData)` | the component owning the `<form>` | you need the action's returned state (errors!) rendered, plus pending — the default companion of `<form action>` |
+| `useFormStatus` | `{ pending } = useFormStatus()` | a **child** component rendered inside the `<form>` | reusable submit buttons that shouldn't take a `pending` prop |
+| `useOptimistic` | `[optimistic, add] = useOptimistic(real, merge)`; call `add` inside the action/transition | lists & counters wrapping a mutation | show the change instantly, reconcile when the server responds |
+| `useTransition` | `[isPending, startTransition]`; wrap the async action call; re-wrap post-`await` state updates | event handlers outside `<form action>` | dialogs, menus, bulk ops — typed args in, typed result back |
+
+**The Next.js layer under all of them:** a server action is an untrusted public
+endpoint (validate + authorize inside, derive identity from the session — not
+the payload); `revalidatePath`/`revalidateTag` inside the action ships the
+re-rendered page in the same roundtrip; actions dispatch **sequentially per
+client**.
+
+## 5. Top five mistakes
+
+1. **Gating a revalidating action on `isSubmitting`** — spinner stops before
+   the list updates. Use `isPending`/`pending` (section 3).
+2. **No nested `startTransition` after `await`** — your `setOpen(false)` runs
+   as an urgent update and the dialog closes on stale data (Setup C).
+3. **Trusting client-side validation** — zod in the browser is UX; anyone can
+   POST the action directly. Re-parse the same schema server-side, always.
+4. **`Promise.all` over server actions from the client** — Next.js dispatches
+   actions sequentially per client; parallelize *inside* one action instead.
+5. **Using RHF `onSubmit` on a public form** — the form is inert until
+   hydration; a slow-connection visitor's submit does nothing. Use Setup A
+   or D so the native POST works.
+
+---
+
+Building on SaaSProKit? The repo-specific conventions — colocated
+`schemas.ts`/`actions.ts`, the `ActionResult` contract, and scaffold recipes —
+live in the `saasprokit:forms` skill (`saasprokit-skills/skills/forms/`).
