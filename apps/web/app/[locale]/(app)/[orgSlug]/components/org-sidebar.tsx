@@ -32,7 +32,6 @@ import { setDefaultWorkspaceAction } from "../actions";
 
 interface OrgSidebarProps {
   activeOrganization?: UserOrganization;
-  /** Present when the signed-in user is platform staff; links to /admin. */
   adminUrl?: string;
   canManageBilling: boolean;
   defaultOrganizationId?: string | null;

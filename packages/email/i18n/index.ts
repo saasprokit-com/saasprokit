@@ -140,9 +140,6 @@ export function formatCurrency(
   }).format(amount);
 }
 
-/**
- * Check if a locale is supported
- */
 export function isLocaleSupported(locale: string): locale is Locale {
   return SUPPORTED_LOCALES.includes(locale as Locale);
 }

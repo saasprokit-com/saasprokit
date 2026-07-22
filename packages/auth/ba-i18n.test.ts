@@ -13,7 +13,7 @@ describe("baErrorTranslations", () => {
     }
   });
 
-  it("has identical key sets across locales (languine drift guard)", () => {
+  it("has identical key sets across locales (drift guard)", () => {
     const enKeys = Object.keys(baErrorTranslations.en).sort();
     for (const [locale, table] of Object.entries(baErrorTranslations)) {
       expect(Object.keys(table).sort(), `locale ${locale}`).toEqual(enKeys);

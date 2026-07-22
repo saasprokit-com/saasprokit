@@ -2,7 +2,6 @@ import { Resend } from "resend";
 import type { EmailProvider, SendEmailOptions, SendEmailResult } from "./types";
 
 /**
- * Resend email provider
  * Best for: Production environments with high deliverability requirements
  *
  * Features:

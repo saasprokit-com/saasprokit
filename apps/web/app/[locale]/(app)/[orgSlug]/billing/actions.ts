@@ -143,7 +143,7 @@ export async function changePlanAction(
  * Start an upgrade (free→paid or paid→paid) via Better Auth's Stripe plugin.
  *
  * No `hasOrgPermission` pre-check: `upgradeSubscription` runs its own
- * `authorizeReference` (owner/admin, not suspended) — a pre-check would be
+ * `authorizeReference` (owner/admin) — a pre-check would be
  * redundant and weaker. Returns the Stripe Checkout / confirm URL for the client
  * to redirect to; for a new subscription that's the hosted Checkout page.
  */
@@ -181,8 +181,8 @@ export async function upgradeSubscriptionAction(
 }
 
 /**
- * Open the Stripe customer portal. Returns the portal URL for the client to
- * redirect to. `createBillingPortal` authorizes the caller itself.
+ * Returns the portal URL for the client to redirect to.
+ * `createBillingPortal` authorizes the caller itself.
  */
 export async function openBillingPortalAction(
   input: OpenBillingPortalInput
@@ -211,9 +211,9 @@ export async function openBillingPortalAction(
 }
 
 /**
- * Cancel the org's subscription. `cancelSubscription` returns a Stripe portal
- * URL for the confirmation flow (client redirects to it). The benign
- * "already scheduled to cancel" error is treated as success so the UI settles.
+ * `cancelSubscription` returns a Stripe portal URL for the confirmation flow
+ * (client redirects to it). The benign "already scheduled to cancel" error is
+ * treated as success so the UI settles.
  */
 export async function cancelSubscriptionAction(
   input: CancelSubscriptionInput

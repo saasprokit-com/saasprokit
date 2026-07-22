@@ -47,19 +47,6 @@ export const bulkInviteSchema = z.object({
   role: z.enum([ORG_ROLES.ADMIN, ORG_ROLES.MEMBER]),
 });
 
-export const suspendMemberSchema = z.object({
-  organizationId: z.string().min(1),
-  orgSlug: z.string().min(1),
-  memberId: z.string().min(1),
-  reason: z.string().optional(),
-});
-
-export const reactivateMemberSchema = z.object({
-  organizationId: z.string().min(1),
-  orgSlug: z.string().min(1),
-  memberId: z.string().min(1),
-});
-
 export const transferOwnershipSchema = z.object({
   organizationId: z.string().min(1),
   orgSlug: z.string().min(1),
@@ -70,6 +57,4 @@ export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
 export type RemoveMembersInput = z.infer<typeof removeMembersSchema>;
 export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;
 export type BulkInviteInput = z.infer<typeof bulkInviteSchema>;
-export type SuspendMemberInput = z.infer<typeof suspendMemberSchema>;
-export type ReactivateMemberInput = z.infer<typeof reactivateMemberSchema>;
 export type TransferOwnershipInput = z.infer<typeof transferOwnershipSchema>;

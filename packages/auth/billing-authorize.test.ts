@@ -31,11 +31,11 @@ describe("isOrgMember", () => {
     await expect(isOrgMember(USER_ID, ORG_ID)).resolves.toBe(false);
   });
 
-  it("scopes by userId, organizationId, and excludes suspended members", async () => {
+  it("scopes by userId and organizationId", async () => {
     findFirst.mockResolvedValue(null);
     await isOrgMember(USER_ID, ORG_ID);
     expect(findFirst).toHaveBeenCalledWith({
-      where: { userId: USER_ID, organizationId: ORG_ID, suspendedAt: null },
+      where: { userId: USER_ID, organizationId: ORG_ID },
       select: { id: true },
     });
   });
@@ -57,19 +57,9 @@ describe("canManageBilling", () => {
     await expect(canManageBilling(USER_ID, ORG_ID)).resolves.toBe(false);
   });
 
-  it("returns false when no membership exists (also covers suspended via where clause)", async () => {
+  it("returns false when no membership exists", async () => {
     findFirst.mockResolvedValue(null);
     await expect(canManageBilling(USER_ID, ORG_ID)).resolves.toBe(false);
-  });
-
-  it("filters out suspended members in the where clause", async () => {
-    findFirst.mockResolvedValue(null);
-    await canManageBilling(USER_ID, ORG_ID);
-    expect(findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { userId: USER_ID, organizationId: ORG_ID, suspendedAt: null },
-      })
-    );
   });
 });
 

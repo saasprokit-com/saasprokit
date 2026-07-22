@@ -1,8 +1,6 @@
 import { auth } from "@repo/auth";
-import languine from "@repo/internationalization/languine.json" with {
-  type: "json",
-};
 import { internationalizationMiddleware } from "@repo/internationalization/proxy";
+import { locales } from "@repo/internationalization/shared";
 import { type NextRequest, NextResponse } from "next/server";
 import {
   AUTH_ROUTE_PREFIXES,
@@ -13,11 +11,8 @@ import {
 
 const HTTP_OK = 200;
 
-const locales = [languine.locale.source, ...languine.locale.targets];
-
 /**
- * Strip the locale prefix from a pathname so route matching
- * works identically for `/org`, `/vi/org`, `/fr/org`, etc.
+ * Route matching must work identically for `/org`, `/vi/org`, `/fr/org`, etc.
  */
 function stripLocale(pathname: string): string {
   for (const locale of locales) {
@@ -32,7 +27,6 @@ function stripLocale(pathname: string): string {
 }
 
 /**
- * Apply a per-request nonce and Content-Security-Policy header to the response.
  * The nonce is also set as `x-nonce` so Server Components can read it via `headers()`.
  */
 function applyNonceCsp(response: NextResponse): NextResponse {

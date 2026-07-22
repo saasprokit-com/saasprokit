@@ -67,9 +67,6 @@ export async function GET(): Promise<NextResponse<HealthCheckResponse>> {
   }
 }
 
-/**
- * Check database connectivity
- */
 async function checkDatabase(): Promise<{
   status: "ok" | "error";
   responseTime?: number;
@@ -91,8 +88,6 @@ async function checkDatabase(): Promise<{
 }
 
 /**
- * Check auth configuration
- *
  * SECURITY: Returns generic error message to avoid information disclosure.
  * Specific missing env vars should not be exposed to external callers
  * as this aids reconnaissance attacks.

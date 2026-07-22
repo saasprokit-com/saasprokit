@@ -11,7 +11,6 @@ import { PAGE_ROUTES } from "@/lib/routes";
 
 const resendSchema = z.object({ email: z.email() });
 
-/** Resend the email-verification link. */
 export async function resendVerificationEmailAction(
   input: z.infer<typeof resendSchema>
 ): Promise<ActionResult> {

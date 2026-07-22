@@ -8,8 +8,6 @@ import { BILLING_INTERVALS, PLAN_NAMES } from "@repo/utils/payment";
 import { z } from "zod";
 
 /**
- * Stripe subscription metadata schema
- * Validates the metadata stored on Stripe subscriptions
  * CRITICAL: Subscriptions must have organizationId and planName for proper tracking
  */
 export const stripeSubscriptionMetadataSchema = z.object({
@@ -25,7 +23,6 @@ export const stripeSubscriptionMetadataSchema = z.object({
 });
 
 /**
- * Stripe checkout session metadata schema (from webhook perspective)
  * Validates metadata in checkout.session.completed events
  */
 export const stripeCheckoutSessionMetadataSchema = z.object({
@@ -41,7 +38,6 @@ export const stripeCheckoutSessionMetadataSchema = z.object({
 });
 
 /**
- * Validate subscription metadata from webhook event
  * @throws If metadata is invalid
  */
 export function validateStripeSubscriptionMetadata(
@@ -61,7 +57,6 @@ export function validateStripeSubscriptionMetadata(
 }
 
 /**
- * Validate checkout session metadata from webhook event
  * @throws If metadata is invalid
  */
 export function validateStripeCheckoutSessionMetadata(

@@ -54,7 +54,6 @@ export async function validateOrganizationMembership(
     where: {
       userId,
       organizationId,
-      suspendedAt: null,
     },
   });
 
@@ -80,7 +79,6 @@ export const getUserOrganizations = cache(
       database.member.findMany({
         where: {
           userId: session.user.id,
-          suspendedAt: null,
         },
         select: memberWithOrgSelect,
         orderBy: { createdAt: "asc" },
@@ -95,8 +93,6 @@ export const getUserOrganizations = cache(
 );
 
 /**
- * Resolve the org addressed by a URL slug and confirm the caller is a member of it.
- *
  * Every org-scoped page must call this: layouts are not re-rendered on client-side
  * navigation between sibling pages, so the layout's check alone would let a removed
  * member keep browsing.

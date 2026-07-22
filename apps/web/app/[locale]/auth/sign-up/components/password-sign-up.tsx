@@ -11,14 +11,15 @@ import { signInSocialAction } from "../../actions";
 import { signUpEmailAction } from "../actions";
 
 interface PasswordSignUpProps {
+  callbackUrl: string;
   errors: ActionErrorMessages;
 }
 
-export function PasswordSignUp({ errors }: PasswordSignUpProps) {
+export function PasswordSignUp({ callbackUrl, errors }: PasswordSignUpProps) {
   const router = useRouter();
 
   async function handleSubmit(data: SignUpFormValues) {
-    const result = await signUpEmailAction(data);
+    const result = await signUpEmailAction(data, callbackUrl);
 
     if (!result.success) {
       throw new Error(result.error || errors.signUp);
@@ -31,7 +32,7 @@ export function PasswordSignUp({ errors }: PasswordSignUpProps) {
   }
 
   async function handleSocialLogin(provider: SocialProvider) {
-    const result = await signInSocialAction(provider);
+    const result = await signInSocialAction(provider, callbackUrl);
 
     if (result.success && result.data?.url) {
       window.location.href = result.data.url;

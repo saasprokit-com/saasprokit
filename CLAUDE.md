@@ -34,9 +34,6 @@ pnpm migrate                  # Format, generate, and push Prisma schema
 
 # Local infra (details: saasprokit:env-setup skill)
 docker compose up postgres maildev   # DB + mail catcher (recommended for app dev)
-
-# i18n
-pnpm --filter internationalization translate   # Machine-translate locale files via languine
 ```
 
 ## Monorepo Structure
@@ -57,7 +54,7 @@ Detailed architecture docs live as skills in the `saasprokit` plugin at `saaspro
 - `saasprokit:forms` — Form patterns (RHF + zod + server actions), scaffold recipes for new forms and dialogs
 - `saasprokit:tables` — Server-driven data table pages (TanStack Table manual mode + nuqs URL state + Prisma), scaffold recipe for list/table pages
 - `saasprokit:billing` — Stripe integration, subscription plans, webhook config
-- `saasprokit:conventions` — No barrel imports, Next.js 16 async params, interface-over-type
+- `saasprokit:conventions` — No barrel imports, Next.js 16 async params, interface-over-type, comments explain why (no redundant docblocks)
 - `saasprokit:workflows` — Recipes for new org-scoped pages, account pages, API routes
 - `saasprokit:testing` — Vitest/Playwright layout, CI rules, Turbo build graph
 - `saasprokit:env-setup` — Env vars, Docker Compose, MailDev

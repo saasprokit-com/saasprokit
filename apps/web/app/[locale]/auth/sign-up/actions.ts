@@ -8,14 +8,15 @@ import type { z } from "zod";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
 import { enforceRateLimit, RateLimitError } from "@/lib/auth/rate-limit";
-import { PAGE_ROUTES } from "@/lib/routes";
+import { resolveCallbackUrl } from "@/lib/routes";
 
 /**
- * Create an account. Under `requireEmailVerification` this creates no session
+ * Under `requireEmailVerification` this creates no session
  * and sends a verification email — the client routes to the verify-email page.
  */
 export async function signUpEmailAction(
-  input: z.infer<typeof signUpSchema>
+  input: z.infer<typeof signUpSchema>,
+  callbackUrl?: string
 ): Promise<ActionResult> {
   const logger = createRequestLogger({ action: "signUpEmail" });
 
@@ -29,7 +30,7 @@ export async function signUpEmailAction(
         name,
         email: email.toLowerCase().trim(),
         password,
-        callbackURL: PAGE_ROUTES.ORG,
+        callbackURL: resolveCallbackUrl(callbackUrl),
       },
     });
 

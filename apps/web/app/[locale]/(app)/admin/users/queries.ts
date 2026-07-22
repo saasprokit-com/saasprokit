@@ -25,7 +25,7 @@ export type AdminUserRow = Prisma.UserGetPayload<{
 }>;
 
 /**
- * Columns a client may sort by. A crafted `sort` URL param must never reach
+ * A crafted `sort` URL param must never reach
  * unexposed or relation fields, so anything outside this allowlist is ignored.
  */
 const SORTABLE_USER_COLUMNS = new Set([

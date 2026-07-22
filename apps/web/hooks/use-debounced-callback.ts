@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 
 /**
- * Returns a debounced version of the given callback.
  * The callback is invoked after `delay` ms of inactivity.
  */
 // biome-ignore lint/suspicious/noExplicitAny: generic callback types

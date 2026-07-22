@@ -10,9 +10,6 @@ const listMemberSelect = {
   role: true,
   createdAt: true,
   userId: true,
-  suspendedAt: true,
-  suspendedBy: true,
-  suspendReason: true,
   user: {
     select: {
       id: true,

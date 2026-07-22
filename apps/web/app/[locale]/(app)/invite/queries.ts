@@ -43,9 +43,7 @@ export type InviteLinkDetail = Prisma.InviteLinkGetPayload<{
 const MAX_TOKEN_LENGTH = 255;
 const tokenSchema = z.string().min(1).max(MAX_TOKEN_LENGTH);
 
-/**
- * Get invitation details (for preview before accepting)
- */
+/** For preview before accepting. */
 export async function getInvitationDetails(invitationId: string) {
   const parsed = tokenSchema.safeParse(invitationId);
   if (!parsed.success) {
@@ -58,9 +56,7 @@ export async function getInvitationDetails(invitationId: string) {
   });
 }
 
-/**
- * Get invite link details (for preview before accepting)
- */
+/** For preview before accepting. */
 export async function getInviteLinkDetails(token: string) {
   const parsed = tokenSchema.safeParse(token);
   if (!parsed.success) {

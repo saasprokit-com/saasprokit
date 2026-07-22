@@ -28,9 +28,6 @@ interface OrgSwitcherProps {
   organizations: Organization[];
 }
 
-/**
- * Get the appropriate icon for an organization
- */
 function OrgIcon({ org }: { org: Organization }) {
   if (org.logo) {
     // Image fills the parent container

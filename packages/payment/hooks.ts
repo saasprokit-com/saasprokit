@@ -19,27 +19,19 @@ interface UseSubscriptionOptions {
 interface UseSubscriptionReturn {
   /** Error if subscription fetch failed */
   error: Error | null;
-  /** Whether the subscription is active */
   isActive: boolean;
   /** Whether the subscription is canceled but still active */
   isCanceled: boolean;
-  /** Whether the subscription data is loading */
   isLoading: boolean;
   /** Whether the user has a paid plan */
   isPaid: boolean;
-  /** The current plan name */
   planName: PlanName;
-  /** Refetch the subscription data */
   refetch: () => Promise<void>;
-  /** The current subscription data */
   subscription: Subscription | null;
   /** Subscription with plan configuration */
   subscriptionWithPlan: SubscriptionWithPlan | null;
 }
 
-/**
- * Hook to get the current subscription for an organization
- */
 export function useSubscription(
   options: UseSubscriptionOptions
 ): UseSubscriptionReturn {

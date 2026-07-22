@@ -6,17 +6,18 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
-import { PAGE_ROUTES } from "@/lib/routes";
+import { resolveCallbackUrl } from "@/lib/routes";
 
 const socialProviderSchema = z.enum(["google", "github"]);
 
 /**
- * Begin a social (OAuth) sign-in. `disableRedirect: true` makes Better Auth
- * return the provider authorization URL instead of redirecting server-side; the
- * client navigates there. The OAuth state cookie is set via `nextCookies`.
+ * `disableRedirect: true` makes Better Auth return the provider authorization
+ * URL instead of redirecting server-side; the client navigates there. The OAuth
+ * state cookie is set via `nextCookies`.
  */
 export async function signInSocialAction(
-  provider: string
+  provider: string,
+  callbackUrl?: string
 ): Promise<ActionResult<{ url?: string }>> {
   const logger = createRequestLogger({ action: "signInSocial" });
 
@@ -27,7 +28,7 @@ export async function signInSocialAction(
       headers: await headers(),
       body: {
         provider: validated,
-        callbackURL: PAGE_ROUTES.ORG,
+        callbackURL: resolveCallbackUrl(callbackUrl),
         disableRedirect: true,
       },
     });

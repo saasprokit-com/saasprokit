@@ -8,11 +8,9 @@
     ".": "./index.ts",
     "./shared": "./shared.ts",
     "./proxy": "./proxy.ts",
-    "./ba-errors": "./ba-errors.ts",
-    "./languine.json": "./languine.json"
+    "./ba-errors": "./ba-errors.ts"
   },
   "scripts": {
-    "translate": "npx -y languine@latest translate",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
@@ -28,6 +26,6 @@
     "@types/node": "24.10.1",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
-    "next": "16.0.10"
+    "next": "16.2.10"
   }
 }

@@ -14,7 +14,6 @@
     "fix": "ultracite fix && turbo fix",
     "test": "turbo test",
     "analyze": "turbo analyze",
-    "translate": "turbo translate",
     "boundaries": "turbo boundaries",
     "bump-deps": "npx npm-check-updates --deep -u -x recharts && pnpm install",
     "bump-ui": "npx shadcn@latest add --all --overwrite -c packages/design-system",
@@ -45,6 +44,7 @@
   },
   "pnpm": {
     "overrides": {
+      "next": "16.2.10",
       "parse5": "^7.2.1",
       "zod": "^4.3.6"
     },

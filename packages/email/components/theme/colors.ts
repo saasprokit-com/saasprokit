@@ -3,14 +3,12 @@
  * Accessibility: All colors meet WCAG 2.1 AA contrast requirements
  */
 export const colors = {
-  // Background colors
   background: {
     main: "#f6f9fc",
     container: "#ffffff",
     muted: "#f9fafb",
   },
 
-  // Text colors
   text: {
     primary: "#1a1a1a",
     secondary: "#525f7f",
@@ -18,7 +16,6 @@ export const colors = {
     footer: "#666666", // Fixed: was #8898aa (failed WCAG), now 5.74:1 contrast
   },
 
-  // Brand colors
   brand: {
     primary: "#6366f1", // Indigo
     primaryHover: "#4f46e5",
@@ -64,7 +61,6 @@ export const colors = {
     },
   },
 
-  // Border colors
   border: {
     default: "#e6ebf1",
     muted: "#e5e7eb",
@@ -90,7 +86,6 @@ export const colors = {
     },
   },
 
-  // Link color
   link: "#6366f1",
 
   // Special use

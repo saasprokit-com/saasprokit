@@ -10,7 +10,6 @@ import type { ActionResult } from "@/lib/auth/auth";
 import { enforceRateLimit, RateLimitError } from "@/lib/auth/rate-limit";
 import { PAGE_ROUTES } from "@/lib/routes";
 
-/** Send a password-reset email. */
 export async function requestPasswordResetAction(
   input: z.infer<typeof forgotPasswordSchema>
 ): Promise<ActionResult> {

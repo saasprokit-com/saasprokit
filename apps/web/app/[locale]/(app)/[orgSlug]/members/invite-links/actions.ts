@@ -22,9 +22,6 @@ import {
   revokeInviteLinksSchema,
 } from "./schemas";
 
-/**
- * Create a shareable invite link
- */
 export async function createInviteLinkAction(
   input: CreateInviteLinkInput
 ): Promise<ActionResult<{ token: string; url: string }>> {
@@ -68,9 +65,6 @@ export async function createInviteLinkAction(
   }
 }
 
-/**
- * Revoke an invite link
- */
 export async function revokeInviteLinkAction(
   input: InviteLinkIdInput
 ): Promise<ActionResult> {
@@ -108,9 +102,6 @@ export async function revokeInviteLinkAction(
   }
 }
 
-/**
- * Revoke multiple active invite links
- */
 export async function revokeInviteLinksAction(
   input: RevokeInviteLinksInput
 ): Promise<ActionResult<{ revokedCount: number }>> {

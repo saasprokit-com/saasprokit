@@ -1,8 +1,5 @@
 import type { ReactElement } from "react";
 
-/**
- * Options for sending an email
- */
 export interface SendEmailOptions {
   /** BCC recipients */
   bcc?: string[];
@@ -20,9 +17,6 @@ export interface SendEmailOptions {
   to: string | string[];
 }
 
-/**
- * Result of sending an email
- */
 export interface SendEmailResult {
   /** Error if sending failed */
   error?: Error;
@@ -33,7 +27,6 @@ export interface SendEmailResult {
 }
 
 /**
- * Email provider interface
  * Implementations: ResendProvider, NodemailerProvider
  */
 export interface EmailProvider {

@@ -19,8 +19,6 @@ import {
 } from "./schemas";
 
 /**
- * Permanently delete an organization (platform admin only).
- *
  * Pure Prisma — Better Auth's deleteOrganization requires the caller to be a
  * member of the target org, which a platform admin generally is not. Blocks
  * deletion while any subscription for the org is in an active status; cleans up

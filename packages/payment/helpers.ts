@@ -13,9 +13,6 @@ const PERCENTAGE_MULTIPLIER = 100;
 const STORAGE_GB_THRESHOLD = 1000; // MB threshold for displaying as GB
 const FRACTION_DIGITS = 1; // For storage formatting
 
-/**
- * Check if a subscription is active
- */
 export function isSubscriptionActive(
   subscription: Subscription | null | undefined
 ): boolean {
@@ -28,8 +25,8 @@ export function isSubscriptionActive(
 }
 
 /**
- * Whether a subscription is scheduled to cancel. Stripe expresses this via the
- * legacy `cancelAtPeriodEnd` boolean OR the newer `cancelAt` timestamp; either
+ * Stripe expresses pending cancellation via the legacy `cancelAtPeriodEnd`
+ * boolean OR the newer `cancelAt` timestamp; either
  * one means pending cancellation. This matches Better Auth's own isPendingCancel
  * — checking only the boolean misses subs canceled via `cancelAt`.
  */
@@ -65,9 +62,6 @@ export function getCurrentPlan(
   return (subscription?.plan as PlanName) || PLAN_NAMES.FREE;
 }
 
-/**
- * Calculate usage statistics for an organization
- */
 export function calculateUsageStats(
   subscription: Subscription | null | undefined,
   currentMembers: number,

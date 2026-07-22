@@ -122,9 +122,6 @@ export class S3StorageProvider implements StorageProvider {
     });
   }
 
-  /**
-   * Upload a file to S3
-   */
   async upload(options: UploadOptions): Promise<UploadResult> {
     const {
       filename: originalFilename,
@@ -175,9 +172,6 @@ export class S3StorageProvider implements StorageProvider {
     };
   }
 
-  /**
-   * Delete a file from S3
-   */
   async delete(options: DeleteOptions): Promise<void> {
     const { path: key, bucket = this.bucket } = options;
 
@@ -217,9 +211,6 @@ export class S3StorageProvider implements StorageProvider {
     return signedUrl;
   }
 
-  /**
-   * Check if a file exists in S3
-   */
   async exists(path: string): Promise<boolean> {
     try {
       const command = new HeadObjectCommand({

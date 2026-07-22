@@ -7,8 +7,6 @@ import { toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
 
 /**
- * Permanently delete the user account immediately.
- *
  * Goes through Better Auth's deleteUser API, which:
  * - authenticates the caller itself (authoritative session re-read from the DB,
  *   bypassing the cookie cache) — no verifySession needed;

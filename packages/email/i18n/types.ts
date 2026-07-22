@@ -13,14 +13,8 @@ export type Locale =
   | "ru"
   | "ko";
 
-/**
- * Default locale
- */
 export const DEFAULT_LOCALE: Locale = "en";
 
-/**
- * Supported locales list
- */
 export const SUPPORTED_LOCALES: Locale[] = [
   "en",
   "es",
@@ -119,12 +113,6 @@ export type MessageKey =
   | "label.failedAttempts"
   | "label.autoUnlock";
 
-/**
- * Message catalog type
- */
 export type MessageCatalog = Record<MessageKey, string>;
 
-/**
- * Interpolation values type
- */
 export type InterpolationValues = Record<string, string | number>;

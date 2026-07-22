@@ -24,8 +24,6 @@ interface OrgLayoutProps {
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { locale, orgSlug } = await params;
 
-  // getActiveOrganization() reuses the memoized getUserOrganizations(),
-  // so these three resolve against a single membership query.
   const [org, { organizations, defaultOrganizationId }, session] =
     await Promise.all([
       getActiveOrganization(orgSlug),
@@ -33,19 +31,11 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
       requireAuth(),
     ]);
 
-  // In-memory check against the role we already hold — no extra query.
   const canManageBilling = canOrg(org.role, { organization: ["update"] });
 
-  // Link visibility only; the /admin area re-gates on a fresh DB role.
   const adminUrl = isAdminAreaRole(session.user.role)
     ? `/${locale}${adminRoutes.dashboard()}`
     : undefined;
-
-  const user = {
-    name: session.user.name,
-    email: session.user.email,
-    avatar: session.user.image ?? undefined,
-  };
 
   return (
     <SidebarProvider>
@@ -60,7 +50,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
         locale={locale}
         organizations={organizations}
         orgSlug={orgSlug}
-        user={user}
+        user={session.user}
       />
       <SidebarInset>
         <BreadcrumbProvider>

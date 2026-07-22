@@ -10,7 +10,6 @@ export interface MemberPermissions {
   canManageInvitations: boolean;
   canManageInviteLinks: boolean;
   canRemove: boolean;
-  canSuspend: boolean;
   canTransferOwnership: boolean;
   canUpdateRole: boolean;
   isOwner: boolean;
@@ -29,7 +28,6 @@ export function getMemberPermissions(role: OrgRoleName): MemberPermissions {
     canUpdateRole: memberPerms.includes("update"),
     canManageInvitations: invitationPerms.includes("create"),
     canManageInviteLinks: invitationPerms.includes("create"),
-    canSuspend: memberPerms.includes("update"),
     canTransferOwnership: role === ORG_ROLES.OWNER,
     isOwner: role === ORG_ROLES.OWNER,
   };

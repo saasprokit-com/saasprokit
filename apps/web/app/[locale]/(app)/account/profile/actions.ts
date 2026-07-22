@@ -6,9 +6,6 @@ import { actionError, toActionError } from "@/lib/auth/action-error";
 import { revalidateAccountPage } from "@/lib/infrastructure/revalidation";
 import { profileSchema } from "./schemas";
 
-/**
- * Update user profile (name and avatar).
- */
 export async function updateProfileAction(formData: FormData) {
   try {
     const rawName = formData.get("name") as string;

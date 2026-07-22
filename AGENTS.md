@@ -29,7 +29,7 @@ Detailed architecture docs and recipes live as Agent Skills (SKILL.md format) in
 - `forms` — Form patterns (react-hook-form + zod + server actions), scaffold recipes for new forms and dialogs
 - `tables` — Server-driven data table pages (TanStack Table manual mode + nuqs URL state + Prisma), scaffold recipe for list/table pages
 - `billing` — Stripe integration, subscription plans, webhook config
-- `conventions` — No barrel imports, Next.js 16 async params, interface-over-type
+- `conventions` — No barrel imports, Next.js 16 async params, interface-over-type, comments explain why (no redundant docblocks)
 - `workflows` — Recipes for new org-scoped pages, account pages, API routes
 - `testing` — Vitest/Playwright layout, CI rules, Turbo build graph
 - `env-setup` — Env vars, Docker Compose, MailDev
@@ -39,6 +39,6 @@ Additional third-party skills (Better Auth, Prisma, Stripe, shadcn, Turborepo, �
 ## Key Conventions
 
 - Path aliases: `@/*` → web app root; `@repo/*` → `packages/`
-- No barrel files; Next.js 16 async params; prefer `interface` over `type` (details: `conventions` skill)
+- No barrel files; Next.js 16 async params; prefer `interface` over `type`; comments explain why, not what — no docblocks that restate the identifier (details: `conventions` skill)
 - Every server action must validate input with its zod schema and check auth independently (details: `forms` and `auth` skills)
 - Linting: Biome via ultracite presets (`biome.jsonc`); run `pnpm check` before committing

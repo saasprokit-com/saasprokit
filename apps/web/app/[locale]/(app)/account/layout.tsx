@@ -1,3 +1,4 @@
+import { isAdminAreaRole } from "@repo/auth/permissions";
 import { BreadcrumbProvider } from "@repo/design-system/components/layout/breadcrumb-context";
 import { Main } from "@repo/design-system/components/layout/main";
 import { SiteHeader } from "@repo/design-system/components/layout/site-header";
@@ -5,7 +6,6 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@repo/design-system/components/ui/sidebar";
-import { isAdminAreaRole } from "@repo/auth/permissions";
 import type { ReactNode } from "react";
 import { ActivityTracker } from "@/components/activity-tracker";
 import { requireAuth } from "@/lib/auth/auth";

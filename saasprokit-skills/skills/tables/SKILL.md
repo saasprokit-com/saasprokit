@@ -37,7 +37,7 @@ One pattern: **TanStack Table (manual mode) + nuqs URL state + Prisma**. The URL
 
 2. **`queries.ts`** (`import "server-only"`) — input `ThingsSearchParams & { organizationId }`. `select` via `satisfies Prisma.ThingSelect`, row type via `GetPayload`. Build `where` (`q` → `{ contains, mode: "insensitive" }`; arrays → `{ in }`). `Promise.all([findMany, count])` → `GetListPayload<T>`. **Allow-list** sortable fields in `buildOrderBy` — `?sort=` ids come from the URL, and an unknown field throws at runtime.
 
-3. **`page.tsx`** (RSC) — `validateOrgMembershipBySlug(orgSlug)` + `getDictionary(locale)`, `cache.parse(searchParams)`, then **start the query promise without awaiting** and stream it:
+3. **`page.tsx`** (RSC) — `getActiveOrganization(orgSlug)` (from `@/servers/organization/queries`, returns `OrganizationContext`) + `getDictionary(locale)`, `cache.parse(searchParams)`, then **start the query promise without awaiting** and stream it:
    ```tsx
    const thingsPromise = getThings({ ...parsed, organizationId }); // no await
    <Suspense fallback={<TableSkeleton />}><ThingsTable thingsPromise={thingsPromise} …/></Suspense>

@@ -22,7 +22,7 @@ import {
 const SECONDS_PER_DAY = 86_400;
 
 /**
- * Set a user's platform role. Self-demotion is blocked at the auth layer by a
+ * Self-demotion is blocked at the auth layer by a
  * `before` hook on `/admin/set-role` (packages/auth/server.ts); the pure guard
  * here is the friendly first-line message before the round-trip.
  */
@@ -76,7 +76,7 @@ export async function setUserRoleAction(
 }
 
 /**
- * Ban a user. Better Auth blocks self-ban and revokes the target's sessions;
+ * Better Auth blocks self-ban and revokes the target's sessions;
  * the pure guard adds a friendly self-target message before the API call.
  */
 export async function banUserAction(
@@ -139,7 +139,7 @@ export async function banUserAction(
 }
 
 /**
- * Lift a ban. Better Auth checks `user:["ban"]` for this endpoint too, and there
+ * Better Auth checks `user:["ban"]` for this endpoint too, and there
  * is no self-target risk, so no pure guard is needed.
  */
 export async function unbanUserAction(
@@ -183,7 +183,7 @@ export async function unbanUserAction(
 }
 
 /**
- * Impersonate a user. Better Auth blocks impersonating admins and parks the
+ * Better Auth blocks impersonating admins and parks the
  * caller's token in a signed cookie; nextCookies() propagates the swap. No
  * revalidation — the client hard-navigates into the impersonated session.
  */
@@ -233,7 +233,7 @@ export async function impersonateUserAction(
 }
 
 /**
- * Revoke every session for a user. Self-revoke is just a full logout, so no
+ * Self-revoke is just a full logout, so no
  * pure guard is needed.
  */
 export async function revokeUserSessionsAction(
@@ -277,7 +277,7 @@ export async function revokeUserSessionsAction(
 }
 
 /**
- * Permanently delete a user. Better Auth blocks self-delete; the pure guard
+ * Better Auth blocks self-delete; the pure guard
  * surfaces a friendly message before the API call.
  */
 export async function removeUserAction(
