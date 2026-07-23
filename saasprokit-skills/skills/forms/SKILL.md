@@ -7,7 +7,10 @@ description: How to build any form in this repo — the ways to submit to the se
 
 New here? This skill answers three questions: **how many ways can a form reach
 the server, which pattern do I pick, and how do I build it.** Rationale and the
-official-docs comparison live in `reference.md` beside this file.
+official-docs comparison live in `reference.md` beside this file; a
+framework-level (React 19 + Next.js, repo-agnostic) how/where/when quick
+reference — the five APIs, pending semantics, and top mistakes — is in
+`cheatsheet.md`.
 
 The whole system rests on one idea: **one zod schema does three jobs** — client
 validation (via `zodResolver`), TypeScript types (via `z.infer`), and the

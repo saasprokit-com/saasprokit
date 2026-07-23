@@ -1,11 +1,10 @@
----
-title: React Forms & Transitions
-description: How, where, and when to use forms, server actions, useActionState, and useTransition in React 19 + Next.js — a decision-tree cheatsheet
----
+# React Forms & Transitions — framework cheatsheet
 
-Five APIs — `<form action>`, `useActionState`, `useFormStatus`, `useOptimistic`,
-`useTransition` — plus Next.js Server Actions. This page tells you **which one
-to reach for and why**, starting from the question you actually have.
+Framework-level (React 19 + Next.js) how/where/when for the five APIs —
+`<form action>`, `useActionState`, `useFormStatus`, `useOptimistic`,
+`useTransition` — plus Server Actions. This is the generic mental model; the
+repo-specific patterns and scaffold recipes are in `SKILL.md`, the rationale in
+`reference.md`.
 
 ## 1. The decision tree
 
@@ -117,7 +116,7 @@ function onConfirm() {
   startTransition(async () => {
     const result = await removeRowsAction({ ids: selectedIds });
 
-    startTransition(() => {          // ⚠ the gotcha: state updates AFTER an
+    startTransition(() => {          // the gotcha: state updates AFTER an
       if (result.success) {          // await must be re-wrapped, or they fall
         setOpen(false);              // out of the transition and commit before
       }                              // the revalidated UI does
@@ -154,9 +153,9 @@ export async function subscribeAction(_prev: unknown, formData: FormData) {
 
 | Signal | Comes from | Goes `false`… | Covers revalidation re-render? |
 | --- | --- | --- | --- |
-| `pending` | `useActionState` / `useFormStatus` | when the transition completes | ✅ (auto-transition) |
-| `isPending` | `useTransition` | when *all* updates in the transition, including the router applying fresh RSC payload, have committed | ✅ |
-| `formState.isSubmitting` | react-hook-form | the moment your `onSubmit` promise resolves | ❌ — action returns *before* the fresh UI paints |
+| `pending` | `useActionState` / `useFormStatus` | when the transition completes | yes (auto-transition) |
+| `isPending` | `useTransition` | when *all* updates in the transition, including the router applying fresh RSC payload, have committed | yes |
+| `formState.isSubmitting` | react-hook-form | the moment your `onSubmit` promise resolves | no — action returns *before* the fresh UI paints |
 
 **Rule:** action revalidates or navigates → gate on a transition-based signal
 (`pending`/`isPending`). Action only returns data (toast and done) →
@@ -193,9 +192,3 @@ client**.
 5. **Using RHF `onSubmit` on a public form** — the form is inert until
    hydration; a slow-connection visitor's submit does nothing. Use Setup A
    or D so the native POST works.
-
----
-
-Building on SaaSProKit? The repo-specific conventions — colocated
-`schemas.ts`/`actions.ts`, the `ActionResult` contract, and scaffold recipes —
-live in the `saasprokit:forms` skill (`saasprokit-skills/skills/forms/`).

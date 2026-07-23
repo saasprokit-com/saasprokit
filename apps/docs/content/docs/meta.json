@@ -1,7 +1,6 @@
 {
   "pages": [
     "getting-started",
-    "guides",
     "deployment",
     "database",
     "authentication",
