@@ -54,9 +54,6 @@ export async function acceptInvitationAction(
       return actionError("notFound");
     }
 
-    // SECURITY: Verify the logged-in user's email matches the invitation email
-    // Prevents unauthorized acceptance of invitations meant for other users
-    // session.user.email is guaranteed non-null here (checked at line 52)
     if (invitation.email.toLowerCase() !== session.user.email.toLowerCase()) {
       return actionError("unauthorized");
     }
@@ -67,6 +64,7 @@ export async function acceptInvitationAction(
         organizationId: invitation.organizationId,
         userId: session.user.id,
       },
+      select: { id: true },
     });
 
     if (existingMember) {
@@ -189,9 +187,9 @@ export async function acceptInviteLinkAction(
     });
 
     // Consume a use only after the member is actually added, so a failed join
-    // (already a member, seat cap) never burns a use. maxUses is a best-effort
-    // cap: two simultaneous joins can exceed it by one, which is fine for a
-    // shared link.
+    // (seat cap, or a concurrent duplicate) never burns a use. maxUses is a
+    // best-effort cap: two simultaneous joins can exceed it by one, which is
+    // fine for a shared link.
     await database.inviteLink.update({
       where: { id: inviteLink.id },
       data: { usedCount: { increment: 1 } },
