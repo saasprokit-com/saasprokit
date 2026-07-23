@@ -307,13 +307,8 @@ export async function bulkInviteAction(
   try {
     const validated = bulkInviteSchema.parse(input);
 
-    const allowed = await hasOrgPermission(validated.organizationId, {
-      invitation: ["create"],
-    });
-    if (!allowed) {
-      return actionError("unauthorized");
-    }
-
+    // Permission (invitation:create) is enforced by BA's createInvitation itself;
+    // only the plan seat cap — which BA has no concept of — is checked here.
     const memberCheck = await canOrgAddMember(validated.organizationId);
     if (!memberCheck.allowed) {
       return actionError("memberLimitReached");

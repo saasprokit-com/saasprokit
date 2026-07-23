@@ -60,10 +60,6 @@ export async function deleteOrganizationAction(
       return actionError("orgHasActiveSubscription");
     }
 
-    // Built before the transaction (reads request headers), then inserted inside it
-    // so the org cannot be deleted without its audit row committing atomically —
-    // unlike the Better Auth mutations, whose statements have already committed
-    // before we regain control and so can only be audited log-and-continue.
     const auditData = await buildAdminAuditData({
       actorId,
       action: ADMIN_AUDIT_ACTIONS.DELETE_ORG,
