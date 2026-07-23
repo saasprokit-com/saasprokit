@@ -20,6 +20,7 @@ import {
 import { Input } from "@repo/design-system/components/ui/input";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { changePasswordAction } from "../actions";
@@ -42,17 +43,19 @@ export function ChangePasswordForm({ errors }: ChangePasswordFormProps) {
     },
   });
 
-  const isPending = form.formState.isSubmitting;
+  const [isPending, startTransition] = useTransition();
 
-  const onSubmit = async (values: ChangePasswordFormValues) => {
-    const result = await changePasswordAction(values);
+  const onSubmit = (values: ChangePasswordFormValues) => {
+    startTransition(async () => {
+      const result = await changePasswordAction(values);
 
-    if (result.success) {
-      toast.success("Password changed successfully");
-      form.reset();
-    } else {
-      toast.error(result.error || errors.changePassword);
-    }
+      if (result.success) {
+        toast.success("Password changed successfully");
+        startTransition(() => form.reset());
+      } else {
+        toast.error(result.error || errors.changePassword);
+      }
+    });
   };
 
   return (

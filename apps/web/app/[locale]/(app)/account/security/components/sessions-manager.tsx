@@ -48,18 +48,23 @@ export function SessionsManager({
   const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
   const [showLogoutAllDialog, setShowLogoutAllDialog] = useState(false);
   const [isLoggingOutAll, startLogoutAllTransition] = useTransition();
+  const [, startLogoutTransition] = useTransition();
 
-  const handleLogoutSession = async (session: SessionInfo) => {
+  const handleLogoutSession = (session: SessionInfo) => {
     setPendingSessionId(session.id);
-    const result = await logoutSessionAction(session.token);
+    startLogoutTransition(async () => {
+      const result = await logoutSessionAction(session.token);
 
-    if (result.success) {
-      toast.success("Session logged out successfully");
-    } else {
-      toast.error(result.error || errors.logoutSession);
-    }
+      if (result.success) {
+        toast.success("Session logged out successfully");
+      } else {
+        toast.error(result.error || errors.logoutSession);
+      }
 
-    setPendingSessionId(null);
+      // Clear inside the transition so the row's pending state spans the
+      // action's revalidation re-render, not just the await.
+      startLogoutTransition(() => setPendingSessionId(null));
+    });
   };
 
   const handleLogoutAll = () => {

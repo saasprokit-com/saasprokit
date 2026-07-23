@@ -21,6 +21,7 @@ import {
 import { Input } from "@repo/design-system/components/ui/input";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { updateProfileAction } from "../actions";
@@ -45,19 +46,24 @@ export function ProfileForm({ errors, user }: ProfileFormProps) {
     },
   });
 
-  const isPending = form.formState.isSubmitting;
+  const [isPending, startTransition] = useTransition();
 
-  const onSubmit = async (values: ProfileFormValues) => {
-    const formData = new FormData();
-    formData.append("name", values.name);
+  const onSubmit = (values: ProfileFormValues) => {
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("name", values.name);
 
-    const result = await updateProfileAction(formData);
+      const result = await updateProfileAction(formData);
 
-    if (result.success) {
-      toast.success("Profile updated successfully");
-    } else {
-      toast.error(result.error || errors.updateProfile);
-    }
+      if (result.success) {
+        toast.success("Profile updated successfully");
+        // Re-sync the form to the saved values (clears isDirty) inside the
+        // transition so it commits with the revalidated UI.
+        startTransition(() => form.reset(values));
+      } else {
+        toast.error(result.error || errors.updateProfile);
+      }
+    });
   };
 
   return (

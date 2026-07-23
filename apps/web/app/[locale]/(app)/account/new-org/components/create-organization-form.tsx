@@ -23,7 +23,7 @@ import type { ActionErrorMessages } from "@repo/internationalization";
 import { generateSlug } from "@repo/utils/slug";
 import { Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useRef } from "react";
+import { useRef, useTransition } from "react";
 import { type Control, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -59,23 +59,30 @@ export function CreateOrganizationForm({
     },
   });
 
-  const isSubmitting = form.formState.isSubmitting;
+  const [isPending, startTransition] = useTransition();
 
-  async function onSubmit(values: CreateOrgInput) {
-    const result = await createOrganizationAction(values);
+  function onSubmit(values: CreateOrgInput) {
+    startTransition(async () => {
+      const result = await createOrganizationAction(values);
 
-    if (!result.success) {
-      // Slug conflict — show as field error on the slug input
-      if (result.error?.includes("slug") || result.error?.includes("already")) {
-        form.setError("slug", { message: result.error });
+      if (!result.success) {
+        // Slug conflict — show as field error on the slug input
+        if (
+          result.error?.includes("slug") ||
+          result.error?.includes("already")
+        ) {
+          startTransition(() =>
+            form.setError("slug", { message: result.error })
+          );
+          return;
+        }
+        toast.error(result.error || errors.createOrganization);
         return;
       }
-      toast.error(result.error || errors.createOrganization);
-      return;
-    }
 
-    toast.success("Workspace created successfully!");
-    router.push(`/${locale}/${result.data?.slug}`);
+      toast.success("Workspace created successfully!");
+      router.push(`/${locale}/${result.data?.slug}`);
+    });
   }
 
   return (
@@ -98,7 +105,7 @@ export function CreateOrganizationForm({
                   <FormControl>
                     <Input
                       {...field}
-                      disabled={isSubmitting}
+                      disabled={isPending}
                       onChange={(e) => {
                         field.onChange(e);
                         if (!slugTouched.current) {
@@ -127,7 +134,7 @@ export function CreateOrganizationForm({
                   <FormControl>
                     <Input
                       {...field}
-                      disabled={isSubmitting}
+                      disabled={isPending}
                       onChange={(e) => {
                         slugTouched.current = true;
                         field.onChange(e);
@@ -142,14 +149,12 @@ export function CreateOrganizationForm({
             />
 
             <div className="flex gap-3">
-              <Button disabled={isSubmitting} type="submit">
-                {isSubmitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+              <Button disabled={isPending} type="submit">
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Workspace
               </Button>
               <Button
-                disabled={isSubmitting}
+                disabled={isPending}
                 onClick={() => {
                   form.reset();
                   slugTouched.current = false;
