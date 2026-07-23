@@ -62,6 +62,9 @@ export function MemberActions({
 
   const isOwner = member.role === ORG_ROLES.OWNER;
   const isSelf = member.userId === currentUserId;
+  // name can be empty for email-signup users; fall back to email so the
+  // confirmation token is never blank (which would bypass the check)
+  const confirmValue = member.user.name || member.user.email;
 
   // Cannot act on yourself or the owner
   if (isSelf || isOwner) {
@@ -89,7 +92,7 @@ export function MemberActions({
   };
 
   const handleTransfer = () => {
-    if (confirmName !== member.user.name) {
+    if (confirmName !== confirmValue) {
       toast.error("Name does not match");
       return;
     }
@@ -193,12 +196,12 @@ export function MemberActions({
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirm">
-                Type <strong>{member.user.name}</strong> to confirm
+                Type <strong>{confirmValue}</strong> to confirm
               </Label>
               <Input
                 id="confirm"
                 onChange={(e) => setConfirmName(e.target.value)}
-                placeholder={member.user.name || ""}
+                placeholder={confirmValue}
                 value={confirmName}
               />
             </div>
@@ -214,7 +217,7 @@ export function MemberActions({
               Cancel
             </Button>
             <Button
-              disabled={isPending || confirmName !== member.user.name}
+              disabled={isPending || confirmName !== confirmValue}
               onClick={handleTransfer}
               variant="destructive"
             >

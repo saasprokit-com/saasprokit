@@ -141,8 +141,6 @@ export const adminRoutes = {
     `${PAGE_ROUTES.ADMIN_ORGANIZATIONS}/${orgId}`,
 } as const;
 
-// ─── API routes ──────────────────────────────────────────────────────────────
-
 export const API_ROUTES = {
   AUTH: "/api/auth",
   HEALTH: "/api/health",

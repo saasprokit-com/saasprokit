@@ -7,12 +7,6 @@ import { actionError, toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
 import { type CreateOrgInput, createOrgSchema } from "./schemas";
 
-/**
- * Better Auth authenticates the caller from the forwarded headers and enforces
- * org-creation eligibility itself (the org plugin's `allowUserToCreateOrganization`
- * hook + `organizationLimit`), so no verifySession pre-check is needed. An
- * ineligible caller surfaces as a Better Auth error mapped through toActionError.
- */
 export async function createOrganizationAction(
   input: CreateOrgInput
 ): Promise<ActionResult<{ slug: string }>> {

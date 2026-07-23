@@ -8,20 +8,11 @@ import { getLocaleFromRequest } from "@/lib/infrastructure/revalidation";
 export type ActionErrorCode = keyof Dictionary["errors"]["action"];
 
 interface ActionErrorOptions {
-  /** Error code key from errors.action dictionary */
   fallback: ActionErrorCode;
-  /** Logger instance — if provided, error is logged before returning */
   logger?: { error: (obj: Record<string, unknown>, msg: string) => void };
-  /** Custom log message (defaults to the fallback dictionary text) */
   logMessage?: string;
 }
 
-/**
- * Better Auth errors are localized by the @better-auth/i18n plugin
- * (packages/auth/server.ts), which stamps `body.originalMessage` only when it
- * actually applied a translation. Untranslated codes, uncoded APIErrors, and
- * non-APIError throws fall through to the localized generic fallback.
- */
 function getPluginTranslatedMessage(error: unknown): string | null {
   if (
     error != null &&
@@ -39,17 +30,6 @@ function getPluginTranslatedMessage(error: unknown): string | null {
   return null;
 }
 
-/**
- * Unified error handler for server action catch blocks.
- *
- * Handles ZodError, Better Auth APIError, and generic errors.
- * All user-facing messages are i18n-aware via @repo/internationalization.
- *
- * Usage:
- *   catch (error) {
- *     return toActionError(error, { fallback: "updateProfile", logger });
- *   }
- */
 export async function toActionError<T = void>(
   error: unknown,
   options: ActionErrorOptions
@@ -87,10 +67,6 @@ export async function toActionError<T = void>(
   };
 }
 
-/**
- * For call sites that need the message itself (not an ActionResult), e.g.
- * per-email failure reporting in bulk invites.
- */
 export async function baErrorMessage(
   error: unknown,
   fallback: ActionErrorCode
@@ -104,12 +80,6 @@ export async function baErrorMessage(
   return dict.errors.action[fallback];
 }
 
-/**
- * Return an i18n-aware ActionResult error for early-return guard checks.
- *
- * Usage:
- *   if (!caller) return actionError("unauthorized");
- */
 export async function actionError<T = void>(
   code: ActionErrorCode
 ): Promise<ActionResult<T>> {
