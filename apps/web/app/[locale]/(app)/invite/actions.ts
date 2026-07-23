@@ -133,7 +133,7 @@ export async function acceptInviteLinkAction(
       where: { token: validated.token },
       include: {
         organization: {
-          select: { id: true, slug: true, name: true },
+          select: { slug: true },
         },
       },
     });
@@ -152,6 +152,22 @@ export async function acceptInviteLinkAction(
       inviteLink.usedCount >= inviteLink.maxUses
     ) {
       return actionError("inviteLinkUsageLimitReached");
+    }
+
+    // Already a member — send them into the org instead of erroring (mirrors
+    // acceptInvitationAction). No use consumed and no seat check needed.
+    const existingMember = await database.member.findFirst({
+      where: {
+        organizationId: inviteLink.organizationId,
+        userId: session.user.id,
+      },
+      select: { id: true },
+    });
+    if (existingMember) {
+      return {
+        success: true,
+        data: { organizationSlug: inviteLink.organization.slug },
+      };
     }
 
     // Plan seat cap (Stripe) — Better Auth has no billing concept.
