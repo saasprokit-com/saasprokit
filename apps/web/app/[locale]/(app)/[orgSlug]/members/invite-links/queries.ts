@@ -93,18 +93,18 @@ export async function getInviteLinks({
   };
 }
 
+const SORTABLE_INVITE_LINK_COLUMNS = new Set(["role", "usedCount", "isActive"]);
+
 function buildOrderBy(
   sort: InviteLinksSearchParams["sort"]
 ): Prisma.InviteLinkOrderByWithRelationInput {
-  if (sort.length === 0) {
-    return { createdAt: "desc" };
-  }
-
   const orderBy: Prisma.InviteLinkOrderByWithRelationInput = {};
   for (const s of sort) {
-    (orderBy as Record<string, Prisma.SortOrder>)[s.id] = s.desc
-      ? "desc"
-      : "asc";
+    if (SORTABLE_INVITE_LINK_COLUMNS.has(s.id)) {
+      (orderBy as Record<string, Prisma.SortOrder>)[s.id] = s.desc
+        ? "desc"
+        : "asc";
+    }
   }
-  return orderBy;
+  return Object.keys(orderBy).length > 0 ? orderBy : { createdAt: "desc" };
 }

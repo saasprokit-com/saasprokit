@@ -13,11 +13,6 @@ export interface AdminContext {
   userId: string;
 }
 
-/**
- * The admin plugin's `role` column is nullable and cookie-cached (up to
- * COOKIE_CACHE_MAX_AGE_MINUTES stale). Every admin gate re-reads it from the DB so a
- * just-demoted or just-banned admin loses access immediately. Memoized per request.
- */
 const getFreshRole = cache((userId: string) =>
   database.user.findUnique({
     where: { id: userId },
@@ -25,12 +20,6 @@ const getFreshRole = cache((userId: string) =>
   })
 );
 
-/**
- * Gate for the /admin layout AND every /admin page (layouts don't re-run on soft
- * navigation, so each page re-asserts). Redirects anonymous users to sign-in;
- * returns 404 — not 403 — for authenticated non-staff, so the area's existence
- * isn't disclosed. Never trusts the cookie-cached session role.
- */
 export const requireAdminArea = cache(async (): Promise<AdminContext> => {
   const session = await requireAuth(PAGE_ROUTES.ADMIN);
   const user = await getFreshRole(session.user.id);

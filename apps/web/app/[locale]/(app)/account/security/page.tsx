@@ -6,7 +6,7 @@ import { accountRoutes } from "@/lib/routes";
 import { ChangePasswordForm } from "./components/change-password-form";
 import { SessionsManager } from "./components/sessions-manager";
 import { TwoFactorManager } from "./components/two-factor-manager";
-import { getSecurityPageData } from "./queries";
+import { getUserSessions } from "./queries";
 
 export const metadata = {
   title: "Security Settings",
@@ -24,9 +24,7 @@ export default async function SecurityPage({ params }: SecurityPageProps) {
     getDictionary(locale),
   ]);
 
-  const { sessions, twoFactorEnabled } = await getSecurityPageData(
-    session!.user.id
-  );
+  const sessions = await getUserSessions(session!.user.id);
 
   const errors = dict.errors.action;
 
@@ -51,7 +49,10 @@ export default async function SecurityPage({ params }: SecurityPageProps) {
           sessions={sessions}
         />
 
-        <TwoFactorManager enabled={twoFactorEnabled} errors={errors} />
+        <TwoFactorManager
+          enabled={session!.user.twoFactorEnabled ?? false}
+          errors={errors}
+        />
       </ContentSection>
     </>
   );

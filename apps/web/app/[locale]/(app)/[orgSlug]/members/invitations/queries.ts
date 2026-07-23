@@ -74,18 +74,23 @@ export async function getInvitations({
   return { data: invitations, total, totalPage, limit: perPage };
 }
 
+const SORTABLE_INVITATION_COLUMNS = new Set([
+  "email",
+  "role",
+  "status",
+  "createdAt",
+]);
+
 function buildOrderBy(
   sort: InvitationsSearchParams["sort"]
 ): Prisma.InvitationOrderByWithRelationInput {
-  if (sort.length === 0) {
-    return { createdAt: "desc" };
-  }
-
   const orderBy: Prisma.InvitationOrderByWithRelationInput = {};
   for (const s of sort) {
-    (orderBy as Record<string, Prisma.SortOrder>)[s.id] = s.desc
-      ? "desc"
-      : "asc";
+    if (SORTABLE_INVITATION_COLUMNS.has(s.id)) {
+      (orderBy as Record<string, Prisma.SortOrder>)[s.id] = s.desc
+        ? "desc"
+        : "asc";
+    }
   }
-  return orderBy;
+  return Object.keys(orderBy).length > 0 ? orderBy : { createdAt: "desc" };
 }

@@ -15,20 +15,10 @@ export type SecuritySession = Prisma.SessionGetPayload<{
   select: typeof sessionSelect;
 }>;
 
-export async function getSecurityPageData(userId: string) {
-  const [sessions, twoFactorRecord] = await Promise.all([
-    database.session.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      select: sessionSelect,
-    }),
-    database.twoFactor.findFirst({
-      where: { userId },
-    }),
-  ]);
-
-  return {
-    sessions,
-    twoFactorEnabled: !!twoFactorRecord,
-  };
+export function getUserSessions(userId: string): Promise<SecuritySession[]> {
+  return database.session.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    select: sessionSelect,
+  });
 }

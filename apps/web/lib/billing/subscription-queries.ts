@@ -153,12 +153,6 @@ export async function canOrgAddMember(
   return { allowed: true, remaining };
 }
 
-/**
- * Rules:
- * 1. Every user gets 1 free organization (no payment required)
- * 2. To create additional orgs, all existing orgs must have paid subscriptions
- * 3. Hard cap of MAX_ORGS_PER_USER organizations per user
- */
 export async function canUserCreateOrg(
   userId: string
 ): Promise<OrgCreationCheck> {

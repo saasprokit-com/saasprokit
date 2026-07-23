@@ -6,8 +6,9 @@ description: Core conventions for this Next.js 16 monorepo — no barrel imports
 # Code Conventions
 
 Biome (`biome.jsonc:3`) extends `ultracite/core`, `ultracite/react`, and
-`ultracite/next`; the only local rule overrides turn `noBarrelFile` off
-(`biome.jsonc:10`) and `noNonNullAssertion` off (`biome.jsonc:17`).
+`ultracite/next`; local rule overrides turn off `noBarrelFile` (`biome.jsonc:10`)
+and `noNonNullAssertion` (`biome.jsonc:17`), plus two niche `suspicious` rules
+(`noBitwiseOperators`, `noControlCharactersInRegex`, `biome.jsonc:13-14`).
 Design-system `ui/`, `lib/`, and `hooks/` are excluded from linting
 (`biome.jsonc:24-26`). Four rules govern everything else.
 

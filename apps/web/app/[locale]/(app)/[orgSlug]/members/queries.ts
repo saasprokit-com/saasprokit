@@ -86,12 +86,11 @@ export async function getMembers({
   };
 }
 
+const SORTABLE_MEMBER_COLUMNS = new Set(["role", "createdAt"]);
+
 function buildOrderBy(
   sort: MembersSearchParams["sort"]
 ): Prisma.MemberOrderByWithRelationInput {
-  if (sort.length === 0) {
-    return { createdAt: "asc" };
-  }
   const orderBy: Prisma.MemberOrderByWithRelationInput = {};
   for (const s of sort) {
     const direction = s.desc ? "desc" : "asc";
@@ -103,9 +102,14 @@ function buildOrderBy(
       case "email":
         orderBy.user = { ...orderBy.user, email: direction };
         break;
+      case "lastActiveAt":
+        orderBy.user = { ...orderBy.user, lastActiveAt: direction };
+        break;
       default:
-        (orderBy as Record<string, Prisma.SortOrder>)[s.id] = direction;
+        if (SORTABLE_MEMBER_COLUMNS.has(s.id)) {
+          (orderBy as Record<string, Prisma.SortOrder>)[s.id] = direction;
+        }
     }
   }
-  return orderBy;
+  return Object.keys(orderBy).length > 0 ? orderBy : { createdAt: "asc" };
 }

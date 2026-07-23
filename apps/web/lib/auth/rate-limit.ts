@@ -46,7 +46,6 @@ export class RateLimitError extends Error {
   }
 }
 
-// Mirrors Better Auth's NO_TRUSTED_IP_KEY shared-bucket fallback + one-time warn.
 const NO_TRUSTED_IP_KEY = "no-trusted-ip";
 let ipWarningLogged = false;
 

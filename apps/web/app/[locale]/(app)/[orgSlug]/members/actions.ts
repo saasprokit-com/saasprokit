@@ -10,7 +10,6 @@ import {
 import { headers } from "next/headers";
 import { verifySession } from "@/lib/auth/action-auth";
 import {
-  type ActionErrorCode,
   actionError,
   baErrorMessage,
   toActionError,
@@ -36,48 +35,11 @@ import {
   updateRoleSchema,
 } from "./schemas";
 
-async function diagnoseMemberUpdateFailure(
-  memberId: string,
-  organizationId: string,
-  callerId: string
-): Promise<ActionErrorCode> {
-  const member = await database.member.findFirst({
-    where: { id: memberId, organizationId },
-    select: { role: true, userId: true },
-  });
-
-  if (!member) {
-    return "memberNotFound";
-  }
-  if (member.role === ORG_ROLES.OWNER) {
-    return "cannotChangeOwnerRole";
-  }
-  if (member.userId === callerId) {
-    return "cannotChangeSelfRole";
-  }
-  return "updateRole";
-}
-
-/**
- * Delegates to BA's inviteMember API which handles:
- * - Permission checks (via orgAc roles)
- * - Duplicate member/invitation detection
- * - Invitation record creation
- * - Email sending (via sendInvitationEmail callback)
- */
 export async function inviteMemberAction(
   input: InviteMemberInput
 ): Promise<ActionResult<{ invitationId: string }>> {
   try {
     const validated = inviteMemberSchema.parse(input);
-
-    // Defense-in-depth: verify permission before delegating to BA API
-    const allowed = await hasOrgPermission(validated.organizationId, {
-      invitation: ["create"],
-    });
-    if (!allowed) {
-      return actionError("unauthorized");
-    }
 
     const memberCheck = await canOrgAddMember(validated.organizationId);
     if (!memberCheck.allowed) {
@@ -186,12 +148,7 @@ export async function updateMemberRoleAction(
     });
 
     if (result.count === 0) {
-      const errorCode = await diagnoseMemberUpdateFailure(
-        validated.memberId,
-        validated.organizationId,
-        session.user.id
-      );
-      return actionError(errorCode);
+      return actionError("updateRole");
     }
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
@@ -344,23 +301,14 @@ async function checkBulkInviteSkip(
   return skipReasons;
 }
 
-/**
- * Uses batch pre-check for performance (3 queries vs N failed BA calls),
- * then delegates each valid invite to BA's inviteMember API.
- */
 export async function bulkInviteAction(
   input: BulkInviteInput
 ): Promise<ActionResult<{ invited: number; skipped: string[] }>> {
   try {
     const validated = bulkInviteSchema.parse(input);
 
-    const allowed = await hasOrgPermission(validated.organizationId, {
-      invitation: ["create"],
-    });
-    if (!allowed) {
-      return actionError("unauthorized");
-    }
-
+    // Permission (invitation:create) is enforced by BA's createInvitation itself;
+    // only the plan seat cap — which BA has no concept of — is checked here.
     const memberCheck = await canOrgAddMember(validated.organizationId);
     if (!memberCheck.allowed) {
       return actionError("memberLimitReached");

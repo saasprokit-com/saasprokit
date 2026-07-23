@@ -32,12 +32,19 @@ function stripLocale(pathname: string): string {
 function applyNonceCsp(response: NextResponse): NextResponse {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
 
+  // React/Next.js need eval() for dev-only debugging (HMR, call-stack
+  // reconstruction). Never emitted in production, where React avoids eval().
+  const scriptSrc =
+    process.env.NODE_ENV === "development"
+      ? `script-src 'self' 'nonce-${nonce}' 'unsafe-eval'`
+      : `script-src 'self' 'nonce-${nonce}'`;
+
   response.headers.set("x-nonce", nonce);
   response.headers.set(
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      `script-src 'self' 'nonce-${nonce}'`,
+      scriptSrc,
       `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https:",

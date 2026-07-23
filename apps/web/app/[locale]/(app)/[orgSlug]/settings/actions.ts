@@ -72,13 +72,7 @@ export async function updateOrganizationAction(
   try {
     const validated = updateOrgActionSchema.parse(input);
 
-    const allowed = await hasOrgPermission(validated.organizationId, {
-      organization: ["update"],
-    });
-    if (!allowed) {
-      return actionError("unauthorized");
-    }
-
+    // Permission (organization:update) is enforced by BA's updateOrganization itself.
     const organization = await database.organization.findUnique({
       where: { id: validated.organizationId },
       select: { slug: true },
@@ -112,13 +106,7 @@ export async function deleteOrganizationAction(
   try {
     const validated = deleteOrgActionSchema.parse(input);
 
-    const allowed = await hasOrgPermission(validated.organizationId, {
-      organization: ["delete"],
-    });
-    if (!allowed) {
-      return actionError("unauthorized");
-    }
-
+    // Permission (organization:delete) is enforced by BA's deleteOrganization itself.
     await auth.api.deleteOrganization({
       headers: await headers(),
       body: { organizationId: validated.organizationId },

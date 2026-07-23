@@ -35,7 +35,7 @@ One pattern: **TanStack Table (manual mode) + nuqs URL state + Prisma**. The URL
    export type ThingsSearchParams = Awaited<ReturnType<typeof thingsSearchParamsCache.parse>>;
    ```
 
-2. **`queries.ts`** (`import "server-only"`) — input `ThingsSearchParams & { organizationId }`. `select` via `satisfies Prisma.ThingSelect`, row type via `GetPayload`. Build `where` (`q` → `{ contains, mode: "insensitive" }`; arrays → `{ in }`). `Promise.all([findMany, count])` → `GetListPayload<T>`. **Allow-list** sortable fields in `buildOrderBy` — `?sort=` ids come from the URL, and an unknown field throws at runtime.
+2. **`queries.ts`** (`import "server-only"`) — input `ThingsSearchParams & { organizationId }`. `select` via `satisfies Prisma.ThingSelect`, row type via `GetPayload`. Build `where` (`q` → `{ contains, mode: "insensitive" }`; arrays → `{ in }`). `Promise.all([findMany, count])` → `GetListPayload<T>`. `buildOrderBy` maps each parsed `?sort=` id straight into a Prisma `orderBy` (the invitations reference casts and assigns without checking, `invitations/queries.ts:77`); since `?sort=` ids come from the URL, an unknown field throws at runtime in Prisma — add an explicit allow-list of sortable columns if you want a graceful fallback instead of a 500.
 
 3. **`page.tsx`** (RSC) — `getActiveOrganization(orgSlug)` (from `@/servers/organization/queries`, returns `OrganizationContext`) + `getDictionary(locale)`, `cache.parse(searchParams)`, then **start the query promise without awaiting** and stream it:
    ```tsx
@@ -45,7 +45,7 @@ One pattern: **TanStack Table (manual mode) + nuqs URL state + Prisma**. The URL
 
 4. **`utils.ts`** — per-feature `SEARCH_DEBOUNCE_MS` and permission flags from `orgRoleDefinitions[role].statements` (copy `getMemberPermissions`). Type trap: use `"team" in statements ? statements.team : []` — a bare `statements.team` fails on roles that omit it.
 
-5. **`components/x-columns.tsx`** — a `getThingColumns({ canManage, … })` **factory**, not a static array: push the select-checkbox (`id: "id"`) and actions columns only when `canManage`; sortable headers via `DataTableColumnHeader` with `accessorKey` ∈ `SORTABLE_FIELDS`; export `xFilterOptions` for facets. Copy `invitations-columns.tsx`.
+5. **`components/x-columns.tsx`** — a `getThingColumns({ canManage, … })` **factory**, not a static array: push the select-checkbox (`id: "id"`) and actions columns only when `canManage`; sortable headers via `DataTableColumnHeader` (set `accessorKey` to the sortable field); export `xFilterOptions` for facets. Copy `invitations-columns.tsx`.
 
 6. **`components/x-table.tsx`** (`"use client"`) — `use(thingsPromise)`, `useMemo` the columns, then:
    ```ts
