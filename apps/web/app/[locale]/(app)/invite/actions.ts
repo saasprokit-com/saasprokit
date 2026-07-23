@@ -33,10 +33,6 @@ async function handleExistingMember(
   };
 }
 
-/**
- * Handles "already a member" gracefully before delegating to BA's acceptInvitation API.
- * BA handles: email match, expiry check, status check, member creation, invitation update.
- */
 export async function acceptInvitationAction(
   input: z.infer<typeof acceptInvitationSchema>
 ): Promise<ActionResult<{ organizationSlug: string }>> {
@@ -113,10 +109,6 @@ export async function acceptInvitationAction(
   }
 }
 
-/**
- * Form-adapted wrapper for useActionState compatibility.
- * Extracts invitationId from FormData and delegates to acceptInvitationAction.
- */
 export async function acceptInvitationFormAction(
   _prevState: ActionResult<{ organizationSlug: string }>,
   formData: FormData
@@ -125,12 +117,6 @@ export async function acceptInvitationFormAction(
   return await acceptInvitationAction({ invitationId });
 }
 
-/**
- * The invite-link rules (active, expiry, maxUses) are this app's own feature, so
- * they are checked here; `canOrgAddMember` is the Stripe plan seat cap. Better
- * Auth owns the membership write via `addMember`, which validates duplicates and
- * its membership limit and runs member hooks.
- */
 export async function acceptInviteLinkAction(
   input: z.infer<typeof acceptInviteLinkSchema>
 ): Promise<ActionResult<{ organizationSlug: string }>> {
@@ -158,7 +144,7 @@ export async function acceptInviteLinkAction(
     if (!inviteLink.isActive) {
       return actionError("inviteLinkRevoked");
     }
-    if (inviteLink.expiresAt && new Date(inviteLink.expiresAt) < new Date()) {
+    if (inviteLink.expiresAt && inviteLink.expiresAt < new Date()) {
       return actionError("inviteLinkExpired");
     }
     if (
@@ -174,8 +160,8 @@ export async function acceptInviteLinkAction(
       return actionError("memberLimitReached");
     }
 
-    // Better Auth owns the membership: validates duplicates + its own
-    // membership limit and runs member-creation hooks.
+    // Better Auth owns the membership write: it validates duplicates, enforces
+    // its own membership limit, and runs member-creation hooks.
     await auth.api.addMember({
       body: {
         userId: session.user.id,
@@ -186,6 +172,10 @@ export async function acceptInviteLinkAction(
       headers: await headers(),
     });
 
+    // Consume a use only after the member is actually added, so a failed join
+    // (already a member, seat cap) never burns a use. maxUses is a best-effort
+    // cap: two simultaneous joins can exceed it by one, which is fine for a
+    // shared link.
     await database.inviteLink.update({
       where: { id: inviteLink.id },
       data: { usedCount: { increment: 1 } },
@@ -200,10 +190,6 @@ export async function acceptInviteLinkAction(
   }
 }
 
-/**
- * Form-adapted wrapper for useActionState compatibility.
- * Extracts token from FormData and delegates to acceptInviteLinkAction.
- */
 export async function acceptInviteLinkFormAction(
   _prevState: ActionResult<{ organizationSlug: string }>,
   formData: FormData
