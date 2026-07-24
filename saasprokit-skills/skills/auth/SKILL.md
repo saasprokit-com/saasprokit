@@ -48,7 +48,7 @@ Exports: `@repo/auth/server` (auth instance), `@repo/auth/client` (hooks + `Sess
 4. **Identity from the session, never the payload.**
 5. **Return `ActionResult<T>`**; in `catch`, `return toActionError(error, { fallback })`.
 
-`auth.api.*` calls **bypass** Better Auth's HTTP rate limits (those run only on `/api/auth/*`), so brute-forceable auth flows re-apply `enforceRateLimit(scope)` from `rate-limit.ts` (`RATE_LIMITS`, `:24`) — do not remove it. BA `APIError`s arrive **pre-localized** by the i18n plugin (`server.ts:490`); `toActionError` surfaces that message, else the localized `errors.action[fallback]`. New BA codes go in `packages/internationalization/ba-errors/[locale].json` — **6 locales** (de, en, es, fr, pt, zh; no vi), key-parity enforced by `packages/auth/ba-i18n.test.ts`.
+`auth.api.*` calls **bypass** Better Auth's HTTP rate limits (those run only on `/api/auth/*`), so brute-forceable auth flows re-apply `enforceRateLimit(scope)` from `rate-limit.ts` (`RATE_LIMITS`, `:24`) — do not remove it. BA `APIError`s arrive **pre-localized** by the i18n plugin (`server.ts:490`); `toActionError` surfaces that message, else the localized `errors.action[fallback]`, and always sets `code` (BA `body.code` when present, else the fallback `ActionErrorCode`). New BA codes go in `packages/internationalization/ba-errors/[locale].json` — **6 locales** (de, en, es, fr, pt, zh; no vi), key-parity enforced by `packages/auth/ba-i18n.test.ts`.
 
 ## Platform admin (`/admin`, `apps/web/lib/auth/admin.ts`)
 

@@ -50,7 +50,7 @@ Is this a <form> the user submits?
 - `@/hooks/use-action-field-errors` — `useActionFieldErrors(form, state)`
   injects server `fieldErrors` onto the matching RHF fields.
 - `@/lib/auth/action-error` — `toFormError(error, { fallback, logger })` and
-  `formActionError(code)` return `FormState`-shaped `{ status: "error", error }`
+  `formActionError(code)` return `FormState`-shaped `{ status: "error", error, code }`
   (the `ActionResult` siblings `toActionError` / `actionError` still exist for
   non-form server functions).
 
@@ -60,6 +60,7 @@ Is this a <form> the user submits?
 interface FormState<TValues, TData = never> {
   status: "idle" | "success" | "error";
   error?: string;                                  // root (non-field) message, localized
+  code?: string;                                   // machine-readable: BA code or ActionErrorCode
   fieldErrors?: Partial<Record<keyof TValues & string, string>>;
   data?: TData;                                    // success payload (a slug, a flag, …)
 }
