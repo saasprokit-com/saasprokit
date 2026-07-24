@@ -2,7 +2,7 @@
 
 import { auth } from "@repo/auth/server";
 import { headers } from "next/headers";
-import { formActionError, toFormError } from "@/lib/auth/action-error";
+import { actionError, toActionError } from "@/lib/auth/action-error";
 import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { revalidateAccountPage } from "@/lib/infrastructure/revalidation";
 import { type ProfileFormValues, profileSchema } from "./schemas";
@@ -33,10 +33,10 @@ export async function updateProfileAction(
       try {
         const url = new URL(image);
         if (url.protocol !== "https:" && url.protocol !== "http:") {
-          return formActionError("invalidImageUrl");
+          return actionError("invalidImageUrl");
         }
       } catch {
-        return formActionError("invalidImageUrl");
+        return actionError("invalidImageUrl");
       }
     }
 
@@ -52,7 +52,7 @@ export async function updateProfileAction(
 
     return { status: "success" };
   } catch (error) {
-    return toFormError(error, {
+    return toActionError(error, {
       fallback: "updateProfile",
     });
   }

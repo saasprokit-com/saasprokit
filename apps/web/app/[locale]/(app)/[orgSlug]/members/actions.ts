@@ -10,13 +10,7 @@ import {
 import { parseEmailInput } from "@repo/utils/user";
 import { headers } from "next/headers";
 import { verifySession } from "@/lib/auth/action-auth";
-import {
-  actionError,
-  baErrorMessage,
-  formActionError,
-  toActionError,
-  toFormError,
-} from "@/lib/auth/action-error";
+import { actionError, toActionError } from "@/lib/auth/action-error";
 import {
   type ActionResult,
   getServerSession,
@@ -58,7 +52,7 @@ export async function inviteMemberAction(
 
     const memberCheck = await canOrgAddMember(validated.organizationId);
     if (!memberCheck.allowed) {
-      return formActionError("memberLimitReached");
+      return actionError("memberLimitReached");
     }
 
     await auth.api.createInvitation({
@@ -73,7 +67,7 @@ export async function inviteMemberAction(
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
     return { status: "success" };
   } catch (error) {
-    return toFormError(error, {
+    return toActionError(error, {
       fallback: "invalidInput",
     });
   }
@@ -201,7 +195,9 @@ async function processBulkInviteEmail(
     });
     return null; // Success
   } catch (error) {
-    const message = await baErrorMessage(error, "unknownError");
+    const { error: message } = await toActionError(error, {
+      fallback: "unknownError",
+    });
     return `${email} (failed - ${message})`;
   }
 }
@@ -360,7 +356,7 @@ export async function bulkInviteAction(
     // only the plan seat cap — which BA has no concept of — is checked here.
     const memberCheck = await canOrgAddMember(validated.organizationId);
     if (!memberCheck.allowed) {
-      return formActionError("memberLimitReached");
+      return actionError("memberLimitReached");
     }
 
     const reqHeaders = await headers();
@@ -376,9 +372,9 @@ export async function bulkInviteAction(
     return { status: "success", data: { invited, skipped } };
   } catch (error) {
     if (error instanceof Error && error.message.includes("seat(s) remaining")) {
-      return formActionError("seatLimitReached");
+      return actionError("seatLimitReached");
     }
-    return toFormError(error, {
+    return toActionError(error, {
       fallback: "invalidInput",
     });
   }

@@ -6,12 +6,7 @@ import { createRequestLogger } from "@repo/logger/server";
 import { ATTACHABLE_TYPE } from "@repo/utils/storage";
 import { headers } from "next/headers";
 import type { z } from "zod";
-import {
-  actionError,
-  formActionError,
-  toActionError,
-  toFormError,
-} from "@/lib/auth/action-error";
+import { actionError, toActionError } from "@/lib/auth/action-error";
 import { type ActionResult, hasOrgPermission } from "@/lib/auth/auth";
 import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
@@ -93,7 +88,7 @@ export async function updateOrganizationAction(
     });
 
     if (!organization) {
-      return formActionError("orgNotFound");
+      return actionError("orgNotFound");
     }
 
     await auth.api.updateOrganization({
@@ -108,7 +103,7 @@ export async function updateOrganizationAction(
 
     return { status: "success" };
   } catch (error) {
-    return toFormError(error, { fallback: "updateOrganization", logger });
+    return toActionError(error, { fallback: "updateOrganization", logger });
   }
 }
 

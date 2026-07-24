@@ -3,7 +3,7 @@
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
-import { formActionError, toFormError } from "@/lib/auth/action-error";
+import { actionError, toActionError } from "@/lib/auth/action-error";
 import { enforceRateLimit, RateLimitError } from "@/lib/auth/rate-limit";
 import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { resolveCallbackUrl } from "@/lib/routes";
@@ -55,9 +55,9 @@ export async function signInEmailAction(
     return { status: "success", data: { twoFactorRequired } };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return formActionError("tooManyRequests");
+      return actionError("tooManyRequests");
     }
-    return toFormError(error, { fallback: "signIn", logger });
+    return toActionError(error, { fallback: "signIn", logger });
   }
 }
 
@@ -88,9 +88,9 @@ export async function signInMagicLinkAction(
     return { status: "success" };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return formActionError("tooManyRequests");
+      return actionError("tooManyRequests");
     }
-    return toFormError(error, { fallback: "sendMagicLink", logger });
+    return toActionError(error, { fallback: "sendMagicLink", logger });
   }
 }
 
@@ -118,9 +118,9 @@ export async function sendSignInOtpAction(
     return { status: "success" };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return formActionError("tooManyRequests");
+      return actionError("tooManyRequests");
     }
-    return toFormError(error, { fallback: "sendOtp", logger });
+    return toActionError(error, { fallback: "sendOtp", logger });
   }
 }
 
@@ -149,8 +149,8 @@ export async function verifySignInOtpAction(
     return { status: "success" };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return formActionError("tooManyRequests");
+      return actionError("tooManyRequests");
     }
-    return toFormError(error, { fallback: "invalidOtp", logger });
+    return toActionError(error, { fallback: "invalidOtp", logger });
   }
 }

@@ -3,11 +3,7 @@
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
-import {
-  baErrorMessage,
-  formActionError,
-  toFormError,
-} from "@/lib/auth/action-error";
+import { actionError, toActionError } from "@/lib/auth/action-error";
 import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { type CreateOrgInput, createOrgSchema } from "./schemas";
 
@@ -51,7 +47,7 @@ export async function createOrganizationAction(
     });
 
     if (!result) {
-      return formActionError("createOrganization");
+      return actionError("createOrganization");
     }
 
     logger.info(
@@ -62,14 +58,15 @@ export async function createOrganizationAction(
     return { status: "success", data: { slug: parsed.data.slug } };
   } catch (error) {
     if (isSlugConflict(error)) {
+      const { error: message } = await toActionError(error, {
+        fallback: "createOrganization",
+      });
       return {
         status: "error",
-        fieldErrors: {
-          slug: await baErrorMessage(error, "createOrganization"),
-        },
+        fieldErrors: { slug: message },
       };
     }
-    return toFormError(error, {
+    return toActionError(error, {
       fallback: "createOrganization",
       logger,
     });

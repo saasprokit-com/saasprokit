@@ -3,7 +3,7 @@
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
-import { formActionError, toFormError } from "@/lib/auth/action-error";
+import { actionError, toActionError } from "@/lib/auth/action-error";
 import { enforceRateLimit, RateLimitError } from "@/lib/auth/rate-limit";
 import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { type TwoFactorFormValues, twoFactorSchema } from "../schemas";
@@ -33,8 +33,8 @@ export async function verifyTwoFactorAction(
     return { status: "success" };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return formActionError("tooManyRequests");
+      return actionError("tooManyRequests");
     }
-    return toFormError(error, { fallback: "verify2fa", logger });
+    return toActionError(error, { fallback: "verify2fa", logger });
   }
 }

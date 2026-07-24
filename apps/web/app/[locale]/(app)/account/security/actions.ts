@@ -3,11 +3,8 @@
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
-import {
-  formActionError,
-  toActionError,
-  toFormError,
-} from "@/lib/auth/action-error";
+import { actionError, toActionError } from "@/lib/auth/action-error";
+import type { ActionResult } from "@/lib/auth/auth";
 import { enforceRateLimit, RateLimitError } from "@/lib/auth/rate-limit";
 import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { revalidateAccountPage } from "@/lib/infrastructure/revalidation";
@@ -45,7 +42,7 @@ export async function enable2FAAction(
     });
 
     if (!data?.totpURI) {
-      return formActionError("enable2fa");
+      return actionError("enable2fa");
     }
 
     return {
@@ -54,9 +51,9 @@ export async function enable2FAAction(
     };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return formActionError("tooManyRequests");
+      return actionError("tooManyRequests");
     }
-    return toFormError(error, { fallback: "enable2fa", logger });
+    return toActionError(error, { fallback: "enable2fa", logger });
   }
 }
 
@@ -86,9 +83,9 @@ export async function verify2FAAction(
     return { status: "success" };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return formActionError("tooManyRequests");
+      return actionError("tooManyRequests");
     }
-    return toFormError(error, { fallback: "verify2fa", logger });
+    return toActionError(error, { fallback: "verify2fa", logger });
   }
 }
 
@@ -118,9 +115,9 @@ export async function disable2FAAction(
     return { status: "success" };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return formActionError("tooManyRequests");
+      return actionError("tooManyRequests");
     }
-    return toFormError(error, { fallback: "disable2fa", logger });
+    return toActionError(error, { fallback: "disable2fa", logger });
   }
 }
 
@@ -128,7 +125,9 @@ export async function disable2FAAction(
  * No verifySession needed: revokeSession authenticates the caller itself and
  * only revokes sessions owned by that caller.
  */
-export async function logoutSessionAction(token: string) {
+export async function logoutSessionAction(
+  token: string
+): Promise<ActionResult> {
   const logger = createRequestLogger({
     action: "logoutSession",
   });
@@ -152,7 +151,7 @@ export async function logoutSessionAction(token: string) {
   }
 }
 
-export async function logoutAllOtherSessionsAction() {
+export async function logoutAllOtherSessionsAction(): Promise<ActionResult> {
   const logger = createRequestLogger({
     action: "logoutAllOtherSessions",
   });
@@ -204,9 +203,9 @@ export async function changePasswordAction(
     return { status: "success" };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return formActionError("tooManyRequests");
+      return actionError("tooManyRequests");
     }
-    return toFormError(error, {
+    return toActionError(error, {
       fallback: "changePassword",
       logger,
     });

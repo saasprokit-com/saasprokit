@@ -16,7 +16,7 @@ Two independent RBAC systems run side by side: **platform admin roles** (staff w
 | Role defs, `ac`/`orgAc`, `canOrg`/`canAdmin`/`isAdminAreaRole` | `packages/auth/permissions.ts` |
 | `ActionResult<T>`, `getServerSession`, `requireAuth`, `hasOrgPermission` | `apps/web/lib/auth/auth.ts` |
 | `verifySession()` (server-action guard) | `apps/web/lib/auth/action-auth.ts:9` |
-| `toActionError`/`actionError`/`baErrorMessage`, `ActionErrorCode` | `apps/web/lib/auth/action-error.ts` |
+| `toActionError`/`actionError`, `ActionErrorCode` | `apps/web/lib/auth/action-error.ts` |
 | Org-slug access: `getActiveOrganization`, `validateOrganizationMembership` | `apps/web/servers/organization/queries.ts` |
 | Admin gates: `requireAdminArea`, `hasAdminPermission`, `AdminContext` | `apps/web/lib/auth/admin.ts` |
 | Server-side rate limiting for auth actions | `apps/web/lib/auth/rate-limit.ts` |

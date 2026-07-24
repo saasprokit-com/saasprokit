@@ -3,7 +3,7 @@
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
-import { formActionError, toFormError } from "@/lib/auth/action-error";
+import { actionError, toActionError } from "@/lib/auth/action-error";
 import { enforceRateLimit, RateLimitError } from "@/lib/auth/rate-limit";
 import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { resolveCallbackUrl } from "@/lib/routes";
@@ -43,8 +43,8 @@ export async function signUpEmailAction(
     return { status: "success" };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return formActionError("tooManyRequests");
+      return actionError("tooManyRequests");
     }
-    return toFormError(error, { fallback: "signUp", logger });
+    return toActionError(error, { fallback: "signUp", logger });
   }
 }

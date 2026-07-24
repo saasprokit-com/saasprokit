@@ -40,9 +40,10 @@ exception — see "Hybrid public form" in `reference.md`.
 - `@/hooks/use-action-result` — `useActionResult(state, { onSuccess, onError })`
   runs the result side-effect **exactly once per action result**. Use it instead
   of a hand-rolled `useEffect`; see "Never hand-roll the result effect" below.
-- `@/lib/auth/action-error` — `toFormError(error, { fallback, logger })` and
-  `formActionError(code)` return `FormState`-shaped errors (`toActionError` /
-  `actionError` are the `ActionResult` siblings for non-form server functions).
+- `@/lib/auth/action-error` — `toActionError(error, { fallback, logger })` for
+  catch blocks, `actionError(code)` for guards. One pair for every action: the
+  returned failure carries both discriminants (`success: false` AND
+  `status: "error"`), so it satisfies `ActionResult` and `FormState` alike.
 
 ```ts
 interface FormState<TValues, TData = never> {
@@ -79,7 +80,7 @@ export type CreateThingValues = z.infer<typeof createThingSchema>;
 "use server";
 
 import { hasOrgPermission } from "@/lib/auth/auth";        // or verifySession — see saasprokit:auth
-import { formActionError, toFormError } from "@/lib/auth/action-error";
+import { actionError, toActionError } from "@/lib/auth/action-error";
 import { fieldErrorsFrom, type FormState } from "@/lib/forms";
 import { type CreateThingValues, createThingSchema } from "./schemas";
 
@@ -100,7 +101,7 @@ export async function createThingAction(
     // 4. revalidate so the response carries fresh UI: await revalidateOrgPage(...)
     return { status: "success", data: { id: thing.id } };
   } catch (error) {
-    return toFormError(error, { fallback: "createThing", logger });
+    return toActionError(error, { fallback: "createThing", logger });
   }
 }
 ```
@@ -113,7 +114,7 @@ export async function createThingAction(
   explicit sanitizer at the point of use (`resolveCallbackUrl` for auth
   `callbackUrl`; Better Auth itself validates a reset `token` / OTP `email`).
   Never neither.
-- `formActionError("tooManyRequests")` for a caught `RateLimitError`. Failures
+- `actionError("tooManyRequests")` for a caught `RateLimitError`. Failures
   are **returned as state, never thrown**.
 
 ### 3. `components/create-thing-form.tsx` — the UX layer

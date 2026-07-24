@@ -9,7 +9,7 @@ type SessionGuard<T = void> =
 export async function verifySession<T = void>(): Promise<SessionGuard<T>> {
   const session = await getServerSession();
   if (!session?.user?.id) {
-    return { session: null, error: await actionError<T>("unauthorized") };
+    return { session: null, error: await actionError("unauthorized") };
   }
   return { session, error: null };
 }

@@ -2,10 +2,18 @@ import "server-only";
 
 import type { Dictionary } from "@repo/internationalization";
 import { getDictionary } from "@repo/internationalization";
-import type { ActionResult } from "@/lib/auth/auth";
 import { getLocaleFromRequest } from "@/lib/infrastructure/revalidation";
 
 export type ActionErrorCode = keyof Dictionary["errors"]["action"];
+
+// Carries both discriminants so one helper pair serves every action: assignable
+// to ActionResult (reads `success`) and to FormState (reads `status`) alike.
+export interface ActionFailure {
+  code: string;
+  error: string;
+  status: "error";
+  success: false;
+}
 
 interface ActionErrorOptions {
   fallback: ActionErrorCode;
@@ -43,10 +51,10 @@ function baErrorInfo(error: unknown): BaErrorInfo {
   return { code, translatedMessage };
 }
 
-export async function toActionError<T = void>(
+export async function toActionError(
   error: unknown,
   options: ActionErrorOptions
-): Promise<ActionResult<T>> {
+): Promise<ActionFailure> {
   const locale = await getLocaleFromRequest();
   const dict = await getDictionary(locale);
 
@@ -55,6 +63,7 @@ export async function toActionError<T = void>(
     const zodError = error as { issues: Array<{ message: string }> };
     return {
       success: false,
+      status: "error",
       error: zodError.issues[0]?.message ?? dict.errors.action.invalidInput,
       code: "invalidInput",
     };
@@ -75,50 +84,27 @@ export async function toActionError<T = void>(
 
   // 3. Better Auth APIError already localized by the i18n plugin
   if (translatedMessage) {
-    return { success: false, error: translatedMessage, code };
+    return { success: false, status: "error", error: translatedMessage, code };
   }
 
   // 4. Generic fallback from action error dictionary
   return {
     success: false,
+    status: "error",
     error: dict.errors.action[options.fallback],
     code,
   };
 }
 
-export async function baErrorMessage(
-  error: unknown,
-  fallback: ActionErrorCode
-): Promise<string> {
-  const { translatedMessage } = baErrorInfo(error);
-  if (translatedMessage) {
-    return translatedMessage;
-  }
-  const locale = await getLocaleFromRequest();
-  const dict = await getDictionary(locale);
-  return dict.errors.action[fallback];
-}
-
-export async function actionError<T = void>(
+export async function actionError(
   code: ActionErrorCode
-): Promise<ActionResult<T>> {
+): Promise<ActionFailure> {
   const locale = await getLocaleFromRequest();
   const dict = await getDictionary(locale);
-  return { success: false, error: dict.errors.action[code], code };
-}
-
-export async function toFormError(
-  error: unknown,
-  options: ActionErrorOptions
-): Promise<{ status: "error"; error?: string; code?: string }> {
-  const result = await toActionError(error, options);
-  return { status: "error", error: result.error, code: result.code };
-}
-
-export async function formActionError(
-  code: ActionErrorCode
-): Promise<{ status: "error"; error: string; code: ActionErrorCode }> {
-  const locale = await getLocaleFromRequest();
-  const dict = await getDictionary(locale);
-  return { status: "error", error: dict.errors.action[code], code };
+  return {
+    success: false,
+    status: "error",
+    error: dict.errors.action[code],
+    code,
+  };
 }

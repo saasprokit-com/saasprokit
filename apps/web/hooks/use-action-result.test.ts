@@ -71,6 +71,40 @@ describe("useActionResult", () => {
       expect(onError).toHaveBeenCalledExactlyOnceWith("Boom");
     });
 
+    // toActionError/actionError return ActionFailure, which carries BOTH
+    // discriminants (success: false AND status: "error") so one helper pair
+    // serves Recipe A and Recipe B. normalize() must not mistake that for a
+    // field-reported failure and swallow it.
+    it("reports an ActionFailure carrying both discriminants", () => {
+      const onError = vi.fn();
+      const onSuccess = vi.fn();
+      const { rerender } = renderHook(
+        ({ state }) => useActionResult(state, { onError, onSuccess }),
+        {
+          initialProps: {
+            state: null as {
+              code?: string;
+              error?: string;
+              status?: string;
+              success: boolean;
+            } | null,
+          },
+        }
+      );
+
+      rerender({
+        state: {
+          code: "MEMBER_NOT_FOUND",
+          error: "Member not found",
+          status: "error",
+          success: false,
+        },
+      });
+
+      expect(onError).toHaveBeenCalledExactlyOnceWith("Member not found");
+      expect(onSuccess).not.toHaveBeenCalled();
+    });
+
     it("reads the success flag on an ActionResult", () => {
       const onSuccess = vi.fn();
       const onError = vi.fn();

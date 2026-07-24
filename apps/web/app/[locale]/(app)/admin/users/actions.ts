@@ -3,12 +3,7 @@
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
-import {
-  actionError,
-  formActionError,
-  toActionError,
-  toFormError,
-} from "@/lib/auth/action-error";
+import { actionError, toActionError } from "@/lib/auth/action-error";
 import { hasAdminPermission } from "@/lib/auth/admin";
 import { type ActionResult, getServerSession } from "@/lib/auth/auth";
 import { type FormState, fieldErrorsFrom } from "@/lib/forms";
@@ -50,10 +45,10 @@ export async function setUserRoleAction(
 
     const session = await getServerSession();
     if (!session?.user?.id) {
-      return formActionError("unauthorized");
+      return actionError("unauthorized");
     }
     if (!(await hasAdminPermission({ user: ["set-role"] }))) {
-      return formActionError("unauthorized");
+      return actionError("unauthorized");
     }
     const actorId = session.user.id;
 
@@ -63,7 +58,7 @@ export async function setUserRoleAction(
       mutation: "set-role",
     });
     if (!guard.ok) {
-      return formActionError(guard.code);
+      return actionError(guard.code);
     }
 
     await auth.api.setRole({
@@ -83,7 +78,7 @@ export async function setUserRoleAction(
     ]);
     return { status: "success" };
   } catch (error) {
-    return toFormError(error, {
+    return toActionError(error, {
       fallback: "updateRole",
       logger,
     });
@@ -112,10 +107,10 @@ export async function banUserAction(
 
     const session = await getServerSession();
     if (!session?.user?.id) {
-      return formActionError("unauthorized");
+      return actionError("unauthorized");
     }
     if (!(await hasAdminPermission({ user: ["ban"] }))) {
-      return formActionError("unauthorized");
+      return actionError("unauthorized");
     }
     const actorId = session.user.id;
 
@@ -125,7 +120,7 @@ export async function banUserAction(
       mutation: "ban",
     });
     if (!guard.ok) {
-      return formActionError(guard.code);
+      return actionError(guard.code);
     }
 
     await auth.api.banUser({
@@ -155,7 +150,7 @@ export async function banUserAction(
     ]);
     return { status: "success" };
   } catch (error) {
-    return toFormError(error, {
+    return toActionError(error, {
       fallback: "banUser",
       logger,
     });

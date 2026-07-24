@@ -4,12 +4,7 @@ import crypto from "node:crypto";
 import { database } from "@repo/database";
 import { MILLISECONDS_PER_DAY } from "@repo/utils/date";
 import { INVITE_TOKEN_BYTES } from "@repo/utils/organization";
-import {
-  actionError,
-  formActionError,
-  toActionError,
-  toFormError,
-} from "@/lib/auth/action-error";
+import { actionError, toActionError } from "@/lib/auth/action-error";
 import {
   type ActionResult,
   getServerSession,
@@ -49,12 +44,12 @@ export async function createInviteLinkAction(
       invitation: ["create"],
     });
     if (!allowed) {
-      return formActionError("unauthorized");
+      return actionError("unauthorized");
     }
 
     const session = await getServerSession();
     if (!session) {
-      return formActionError("unauthorized");
+      return actionError("unauthorized");
     }
 
     const token = crypto.randomBytes(INVITE_TOKEN_BYTES).toString("hex");
@@ -78,7 +73,7 @@ export async function createInviteLinkAction(
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
     return { status: "success", data: { token, url } };
   } catch (error) {
-    return toFormError(error, { fallback: "createInviteLink" });
+    return toActionError(error, { fallback: "createInviteLink" });
   }
 }
 
