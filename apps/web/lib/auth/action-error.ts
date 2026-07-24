@@ -13,21 +13,36 @@ interface ActionErrorOptions {
   logMessage?: string;
 }
 
-function getPluginTranslatedMessage(error: unknown): string | null {
+interface BaErrorInfo {
+  code?: string;
+  translatedMessage?: string;
+}
+
+// Duck-typed (not `instanceof APIError`): apps/web and @repo/auth resolve
+// different better-auth versions, so class identity is unreliable.
+function baErrorInfo(error: unknown): BaErrorInfo {
   if (
-    error != null &&
-    typeof error === "object" &&
-    "body" in error &&
-    error.body != null &&
-    typeof error.body === "object" &&
-    "originalMessage" in error.body &&
-    typeof error.body.originalMessage === "string" &&
-    "message" in error.body &&
-    typeof error.body.message === "string"
+    error == null ||
+    typeof error !== "object" ||
+    !("body" in error) ||
+    error.body == null ||
+    typeof error.body !== "object"
   ) {
-    return error.body.message;
+    return {};
   }
-  return null;
+  const { body } = error;
+  const code =
+    "code" in body && typeof body.code === "string" ? body.code : undefined;
+  // The i18n after-hook stamps originalMessage only when it translated the
+  // body; untranslated English messages keep falling back to the dictionary.
+  const translatedMessage =
+    "originalMessage" in body &&
+    typeof body.originalMessage === "string" &&
+    "message" in body &&
+    typeof body.message === "string"
+      ? body.message
+      : undefined;
+  return { code, translatedMessage };
 }
 
 export async function toActionError<T = void>(
@@ -43,6 +58,7 @@ export async function toActionError<T = void>(
     return {
       success: false,
       error: zodError.issues[0]?.message ?? dict.errors.action.invalidInput,
+      code: "invalidInput",
     };
   }
 
@@ -54,16 +70,21 @@ export async function toActionError<T = void>(
     );
   }
 
+  const { code: baCode, translatedMessage } = baErrorInfo(error);
+  // BA body.code survives even when the message was not translated, so
+  // callers can branch on it while the user still sees the dictionary text.
+  const code = baCode ?? options.fallback;
+
   // 3. Better Auth APIError already localized by the i18n plugin
-  const translated = getPluginTranslatedMessage(error);
-  if (translated) {
-    return { success: false, error: translated };
+  if (translatedMessage) {
+    return { success: false, error: translatedMessage, code };
   }
 
   // 4. Generic fallback from action error dictionary
   return {
     success: false,
     error: dict.errors.action[options.fallback],
+    code,
   };
 }
 
@@ -71,9 +92,9 @@ export async function baErrorMessage(
   error: unknown,
   fallback: ActionErrorCode
 ): Promise<string> {
-  const translated = getPluginTranslatedMessage(error);
-  if (translated) {
-    return translated;
+  const { translatedMessage } = baErrorInfo(error);
+  if (translatedMessage) {
+    return translatedMessage;
   }
   const locale = await getLocaleFromRequest();
   const dict = await getDictionary(locale);
@@ -85,21 +106,21 @@ export async function actionError<T = void>(
 ): Promise<ActionResult<T>> {
   const locale = await getLocaleFromRequest();
   const dict = await getDictionary(locale);
-  return { success: false, error: dict.errors.action[code] };
+  return { success: false, error: dict.errors.action[code], code };
 }
 
 export async function toFormError(
   error: unknown,
   options: ActionErrorOptions
-): Promise<{ status: "error"; error?: string }> {
+): Promise<{ status: "error"; error?: string; code?: string }> {
   const result = await toActionError(error, options);
-  return { status: "error", error: result.error };
+  return { status: "error", error: result.error, code: result.code };
 }
 
 export async function formActionError(
   code: ActionErrorCode
-): Promise<{ status: "error"; error: string }> {
+): Promise<{ status: "error"; error: string; code: ActionErrorCode }> {
   const locale = await getLocaleFromRequest();
   const dict = await getDictionary(locale);
-  return { status: "error", error: dict.errors.action[code] };
+  return { status: "error", error: dict.errors.action[code], code };
 }

@@ -7,6 +7,8 @@ import { cache } from "react";
 import { PAGE_ROUTES } from "../routes";
 
 export interface ActionResult<T = void> {
+  /** BA SCREAMING_SNAKE code or app ActionErrorCode — namespaces never collide. */
+  code?: string;
   data?: T;
   error?: string;
   success: boolean;

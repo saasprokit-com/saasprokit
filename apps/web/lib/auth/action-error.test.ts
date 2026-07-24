@@ -11,7 +11,13 @@ vi.mock("next/headers", () => ({
     }),
 }));
 
-import { baErrorMessage, toActionError } from "./action-error";
+import {
+  actionError,
+  baErrorMessage,
+  formActionError,
+  toActionError,
+  toFormError,
+} from "./action-error";
 
 /** Shape thrown by Better Auth after the @better-auth/i18n plugin translated it. */
 function translatedAPIError(message: string, originalMessage: string) {
@@ -41,6 +47,7 @@ describe("toActionError", () => {
     expect(result).toEqual({
       success: false,
       error: "Dieser Slug ist bereits vergeben.",
+      code: "ORGANIZATION_SLUG_ALREADY_TAKEN",
     });
   });
 
@@ -51,6 +58,7 @@ describe("toActionError", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).toBe("An error occurred");
+      expect(result.code).toBe("MEMBER_NOT_FOUND");
     }
   });
 
@@ -61,6 +69,7 @@ describe("toActionError", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error).not.toContain("db exploded");
+      expect(result.code).toBe("updateProfile");
     }
   });
 
@@ -79,6 +88,7 @@ describe("toActionError", () => {
     const result = await toActionError(zodLike, { fallback: "invalidInput" });
     if (!result.success) {
       expect(result.error).toBe("Invalid email address");
+      expect(result.code).toBe("invalidInput");
     }
   });
 });
@@ -95,5 +105,38 @@ describe("baErrorMessage", () => {
     expect(await baErrorMessage(new Error("boom"), "unknownError")).toBe(
       "An error occurred"
     );
+  });
+});
+
+describe("actionError", () => {
+  it("carries its code alongside the localized message", async () => {
+    expect(await actionError("unknownError")).toEqual({
+      success: false,
+      error: "An error occurred",
+      code: "unknownError",
+    });
+  });
+});
+
+describe("formActionError", () => {
+  it("carries its code alongside the localized message", async () => {
+    expect(await formActionError("unknownError")).toEqual({
+      status: "error",
+      error: "An error occurred",
+      code: "unknownError",
+    });
+  });
+});
+
+describe("toFormError", () => {
+  it("passes the Better Auth code through", async () => {
+    const result = await toFormError(untranslatedAPIError(), {
+      fallback: "unknownError",
+    });
+    expect(result).toEqual({
+      status: "error",
+      error: "An error occurred",
+      code: "MEMBER_NOT_FOUND",
+    });
   });
 });
