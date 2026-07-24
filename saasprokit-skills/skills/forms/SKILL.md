@@ -5,43 +5,31 @@ description: How to build any form in this repo — the two form recipes (field-
 
 # Forms: the two recipes and how to build them
 
-New here? Every form in this repo submits through React 19 **`useActionState`**,
-gated on the hook's own **`isPending`**. There are exactly two recipes plus one
-non-form escape hatch. Rationale and the official-docs comparison live in
-`reference.md`; a framework-level (repo-agnostic) quick reference is in
-`cheatsheet.md`.
-
-The whole system rests on one idea: **one zod schema does three jobs** — client
-validation (via `zodResolver`), TypeScript types (via `z.infer`), and the
-server-side security check (re-parsed with `safeParse` inside the action). Define
-it once in `schemas.ts`; everything else consumes it.
-
-## The one rule about pending
-
-**Never gate a form on `formState.isSubmitting` or `useFormStatus`.** Field-forms
-gate on the `isPending` returned by `useActionState`; confirm buttons do too.
-`useTransition` is only for interactions that are **not** forms (menu items,
-select `onChange`, redirect buttons) — see the last section.
-
-`isPending` from `useActionState` stays true until the action **and** any
-revalidation re-render have committed — so the spinner never stops before the
-fresh UI paints. `formState.isSubmitting` ends when the action returns, before
-the revalidated page arrives; that is why it is banned here.
+Every form submits through React 19 **`useActionState`**, gated on the hook's
+own **`isPending`** — never on `formState.isSubmitting` or `useFormStatus`
+(`isSubmitting` ends before the revalidated UI paints; the full pending-signal
+comparison is in `reference.md`). One zod schema does three jobs: client
+validation (`zodResolver`), types (`z.infer`), and the server security check
+(`safeParse` inside the action).
 
 ## Decision tree (start here)
 
 ```
 Is this a <form> the user submits?
 │
-├─ NO — it's a menu item / select onChange / a button that just
-│        redirects or fires a one-off mutation from a row
-│        → NOT a form. Use useTransition (last section).
+├─ NO — a menu item / select onChange / a button that redirects
+│        or fires a one-off mutation / a file upload
+│        → NOT a form. Use useTransition (see below).
 │
 └─ YES ↓
     Does it collect typed input fields?
     ├─ NO  (a confirm / delete / accept / resend button) → Recipe B
+    │       (dynamic client state like selected row ids rides .bind — still B)
     └─ YES (email, name, password, role, …)              → Recipe A
 ```
+
+Public first-visit pages that must accept a pre-hydration submit are the one
+exception — see "Hybrid public form" in `reference.md`.
 
 ## Shared plumbing (already exists — import, don't reinvent)
 
@@ -53,11 +41,8 @@ Is this a <form> the user submits?
   runs the result side-effect **exactly once per action result**. Use it instead
   of a hand-rolled `useEffect`; see "Never hand-roll the result effect" below.
 - `@/lib/auth/action-error` — `toFormError(error, { fallback, logger })` and
-  `formActionError(code)` return `FormState`-shaped `{ status: "error", error, code }`
-  (the `ActionResult` siblings `toActionError` / `actionError` still exist for
-  non-form server functions).
-
-`FormState` shape returned by every form action:
+  `formActionError(code)` return `FormState`-shaped errors (`toActionError` /
+  `actionError` are the `ActionResult` siblings for non-form server functions).
 
 ```ts
 interface FormState<TValues, TData = never> {
@@ -71,12 +56,12 @@ interface FormState<TValues, TData = never> {
 
 ## Recipe A: field-form (the default for anything with inputs)
 
-Three colocated files (see `saasprokit:data-access` for placement,
-`saasprokit:workflows` for the page). Reference implementations:
+Three colocated files (placement: `saasprokit:data-access`; page:
+`saasprokit:workflows`). Reference implementations:
 `account/security/components/change-password-form.tsx` and
 `auth/sign-in/components/sign-in-form.tsx`.
 
-### 1. `schemas.ts` — one schema, three jobs
+### 1. `schemas.ts`
 
 ```ts
 import { z } from "zod";
@@ -121,11 +106,14 @@ export async function createThingAction(
 ```
 
 - **Signature is `(prevState, input)`** — `input` is the typed RHF values object
-  (NOT `FormData`). Non-field values (an `organizationId`, a `token`) ride along
-  in the same object; type them as `CreateThingValues & { organizationId: string }`
-  and keep them in the schema so `safeParse` validates them.
-- `safeParse` + `fieldErrorsFrom` on failure; `toFormError` in the catch;
-  `formActionError("tooManyRequests")` for a caught `RateLimitError`. Failures
+  (NOT `FormData`). Non-field values (an `organizationId`, a `token`) ride along:
+  type them as `CreateThingValues & { organizationId: string }`, and give every
+  ride-along **one** of (a) a place in the schema so `safeParse` validates it
+  (`members/schemas.ts`: full schema, `.pick()` the form fields) or (b) an
+  explicit sanitizer at the point of use (`resolveCallbackUrl` for auth
+  `callbackUrl`; Better Auth itself validates a reset `token` / OTP `email`).
+  Never neither.
+- `formActionError("tooManyRequests")` for a caught `RateLimitError`. Failures
   are **returned as state, never thrown**.
 
 ### 3. `components/create-thing-form.tsx` — the UX layer
@@ -193,22 +181,19 @@ export function CreateThingForm({ organizationId }: { organizationId: string }) 
 Four non-negotiables:
 
 1. **`form.handleSubmit((values) => startTransition(() => formAction(values)))`** —
-   RHF validates first, then dispatches the typed values inside a **top-level
-   `startTransition`** (imported from `react`, NOT the `useTransition` hook).
-   The transition wrapper is required: dispatching `useActionState`'s action
-   outside a transition logs a dev error and `isPending` won't update.
+   dispatch inside the **top-level `startTransition`** (imported from `react`,
+   NOT the `useTransition` hook), or `isPending` won't update and dev logs an
+   error.
 2. Gate every input and the submit button on **`isPending` from `useActionState`**.
 3. `useActionFieldErrors(form, state)` for field errors; `state.error` (root)
-   goes to a toast, or an inline banner for auth pages.
+   goes to a toast — or an inline banner on auth pages (see `sign-in-form.tsx`:
+   `const rootError = state.status === "error" ? state.error : undefined;`).
 4. Success/navigation side-effects go in `useActionResult` — never a hand-rolled
    `useEffect` (see below).
 
-Auth pages render the root error as an inline banner instead of a toast (see
-`sign-in-form.tsx`): `const rootError = state.status === "error" ? state.error : undefined;`
-
 ## Recipe B: confirm-button (no input fields)
 
-No fields → no RHF. Keep the existing typed `ActionResult` action and give it a
+No fields → no RHF. Keep the typed `ActionResult` action and give it a
 `useActionState`-compatible surface. References:
 `account/danger/components/delete-account-form.tsx` (nullary),
 `billing/components/downgrade-button.tsx` (bound args),
@@ -249,62 +234,43 @@ export async function removeThingsFormAction(
 }
 ```
 
-- `<form action={formAction}>` (React auto-wraps it in a transition — no manual
-  `startTransition`). Gate on `isPending` from the hook.
-- Fixed/dynamic args via `.bind(null, args)` with signature
-  `(input, _prevState, _formData)`; nullary flows use a thin
-  `(prevState, formData)` wrapper (delete-account pattern).
-- A type-to-confirm guard `Input` (e.g. "type the org name to delete") stays
-  plain `useState` gating `disabled` — it is **not** submitted and **not** RHF.
-- Result handling via `useActionResult` — it skips every idle convention
-  (`"idle"`, `null`, a `{ success: false }` sentinel), so no guard is needed.
+- `<form action={formAction}>` — React auto-wraps it in a transition; no manual
+  `startTransition`. Gate on `isPending` from the hook.
+- Args via `.bind(null, args)` with signature `(input, _prevState, _formData)`;
+  nullary flows use a thin `(prevState, formData)` wrapper (delete-account).
+- A type-to-confirm guard `Input` ("type the org name to delete") stays plain
+  `useState` gating `disabled` — not submitted, not RHF.
 
 ## Never hand-roll the result effect
 
-Use `useActionResult`. A hand-rolled `useEffect` replays stale side-effects, and
-the trap is invisible at the call site:
-
 ```tsx
-// WRONG — fires again every time an unrelated action revalidates the page
+// WRONG — replays the stale result every time an unrelated action revalidates
 useEffect(() => {
   if (state.status === "success") toast.success("Saved");
 }, [state, form, errors]);
 ```
 
-`useActionState`'s `state` is stable and **never resets to idle** — after a
-success it stays `"success"` for the component's life. `errors`
-(`dict.errors.action`) is built in a Server Component, so every
-`revalidatePath` ships a new object identity, re-running the effect against that
-stale terminal state. Change your password, then log out another session, and
-the success toast fires a second time. The same applies to any `onSuccess` prop
-re-created on each parent render — after a failed bulk action, every keystroke
-in a search box re-toasts the error.
+`state` never resets to idle, and `errors` (`dict.errors.action`) gets a new
+object identity from every `revalidatePath` — so the effect re-fires against the
+old terminal state (duplicate success toasts; an unstable `onSuccess` prop does
+the same). `useActionResult` guards on the last-handled state object and keeps
+handlers in a ref, so unstable deps cannot replay a result, while a genuine
+resubmit (fresh state object) still fires.
 
-`useActionResult` reads its handlers from a ref and depends on `state` alone,
-guarding on the last-handled state object. Firing is decided by that guard, not
-by the dependency array, so unstable props cannot replay a result. Two
-consecutive identical failures still toast twice — each dispatch returns a
-freshly deserialized object.
-
-**`onError` does not fire for a `fieldErrors`-only failure.** A `safeParse`
-rejection returns `{ status: "error", fieldErrors }` with no root message, and
-`useActionFieldErrors` already renders those inline on the fields. Toasting
-there would stack a vaguer duplicate on top of the precise field message — so a
-duplicate-slug or over-the-cap rejection shows only its inline text.
+**`onError` does not fire for a `fieldErrors`-only failure** — those render
+inline via `useActionFieldErrors`; toasting would stack a vaguer duplicate on
+the precise field message.
 
 ## When it is NOT a form: `useTransition`
 
-Some interactions call a server action but aren't a submitted `<form>`. These
-keep the `useTransition` hook — it's the officially documented way to invoke an
-action from an event handler, and `isPending` still spans the revalidation:
+Interactions that call a server action but aren't a submitted `<form>` keep the
+`useTransition` hook (its `isPending` also spans the revalidation):
 
-- **Dropdown / menu items** — a `<form>` nested in a `DropdownMenuItem` fights
-  Radix focus/close, and a row firing 2–3 actions shouldn't become 2–3 forms
+- **Dropdown / menu items** — a nested `<form>` fights Radix focus/close
   (`member-actions.tsx`, `invitation-actions.tsx`, `invite-link-actions.tsx`).
 - **Select `onChange`** that mutates immediately (`role-selector.tsx`).
-- **Buttons that redirect** to Stripe / an OAuth URL, or refresh
-  (`billing-actions.tsx`, `manage-billing-form.tsx`, `upgrade-form.tsx`,
-  `checkout-refresh-button.tsx`, `org-sidebar.tsx`, `sessions-manager.tsx`).
+- **Buttons that redirect** to Stripe / OAuth, or refresh
+  (`billing-actions.tsx`, `sessions-manager.tsx`, `org-sidebar.tsx`, …).
 - **File uploads** — `fetch()` → Route Handler, the one non-server-action
   transport (`logo-upload.tsx`).
 
@@ -313,14 +279,15 @@ const [isPending, startTransition] = useTransition();
 function onSelect(role: string) {
   startTransition(async () => {
     const result = await updateMemberRoleAction({ organizationId, memberId, role });
+    startTransition(() => {
+      // Gotcha: state updates AFTER an await must be re-wrapped in a nested
+      // startTransition, or they commit before the revalidated UI does.
+      if (result.success) setOpen(false);
+    });
     if (!result.success) toast.error(result.error);
   });
 }
 ```
-
-Gotcha: a state update *after* an `await` inside `startTransition` must be
-re-wrapped in a nested `startTransition`, or it falls out of the transition.
-(Field-forms avoid this entirely — `useActionState` owns the transition.)
 
 ## The server-action contract (non-negotiable in EVERY action)
 
@@ -330,25 +297,21 @@ action is a public POST endpoint.
 - **Validate** — `schema.safeParse(input)`; return `fieldErrors` via
   `fieldErrorsFrom` on failure.
 - **Authenticate + authorize** — `verifySession` / `hasOrgPermission`.
-- **Ownership from the session, not the payload** — a well-formed input can still
-  reference a row the caller doesn't own.
+- **Ownership from the session, not the payload** — a well-formed input can
+  still reference a row the caller doesn't own.
 - **Return `FormState`** (form actions) or typed `ActionResult<T>` (non-form
   server functions) shaped to what the UI renders, never raw DB records.
 - **`redirect()` throws** — put revalidation calls before it.
 - **Auth flows re-apply `enforceRateLimit`** — `auth.api.*` bypasses Better
   Auth's HTTP-path rate limiter, so brute-force protection is re-applied
   server-side (`apps/web/lib/auth/rate-limit.ts`). Do **not** delete those calls.
-
-## Gotchas
-
 - Server actions dispatch **sequentially per client** — never `Promise.all`
-  multiple actions from the browser; do parallel work inside one action.
-- No barrel imports; async params — see `saasprokit:conventions`.
-- Auth forms are **colocated** with their route under
-  `apps/web/app/[locale]/auth/*/components/` (shared `AuthCard`,
-  `SocialProviders`, and `schemas.ts` live in `auth/components/` + `auth/schemas.ts`).
-  There is no design-system auth molecule layer anymore.
+  actions from the browser; parallelize inside one action.
 
-See `saasprokit:auth` for `verifySession` / `hasOrgPermission`,
-`saasprokit:data-access` for file placement, and `reference.md` here for the
-rationale and official-docs comparison.
+Auth forms are **colocated** under `apps/web/app/[locale]/auth/*/components/`
+(shared `AuthCard`/`SocialProviders` in `auth/components/`, schemas in
+`auth/schemas.ts`) — there is no design-system auth layer. No barrel imports,
+async params: `saasprokit:conventions`.
+
+See `saasprokit:auth` for the auth helpers and `reference.md` here for the
+rationale, pending-signal semantics, and the official-docs comparison.

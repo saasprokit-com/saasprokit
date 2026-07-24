@@ -46,20 +46,28 @@ So `signIn.email` (or any first factor) on a 2FA-enabled account triggers a full
 
 ## The /auth/2fa page
 
-`two-factor-client.tsx` verifies the TOTP code and, on success, lands the user at `/org`:
+`2fa/components/two-factor-form.tsx` dispatches `verifyTwoFactorAction` and, on success, lands the user at `/org`:
 
 ```tsx
-async function handleSubmit(data: TwoFactorFormValues) {
-  const result = await twoFactor.verifyTotp({ code: data.code });
-  if (result.error) throw new Error(result.error.message || errors.invalidVerificationCode);
-  router.push(PAGE_ROUTES.ORG);
-  router.refresh();
-}
-// renders <TwoFactorForm method="totp" ... />
+const [state, formAction, isPending] = useActionState(
+  verifyTwoFactorAction,
+  initialFormState
+);
+
+onSubmit={form.handleSubmit((values) =>
+  startTransition(() => formAction(values))
+)}
+
+// success effect
+router.push(PAGE_ROUTES.ORG);
+router.refresh();
+
+// actions.ts — the verification itself runs server-side
+await auth.api.verifyTOTP({ headers: await headers(), body: { code } });
 ```
 
 <Callout type="warn">
-The page only wires **TOTP** (`verifyTotp`, `method="totp"`). The server *also* configures an email-OTP second factor (`otpOptions.sendOTP`), but there is no UI here to request or verify an emailed 2FA code. Email 2FA is configured-but-unused by the current `/auth/2fa` page; add a `verifyOTP` path and a "send code by email" control if you want it reachable.
+The page only wires **TOTP**. The server *also* configures an email-OTP second factor (`otpOptions.sendOTP`), but there is no UI here to request or verify an emailed 2FA code. Email 2FA is configured-but-unused by the current `/auth/2fa` page; add a `verifyOTP` action and a "send code by email" control if you want it reachable.
 </Callout>
 
 <Callout type="info">
@@ -71,7 +79,7 @@ The page only wires **TOTP** (`verifyTotp`, `method="totp"`). The server *also* 
 ```mermaid
 sequenceDiagram
     actor User
-    participant SignIn as PasswordSignIn
+    participant SignIn as SignInForm
     participant BA as Better Auth<br/>/api/auth/*
     participant Client as twoFactorClient
     participant TFA as /auth/2fa
@@ -82,7 +90,7 @@ sequenceDiagram
     BA-->>Client: "two factor required" (no full session yet)
     Client->>TFA: onTwoFactorRedirect → window.location = "/auth/2fa"
     User->>TFA: Enter 6-digit TOTP code
-    TFA->>BA: twoFactor.verifyTotp({ code })
+    TFA->>BA: verifyTwoFactorAction → auth.api.verifyTOTP({ code })
     BA->>BA: validate against TwoFactor.secret, create Session
     BA-->>TFA: ok
     TFA->>Org: router.push("/org") + refresh()
@@ -91,7 +99,8 @@ sequenceDiagram
 ## Source files
 
 - `apps/web/app/[locale]/auth/2fa/page.tsx` — server page
-- `apps/web/app/[locale]/auth/2fa/components/two-factor-client.tsx` — `twoFactor.verifyTotp`
+- `apps/web/app/[locale]/auth/2fa/components/two-factor-form.tsx` — dispatches `verifyTwoFactorAction`
+- `apps/web/app/[locale]/auth/2fa/actions.ts` — `verifyTwoFactorAction` → `auth.api.verifyTOTP`
 - `packages/auth/server.ts` — `twoFactor()` plugin config
 - `packages/auth/client.ts` — `twoFactorClient({ onTwoFactorRedirect })`
 - `apps/web/lib/routes.ts` — `AUTH_ROUTE_PREFIXES` (includes `/auth/2fa`)

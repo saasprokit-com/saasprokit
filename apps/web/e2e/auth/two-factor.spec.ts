@@ -335,8 +335,8 @@ test.describe("Two-Factor Auth Page", () => {
         return;
       }
 
-      // TwoFactorClient does NOT pass onUseBackupCode, so the button
-      // should not be rendered
+      // TwoFactorForm wires TOTP only — there is no backup-code UI on this
+      // page, so neither control should render.
       const backupButton = page.getByRole("button", {
         name: /backup code/i,
       });

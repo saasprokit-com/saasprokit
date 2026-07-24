@@ -3,7 +3,7 @@ title: Sign In
 description: The tabbed sign-in page — password, social, magic link, and email OTP — plus the two-factor hand-off
 ---
 
-`/auth/sign-in` is the busiest auth page: a single `Tabs` UI hosts **four** ways in. `sign-in/page.tsx` is a Server Component that hosts the `Tabs` shell, and three per-tab client components (`components/{password,magic-link,email-otp}-sign-in.tsx`) each call a different `authClient` method but converge on the same destination — `/org` — once a session exists.
+`/auth/sign-in` is the busiest auth page: a single `Tabs` UI hosts **four** ways in. `sign-in/page.tsx` is a Server Component that hosts the `Tabs` shell, and three per-tab client components (`components/{sign-in-form,magic-link-sign-in,email-otp-sign-in}.tsx`) each dispatch a different server action through `useActionState`. The browser never calls Better Auth directly — the actions run `auth.api.*` server-side.
 
 ```tsx
 // page.tsx reads ?tab= and resolves it to the initial tab
@@ -19,29 +19,34 @@ description: The tabbed sign-in page — password, social, magic link, and email
 The password tab renders `SignInForm`, which also carries the Google/GitHub buttons.
 
 ```tsx
-async function handleSubmit(data: SignInFormValues) {
-  const normalizedEmail = data.email.toLowerCase().trim();
-  const result = await signIn.email({
-    email: normalizedEmail,
-    password: data.password,
-    rememberMe: data.rememberMe,
-  });
-  if (result.error) throw new Error(result.error.message || errors.signIn);
-  router.push(PAGE_ROUTES.ORG);
-  router.refresh();
-}
+// components/sign-in-form.tsx — RHF validates, then dispatches the action
+const [state, formAction, isPending] = useActionState(
+  signInEmailAction,
+  initialFormState
+);
 
-function handleSocialLogin(provider: SocialProvider) {
-  signIn.social({ provider, callbackURL: PAGE_ROUTES.ORG });
+onSubmit={form.handleSubmit((values) =>
+  startTransition(() => formAction(values))
+)}
+
+// on success the effect navigates to the resolved callbackUrl
+router.push(callbackUrl);
+router.refresh();
+
+// social stays a plain awaited call — it redirects to the provider
+async function handleSocialLogin(provider: SocialProvider) {
+  const result = await signInSocialAction(provider, callbackUrl);
+  if (result.success && result.data?.url) window.location.href = result.data.url;
 }
 ```
 
 - **`rememberMe`** is passed through to Better Auth, which controls whether the session cookie is persistent or session-scoped.
-- On success the client calls `router.push("/org")` **and** `router.refresh()` — the refresh re-runs Server Components so the freshly minted session cookie is picked up immediately.
-- Social sign-in delegates the redirect to `callbackURL`; control never returns to the form.
+- On success the effect calls `router.push(callbackUrl)` **and** `router.refresh()` — the refresh re-runs Server Components so the freshly minted session cookie is picked up immediately.
+- **2FA short-circuits the redirect**: when the action returns `data.twoFactorRequired`, the effect routes to `/auth/2fa` instead and skips the refresh.
+- Social sign-in returns a provider URL that the handler assigns to `window.location.href`; control never returns to the form.
 
-<Callout type="warn">
-The `proxy.ts` gate appends `?callbackUrl=<original path>` when it bounces an unauthenticated user to sign-in, and `requireAuth` appends `?returnTo=...`. The sign-in tab components read **neither** — they always route to `/org` after a successful sign-in. If you want post-login to return the user to where they were headed, read the `callbackUrl` param in `components/password-sign-in.tsx` (and the other tab components) and pass it to `router.push`. See [Sessions & Route Protection](./sessions-and-routing).
+<Callout>
+`proxy.ts` appends `?callbackUrl=<original path>` when it bounces an unauthenticated user here. `page.tsx` resolves it through `resolveCallbackUrl` and passes the result to all three tabs, so a bounced user lands back where they were headed. The resolver rejects protocol-relative (`//evil.com`) and cross-origin targets, falling back to `/org` — so a crafted `?callbackUrl` cannot turn this page into an open redirect. See [Sessions & Route Protection](./sessions-and-routing).
 </Callout>
 
 ## Magic link
@@ -49,35 +54,36 @@ The `proxy.ts` gate appends `?callbackUrl=<original path>` when it bounces an un
 The magic-link tab requests a one-time login link by email:
 
 ```tsx
-const result = await authClient.signIn.magicLink({
-  email: normalizedEmail,
-  callbackURL: PAGE_ROUTES.ORG,
-});
-// success → show "Check your email for the magic link!" inline
+// components/magic-link-sign-in.tsx
+const [state, formAction, isPending] = useActionState(
+  signInMagicLinkAction,
+  initialFormState
+);
+// dispatched as formAction({ ...values, callbackUrl })
+// success → render <MagicLinkSentCard /> inline
 ```
 
 The link is generated server-side by the `magicLink()` plugin and emailed via `sendMagicLinkEmail`. It **expires in 10 minutes** (`MAGIC_LINK_EXPIRES_IN_MINUTES`). Clicking it hits the plugin's verify endpoint, which establishes a session and redirects to `callbackURL` (`/org`).
 
 <Callout type="warn">
-There used to be a dedicated `/auth/magic-link` landing page for the failure/expired-link state (driven by a `?error=` param), but its `page.tsx` was removed. `PAGE_ROUTES.MAGIC_LINK` and the `MagicLinkErrorCard`/`MagicLinkSuccess` design-system components still exist but are currently unused — the only live magic-link UI is the inline `MagicLinkSentCard` shown on this tab after a successful request.
+There used to be a dedicated `/auth/magic-link` landing page for the failure/expired-link state (driven by a `?error=` param), but its `page.tsx` was removed. `PAGE_ROUTES.MAGIC_LINK` still exists in `lib/routes.ts` and is currently unused — the only live magic-link UI is the inline `MagicLinkSentCard` (`sign-in/components/magic-link-sent-card.tsx`) shown on this tab after a successful request.
 </Callout>
 
 ## Email OTP
 
-The OTP tab is a **two-step** flow held in local state (`otpSent`):
+The OTP tab is a **two-step** flow. `EmailOtpSignIn` holds the entered address in local state and swaps between two inner components, each with its own `useActionState`:
 
 ```tsx
-// Step 1 — send the code
-await authClient.emailOtp.sendVerificationOtp({ email: normalizedEmail, type: "sign-in" });
-setOtpSent(true);
+// Step 1 — EmailOtpRequest dispatches sendSignInOtpAction, then lifts the email
+onSent(form.getValues("email").toLowerCase().trim());
 
-// Step 2 — verify the code
-await authClient.signIn.emailOtp({ email: normalizedEmail, otp: otpCode });
-router.push(PAGE_ROUTES.ORG);
-router.refresh();
+// Step 2 — EmailOtpVerify dispatches verifySignInOtpAction with the code,
+// carrying the lifted email as a ride-along value
+formAction({ ...values, email });
+// success → router.push(callbackUrl)
 ```
 
-The code is **6 digits** (`OTP_LENGTH`) and **expires in 5 minutes** (`OTP_EXPIRES_IN_MINUTES`). On the server, `sendVerificationOTP` switches on `type` — here `"sign-in"` routes to `sendSignInOTPEmail`. A "Use different email" button resets `otpSent` to restart at step 1.
+The code is **6 digits** (`OTP_LENGTH`) and **expires in 5 minutes** (`OTP_EXPIRES_IN_MINUTES`). On the server, `sendVerificationOTP` switches on `type` — here `"sign-in"` routes to `sendSignInOTPEmail`. A "Use different email" button clears the lifted email to restart at step 1.
 
 ## The two-factor hand-off
 
@@ -89,18 +95,18 @@ When a user with 2FA enabled signs in with a correct password, Better Auth does 
 flowchart LR
     SignIn["/auth/sign-in"]
 
-    SignIn -->|"Password tab"| PW["signIn.email"]
-    SignIn -->|"Social buttons"| SOC["signIn.social → provider"]
-    SignIn -->|"Magic Link tab"| ML["signIn.magicLink → email link (10m)"]
-    SignIn -->|"Email OTP tab"| OTP["sendVerificationOtp → signIn.emailOtp (6 digit, 5m)"]
+    SignIn -->|"Password tab"| PW["signInEmailAction"]
+    SignIn -->|"Social buttons"| SOC["signInSocialAction → provider"]
+    SignIn -->|"Magic Link tab"| ML["signInMagicLinkAction → email link (10m)"]
+    SignIn -->|"Email OTP tab"| OTP["sendSignInOtpAction → verifySignInOtpAction (6 digit, 5m)"]
 
     PW --> Check{"2FA enabled?"}
-    SOC --> Org["/org"]
-    ML --> Org
-    OTP --> Org
-    Check -->|"no"| Org
-    Check -->|"yes"| TFA["/auth/2fa (verifyTotp)"]
-    TFA --> Org
+    SOC --> Dest["callbackUrl (default /org)"]
+    ML --> Dest
+    OTP --> Dest
+    Check -->|"no"| Dest
+    Check -->|"yes"| TFA["/auth/2fa (verifyTwoFactorAction)"]
+    TFA --> Dest
 ```
 
 ## Notes
@@ -111,8 +117,9 @@ flowchart LR
 
 ## Source files
 
-- `apps/web/app/[locale]/auth/sign-in/page.tsx` — server page; hosts the Tabs and resolves `?tab=`
-- `apps/web/app/[locale]/auth/sign-in/components/{password,magic-link,email-otp}-sign-in.tsx` — the three per-tab client components
-- `apps/web/app/[locale]/auth/sign-in/components/{sign-in-form,magic-link-sign-in,email-otp-sign-in}.tsx` — the colocated form components
+- `apps/web/app/[locale]/auth/sign-in/page.tsx` — server page; hosts the Tabs, resolves `?tab=` and `?callbackUrl=`
+- `apps/web/app/[locale]/auth/sign-in/components/{sign-in-form,magic-link-sign-in,email-otp-sign-in}.tsx` — the three per-tab client components
+- `apps/web/app/[locale]/auth/sign-in/actions.ts` — `signInEmailAction`, `signInMagicLinkAction`, `sendSignInOtpAction`, `verifySignInOtpAction`
+- `apps/web/app/[locale]/auth/actions.ts` — `signInSocialAction` (shared by sign-in and sign-up)
 - `packages/auth/server.ts` — `magicLink` and `emailOTP` plugin config
 - `packages/auth/client.ts` — `magicLinkClient`, `emailOTPClient`, `twoFactorClient`

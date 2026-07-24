@@ -167,8 +167,11 @@ Each route is a Server-Component `page.tsx` plus a `components/` folder of `"use
 
 ```
 /[locale]/auth/
-├── sign-in/          # page.tsx + components/{password,magic-link,email-otp}-sign-in.tsx
-├── sign-up/          # page.tsx + components/password-sign-up.tsx
+├── components/       # shared: auth-card.tsx, social-providers.tsx
+├── schemas.ts        # shared zod schemas for every auth form
+├── actions.ts        # signInSocialAction (shared by sign-in and sign-up)
+├── sign-in/          # page.tsx + components/{sign-in-form,magic-link-sign-in,email-otp-sign-in}.tsx
+├── sign-up/          # page.tsx + components/sign-up-form.tsx
 ├── forgot-password/  # page.tsx + components/
 ├── reset-password/   # page.tsx + components/
 ├── verify-email/     # page.tsx + components/
