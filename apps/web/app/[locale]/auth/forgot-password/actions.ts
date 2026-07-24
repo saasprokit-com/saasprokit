@@ -1,40 +1,46 @@
 "use server";
 
 import { auth } from "@repo/auth/server";
-import { forgotPasswordSchema } from "@repo/design-system/components/molecules/auth/schemas";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
-import type { z } from "zod";
-import { actionError, toActionError } from "@/lib/auth/action-error";
-import type { ActionResult } from "@/lib/auth/auth";
+import { formActionError, toFormError } from "@/lib/auth/action-error";
 import { enforceRateLimit, RateLimitError } from "@/lib/auth/rate-limit";
+import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { PAGE_ROUTES } from "@/lib/routes";
+import {
+  type ForgotPasswordFormValues,
+  forgotPasswordSchema,
+} from "../schemas";
+
+export type ForgotPasswordFormState = FormState<ForgotPasswordFormValues>;
 
 export async function requestPasswordResetAction(
-  input: z.infer<typeof forgotPasswordSchema>
-): Promise<ActionResult> {
+  _prevState: ForgotPasswordFormState,
+  input: ForgotPasswordFormValues
+): Promise<ForgotPasswordFormState> {
   const logger = createRequestLogger({ action: "requestPasswordReset" });
 
+  const parsed = forgotPasswordSchema.safeParse(input);
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+  }
+
   try {
-    const { email } = forgotPasswordSchema.parse(input);
     await enforceRateLimit("forgot");
 
     await auth.api.requestPasswordReset({
       headers: await headers(),
       body: {
-        email: email.toLowerCase().trim(),
+        email: parsed.data.email.toLowerCase().trim(),
         redirectTo: PAGE_ROUTES.RESET_PASSWORD,
       },
     });
 
-    return { success: true };
+    return { status: "success" };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return actionError("tooManyRequests");
+      return formActionError("tooManyRequests");
     }
-    return toActionError(error, {
-      fallback: "sendResetEmail",
-      logger,
-    });
+    return toFormError(error, { fallback: "sendResetEmail", logger });
   }
 }

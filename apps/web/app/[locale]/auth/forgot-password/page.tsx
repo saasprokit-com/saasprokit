@@ -1,5 +1,5 @@
 import { getDictionary } from "@repo/internationalization";
-import { ForgotPasswordClient } from "./components/forgot-password-client";
+import { ForgotPasswordForm } from "./components/forgot-password-form";
 
 interface ForgotPasswordPageProps {
   params: Promise<{ locale: string }>;
@@ -11,5 +11,5 @@ export default async function ForgotPasswordPage({
   const { locale } = await params;
   const dict = await getDictionary(locale);
 
-  return <ForgotPasswordClient errors={dict.errors.action} />;
+  return <ForgotPasswordForm errors={dict.errors.action} />;
 }

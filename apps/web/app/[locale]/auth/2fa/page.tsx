@@ -1,5 +1,5 @@
 import { getDictionary } from "@repo/internationalization";
-import { TwoFactorClient } from "./components/two-factor-client";
+import { TwoFactorForm } from "./components/two-factor-form";
 
 interface TwoFactorPageProps {
   params: Promise<{ locale: string }>;
@@ -11,5 +11,5 @@ export default async function TwoFactorAuthPage({
   const { locale } = await params;
   const dict = await getDictionary(locale);
 
-  return <TwoFactorClient errors={dict.errors.action} />;
+  return <TwoFactorForm errors={dict.errors.action} />;
 }

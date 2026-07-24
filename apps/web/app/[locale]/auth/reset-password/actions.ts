@@ -2,43 +2,38 @@
 
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
-import { passwordSchema } from "@repo/utils/user";
 import { headers } from "next/headers";
-import { z } from "zod";
-import { actionError, toActionError } from "@/lib/auth/action-error";
-import type { ActionResult } from "@/lib/auth/auth";
+import { formActionError, toFormError } from "@/lib/auth/action-error";
 import { enforceRateLimit, RateLimitError } from "@/lib/auth/rate-limit";
+import { type FormState, fieldErrorsFrom } from "@/lib/forms";
+import { type ResetPasswordFormValues, resetPasswordSchema } from "../schemas";
 
-// Server-side trust boundary: the reset action is a public POST endpoint, so it
-// must re-enforce the app's password-complexity policy (the client resolver runs
-// only in the browser, and Better Auth's backstop checks length only).
-const resetPasswordActionSchema = z.object({
-  token: z.string().min(1),
-  newPassword: passwordSchema,
-});
+export type ResetPasswordFormState = FormState<ResetPasswordFormValues>;
 
 export async function resetPasswordAction(
-  input: z.infer<typeof resetPasswordActionSchema>
-): Promise<ActionResult> {
+  _prevState: ResetPasswordFormState,
+  input: ResetPasswordFormValues & { token: string }
+): Promise<ResetPasswordFormState> {
   const logger = createRequestLogger({ action: "resetPassword" });
 
+  const parsed = resetPasswordSchema.safeParse(input);
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+  }
+
   try {
-    const { token, newPassword } = resetPasswordActionSchema.parse(input);
     await enforceRateLimit("reset");
 
     await auth.api.resetPassword({
       headers: await headers(),
-      body: { token, newPassword },
+      body: { token: input.token, newPassword: parsed.data.password },
     });
 
-    return { success: true };
+    return { status: "success" };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return actionError("tooManyRequests");
+      return formActionError("tooManyRequests");
     }
-    return toActionError(error, {
-      fallback: "resetPassword",
-      logger,
-    });
+    return toFormError(error, { fallback: "resetPassword", logger });
   }
 }

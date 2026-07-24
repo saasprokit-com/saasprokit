@@ -67,14 +67,14 @@ emailVerification: {
 
 ## The verify-email page
 
-`/auth/verify-email` is the screen the user lands on after registering. `verify-email/page.tsx` reads the `?email=` query param **server-side** and passes it as a prop, so `VerifyEmailClient` (`components/verify-email-client.tsx`) shows *which* address the link went to without a client `useSearchParams` round-trip. The client renders the presentational `VerifyEmailCard` and offers a **resend** with a 60-second cooldown:
+`/auth/verify-email` is the screen the user lands on after registering. `verify-email/page.tsx` reads the `?email=` query param **server-side** and passes it as a prop, so the colocated `VerifyEmailCard` (`components/verify-email-card.tsx`) shows *which* address the link went to without a client `useSearchParams` round-trip. The card resends via a `useActionState` server action and keeps a **60-second cooldown** as local UI state:
 
 ```tsx
 // verify-email/page.tsx — read the address server-side
 const [{ locale }, { email }] = await Promise.all([params, searchParams]);
-return <VerifyEmailClient email={email ?? null} errors={dict.errors.action} />;
+return <VerifyEmailCard email={email ?? null} errors={dict.errors.action} />;
 
-// components/verify-email-client.tsx — resend with cooldown
+// components/verify-email-card.tsx — resend with cooldown
 const handleResend = useCallback(() => {
   if (!email || cooldown > 0) return;
   startResendTransition(async () => {
@@ -134,5 +134,5 @@ sequenceDiagram
 - `apps/web/app/[locale]/auth/sign-up/components/password-sign-up.tsx` — `PasswordSignUp`: `signUp.email`, social, redirect
 - `apps/web/app/[locale]/auth/verify-email/page.tsx` — server page; reads `?email=` server-side
 - `apps/web/app/[locale]/auth/verify-email/components/verify-email-client.tsx` — resend + cooldown
-- `packages/design-system/components/molecules/auth/verify-email-card.tsx` — presentational card + alternative-method links
+- `apps/web/app/[locale]/auth/verify-email/components/verify-email-card.tsx` — resend card + alternative-method links
 - `packages/auth/server.ts` — `emailAndPassword` + `emailVerification` config

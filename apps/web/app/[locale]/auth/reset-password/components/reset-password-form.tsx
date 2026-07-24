@@ -11,62 +11,69 @@ import {
   FormMessage,
 } from "@repo/design-system/components/ui/form";
 import { Input } from "@repo/design-system/components/ui/input";
+import type { ActionErrorMessages } from "@repo/internationalization";
 import Link from "next/link";
+import { startTransition, useActionState } from "react";
 import { useForm } from "react-hook-form";
-import { AuthCard } from "./auth-card";
-import { type ResetPasswordFormValues, resetPasswordSchema } from "./schemas";
+import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { initialFormState } from "@/lib/forms";
+import { PAGE_ROUTES } from "@/lib/routes";
+import { AuthCard } from "../../components/auth-card";
+import {
+  type ResetPasswordFormValues,
+  resetPasswordSchema,
+} from "../../schemas";
+import { resetPasswordAction } from "../actions";
+import { ResetPasswordSuccess } from "./reset-password-success";
 
-export type { ResetPasswordFormValues } from "./schemas";
-
-export interface ResetPasswordFormProps {
-  className?: string;
-  error?: string;
-  onSubmit: (data: ResetPasswordFormValues) => Promise<void>;
-  signInUrl?: string;
+interface ResetPasswordFormProps {
+  errors: ActionErrorMessages;
+  token: string;
 }
 
-export function ResetPasswordForm({
-  onSubmit,
-  signInUrl = "/auth/sign-in",
-  error,
-  className,
-}: ResetPasswordFormProps) {
+export function ResetPasswordForm({ errors, token }: ResetPasswordFormProps) {
+  const [state, formAction, isPending] = useActionState(
+    resetPasswordAction,
+    initialFormState
+  );
+
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
-    defaultValues: {
-      password: "",
-      confirmPassword: "",
-    },
+    defaultValues: { password: "", confirmPassword: "" },
   });
 
-  const isSubmitting = form.formState.isSubmitting;
+  useActionFieldErrors(form, state);
 
-  async function handleSubmit(data: ResetPasswordFormValues) {
-    try {
-      await onSubmit(data);
-    } catch (err) {
-      form.setError("root", {
-        message: err instanceof Error ? err.message : "An error occurred",
-      });
-    }
+  if (state.status === "success") {
+    return <ResetPasswordSuccess />;
   }
+
+  const rootError =
+    state.status === "error" ? state.error || errors.resetPassword : undefined;
 
   return (
     <AuthCard
-      className={className}
       description="Enter your new password"
       footer={
-        <Link className="text-primary text-sm hover:underline" href={signInUrl}>
+        <Link
+          className="text-primary text-sm hover:underline"
+          href={PAGE_ROUTES.SIGN_IN}
+        >
           Back to sign in
         </Link>
       }
       title="Reset Password"
     >
       <Form {...form}>
-        <form className="grid gap-4" onSubmit={form.handleSubmit(handleSubmit)}>
-          {(error || form.formState.errors.root) && (
+        <form
+          className="grid gap-4"
+          onSubmit={form.handleSubmit((values) =>
+            startTransition(() => formAction({ ...values, token }))
+          )}
+        >
+          {rootError && (
             <div className="rounded-md bg-destructive/10 p-3 text-destructive text-sm">
-              {error || form.formState.errors.root?.message}
+              {rootError}
             </div>
           )}
 
@@ -79,7 +86,7 @@ export function ResetPasswordForm({
                 <FormControl>
                   <Input
                     autoComplete="new-password"
-                    disabled={isSubmitting}
+                    disabled={isPending}
                     placeholder="Create a strong password"
                     type="password"
                     {...field}
@@ -99,7 +106,7 @@ export function ResetPasswordForm({
                 <FormControl>
                   <Input
                     autoComplete="new-password"
-                    disabled={isSubmitting}
+                    disabled={isPending}
                     placeholder="Confirm your password"
                     type="password"
                     {...field}
@@ -110,8 +117,8 @@ export function ResetPasswordForm({
             )}
           />
 
-          <Button className="w-full" disabled={isSubmitting} type="submit">
-            {isSubmitting ? "Resetting..." : "Reset Password"}
+          <Button className="w-full" disabled={isPending} type="submit">
+            {isPending ? "Resetting..." : "Reset Password"}
           </Button>
         </form>
       </Form>

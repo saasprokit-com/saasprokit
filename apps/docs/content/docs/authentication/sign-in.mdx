@@ -113,6 +113,6 @@ flowchart LR
 
 - `apps/web/app/[locale]/auth/sign-in/page.tsx` — server page; hosts the Tabs and resolves `?tab=`
 - `apps/web/app/[locale]/auth/sign-in/components/{password,magic-link,email-otp}-sign-in.tsx` — the three per-tab client components
-- `packages/design-system/components/molecules/auth/{sign-in,magic-link,email-otp-request,email-otp-verify}-form.tsx` — the presentational forms
+- `apps/web/app/[locale]/auth/sign-in/components/{sign-in-form,magic-link-sign-in,email-otp-sign-in}.tsx` — the colocated form components
 - `packages/auth/server.ts` — `magicLink` and `emailOTP` plugin config
 - `packages/auth/client.ts` — `magicLinkClient`, `emailOTPClient`, `twoFactorClient`

@@ -12,62 +12,78 @@ import {
   FormMessage,
 } from "@repo/design-system/components/ui/form";
 import { Input } from "@repo/design-system/components/ui/input";
+import type { ActionErrorMessages } from "@repo/internationalization";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { startTransition, useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { AuthCard } from "./auth-card";
-import { type SignInFormValues, signInSchema } from "./schemas";
-import { type SocialProvider, SocialProviders } from "./social-providers";
+import { toast } from "sonner";
+import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { initialFormState } from "@/lib/forms";
+import { PAGE_ROUTES } from "@/lib/routes";
+import { signInSocialAction } from "../../actions";
+import { AuthCard } from "../../components/auth-card";
+import {
+  type SocialProvider,
+  SocialProviders,
+} from "../../components/social-providers";
+import { type SignInFormValues, signInSchema } from "../../schemas";
+import { signInEmailAction } from "../actions";
 
-export type { SignInFormValues } from "./schemas";
+const SOCIAL_PROVIDERS: SocialProvider[] = ["google", "github"];
 
-export interface SignInFormProps {
-  className?: string;
-  error?: string;
-  forgotPasswordUrl?: string;
-  onSocialLogin?: (provider: SocialProvider) => void;
-  onSubmit: (data: SignInFormValues) => Promise<void>;
-  signUpUrl?: string;
-  socialProviders?: SocialProvider[];
+interface SignInFormProps {
+  callbackUrl: string;
+  errors: ActionErrorMessages;
 }
 
-export function SignInForm({
-  onSubmit,
-  onSocialLogin,
-  socialProviders = [],
-  signUpUrl = "/auth/sign-up",
-  forgotPasswordUrl = "/auth/forgot-password",
-  error,
-  className,
-}: SignInFormProps) {
+export function SignInForm({ callbackUrl, errors }: SignInFormProps) {
+  const router = useRouter();
+  const [state, formAction, isPending] = useActionState(
+    signInEmailAction,
+    initialFormState
+  );
+
   const form = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-      rememberMe: false,
-    },
+    defaultValues: { email: "", password: "", rememberMe: false },
   });
 
-  const isSubmitting = form.formState.isSubmitting;
+  useActionFieldErrors(form, state);
 
-  async function handleSubmit(data: SignInFormValues) {
-    try {
-      await onSubmit(data);
-    } catch (err) {
-      form.setError("root", {
-        message: err instanceof Error ? err.message : "An error occurred",
-      });
+  useEffect(() => {
+    if (state.status !== "success") {
+      return;
     }
+    if (state.data?.twoFactorRequired) {
+      router.push(PAGE_ROUTES.TWO_FACTOR);
+      return;
+    }
+    router.push(callbackUrl);
+    router.refresh();
+  }, [state, router, callbackUrl]);
+
+  async function handleSocialLogin(provider: SocialProvider) {
+    const result = await signInSocialAction(provider, callbackUrl);
+    if (result.success && result.data?.url) {
+      window.location.href = result.data.url;
+      return;
+    }
+    toast.error(result.error || errors.signIn);
   }
+
+  const rootError = state.status === "error" ? state.error : undefined;
 
   return (
     <AuthCard
-      className={className}
       description="Enter your credentials to access your account"
       footer={
         <p className="text-center text-muted-foreground text-sm">
           Don&apos;t have an account?{" "}
-          <Link className="text-primary hover:underline" href={signUpUrl}>
+          <Link
+            className="text-primary hover:underline"
+            href={PAGE_ROUTES.SIGN_UP}
+          >
             Sign up
           </Link>
         </p>
@@ -75,10 +91,15 @@ export function SignInForm({
       title="Sign In"
     >
       <Form {...form}>
-        <form className="grid gap-4" onSubmit={form.handleSubmit(handleSubmit)}>
-          {(error || form.formState.errors.root) && (
+        <form
+          className="grid gap-4"
+          onSubmit={form.handleSubmit((values) =>
+            startTransition(() => formAction(values))
+          )}
+        >
+          {rootError && (
             <div className="rounded-md bg-destructive/10 p-3 text-destructive text-sm">
-              {error || form.formState.errors.root?.message}
+              {rootError}
             </div>
           )}
 
@@ -91,7 +112,7 @@ export function SignInForm({
                 <FormControl>
                   <Input
                     autoComplete="email"
-                    disabled={isSubmitting}
+                    disabled={isPending}
                     placeholder="name@example.com"
                     type="email"
                     {...field}
@@ -111,7 +132,7 @@ export function SignInForm({
                   <FormLabel>Password</FormLabel>
                   <Link
                     className="text-muted-foreground text-sm hover:text-primary"
-                    href={forgotPasswordUrl}
+                    href={PAGE_ROUTES.FORGOT_PASSWORD}
                   >
                     Forgot password?
                   </Link>
@@ -119,7 +140,7 @@ export function SignInForm({
                 <FormControl>
                   <Input
                     autoComplete="current-password"
-                    disabled={isSubmitting}
+                    disabled={isPending}
                     placeholder="Enter your password"
                     type="password"
                     {...field}
@@ -138,7 +159,7 @@ export function SignInForm({
                 <FormControl>
                   <Checkbox
                     checked={field.value}
-                    disabled={isSubmitting}
+                    disabled={isPending}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -147,30 +168,26 @@ export function SignInForm({
             )}
           />
 
-          <Button className="w-full" disabled={isSubmitting} type="submit">
-            {isSubmitting ? "Signing in..." : "Sign In"}
+          <Button className="w-full" disabled={isPending} type="submit">
+            {isPending ? "Signing in..." : "Sign In"}
           </Button>
 
-          {socialProviders.length > 0 && onSocialLogin && (
-            <>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
-                </div>
-              </div>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
+          </div>
 
-              <SocialProviders
-                isLoading={isSubmitting}
-                onProviderClick={onSocialLogin}
-                providers={socialProviders}
-              />
-            </>
-          )}
+          <SocialProviders
+            isLoading={isPending}
+            onProviderClick={handleSocialLogin}
+            providers={SOCIAL_PROVIDERS}
+          />
         </form>
       </Form>
     </AuthCard>

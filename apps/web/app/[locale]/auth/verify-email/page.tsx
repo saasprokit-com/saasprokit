@@ -1,5 +1,5 @@
 import { getDictionary } from "@repo/internationalization";
-import { VerifyEmailClient } from "./components/verify-email-client";
+import { VerifyEmailCard } from "./components/verify-email-card";
 
 interface VerifyEmailPageProps {
   params: Promise<{ locale: string }>;
@@ -13,7 +13,5 @@ export default async function VerifyEmailPage({
   const [{ locale }, { email }] = await Promise.all([params, searchParams]);
   const dict = await getDictionary(locale);
 
-  return (
-    <VerifyEmailClient email={email ?? null} errors={dict.errors.action} />
-  );
+  return <VerifyEmailCard email={email ?? null} errors={dict.errors.action} />;
 }

@@ -9,7 +9,7 @@ import { KeyRound, Mail, Sparkles } from "lucide-react";
 import { resolveCallbackUrl } from "@/lib/routes";
 import { EmailOtpSignIn } from "./components/email-otp-sign-in";
 import { MagicLinkSignIn } from "./components/magic-link-sign-in";
-import { PasswordSignIn } from "./components/password-sign-in";
+import { SignInForm } from "./components/sign-in-form";
 
 type SignInTab = "password" | "magic-link" | "otp";
 
@@ -56,7 +56,7 @@ export default async function SignInPage({
         </TabsList>
 
         <TabsContent className="mt-6" value="password">
-          <PasswordSignIn callbackUrl={callbackUrl} errors={errors} />
+          <SignInForm callbackUrl={callbackUrl} errors={errors} />
         </TabsContent>
 
         <TabsContent className="mt-6" value="magic-link">

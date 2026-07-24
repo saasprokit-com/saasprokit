@@ -2,17 +2,18 @@
 
 Why the forms system is shaped the way it is, and how our approach compares to
 the official React 19 / Next.js 16 guidance. The build recipes and the full
-pattern list live in `SKILL.md`; this file is the reasoning behind them.
+decision tree live in `SKILL.md`; this file is the reasoning behind them.
 
 ## Stack
 
 | Concern | Tool |
 | --- | --- |
-| Form state & submission | `react-hook-form` (`^7.x`) |
-| Validation | `zod` (`^4.x`) via `@hookform/resolvers/zod` |
+| Client form state & validation UX | `react-hook-form` (`^7.x`) — owns field state, dirty/touched, instant errors |
+| Validation | `zod` (`^4.x`) via `@hookform/resolvers/zod` (client UX) + `schema.safeParse` (server boundary) |
 | UI primitives | shadcn-style `Form`, `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormMessage` in `packages/design-system/components/ui/form.tsx` |
-| Mutations | Next.js Server Actions returning typed `ActionResult<T>` (`{ success, data }` or `{ success: false, error }`) |
-| Notifications | `sonner` toasts |
+| Submission transport | React 19 `useActionState` — the pending signal (`isPending`) and the returned state both come from the hook |
+| Mutations | Next.js Server Actions returning `FormState<TValues, TData>` (form actions) or typed `ActionResult<T>` (non-form server functions) |
+| Notifications | `sonner` toasts (app forms); inline banner (auth pages) |
 
 Forms submit to **Server Actions**, not client fetches to API routes — including
 all **auth flows** (sign-in/up, social, magic-link, OTP, forgot/reset password,
@@ -29,188 +30,195 @@ Schemas and actions are colocated with the feature that owns them:
 ```
 app/[locale]/(app)/[orgSlug]/members/
 ├── schemas.ts     # z.object(...) + inferred types (z.infer<typeof x>)
-├── actions.ts     # "use server" actions; re-parse the SAME schema
+├── actions.ts     # "use server" actions; re-validate the SAME schema
 ├── queries.ts     # server-side reads
 └── components/    # client form components
 ```
 
 Each schema file exports both the zod schema and its inferred type. The same
 schema validates on the client (via `zodResolver`) **and** on the server (via
-`schema.parse()` inside the action) — defense in depth from one definition.
+`schema.safeParse(input)` inside the action) — defense in depth from one
+definition.
 
-## The patterns
+Auth forms follow the same convention rather than living in the design system:
+they are **colocated** with their route under
+`apps/web/app/[locale]/auth/*/components/`, with the shared `AuthCard` and
+`SocialProviders` in `apps/web/app/[locale]/auth/components/` and their schemas
+in `apps/web/app/[locale]/auth/schemas.ts`. There is no design-system auth
+molecule layer.
 
-`SKILL.md` names six patterns; the three below are the ones with interesting
-mechanics worth explaining. They share a submission target (server actions) and
-differ in who owns the form state and where the component lives. Of the other
-three, **confirmation form** (fieldless) and **hybrid public form** have their
-own recipes in `SKILL.md` (Recipes 3 and 4), and **molecule + server action** is
-a molecule form whose injected handler calls a server action — see the molecule
-form section below.
+## The two recipes
 
-### colocated form — RHF + zodResolver + server action (the default)
+Every form in the repo is one of two recipes, and both route submission through
+React 19 `useActionState` and gate on the hook's own `isPending`. They differ
+only in whether there are input fields to validate.
 
-Example: `apps/web/app/[locale]/(app)/account/new-org/components/create-organization-form.tsx`
+### Recipe A — field-form (anything with typed inputs)
+
+RHF + `zodResolver` still own the **client** experience — instant field-level
+errors, dirty/touched tracking, focus management. Submission, however, is
+dispatched through `useActionState`:
 
 ```tsx
-const form = useForm<CreateOrgInput>({
-  resolver: zodResolver(createOrgSchema),
-  defaultValues: { name: "", slug: "" },
-});
-const isSubmitting = form.formState.isSubmitting;
+const [state, formAction, isPending] = useActionState(action, initialFormState);
+const form = useForm<Values>({ resolver: zodResolver(schema) });
 
-async function onSubmit(values: CreateOrgInput) {
-  const result = await createOrganizationAction(values);
-  if (!result.success) {
-    // field-level error or toast
-    form.setError("slug", { message: result.error });
-    return;
+useActionFieldErrors(form, state);   // server fieldErrors → RHF fields
+
+// <form onSubmit={form.handleSubmit((values) =>
+//   startTransition(() => formAction(values))   // startTransition: top-level react import
+// )}>
+// gate every input + the submit button on isPending
+```
+
+The action has signature `(prevState, input)`, re-validates with
+`schema.safeParse`, and **returns** errors as state — it never throws:
+
+```ts
+"use server";
+export async function action(
+  _prev: FormState<Values, Data>,
+  input: Values
+): Promise<FormState<Values, Data>> {
+  const parsed = schema.safeParse(input);
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
   }
-  // navigate / toast
+  try {
+    // authorize, mutate, revalidate
+    return { status: "success", data };
+  } catch (error) {
+    return toFormError(error, { fallback: "…", logger });   // { status: "error", error }
+  }
 }
 ```
 
-- Client-side zod validation with instant field-level errors.
-- Loading state from `form.formState.isSubmitting`.
-- Failures map to `form.setError(...)` (field-level) or a sonner toast.
-- The action re-parses the schema, calls `verifySession` / `hasOrgPermission`,
-  and returns `ActionResult<T>`.
+**Why keep RHF at all if `useActionState` runs the submit?** Because the two
+solve different problems. `useActionState` is the *transport and pending*
+authority; RHF is the *client validation and field-state* authority. Dropping
+RHF would cost instant on-blur validation, focus-on-error, and dirty tracking —
+UX that a bare `<form action>` can't replicate without a server round-trip per
+keystroke. Keeping both costs nothing extra: the one zod schema feeds
+`zodResolver` on the client and `safeParse` on the server.
 
-**Use for:** any multi-field form inside the app.
+**Why dispatch typed values instead of `FormData`?** `form.handleSubmit` already
+produces a fully-typed `z.infer<typeof schema>` object; dispatching it preserves
+end-to-end types (no `formData.get()` string coercion) and lets non-field values
+(an `organizationId`, a `token`) ride along in the same typed object. The
+`safeParse` on the server still guards the boundary — it just parses a typed
+object instead of a stringly-typed `FormData`.
 
-### molecule form — RHF form as a design-system molecule (dependency-injected)
+**Why `startTransition` from the top-level `react` import?** `useActionState`'s
+dispatch must run inside a transition, but it is **not** the `useTransition`
+hook — the hook's `isPending` is a separate signal we don't use here.
+Dispatching outside a transition logs a dev error and `isPending` never updates.
+So we wrap `form.handleSubmit`'s callback in the module-level `startTransition`.
 
-Example: `packages/design-system/components/molecules/auth/sign-in-form.tsx`,
-consumed by `apps/web/app/[locale]/auth/sign-in/components/password-sign-in.tsx`.
+### Recipe B — confirm-button (no input fields)
 
-Same RHF + zodResolver mechanics as the colocated form — the difference is **who owns the
-submit logic**. The molecule takes `onSubmit: (data) => Promise<void>` as a prop,
-catches whatever it throws, and surfaces it via `form.setError("root", ...)`. It
-knows nothing about server actions, routes, or auth libraries, which is what lets
-it live in `packages/design-system`.
-
-The app injects the handler. For auth pages that handler calls a **server
-action** (`signInEmailAction(...)` → `auth.api.signInEmail`), throws on
-`!result.success` so the molecule's root-error banner fires, then routes via
-`PAGE_ROUTES`.
-
-**Use for:** forms reused across apps, or forms that must stay decoupled from
-app-specific transport (the prop is transport-agnostic). This is the **molecule
-+ server action** pattern, used by every auth flow. Brute-force protection is
-re-applied inside the action via `enforceRateLimit` (`apps/web/lib/auth/rate-limit.ts`),
-because a direct `auth.api.*` call bypasses Better Auth's HTTP-path limiter — so
-do **not** delete those calls thinking the client transport still covers them.
-
-### dialog form — RHF + `startTransition`; and the legacy `useState` dialogs
-
-The prescribed **dialog form** keeps RHF + zodResolver for validation and wraps
-the action call in `startTransition` (see `SKILL.md` Recipe 2). Five dialogs
-predate this rule and use plain `useState` per field — they are **legacy**. This
-section explains why the transition matters, using the legacy
-`invite-member-dialog.tsx` as the example:
+No fields → no RHF, no client validation to preserve. This is the canonical
+official pattern verbatim: `<form action={formAction}>` + `useActionState`, with
+dynamic args supplied via `.bind(null, args)`. React auto-wraps the `action`
+prop in a transition, so there is no manual `startTransition`. Gate on
+`isPending` from the hook.
 
 ```tsx
-const [isPending, startTransition] = useTransition();
-
-const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
-  startTransition(async () => {
-    const result = await inviteMemberAction({ organizationId, orgSlug, email, role });
-    if (result.success) { toast.success(...); setOpen(false); }
-    else { toast.error(...); }
-  });
-};
+const boundAction = removeThingsFormAction.bind(null, { ids });
+const [state, formAction, isPending] = useActionState(boundAction, null);
+// <form action={formAction}><Button disabled={isPending} type="submit">…</Button></form>
 ```
 
-Manual `useState` per field, no RHF, no client-side zod. Validation happens only
-server-side (`inviteMemberSchema.parse()` in the action).
+A type-to-confirm guard input (e.g. "type the org name to delete") stays plain
+`useState` gating `disabled` — it is not submitted and not RHF.
 
-**The `useTransition` part is exactly right** — it's the officially documented
-way to invoke a server action outside `<form action>`, and it has a payoff
-specific to actions that revalidate: `inviteMemberAction` calls
-`revalidateOrgPage(...)`, so the response carries a fresh RSC payload for the
-members page. Because the call runs inside a transition:
+### Why `isPending` from the hook, never `isSubmitting`
 
-1. `isPending` spans the **whole** update — server round-trip *plus* the router
-   applying the revalidated members list. A manual `setLoading(false)` after
-   `await` would drop the spinner before the new row appears.
-2. The revalidation re-render is non-blocking; the dialog stays interactive.
+This is the single rule the whole system enforces. Actions here **revalidate**
+(`revalidateOrgPage(...)` / `revalidatePath(...)`) so the response carries a
+fresh RSC payload — read-your-own-writes in one roundtrip. The pending signal has
+to stay true until that fresh UI paints, or the spinner lies:
 
-**The weakness** of the *legacy* form is the validation UX: users only see real
-validation errors after a server round-trip, and it's a second form idiom to
-maintain. That's why the current rule is RHF + zodResolver **while keeping**
-`startTransition` around the action call — the strongest hybrid, and the
-`dialog form` pattern. Migrate legacy `useState` dialogs to it when touched.
+- `isPending` from `useActionState` stays true until the action **and** the
+  revalidation re-render have both committed. The spinner stops when the new UI
+  is on screen.
+- `form.formState.isSubmitting` goes false the moment the action's promise
+  resolves — **before** the router applies the revalidated payload. Gate on it
+  and the button re-enables over stale UI for a frame. That's the "lying
+  spinner", and it's why `isSubmitting` (and `useFormStatus`) are banned for
+  form submission here.
 
-One React gotcha in this pattern: state updates *after* the `await` inside
-`startTransition` (e.g. `setOpen(false)`) must be re-wrapped in a nested
-`startTransition`, or they fall out of the transition and close the dialog
-before the revalidated list commits.
+## When it is NOT a form: `useTransition`
+
+`useTransition` is not gone — it moved. It is now used **only** for interactions
+that call a server action but are not a submitted `<form>`, where its
+transition-scoped `isPending` still spans the revalidation:
+
+- **Dropdown / menu items** — a nested `<form>` fights Radix focus/close, and a
+  row firing 2–3 actions shouldn't become 2–3 forms.
+- **Select `onChange`** that mutates immediately (e.g. a role selector).
+- **Buttons that redirect** to Stripe / an OAuth URL, or refresh the router.
+- **File uploads** — `fetch()` → Route Handler, the one non-server-action
+  transport.
+
+Its one gotcha: a state update *after* an `await` inside `startTransition` must
+be re-wrapped in a nested `startTransition`, or it falls out of the transition.
+Field-forms avoid this entirely because `useActionState` owns the transition.
 
 ## Validation: two layers, one schema
 
 | Layer | Mechanism | Purpose | Trustworthy? |
 | --- | --- | --- | --- |
 | Client | RHF + `zodResolver(schema)` | UX: instant field errors, fewer wasted round-trips | **No** — skippable (JS disabled, edited bundle, direct POST) |
-| Server | `schema.parse(input)` inside the action + `verifySession` / `hasOrgPermission` | Security: the actual boundary | **Yes** — the only layer that counts |
+| Server | `schema.safeParse(input)` inside the action + `verifySession` / `hasOrgPermission` | Security: the actual boundary | **Yes** — the only layer that counts |
 
 Client-side validation is a convenience, never verification. Anyone can invoke a
 server action directly with a crafted request, bypassing RHF entirely. The server
 re-parse must exist even though the client already validated — the elegance of
 this setup is that both layers cost one schema definition.
 
-### Two-tier server validation
-
-The server re-parse comes in two flavors, chosen by form type:
-
-| Form type | Server validation | Why |
-| --- | --- | --- |
-| Authenticated (colocated, dialog, molecule) | `schema.parse` + `toActionError` (generic) | client zod already gives field errors; a server rejection means an attacker or schema drift — a generic error is enough |
-| Hybrid public form | `schema.safeParse` + field errors via `useActionState` | a pre-hydration submitter has no client validation, so the server response is their only feedback |
+Every form action now `safeParse`s and returns `fieldErrors` as state (surfaced
+onto RHF fields via `useActionFieldErrors`). There is no longer a two-tier split
+where authenticated forms used `parse` + a generic error and only public forms
+used `safeParse` + field errors — the whole codebase returns field errors from
+the action uniformly, so schema drift or a partial-payload attack produces the
+same precise, field-anchored feedback everywhere.
 
 ## How this compares to the official docs
 
-The canonical React 19 / Next.js pattern is different from ours:
+The canonical React 19 / Next.js pattern **is** `useActionState`, and we now
+**converge** on it — earlier this doc described a deliberate deviation
+(RHF `onSubmit` + a direct `await`); that is gone.
 
 ```tsx
-// Official: action prop + useActionState, FormData-shaped action
+// Official: action prop + useActionState
 const [state, formAction, pending] = useActionState(createUser, initialState);
 
 <form action={formAction}>
   <input name="email" required type="email" />
-  <p aria-live="polite">{state?.message}</p>
+  <p aria-live="polite">{state?.error}</p>
   <button disabled={pending}>Sign up</button>
 </form>
 ```
 
-- The action receives `(prevState, formData: FormData)`.
-- Works **before hydration and without JS** (progressive enhancement): a native
-  form POST still invokes the action.
-- Client validation = HTML attributes only; real validation is server-side zod
-  `safeParse` returning `{ errors: fieldErrors }`.
-- Pending via `useActionState`'s `pending` or `useFormStatus`; optimistic UI via
-  `useOptimistic`.
+We keep the hook, the pending signal, and the errors-as-returned-state contract
+exactly as documented. The **one intentional twist** is the payload: instead of
+letting the action receive a stringly-typed `FormData`, a field-form dispatches
+the typed RHF values object.
 
-**We deliberately deviate** on the submission layer:
-
-| | Official (`<form action>` + FormData) | Ours (RHF `onSubmit` + typed objects) |
+| | Official (`<form action>` + FormData) | Ours — Recipe A (RHF values → `useActionState`) |
 | --- | --- | --- |
-| Works pre-hydration / no-JS | ✅ | ❌ form is inert until JS loads |
-| Instant field-level validation | ❌ server round-trip per error | ✅ zod on blur/change |
-| Type safety | ❌ `formData.get()` is stringly-typed, needs coercion | ✅ `z.infer` types shared end-to-end |
-| Typed returns | via `prevState` reducer shape | ✅ `ActionResult<T>` with inference |
+| Submission transport | `useActionState`, action gets `(prevState, formData)` | `useActionState`, action gets `(prevState, values)` — **same hook** |
+| Pending signal | `pending` from the hook | `isPending` from the hook — **same** |
+| Errors returned as state | ✅ | ✅ **same** (`FormState`) |
+| Payload shape | `FormData` — `formData.get()` is stringly-typed, needs coercion | typed `z.infer` values object, non-field data rides along |
+| Instant field-level validation | ❌ server round-trip per error | ✅ zod on blur/change via RHF |
+| Works pre-hydration / no-JS | ✅ | ❌ inert until JS loads |
 
-The tradeoff is near-free **for authenticated app forms**: sign-in itself
-requires JS (the RHF molecule), so no-JS users can't reach the dashboard
-anyway. The only exposure is the hydration gap.
-
-**When the calculus flips:** public marketing pages, lead-capture, anything
-first-visit-critical. There, the hydration gap is exactly when users interact.
-We don't switch authoring stacks for it — instead the **hybrid public form**
-pattern keeps RHF for the enhanced experience but adds a native
-`<form action={serverAction}>` fallback so a pre-hydration submit still POSTs
-(with `safeParse` + field errors via `useActionState`). Universal RHF authoring,
-gap covered. See `SKILL.md` Recipe 4.
+The only thing the twist gives up is progressive enhancement, and that's
+near-free for authenticated app forms: reaching a dashboard form already requires
+JS, so a no-JS visitor was never going to submit it. **Recipe B keeps the
+official `FormData` shape verbatim** (fieldless confirms, `.bind` args), so it
+retains full progressive enhancement where it's cheap to keep.
 
 ## Server action security checklist
 
@@ -222,14 +230,15 @@ Inside **every** action:
 - [ ] **Authenticate & authorize** — `verifySession` / `hasOrgPermission`.
       Rendering the form only on an authenticated page is *not* a security
       boundary.
-- [ ] **Validate input** — `schema.parse(input)` (or `safeParse` for field
-      errors). Client validation doesn't count.
+- [ ] **Validate input** — `schema.safeParse(input)`; return `fieldErrors` via
+      `fieldErrorsFrom(parsed.error)` on failure. Client validation doesn't count.
 - [ ] **Send IDs, verify ownership server-side** — schema validation only checks
       *shape*; a well-formed object can still reference a row the caller doesn't
       own. Derive identity from the session, look rows up by ownership
       (e.g. `hasOrgPermission(organizationId, ...)`).
 - [ ] **Constrain return values** — returns are serialized to the client; shape
-      them to what the UI renders (`ActionResult<T>`), never raw DB records.
+      them to what the UI renders (`FormState` for form actions, typed
+      `ActionResult<T>` for non-form server functions), never raw DB records.
 - [ ] **Revalidate in the action** — `revalidateOrgPage(...)` /
       `revalidatePath(...)` ships the re-rendered page in the same roundtrip
       (read-your-own-writes, no follow-up fetch).
@@ -239,36 +248,24 @@ Operational caveats:
 - Server actions dispatch **sequentially per client** — never `Promise.all`
   multiple actions from the browser; parallelize inside a single action instead.
 - `redirect()` throws — place revalidation calls *before* it.
+- Failures are **returned as `FormState`** (`toFormError` / `formActionError`),
+  never thrown out of a form action.
 
 ## Decision guide
 
-| Situation | Pattern |
+| Situation | Recipe |
 | --- | --- |
-| Multi-field form in the app | **colocated form** — RHF + zodResolver + server action |
-| Form reused across apps / design system | **molecule form** — injected `onSubmit` |
-| Auth flow (sign-in/up, social, magic-link, OTP, reset, verify-email, 2FA) | **molecule + server action** — injected handler calls `auth.api.*` inside an action with server-side `enforceRateLimit` |
-| Billing (upgrade / portal / cancel) | **server action** returning a Stripe redirect URL |
-| Dialog with fields | **dialog form** — RHF + zodResolver + `startTransition` |
-| Fieldless confirm / cancel / accept | **confirmation form** — `<form action>`+`useActionState` for a fixed/public target, `useTransition` for dynamic ids / menu items |
-| Public / marketing / no-JS-critical form | **hybrid public form** — native `<form action>` fallback + RHF |
-
-(Full decision tree and recipes in `SKILL.md`.)
+| Form with typed input fields (create org, sign-in, change password, invite) | **Recipe A — field-form**: RHF + `zodResolver` for client UX, submit via `form.handleSubmit((values) => startTransition(() => formAction(values)))`, gate on `isPending` |
+| Fieldless confirm / delete / accept / resend | **Recipe B — confirm-button**: `<form action={formAction}>` + `useActionState`, args via `.bind(null, args)`, gate on `isPending` |
+| Not a submitted `<form>` — menu item, `select onChange`, a button that redirects (Stripe/OAuth) or refreshes, or a file upload | **`useTransition`** — the non-form escape hatch (last section) |
 
 For a fieldless confirmation, the transport is decided by the action's
 **argument shape**, not the trigger's container: a fixed/nullary target
-(hidden-input-able, `.bind`) → `<form action>` + `useActionState`; dynamic args
-the client holds (selected ids) → `useTransition`; public/semi-public surfaces
-mandate `<form action>` (progressive enhancement); dropdown/menu items use
-`useTransition` regardless. Proof the container doesn't decide: `downgrade-button.tsx`
-uses `<form action>` inside an AlertDialog. See `SKILL.md` Recipe 3 for the
-ordered rule.
+(hidden-input-able, `.bind`) → Recipe B; dynamic args the client holds (selected
+ids) or a dropdown/menu item → `useTransition`. Proof the container doesn't
+decide: `downgrade-button.tsx` uses `<form action>` inside an AlertDialog.
 
-Notes when touching form code:
-
-1. Authenticated forms use `parse` + `toActionError`; only hybrid public forms
-   need `safeParse` + field errors (two-tier policy above).
-2. Migrate legacy `useState` dialogs to the **dialog form** pattern (RHF +
-   `startTransition`) when touched — the five are listed in `SKILL.md`.
+(Full decision tree and step-by-step scaffolds in `SKILL.md`.)
 
 ## References
 
@@ -282,7 +279,6 @@ Notes when touching form code:
 **Repo examples**
 
 - Form primitives: `packages/design-system/components/ui/form.tsx`
-- colocated form: `apps/web/app/[locale]/(app)/account/new-org/components/create-organization-form.tsx` (+ `../actions.ts`, `../schemas.ts`)
-- molecule form / + server action: `packages/design-system/components/molecules/auth/sign-in-form.tsx`, `apps/web/app/[locale]/auth/sign-in/components/password-sign-in.tsx`
-- confirmation form: `apps/web/app/[locale]/(app)/invite/accept/accept-button.tsx`
-- legacy `useState` dialog (do not copy): `apps/web/app/[locale]/(app)/[orgSlug]/members/components/invite-member-dialog.tsx` (+ `../actions.ts` → `inviteMemberAction`)
+- Recipe A — field-form: `apps/web/app/[locale]/(app)/account/security/components/change-password-form.tsx` (+ `../actions.ts` → `changePasswordAction`, `../schemas.ts`); auth variant with inline root-error banner: `apps/web/app/[locale]/auth/sign-in/components/sign-in-form.tsx`
+- Recipe B — confirm-button: `apps/web/app/[locale]/(app)/account/danger/components/delete-account-form.tsx` (nullary) and `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/downgrade-button.tsx` (bound args); with a hidden input: `apps/web/app/[locale]/(app)/invite/accept/accept-button.tsx`
+- Shared plumbing: `@/lib/forms` (`FormState`, `initialFormState`, `fieldErrorsFrom`), `@/hooks/use-action-field-errors` (`useActionFieldErrors`), `@/lib/auth/action-error` (`toFormError`, `formActionError`)

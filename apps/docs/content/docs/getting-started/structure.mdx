@@ -68,7 +68,7 @@ next-nest-monorepo/
 │   ├── design-system/             # shadcn/ui + app UI components
 │   │   ├── components/
 │   │   │   ├── ui/                # shadcn base components (vendored)
-│   │   │   ├── molecules/         # Composite components (e.g. molecules/auth/*)
+│   │   │   ├── molecules/         # Composite components (e.g. molecules/error/*)
 │   │   │   ├── blocks/            # Page/section blocks
 │   │   │   ├── layout/            # Layout components
 │   │   │   ├── data-table/        # Data table
@@ -163,7 +163,7 @@ A few notes beyond what the tree above already shows:
 
 ### Authentication Routes (`/[locale]/auth/`)
 
-Each route is a Server-Component `page.tsx` plus a `components/` folder of `"use client"` logic; the form UI lives in `@repo/design-system` (`components/molecules/auth/`).
+Each route is a Server-Component `page.tsx` plus a `components/` folder of `"use client"` logic; auth form UI is colocated there too (submission via server actions + `useActionState`).
 
 ```
 /[locale]/auth/

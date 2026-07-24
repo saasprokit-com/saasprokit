@@ -24,9 +24,7 @@ Does the UI have input fields the user fills in?
     ├─ Public / first-visit page where a pre-hydration submit
     │  must still work (lead capture, invite accept) . Setup D  hybrid (A + B)
     │
-    └─ Behind a login (dashboard, dialog, settings) .. Setup B  RHF + typed server action
-        └─ inside a Dialog? same setup, wrap the call
-           in startTransition (see Setup C's gotcha)
+    └─ Behind a login (dashboard, dialog, settings) .. Setup B  RHF → useActionState
 ```
 
 Two framework facts drive this tree:
@@ -75,32 +73,52 @@ export async function acceptInviteAction(_prev: unknown, formData: FormData) {
 Extra args without hidden inputs: `myAction.bind(null, { planId })`.
 Pending state in a nested child: `useFormStatus` (must be *inside* the `<form>`).
 
-### Setup B — react-hook-form + zodResolver + typed server action (fields, behind login)
+### Setup B — react-hook-form + `useActionState` (fields, behind login)
 
-Instant field-level validation, end-to-end types from one zod schema — traded
-against progressive enhancement (irrelevant behind a login).
+Instant field-level validation and end-to-end types from one zod schema, with
+submission routed through `useActionState` so the pending signal covers
+revalidation — traded against progressive enhancement (irrelevant behind a
+login). RHF owns client validation and field state; `useActionState` owns
+transport and pending.
 
 ```tsx
+const [state, formAction, isPending] = useActionState(saveAction, initialState);
 const form = useForm<Input>({ resolver: zodResolver(schema) });
 
-async function onSubmit(values: Input) {
-  const result = await saveAction(values);      // typed args, typed result
-  if (!result.success) { toast.error(result.error); return; }
-}
-// <form onSubmit={form.handleSubmit(onSubmit)}> … gate on form.formState.isSubmitting
-// — ONLY if saveAction doesn't revalidate/navigate. If it does, wrap the call
-// in startTransition and gate on isPending instead (Setup C).
+// server fieldErrors → RHF fields (a small useEffect calling form.setError,
+// or a shared hook)
+useActionFieldErrors(form, state);
+
+// <form onSubmit={form.handleSubmit((values) =>
+//   startTransition(() => formAction(values))    // startTransition: top-level "react" import
+// )}>
+// gate every input + submit button on isPending — NOT form.formState.isSubmitting
 ```
 
+Why route through `useActionState` rather than gate on
+`form.formState.isSubmitting`? Because an action that calls
+`revalidatePath`/`revalidateTag` returns *before* the fresh UI paints —
+`isSubmitting` would drop the spinner over stale UI (section 3). `isPending`
+from the hook stays true through the revalidation re-render. Dispatch inside
+`startTransition` (the **top-level** `react` import, not the `useTransition`
+hook) because `useActionState`'s dispatch must run in a transition. Note this
+dispatches the typed RHF `values` object, not `FormData`, keeping `z.infer`
+types end-to-end; for public pages that still need a pre-hydration submit, use
+Setup D.
+
 The **same schema is re-parsed inside the action** — client validation is UX,
-server validation is the boundary:
+server validation is the boundary — and the action returns field errors as
+state rather than throwing:
 
 ```ts
 "use server";
-export async function saveAction(input: Input) {
-  const data = schema.parse(input);   // never trust the client — even your own
+export async function saveAction(_prev: State, input: Input): Promise<State> {
+  const parsed = schema.safeParse(input);   // never trust the client — even your own
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: parsed.error.flatten().fieldErrors };
+  }
   // authorize, mutate, revalidatePath(...)
-  return { success: true } as const;
+  return { status: "success" };
 }
 ```
 
@@ -158,10 +176,12 @@ export async function subscribeAction(_prev: unknown, formData: FormData) {
 | `formState.isSubmitting` | react-hook-form | the moment your `onSubmit` promise resolves | no — action returns *before* the fresh UI paints |
 
 **Rule:** action revalidates or navigates → gate on a transition-based signal
-(`pending`/`isPending`). Action only returns data (toast and done) →
-`isSubmitting` is fine. And inside `startTransition(async () => …)`,
-`isSubmitting` measures nothing at all — `startTransition` returns
-synchronously.
+(`pending`/`isPending`), **never** `form.formState.isSubmitting`. Only a pure
+data-return action (toast and done, no revalidation) can technically use
+`isSubmitting` — but because these actions revalidate to give
+read-your-own-writes, prefer `useActionState`'s `isPending` by default. And
+inside `startTransition(async () => …)`, `isSubmitting` measures nothing at all
+— `startTransition` returns synchronously.
 
 ## 4. The five APIs — how / where / when
 

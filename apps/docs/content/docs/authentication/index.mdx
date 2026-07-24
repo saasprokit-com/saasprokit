@@ -31,7 +31,7 @@ Package exports (`package.json`):
 
 ### The auth pages (`apps/web/app/[locale]/auth/`)
 
-Most pages follow the same **"thin page, fat client"** shape: a Server Component (`page.tsx`) awaits `params`, loads the localized error dictionary, and renders a `"use client"` logic component that does the real work through `authClient`. The split is consistent: the **presentational UI** (the forms, success/error cards) lives in the design system (`packages/design-system/components/molecules/auth/`), while the **client logic** (the `authClient` calls + routing) lives in a `components/` subdir next to the page.
+Most pages follow the same **"thin page, fat client"** shape: a Server Component (`page.tsx`) awaits `params`, loads the localized error dictionary, and renders a `"use client"` form component colocated in a `components/` subdir next to the page. Each form keeps react-hook-form for client-side validation and submits through a **server action** driven by `useActionState`; the action re-validates with `safeParse` and returns field/root errors as state (no design-system split, no `authClient` in the browser).
 
 ```tsx
 // page.tsx — the pattern, repeated for most flows

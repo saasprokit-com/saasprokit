@@ -1,23 +1,16 @@
-"use client";
-
 import Link from "next/link";
-import { AuthCard } from "./auth-card";
+import { PAGE_ROUTES } from "@/lib/routes";
+import { AuthCard } from "../../components/auth-card";
 
-export interface ResetPasswordSuccessProps {
-  className?: string;
-  signInUrl?: string;
-}
-
-export function ResetPasswordSuccess({
-  signInUrl = "/auth/sign-in",
-  className,
-}: ResetPasswordSuccessProps) {
+export function ResetPasswordSuccess() {
   return (
     <AuthCard
-      className={className}
       description="Your password has been updated"
       footer={
-        <Link className="text-primary text-sm hover:underline" href={signInUrl}>
+        <Link
+          className="text-primary text-sm hover:underline"
+          href={PAGE_ROUTES.SIGN_IN}
+        >
           Sign in with your new password
         </Link>
       }
