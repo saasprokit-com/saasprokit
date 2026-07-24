@@ -20,9 +20,11 @@ import {
 import { Input } from "@repo/design-system/components/ui/input";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
-import { useTransition } from "react";
+import { startTransition, useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { initialFormState } from "@/lib/forms";
 import { changePasswordAction } from "../actions";
 import {
   type ChangePasswordFormValues,
@@ -34,6 +36,11 @@ interface ChangePasswordFormProps {
 }
 
 export function ChangePasswordForm({ errors }: ChangePasswordFormProps) {
+  const [state, formAction, isPending] = useActionState(
+    changePasswordAction,
+    initialFormState
+  );
+
   const form = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
     defaultValues: {
@@ -43,19 +50,19 @@ export function ChangePasswordForm({ errors }: ChangePasswordFormProps) {
     },
   });
 
-  const [isPending, startTransition] = useTransition();
+  useActionFieldErrors(form, state);
+
+  useEffect(() => {
+    if (state.status === "success") {
+      toast.success("Password changed successfully");
+      form.reset();
+    } else if (state.status === "error" && state.error) {
+      toast.error(state.error || errors.changePassword);
+    }
+  }, [state, form, errors]);
 
   const onSubmit = (values: ChangePasswordFormValues) => {
-    startTransition(async () => {
-      const result = await changePasswordAction(values);
-
-      if (result.success) {
-        toast.success("Password changed successfully");
-        startTransition(() => form.reset());
-      } else {
-        toast.error(result.error || errors.changePassword);
-      }
-    });
+    startTransition(() => formAction(values));
   };
 
   return (

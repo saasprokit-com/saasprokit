@@ -3,106 +3,124 @@
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
-import type { z } from "zod";
-import { actionError, toActionError } from "@/lib/auth/action-error";
-import type { ActionResult } from "@/lib/auth/auth";
+import {
+  formActionError,
+  toActionError,
+  toFormError,
+} from "@/lib/auth/action-error";
 import { enforceRateLimit, RateLimitError } from "@/lib/auth/rate-limit";
+import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { revalidateAccountPage } from "@/lib/infrastructure/revalidation";
-import { changePasswordSchema } from "./schemas";
+import {
+  type ChangePasswordFormValues,
+  changePasswordSchema,
+  type TwoFactorCodeValues,
+  type TwoFactorPasswordValues,
+  twoFactorCodeSchema,
+  twoFactorPasswordSchema,
+} from "./schemas";
 
-type Enable2FAResult =
-  | { success: true; totpURI: string; backupCodes: string[] }
-  | { success: false; error: string };
+export type Enable2FAFormState = FormState<
+  TwoFactorPasswordValues,
+  { totpURI: string; backupCodes: string[] }
+>;
 
 export async function enable2FAAction(
-  password: string
-): Promise<Enable2FAResult> {
+  _prevState: Enable2FAFormState,
+  input: TwoFactorPasswordValues
+): Promise<Enable2FAFormState> {
   const logger = createRequestLogger({ action: "enable2FA" });
+
+  const parsed = twoFactorPasswordSchema.safeParse(input);
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+  }
 
   try {
     await enforceRateLimit("change-password");
 
     const data = await auth.api.enableTwoFactor({
       headers: await headers(),
-      body: { password },
+      body: { password: parsed.data.password },
     });
 
     if (!data?.totpURI) {
-      return { success: false, error: "No TOTP URI returned" };
+      return formActionError("enable2fa");
     }
 
     return {
-      success: true,
-      totpURI: data.totpURI,
-      backupCodes: data.backupCodes ?? [],
+      status: "success",
+      data: { totpURI: data.totpURI, backupCodes: data.backupCodes ?? [] },
     };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      const limited = await actionError("tooManyRequests");
-      return {
-        success: false,
-        error: limited.error ?? "Too many attempts. Please try again shortly.",
-      };
+      return formActionError("tooManyRequests");
     }
-    logger.error(
-      { err: error instanceof Error ? error : new Error(String(error)) },
-      "Failed to enable 2FA"
-    );
-    return { success: false, error: "Failed to enable 2FA" };
+    return toFormError(error, { fallback: "enable2fa", logger });
   }
 }
 
-export async function verify2FAAction(code: string): Promise<ActionResult> {
+export type Verify2FAFormState = FormState<TwoFactorCodeValues>;
+
+export async function verify2FAAction(
+  _prevState: Verify2FAFormState,
+  input: TwoFactorCodeValues
+): Promise<Verify2FAFormState> {
   const logger = createRequestLogger({ action: "verify2FA" });
+
+  const parsed = twoFactorCodeSchema.safeParse(input);
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+  }
 
   try {
     await enforceRateLimit("2fa");
 
     await auth.api.verifyTOTP({
       headers: await headers(),
-      body: { code },
+      body: { code: parsed.data.code },
     });
 
     await revalidateAccountPage("security");
 
-    return { success: true };
+    return { status: "success" };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return actionError("tooManyRequests");
+      return formActionError("tooManyRequests");
     }
-    logger.error(
-      { err: error instanceof Error ? error : new Error(String(error)) },
-      "Failed to verify 2FA"
-    );
-    return { success: false, error: "Verification failed" };
+    return toFormError(error, { fallback: "verify2fa", logger });
   }
 }
 
+export type Disable2FAFormState = FormState<TwoFactorPasswordValues>;
+
 export async function disable2FAAction(
-  password: string
-): Promise<ActionResult> {
+  _prevState: Disable2FAFormState,
+  input: TwoFactorPasswordValues
+): Promise<Disable2FAFormState> {
   const logger = createRequestLogger({ action: "disable2FA" });
+
+  const parsed = twoFactorPasswordSchema.safeParse(input);
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+  }
 
   try {
     await enforceRateLimit("change-password");
 
     await auth.api.disableTwoFactor({
       headers: await headers(),
-      body: { password },
+      body: { password: parsed.data.password },
     });
 
     await revalidateAccountPage("security");
 
-    return { success: true };
+    return { status: "success" };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return actionError("tooManyRequests");
+      return formActionError("tooManyRequests");
     }
-    logger.error(
-      { err: error instanceof Error ? error : new Error(String(error)) },
-      "Failed to disable 2FA"
-    );
-    return { success: false, error: "Failed to disable 2FA" };
+    return toFormError(error, { fallback: "disable2fa", logger });
   }
 }
 
@@ -158,16 +176,24 @@ export async function logoutAllOtherSessionsAction() {
   }
 }
 
+export type ChangePasswordFormState = FormState<ChangePasswordFormValues>;
+
 /**
  * auth.api.changePassword authenticates the caller from the forwarded headers.
  */
 export async function changePasswordAction(
-  input: z.infer<typeof changePasswordSchema>
-): Promise<ActionResult> {
+  _prevState: ChangePasswordFormState,
+  input: ChangePasswordFormValues
+): Promise<ChangePasswordFormState> {
   const logger = createRequestLogger({ action: "changePassword" });
 
+  const parsed = changePasswordSchema.safeParse(input);
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+  }
+
   try {
-    const { currentPassword, newPassword } = changePasswordSchema.parse(input);
+    const { currentPassword, newPassword } = parsed.data;
     await enforceRateLimit("change-password");
 
     await auth.api.changePassword({
@@ -175,12 +201,12 @@ export async function changePasswordAction(
       body: { currentPassword, newPassword, revokeOtherSessions: true },
     });
 
-    return { success: true };
+    return { status: "success" };
   } catch (error) {
     if (error instanceof RateLimitError) {
-      return actionError("tooManyRequests");
+      return formActionError("tooManyRequests");
     }
-    return toActionError(error, {
+    return toFormError(error, {
       fallback: "changePassword",
       logger,
     });

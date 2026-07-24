@@ -6,8 +6,14 @@ import { createRequestLogger } from "@repo/logger/server";
 import { ATTACHABLE_TYPE } from "@repo/utils/storage";
 import { headers } from "next/headers";
 import type { z } from "zod";
-import { actionError, toActionError } from "@/lib/auth/action-error";
+import {
+  actionError,
+  formActionError,
+  toActionError,
+  toFormError,
+} from "@/lib/auth/action-error";
 import { type ActionResult, hasOrgPermission } from "@/lib/auth/auth";
+import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
 import { ORG_PAGES } from "@/lib/routes";
 import {
@@ -64,42 +70,52 @@ export async function removeOrganizationLogoAction(
   }
 }
 
+export type UpdateOrgFormState = FormState<
+  z.infer<typeof updateOrgActionSchema>
+>;
+
 export async function updateOrganizationAction(
+  _prevState: UpdateOrgFormState,
   input: z.infer<typeof updateOrgActionSchema>
-): Promise<ActionResult> {
+): Promise<UpdateOrgFormState> {
   const logger = createRequestLogger({ action: "updateOrganization" });
 
-  try {
-    const validated = updateOrgActionSchema.parse(input);
+  const parsed = updateOrgActionSchema.safeParse(input);
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+  }
 
+  try {
     // Permission (organization:update) is enforced by BA's updateOrganization itself.
     const organization = await database.organization.findUnique({
-      where: { id: validated.organizationId },
+      where: { id: parsed.data.organizationId },
       select: { slug: true },
     });
 
     if (!organization) {
-      return actionError("orgNotFound");
+      return formActionError("orgNotFound");
     }
 
     await auth.api.updateOrganization({
       headers: await headers(),
       body: {
-        data: { name: validated.name },
-        organizationId: validated.organizationId,
+        data: { name: parsed.data.name },
+        organizationId: parsed.data.organizationId,
       },
     });
 
     await revalidateOrgPage(organization.slug, ORG_PAGES.SETTINGS);
 
-    return { success: true };
+    return { status: "success" };
   } catch (error) {
-    return toActionError(error, { fallback: "updateOrganization", logger });
+    return toFormError(error, { fallback: "updateOrganization", logger });
   }
 }
 
 export async function deleteOrganizationAction(
-  input: z.infer<typeof deleteOrgActionSchema>
+  input: z.infer<typeof deleteOrgActionSchema>,
+  _prevState: ActionResult | null,
+  _formData: FormData
 ): Promise<ActionResult> {
   const logger = createRequestLogger({ action: "deleteOrganization" });
 

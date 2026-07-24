@@ -87,3 +87,19 @@ export async function actionError<T = void>(
   const dict = await getDictionary(locale);
   return { success: false, error: dict.errors.action[code] };
 }
+
+export async function toFormError(
+  error: unknown,
+  options: ActionErrorOptions
+): Promise<{ status: "error"; error?: string }> {
+  const result = await toActionError(error, options);
+  return { status: "error", error: result.error };
+}
+
+export async function formActionError(
+  code: ActionErrorCode
+): Promise<{ status: "error"; error: string }> {
+  const locale = await getLocaleFromRequest();
+  const dict = await getDictionary(locale);
+  return { status: "error", error: dict.errors.action[code] };
+}

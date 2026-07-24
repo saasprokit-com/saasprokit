@@ -28,10 +28,12 @@ import {
 } from "@repo/design-system/components/ui/select";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2, Shield, ShieldCheck, User } from "lucide-react";
-import { useTransition } from "react";
+import { startTransition, useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { initialFormState } from "@/lib/forms";
 import { setUserRoleAction } from "../actions";
 import type { AdminUserRow } from "../queries";
 import { type SetUserRoleInput, setUserRoleSchema } from "../schemas";
@@ -65,31 +67,31 @@ export function SetRoleDialog({
   open,
   onOpenChange,
 }: SetRoleDialogProps) {
+  const [state, formAction, isPending] = useActionState(
+    setUserRoleAction,
+    initialFormState
+  );
+
   const form = useForm<SetUserRoleInput>({
     resolver: zodResolver(setUserRoleSchema),
     defaultValues: { userId: user.id, role: normalizeRole(user.role) },
   });
 
-  const [isPending, startTransition] = useTransition();
+  useActionFieldErrors(form, state);
 
-  // isPending (not formState.isSubmitting): the action revalidates, so the spinner
-  // must stay up until the refreshed table commits.
-  const onSubmit = (values: SetUserRoleInput) => {
-    startTransition(async () => {
-      const result = await setUserRoleAction(values);
-      if (!result.success) {
-        toast.error(result.error || errors.updateRole);
-        return;
-      }
+  useEffect(() => {
+    if (state.status === "success") {
       toast.success("Role updated", {
-        description: `${user.name || user.email} is now ${values.role}`,
+        description: `${user.name || user.email} is now ${form.getValues("role")}`,
       });
-      // Re-enter the transition: state updates after an await must be re-wrapped,
-      // or they fall out of it and close the dialog before the list revalidates.
-      startTransition(() => {
-        onOpenChange(false);
-      });
-    });
+      onOpenChange(false);
+    } else if (state.status === "error" && state.error) {
+      toast.error(state.error || errors.updateRole);
+    }
+  }, [state, form, errors.updateRole, onOpenChange, user.name, user.email]);
+
+  const onSubmit = (values: SetUserRoleInput) => {
+    startTransition(() => formAction({ ...values, userId: user.id }));
   };
 
   return (

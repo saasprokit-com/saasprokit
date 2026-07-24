@@ -7,12 +7,15 @@ import {
   BULK_INVITE_CONCURRENCY,
   INVITATION_STATUS,
 } from "@repo/utils/organization";
+import { parseEmailInput } from "@repo/utils/user";
 import { headers } from "next/headers";
 import { verifySession } from "@/lib/auth/action-auth";
 import {
   actionError,
   baErrorMessage,
+  formActionError,
   toActionError,
+  toFormError,
 } from "@/lib/auth/action-error";
 import {
   type ActionResult,
@@ -20,10 +23,13 @@ import {
   hasOrgPermission,
 } from "@/lib/auth/auth";
 import { canOrgAddMember } from "@/lib/billing/subscription-queries";
+import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
 import { ORG_PAGES } from "@/lib/routes";
 import {
+  type BulkInviteActionInput,
   type BulkInviteInput,
+  bulkInviteActionSchema,
   bulkInviteSchema,
   type InviteMemberInput,
   inviteMemberSchema,
@@ -33,20 +39,29 @@ import {
   transferOwnershipSchema,
   type UpdateRoleInput,
   updateRoleSchema,
+  validateEmails,
 } from "./schemas";
 
+export type InviteMemberFormState = FormState<InviteMemberInput>;
+
 export async function inviteMemberAction(
+  _prevState: InviteMemberFormState,
   input: InviteMemberInput
-): Promise<ActionResult<{ invitationId: string }>> {
+): Promise<InviteMemberFormState> {
+  const parsed = inviteMemberSchema.safeParse(input);
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+  }
+
   try {
-    const validated = inviteMemberSchema.parse(input);
+    const validated = parsed.data;
 
     const memberCheck = await canOrgAddMember(validated.organizationId);
     if (!memberCheck.allowed) {
-      return actionError("memberLimitReached");
+      return formActionError("memberLimitReached");
     }
 
-    const invitation = await auth.api.createInvitation({
+    await auth.api.createInvitation({
       body: {
         email: validated.email,
         role: validated.role,
@@ -56,9 +71,9 @@ export async function inviteMemberAction(
     });
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
-    return { success: true, data: { invitationId: invitation.id } };
+    return { status: "success" };
   } catch (error) {
-    return toActionError(error, {
+    return toFormError(error, {
       fallback: "invalidInput",
     });
   }
@@ -115,6 +130,18 @@ export async function removeMembersAction(
   } catch (error) {
     return toActionError(error, { fallback: "removeMember" });
   }
+}
+
+/**
+ * Bound-args useActionState surface for the toolbar dialog. The typed
+ * removeMembersAction stays exported for member-actions.tsx.
+ */
+export async function removeMembersFormAction(
+  input: RemoveMembersInput,
+  _prevState: ActionResult<{ removedCount: number }> | null,
+  _formData: FormData
+): Promise<ActionResult<{ removedCount: number }>> {
+  return await removeMembersAction(input);
 }
 
 export async function updateMemberRoleAction(
@@ -301,17 +328,39 @@ async function checkBulkInviteSkip(
   return skipReasons;
 }
 
+export type BulkInviteFormState = FormState<
+  BulkInviteActionInput,
+  { invited: number; skipped: string[] }
+>;
+
 export async function bulkInviteAction(
-  input: BulkInviteInput
-): Promise<ActionResult<{ invited: number; skipped: string[] }>> {
+  _prevState: BulkInviteFormState,
+  input: BulkInviteActionInput
+): Promise<BulkInviteFormState> {
+  const parsedInput = bulkInviteActionSchema.safeParse(input);
+  if (!parsedInput.success) {
+    return { status: "error", fieldErrors: fieldErrorsFrom(parsedInput.error) };
+  }
+
+  // Mirror the dialog's live badge: parse the raw textarea and drop invalid
+  // entries so a stray typo doesn't block the valid invites.
+  const { valid } = validateEmails(parseEmailInput(parsedInput.data.emails));
+  const parsed = bulkInviteSchema.safeParse({
+    ...parsedInput.data,
+    emails: valid,
+  });
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+  }
+
   try {
-    const validated = bulkInviteSchema.parse(input);
+    const validated = parsed.data;
 
     // Permission (invitation:create) is enforced by BA's createInvitation itself;
     // only the plan seat cap — which BA has no concept of — is checked here.
     const memberCheck = await canOrgAddMember(validated.organizationId);
     if (!memberCheck.allowed) {
-      return actionError("memberLimitReached");
+      return formActionError("memberLimitReached");
     }
 
     const reqHeaders = await headers();
@@ -324,12 +373,12 @@ export async function bulkInviteAction(
     );
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
-    return { success: true, data: { invited, skipped } };
+    return { status: "success", data: { invited, skipped } };
   } catch (error) {
     if (error instanceof Error && error.message.includes("seat(s) remaining")) {
-      return actionError("seatLimitReached");
+      return formActionError("seatLimitReached");
     }
-    return toActionError(error, {
+    return toFormError(error, {
       fallback: "invalidInput",
     });
   }

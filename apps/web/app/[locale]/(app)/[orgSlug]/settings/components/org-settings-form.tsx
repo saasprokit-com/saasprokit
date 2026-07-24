@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ORG_ROLES, type OrgRoleName } from "@repo/auth/permissions";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -36,10 +35,13 @@ import { formatDate } from "@repo/design-system/lib/date";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import type { ActionResult } from "@/lib/auth/auth";
+import { initialFormState } from "@/lib/forms";
 import { deleteOrganizationAction, updateOrganizationAction } from "../actions";
 import { type UpdateOrgFormValues, updateOrgSchema } from "../schemas";
 import { LogoUpload } from "./logo-upload";
@@ -64,10 +66,22 @@ export function OrgSettingsForm({
   userRole,
 }: OrgSettingsFormProps) {
   const router = useRouter();
-  const [isSaving, startSaveTransition] = useTransition();
-  const [isDeleting, startDeleteTransition] = useTransition();
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const [updateState, updateFormAction, isSaving] = useActionState(
+    updateOrganizationAction,
+    initialFormState
+  );
+
+  const boundDeleteAction = deleteOrganizationAction.bind(null, {
+    organizationId: organization.id,
+  });
+
+  const [deleteState, deleteFormAction, isDeleting] = useActionState<
+    ActionResult | null,
+    FormData
+  >(boundDeleteAction, null);
 
   const form = useForm<UpdateOrgFormValues>({
     resolver: zodResolver(updateOrgSchema),
@@ -76,46 +90,39 @@ export function OrgSettingsForm({
     },
   });
 
-  const isDirty = form.formState.isDirty;
-  const canDelete = userRole === ORG_ROLES.OWNER;
+  useActionFieldErrors(form, updateState);
 
-  function onSubmit(values: UpdateOrgFormValues) {
-    startSaveTransition(async () => {
-      const result = await updateOrganizationAction({
-        organizationId: organization.id,
-        name: values.name,
-      });
-
-      if (!result.success) {
-        toast.error(result.error || errors.updateOrganization);
-        return;
-      }
-
+  useEffect(() => {
+    if (updateState.status === "success") {
       toast.success("Organization updated successfully");
-      form.reset({ name: values.name });
-    });
-  }
+      // Re-baseline defaults on the saved name so isDirty gates the button again.
+      form.reset({ name: form.getValues("name") });
+    } else if (updateState.status === "error" && updateState.error) {
+      toast.error(updateState.error || errors.updateOrganization);
+    }
+  }, [updateState, form, errors]);
 
-  function handleDelete() {
-    if (deleteConfirmation !== organization.name) {
-      toast.error("Please type the organization name to confirm");
+  useEffect(() => {
+    if (!deleteState) {
       return;
     }
 
-    startDeleteTransition(async () => {
-      const result = await deleteOrganizationAction({
-        organizationId: organization.id,
-      });
-
-      if (!result.success) {
-        toast.error(result.error || errors.deleteOrganization);
-        return;
-      }
-
+    if (deleteState.success) {
       toast.success("Organization deleted successfully");
       router.push("/org");
-    });
-  }
+    } else if (deleteState.error) {
+      toast.error(deleteState.error || errors.deleteOrganization);
+    }
+  }, [deleteState, router, errors]);
+
+  const isDirty = form.formState.isDirty;
+  const canDelete = userRole === ORG_ROLES.OWNER;
+
+  const onSubmit = (values: UpdateOrgFormValues) => {
+    startTransition(() =>
+      updateFormAction({ ...values, organizationId: organization.id })
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -282,21 +289,20 @@ export function OrgSettingsForm({
                   <AlertDialogCancel disabled={isDeleting}>
                     Cancel
                   </AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    disabled={
-                      isDeleting || deleteConfirmation !== organization.name
-                    }
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleDelete();
-                    }}
-                  >
-                    {isDeleting && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    Delete Organization
-                  </AlertDialogAction>
+                  <form action={deleteFormAction}>
+                    <Button
+                      disabled={
+                        isDeleting || deleteConfirmation !== organization.name
+                      }
+                      type="submit"
+                      variant="destructive"
+                    >
+                      {isDeleting && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      Delete Organization
+                    </Button>
+                  </form>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

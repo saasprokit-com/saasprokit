@@ -2,7 +2,6 @@
 
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -10,12 +9,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@repo/design-system/components/ui/alert-dialog";
+import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useTransition } from "react";
+import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
 
+import type { ActionResult } from "@/lib/auth/auth";
 import { PAGE_ROUTES } from "@/lib/routes";
 import { impersonateUserAction } from "../actions";
 import type { AdminUserRow } from "../queries";
@@ -34,23 +35,24 @@ export function ImpersonateUserDialog({
   onOpenChange,
 }: ImpersonateUserDialogProps) {
   const { locale } = useParams<{ locale: string }>();
-  const [isPending, startTransition] = useTransition();
 
-  const handleConfirm = () => {
-    startTransition(async () => {
-      try {
-        const result = await impersonateUserAction({ userId: user.id });
-        if (result.success) {
-          // Full navigation — the Next.js router cache still holds the old identity.
-          window.location.assign(`/${locale}${PAGE_ROUTES.ORG}`);
-        } else {
-          toast.error(result.error || errors.impersonateUser);
-        }
-      } catch {
-        toast.error(errors.impersonateUser);
-      }
-    });
-  };
+  const boundAction = impersonateUserAction.bind(null, { userId: user.id });
+  const [state, formAction, isPending] = useActionState<
+    ActionResult | null,
+    FormData
+  >(boundAction, null);
+
+  useEffect(() => {
+    if (!state) {
+      return;
+    }
+    if (state.success) {
+      // Full navigation — the Next.js router cache still holds the old identity.
+      window.location.assign(`/${locale}${PAGE_ROUTES.ORG}`);
+    } else if (state.error) {
+      toast.error(state.error || errors.impersonateUser);
+    }
+  }, [state, locale, errors.impersonateUser]);
 
   return (
     <AlertDialog onOpenChange={onOpenChange} open={open}>
@@ -65,22 +67,18 @@ export function ImpersonateUserDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={isPending}
-            onClick={(e) => {
-              e.preventDefault();
-              handleConfirm();
-            }}
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Starting...
-              </>
-            ) : (
-              "Impersonate"
-            )}
-          </AlertDialogAction>
+          <form action={formAction}>
+            <Button disabled={isPending} type="submit">
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Starting...
+                </>
+              ) : (
+                "Impersonate"
+              )}
+            </Button>
+          </form>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

@@ -1,5 +1,6 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ORG_ROLES } from "@repo/auth/permissions";
 import { DataTableFacetedFilter } from "@repo/design-system/components/data-table/faceted-filter";
 import { DataTableViewOptions } from "@repo/design-system/components/data-table/view-options";
@@ -13,6 +14,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/design-system/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@repo/design-system/components/ui/form";
 import { Input } from "@repo/design-system/components/ui/input";
 import { Label } from "@repo/design-system/components/ui/label";
 import {
@@ -23,18 +32,33 @@ import {
   SelectValue,
 } from "@repo/design-system/components/ui/select";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { MAX_INVITE_LINK_USES } from "@repo/utils/organization";
+import {
+  DEFAULT_INVITE_LINK_DAYS,
+  MAX_INVITE_LINK_USES,
+} from "@repo/utils/organization";
 import type { Table } from "@tanstack/react-table";
 import { Copy, Plus, X } from "lucide-react";
 import { useParams } from "next/navigation";
-import { type ComponentType, useEffect, useState, useTransition } from "react";
+import {
+  type ComponentType,
+  startTransition,
+  useActionState,
+  useEffect,
+  useState,
+} from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
+import { initialFormState } from "@/lib/forms";
 import { SEARCH_DEBOUNCE_MS } from "../../utils";
 import { createInviteLinkAction } from "../actions";
 import type { InviteLink } from "../queries";
-import type { CreateInviteLinkInput } from "../schemas";
+import {
+  type CreateInviteLinkFormValues,
+  createInviteLinkFormSchema,
+} from "../schemas";
 import { RevokeInviteLinksDialog } from "./revoke-invite-links-dialog";
 
 interface InviteLinksToolbarProps {
@@ -83,42 +107,40 @@ export function InviteLinksToolbar({
   };
 
   // Create link dialog state
-  const [isPending, startTransition] = useTransition();
   const [createOpen, setCreateOpen] = useState(false);
   const [newLinkUrl, setNewLinkUrl] = useState<string | null>(null);
-  const [role, setRole] = useState<CreateInviteLinkInput["role"]>(
-    ORG_ROLES.MEMBER
+
+  const [state, formAction, isPending] = useActionState(
+    createInviteLinkAction,
+    initialFormState
   );
-  const [expiresInDays, setExpiresInDays] = useState("7");
-  const [maxUses, setMaxUses] = useState("");
+
+  const form = useForm<CreateInviteLinkFormValues>({
+    resolver: zodResolver(createInviteLinkFormSchema),
+    defaultValues: {
+      role: ORG_ROLES.MEMBER,
+      expiresInDays: DEFAULT_INVITE_LINK_DAYS,
+    },
+  });
+
+  useActionFieldErrors(form, state);
+
+  useEffect(() => {
+    if (state.status === "success" && state.data) {
+      setNewLinkUrl(state.data.url);
+      toast.success("Invite link created");
+    } else if (state.status === "error" && state.error) {
+      toast.error(state.error || errors.createInviteLink);
+    }
+  }, [state, errors.createInviteLink]);
 
   const resetForm = () => {
-    setRole(ORG_ROLES.MEMBER);
-    setExpiresInDays("7");
-    setMaxUses("");
+    form.reset();
     setNewLinkUrl(null);
   };
 
-  const handleCreate = () => {
-    startTransition(async () => {
-      try {
-        const result = await createInviteLinkAction({
-          organizationId,
-          orgSlug,
-          role,
-          expiresInDays: Number.parseInt(expiresInDays, 10),
-          maxUses: maxUses ? Number.parseInt(maxUses, 10) : undefined,
-        });
-        if (result.success && result.data) {
-          setNewLinkUrl(result.data.url);
-          toast.success("Invite link created");
-        } else {
-          toast.error(result.error || errors.createInviteLink);
-        }
-      } catch {
-        toast.error("An error occurred");
-      }
-    });
+  const onSubmit = (values: CreateInviteLinkFormValues) => {
+    startTransition(() => formAction({ ...values, organizationId, orgSlug }));
   };
 
   // Get selected active links for bulk revoke
@@ -225,71 +247,114 @@ export function InviteLinksToolbar({
                   </DialogFooter>
                 </div>
               ) : (
-                <>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Role</Label>
-                      <Select
-                        onValueChange={(v) =>
-                          setRole(v as CreateInviteLinkInput["role"])
-                        }
-                        value={role}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={ORG_ROLES.MEMBER}>
-                            Member
-                          </SelectItem>
-                          <SelectItem value={ORG_ROLES.ADMIN}>Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                <Form {...form}>
+                  <form
+                    className="space-y-4"
+                    onSubmit={form.handleSubmit(onSubmit)}
+                  >
+                    <FormField
+                      control={form.control}
+                      name="role"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Role</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value={ORG_ROLES.MEMBER}>
+                                Member
+                              </SelectItem>
+                              <SelectItem value={ORG_ROLES.ADMIN}>
+                                Admin
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    <div className="space-y-2">
-                      <Label>Expires in</Label>
-                      <Select
-                        onValueChange={setExpiresInDays}
-                        value={expiresInDays}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">1 day</SelectItem>
-                          <SelectItem value="7">7 days</SelectItem>
-                          <SelectItem value="14">14 days</SelectItem>
-                          <SelectItem value="30">30 days</SelectItem>
-                          <SelectItem value="90">90 days</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="expiresInDays"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Expires in</FormLabel>
+                          <Select
+                            onValueChange={(v) =>
+                              field.onChange(Number.parseInt(v, 10))
+                            }
+                            value={String(field.value)}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="1">1 day</SelectItem>
+                              <SelectItem value="7">7 days</SelectItem>
+                              <SelectItem value="14">14 days</SelectItem>
+                              <SelectItem value="30">30 days</SelectItem>
+                              <SelectItem value="90">90 days</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    <div className="space-y-2">
-                      <Label>Max uses (optional)</Label>
-                      <Input
-                        max={MAX_INVITE_LINK_USES}
-                        min="1"
-                        onChange={(e) => setMaxUses(e.target.value)}
-                        placeholder="Unlimited"
-                        type="number"
-                        value={maxUses}
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      onClick={() => setCreateOpen(false)}
-                      variant="outline"
-                    >
-                      Cancel
-                    </Button>
-                    <Button disabled={isPending} onClick={handleCreate}>
-                      {isPending ? "Creating..." : "Create Link"}
-                    </Button>
-                  </DialogFooter>
-                </>
+                    <FormField
+                      control={form.control}
+                      name="maxUses"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Max uses (optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              max={MAX_INVITE_LINK_USES}
+                              min="1"
+                              name={field.name}
+                              onBlur={field.onBlur}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === ""
+                                    ? undefined
+                                    : Number(e.target.value)
+                                )
+                              }
+                              placeholder="Unlimited"
+                              ref={field.ref}
+                              type="number"
+                              value={field.value ?? ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <DialogFooter>
+                      <Button
+                        onClick={() => setCreateOpen(false)}
+                        type="button"
+                        variant="outline"
+                      >
+                        Cancel
+                      </Button>
+                      <Button disabled={isPending} type="submit">
+                        {isPending ? "Creating..." : "Create Link"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
               )}
             </DialogContent>
           </Dialog>

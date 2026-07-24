@@ -17,3 +17,22 @@ export const changePasswordSchema = z
   });
 
 export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
+
+export const TWO_FACTOR_CODE_LENGTH = 6;
+
+export const twoFactorPasswordSchema = z.object({
+  password: z.string().min(1, "Password is required"),
+});
+
+export type TwoFactorPasswordValues = z.infer<typeof twoFactorPasswordSchema>;
+
+const twoFactorCodeMessage = `Please enter a valid ${TWO_FACTOR_CODE_LENGTH}-digit code`;
+
+export const twoFactorCodeSchema = z.object({
+  code: z
+    .string()
+    .length(TWO_FACTOR_CODE_LENGTH, twoFactorCodeMessage)
+    .regex(/^\d+$/, twoFactorCodeMessage),
+});
+
+export type TwoFactorCodeValues = z.infer<typeof twoFactorCodeSchema>;

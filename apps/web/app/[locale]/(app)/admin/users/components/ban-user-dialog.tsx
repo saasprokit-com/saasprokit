@@ -22,10 +22,12 @@ import { Input } from "@repo/design-system/components/ui/input";
 import { Textarea } from "@repo/design-system/components/ui/textarea";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
-import { useTransition } from "react";
+import { startTransition, useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { initialFormState } from "@/lib/forms";
 import { banUserAction } from "../actions";
 import type { AdminUserRow } from "../queries";
 import { type BanUserInput, banUserSchema } from "../schemas";
@@ -43,32 +45,32 @@ export function BanUserDialog({
   open,
   onOpenChange,
 }: BanUserDialogProps) {
+  const [state, formAction, isPending] = useActionState(
+    banUserAction,
+    initialFormState
+  );
+
   const form = useForm<BanUserInput>({
     resolver: zodResolver(banUserSchema),
     defaultValues: { userId: user.id },
   });
 
-  const [isPending, startTransition] = useTransition();
+  useActionFieldErrors(form, state);
 
-  // isPending (not formState.isSubmitting): the action revalidates, so the spinner
-  // must stay up until the refreshed table commits.
-  const onSubmit = (values: BanUserInput) => {
-    startTransition(async () => {
-      const result = await banUserAction(values);
-      if (!result.success) {
-        toast.error(result.error || errors.banUser);
-        return;
-      }
+  useEffect(() => {
+    if (state.status === "success") {
       toast.success("User banned", {
         description: `${user.name || user.email} has been banned and their sessions revoked.`,
       });
-      // Re-enter the transition: state updates after an await must be re-wrapped,
-      // or they fall out of it and close the dialog before the list revalidates.
-      startTransition(() => {
-        onOpenChange(false);
-        form.reset();
-      });
-    });
+      onOpenChange(false);
+      form.reset();
+    } else if (state.status === "error" && state.error) {
+      toast.error(state.error || errors.banUser);
+    }
+  }, [state, form, errors.banUser, onOpenChange, user.name, user.email]);
+
+  const onSubmit = (values: BanUserInput) => {
+    startTransition(() => formAction({ ...values, userId: user.id }));
   };
 
   return (

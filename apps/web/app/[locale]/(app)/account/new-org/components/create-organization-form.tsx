@@ -23,10 +23,11 @@ import type { ActionErrorMessages } from "@repo/internationalization";
 import { generateSlug } from "@repo/utils/slug";
 import { Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useRef, useTransition } from "react";
+import { startTransition, useActionState, useEffect, useRef } from "react";
 import { type Control, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-
+import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { initialFormState } from "@/lib/forms";
 import { createOrganizationAction } from "../actions";
 import { type CreateOrgInput, createOrgSchema } from "../schemas";
 
@@ -51,6 +52,11 @@ export function CreateOrganizationForm({
   const { locale } = useParams<{ locale: string }>();
   const slugTouched = useRef(false);
 
+  const [state, formAction, isPending] = useActionState(
+    createOrganizationAction,
+    initialFormState
+  );
+
   const form = useForm<CreateOrgInput>({
     resolver: zodResolver(createOrgSchema),
     defaultValues: {
@@ -59,31 +65,20 @@ export function CreateOrganizationForm({
     },
   });
 
-  const [isPending, startTransition] = useTransition();
+  useActionFieldErrors(form, state);
 
-  function onSubmit(values: CreateOrgInput) {
-    startTransition(async () => {
-      const result = await createOrganizationAction(values);
-
-      if (!result.success) {
-        // Slug conflict — show as field error on the slug input
-        if (
-          result.error?.includes("slug") ||
-          result.error?.includes("already")
-        ) {
-          startTransition(() =>
-            form.setError("slug", { message: result.error })
-          );
-          return;
-        }
-        toast.error(result.error || errors.createOrganization);
-        return;
-      }
-
+  useEffect(() => {
+    if (state.status === "success") {
       toast.success("Workspace created successfully!");
-      router.push(`/${locale}/${result.data?.slug}`);
-    });
-  }
+      router.push(`/${locale}/${state.data?.slug}`);
+    } else if (state.status === "error" && state.error) {
+      toast.error(state.error || errors.createOrganization);
+    }
+  }, [state, router, locale, errors]);
+
+  const onSubmit = (values: CreateOrgInput) => {
+    startTransition(() => formAction(values));
+  };
 
   return (
     <Card>

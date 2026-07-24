@@ -1,5 +1,6 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Alert,
   AlertDescription,
@@ -21,17 +22,31 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/design-system/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@repo/design-system/components/ui/form";
 import { Input } from "@repo/design-system/components/ui/input";
-import { Label } from "@repo/design-system/components/ui/label";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { AlertTriangle, Loader2, Shield } from "lucide-react";
-import { useState, useTransition } from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
-
+import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { initialFormState } from "@/lib/forms";
 import { disable2FAAction, enable2FAAction, verify2FAAction } from "../actions";
-
-const TWO_FACTOR_CODE_LENGTH = 6;
+import {
+  TWO_FACTOR_CODE_LENGTH,
+  type TwoFactorCodeValues,
+  type TwoFactorPasswordValues,
+  twoFactorCodeSchema,
+  twoFactorPasswordSchema,
+} from "../schemas";
 
 interface TwoFactorManagerProps {
   enabled: boolean;
@@ -41,93 +56,107 @@ interface TwoFactorManagerProps {
 type SetupStep = "password" | "verify" | "success";
 
 export function TwoFactorManager({ enabled, errors }: TwoFactorManagerProps) {
-  const [isPending, startTransition] = useTransition();
   const [showDialog, setShowDialog] = useState(false);
   const [setupStep, setSetupStep] = useState<SetupStep>("password");
-  const [password, setPassword] = useState("");
   const [totpURI, setTotpURI] = useState<string | null>(null);
-  const [code, setCode] = useState("");
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
 
   // Disable 2FA state
   const [showDisableDialog, setShowDisableDialog] = useState(false);
-  const [disablePassword, setDisablePassword] = useState("");
 
-  const handleEnable2FA = () => {
-    if (!password) {
-      toast.error("Please enter your password");
-      return;
-    }
+  const [enableState, enableFormAction, isEnabling] = useActionState(
+    enable2FAAction,
+    initialFormState
+  );
+  const [verifyState, verifyFormAction, isVerifying] = useActionState(
+    verify2FAAction,
+    initialFormState
+  );
+  const [disableState, disableFormAction, isDisabling] = useActionState(
+    disable2FAAction,
+    initialFormState
+  );
 
-    startTransition(async () => {
-      const result = await enable2FAAction(password);
+  const isPending = isEnabling || isVerifying || isDisabling;
 
-      if (!result.success) {
-        toast.error(result.error || errors.enable2fa);
-        return;
-      }
+  const enableForm = useForm<TwoFactorPasswordValues>({
+    resolver: zodResolver(twoFactorPasswordSchema),
+    defaultValues: { password: "" },
+  });
+  const verifyForm = useForm<TwoFactorCodeValues>({
+    resolver: zodResolver(twoFactorCodeSchema),
+    defaultValues: { code: "" },
+  });
+  const disableForm = useForm<TwoFactorPasswordValues>({
+    resolver: zodResolver(twoFactorPasswordSchema),
+    defaultValues: { password: "" },
+  });
 
-      setTotpURI(result.totpURI);
-      setBackupCodes(result.backupCodes);
+  useActionFieldErrors(enableForm, enableState);
+  useActionFieldErrors(verifyForm, verifyState);
+  useActionFieldErrors(disableForm, disableState);
+
+  const enablePassword = enableForm.watch("password");
+  const code = verifyForm.watch("code");
+  const disablePassword = disableForm.watch("password");
+
+  useEffect(() => {
+    if (enableState.status === "success" && enableState.data) {
+      setTotpURI(enableState.data.totpURI);
+      setBackupCodes(enableState.data.backupCodes);
       setSetupStep("verify");
-    });
-  };
-
-  const handleVerifyTotp = () => {
-    if (!code || code.length !== TWO_FACTOR_CODE_LENGTH) {
-      toast.error(`Please enter a valid ${TWO_FACTOR_CODE_LENGTH}-digit code`);
-      return;
+    } else if (enableState.status === "error" && enableState.error) {
+      toast.error(enableState.error || errors.enable2fa);
     }
+  }, [enableState, errors]);
 
-    startTransition(async () => {
-      const result = await verify2FAAction(code);
-
-      if (!result.success) {
-        toast.error(result.error || errors.verify2fa);
-        return;
-      }
-
+  useEffect(() => {
+    if (verifyState.status === "success") {
       setSetupStep("success");
       toast.success("Two-factor authentication has been enabled");
-    });
-  };
-
-  const handleDisable2FA = () => {
-    if (!disablePassword) {
-      toast.error("Please enter your password");
-      return;
+    } else if (verifyState.status === "error" && verifyState.error) {
+      toast.error(verifyState.error || errors.verify2fa);
     }
+  }, [verifyState, errors]);
 
-    startTransition(async () => {
-      const result = await disable2FAAction(disablePassword);
-
-      if (!result.success) {
-        toast.error(result.error || errors.disable2fa);
-        return;
-      }
-
+  useEffect(() => {
+    if (disableState.status === "success") {
       toast.success("Two-factor authentication has been disabled");
       setShowDisableDialog(false);
-      setDisablePassword("");
-    });
+      disableForm.reset();
+    } else if (disableState.status === "error" && disableState.error) {
+      toast.error(disableState.error || errors.disable2fa);
+    }
+  }, [disableState, disableForm, errors]);
+
+  const onEnableSubmit = (values: TwoFactorPasswordValues) => {
+    startTransition(() => enableFormAction(values));
+  };
+
+  const onVerifySubmit = (values: TwoFactorCodeValues) => {
+    startTransition(() => verifyFormAction(values));
+  };
+
+  const onDisableSubmit = (values: TwoFactorPasswordValues) => {
+    startTransition(() => disableFormAction(values));
   };
 
   const handleOpenDialog = () => {
     setShowDialog(true);
     setSetupStep("password");
-    setPassword("");
     setTotpURI(null);
-    setCode("");
     setBackupCodes([]);
+    enableForm.reset();
+    verifyForm.reset();
   };
 
   const handleCloseDialog = () => {
     setShowDialog(false);
     setSetupStep("password");
-    setPassword("");
     setTotpURI(null);
-    setCode("");
     setBackupCodes([]);
+    enableForm.reset();
+    verifyForm.reset();
   };
 
   // Extract manual secret from TOTP URI for users who can't scan QR codes
@@ -222,44 +251,52 @@ export function TwoFactorManager({ enabled, errors }: TwoFactorManagerProps) {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-4">
-                <div className="grid gap-4">
-                  <Label htmlFor="enable-password">Password</Label>
-                  <Input
-                    autoComplete="current-password"
-                    disabled={isPending}
-                    id="enable-password"
-                    onChange={(e) => setPassword(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && password) {
-                        handleEnable2FA();
-                      }
-                    }}
-                    placeholder="Enter your password"
-                    type="password"
-                    value={password}
+              <Form {...enableForm}>
+                <form
+                  className="space-y-4"
+                  onSubmit={enableForm.handleSubmit(onEnableSubmit)}
+                >
+                  <FormField
+                    control={enableForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input
+                            autoComplete="current-password"
+                            disabled={isEnabling}
+                            placeholder="Enter your password"
+                            type="password"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-              </div>
 
-              <DialogFooter>
-                <Button
-                  disabled={isPending}
-                  onClick={() => handleCloseDialog()}
-                  variant="outline"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  disabled={isPending || !password}
-                  onClick={handleEnable2FA}
-                >
-                  {isPending && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Continue
-                </Button>
-              </DialogFooter>
+                  <DialogFooter>
+                    <Button
+                      disabled={isEnabling}
+                      onClick={() => handleCloseDialog()}
+                      type="button"
+                      variant="outline"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      disabled={isEnabling || !enablePassword}
+                      type="submit"
+                    >
+                      {isEnabling && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      Continue
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
             </>
           )}
 
@@ -273,68 +310,78 @@ export function TwoFactorManager({ enabled, errors }: TwoFactorManagerProps) {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-4">
-                <div className="flex justify-center rounded-lg border bg-white p-4">
-                  <QRCode size={200} value={totpURI} />
-                </div>
+              <Form {...verifyForm}>
+                <form
+                  className="space-y-4"
+                  onSubmit={verifyForm.handleSubmit(onVerifySubmit)}
+                >
+                  <div className="flex justify-center rounded-lg border bg-white p-4">
+                    <QRCode size={200} value={totpURI} />
+                  </div>
 
-                <div className="rounded-lg border border-dashed bg-gray-50 p-3 text-center">
-                  <p className="mb-1 text-gray-600 text-xs">
-                    Or enter this secret manually
-                  </p>
-                  <p className="select-all font-mono text-gray-700 text-sm">
-                    {getManualSecret(totpURI)}
-                  </p>
-                </div>
+                  <div className="rounded-lg border border-dashed bg-gray-50 p-3 text-center">
+                    <p className="mb-1 text-gray-600 text-xs">
+                      Or enter this secret manually
+                    </p>
+                    <p className="select-all font-mono text-gray-700 text-sm">
+                      {getManualSecret(totpURI)}
+                    </p>
+                  </div>
 
-                <div className="grid gap-4">
-                  <Label htmlFor="totp-code">Authentication Code</Label>
-                  <Input
-                    autoComplete="off"
-                    disabled={isPending}
-                    id="totp-code"
-                    inputMode="numeric"
-                    maxLength={6}
-                    onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                    onKeyDown={(e) => {
-                      if (
-                        e.key === "Enter" &&
-                        code.length === TWO_FACTOR_CODE_LENGTH
-                      ) {
-                        handleVerifyTotp();
-                      }
-                    }}
-                    placeholder="000000"
-                    value={code}
+                  <FormField
+                    control={verifyForm.control}
+                    name="code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Authentication Code</FormLabel>
+                        <FormControl>
+                          <Input
+                            autoComplete="off"
+                            disabled={isVerifying}
+                            inputMode="numeric"
+                            maxLength={TWO_FACTOR_CODE_LENGTH}
+                            placeholder="000000"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(e.target.value.replace(/\D/g, ""))
+                            }
+                          />
+                        </FormControl>
+                        <p className="mt-1 text-muted-foreground text-xs">
+                          Enter the 6-digit code from your authenticator app
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                  <p className="mt-1 text-muted-foreground text-xs">
-                    Enter the 6-digit code from your authenticator app
-                  </p>
-                </div>
-              </div>
 
-              <DialogFooter>
-                <Button
-                  disabled={isPending}
-                  onClick={() => {
-                    setSetupStep("password");
-                    setTotpURI(null);
-                    setPassword("");
-                  }}
-                  variant="outline"
-                >
-                  Back
-                </Button>
-                <Button
-                  disabled={isPending || code.length !== TWO_FACTOR_CODE_LENGTH}
-                  onClick={handleVerifyTotp}
-                >
-                  {isPending && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Verify & Enable
-                </Button>
-              </DialogFooter>
+                  <DialogFooter>
+                    <Button
+                      disabled={isVerifying}
+                      onClick={() => {
+                        setSetupStep("password");
+                        setTotpURI(null);
+                        enableForm.reset();
+                      }}
+                      type="button"
+                      variant="outline"
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      disabled={
+                        isVerifying || code.length !== TWO_FACTOR_CODE_LENGTH
+                      }
+                      type="submit"
+                    >
+                      {isVerifying && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      Verify & Enable
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
             </>
           )}
 
@@ -394,7 +441,7 @@ export function TwoFactorManager({ enabled, errors }: TwoFactorManagerProps) {
         onOpenChange={(open) => {
           setShowDisableDialog(open);
           if (!open) {
-            setDisablePassword("");
+            disableForm.reset();
           }
         }}
         open={showDisableDialog}
@@ -408,44 +455,56 @@ export function TwoFactorManager({ enabled, errors }: TwoFactorManagerProps) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4">
-            <Label htmlFor="disable-password">Password</Label>
-            <Input
-              autoComplete="current-password"
-              disabled={isPending}
-              id="disable-password"
-              onChange={(e) => setDisablePassword(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && disablePassword) {
-                  handleDisable2FA();
-                }
-              }}
-              placeholder="Enter your password"
-              type="password"
-              value={disablePassword}
-            />
-          </div>
+          <Form {...disableForm}>
+            <form
+              className="space-y-4"
+              onSubmit={disableForm.handleSubmit(onDisableSubmit)}
+            >
+              <FormField
+                control={disableForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        autoComplete="current-password"
+                        disabled={isDisabling}
+                        placeholder="Enter your password"
+                        type="password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <DialogFooter>
-            <Button
-              disabled={isPending}
-              onClick={() => {
-                setShowDisableDialog(false);
-                setDisablePassword("");
-              }}
-              variant="outline"
-            >
-              Cancel
-            </Button>
-            <Button
-              disabled={isPending || !disablePassword}
-              onClick={handleDisable2FA}
-              variant="destructive"
-            >
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Disable
-            </Button>
-          </DialogFooter>
+              <DialogFooter>
+                <Button
+                  disabled={isDisabling}
+                  onClick={() => {
+                    setShowDisableDialog(false);
+                    disableForm.reset();
+                  }}
+                  type="button"
+                  variant="outline"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  disabled={isDisabling || !disablePassword}
+                  type="submit"
+                  variant="destructive"
+                >
+                  {isDisabling && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Disable
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </>

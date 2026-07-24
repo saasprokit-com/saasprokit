@@ -3,7 +3,6 @@
 import { ORG_ROLES } from "@repo/auth/permissions";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -15,9 +14,13 @@ import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2, XCircle } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { cancelInvitationsAction } from "../actions";
+import type { ActionResult } from "@/lib/auth/auth";
+import {
+  type CancelInvitationsResult,
+  cancelInvitationsAction,
+} from "../actions";
 import type { Invitation } from "../queries";
 
 interface CancelInvitationsDialogProps {
@@ -34,32 +37,38 @@ export function CancelInvitationsDialog({
   onSuccess,
 }: CancelInvitationsDialogProps) {
   const { orgSlug } = useParams<{ orgSlug: string }>();
-  const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
 
   const count = selectedInvitations.length;
 
-  const handleConfirm = () => {
-    startTransition(async () => {
-      const result = await cancelInvitationsAction({
-        organizationId,
-        orgSlug,
-        invitationIds: selectedInvitations.map((inv) => inv.id),
-      });
+  const boundAction = cancelInvitationsAction.bind(null, {
+    organizationId,
+    orgSlug,
+    invitationIds: selectedInvitations.map((inv) => inv.id),
+  });
 
-      if (result.success) {
-        toast.success("Invitations cancelled", {
-          description: `Successfully cancelled ${result.data?.cancelledCount ?? count} invitation(s)`,
-        });
-        setOpen(false);
-        onSuccess();
-      } else {
-        toast.error(errors.cancelInvitations, {
-          description: result.error ?? "Something went wrong",
-        });
-      }
-    });
-  };
+  const [state, formAction, isPending] = useActionState<
+    ActionResult<CancelInvitationsResult> | null,
+    FormData
+  >(boundAction, null);
+
+  useEffect(() => {
+    if (!state) {
+      return;
+    }
+
+    if (state.success) {
+      toast.success("Invitations cancelled", {
+        description: `Successfully cancelled ${state.data?.cancelledCount ?? 0} invitation(s)`,
+      });
+      setOpen(false);
+      onSuccess();
+    } else {
+      toast.error(errors.cancelInvitations, {
+        description: state.error ?? "Something went wrong",
+      });
+    }
+  }, [state, errors.cancelInvitations, onSuccess]);
 
   return (
     <AlertDialog onOpenChange={setOpen} open={open}>
@@ -95,23 +104,22 @@ export function CancelInvitationsDialog({
         </div>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Close</AlertDialogCancel>
-          <AlertDialogAction
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            disabled={isPending}
-            onClick={(e) => {
-              e.preventDefault();
-              handleConfirm();
-            }}
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Cancelling...
-              </>
-            ) : (
-              "Cancel Invitations"
-            )}
-          </AlertDialogAction>
+          <form action={formAction}>
+            <Button
+              className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isPending}
+              type="submit"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                "Cancel Invitations"
+              )}
+            </Button>
+          </form>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

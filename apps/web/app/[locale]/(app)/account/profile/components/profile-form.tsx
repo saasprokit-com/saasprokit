@@ -21,9 +21,11 @@ import {
 import { Input } from "@repo/design-system/components/ui/input";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
-import { useTransition } from "react";
+import { startTransition, useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { initialFormState } from "@/lib/forms";
 import { updateProfileAction } from "../actions";
 import { type ProfileFormValues, profileSchema } from "../schemas";
 
@@ -39,6 +41,11 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ errors, user }: ProfileFormProps) {
+  const [state, formAction, isPending] = useActionState(
+    updateProfileAction,
+    initialFormState
+  );
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -46,24 +53,21 @@ export function ProfileForm({ errors, user }: ProfileFormProps) {
     },
   });
 
-  const [isPending, startTransition] = useTransition();
+  useActionFieldErrors(form, state);
+
+  useEffect(() => {
+    if (state.status === "success") {
+      toast.success("Profile updated successfully");
+      // Re-sync the form to the saved values so isDirty clears and the
+      // submit button disables until the next edit.
+      form.reset(form.getValues());
+    } else if (state.status === "error" && state.error) {
+      toast.error(state.error || errors.updateProfile);
+    }
+  }, [state, form, errors]);
 
   const onSubmit = (values: ProfileFormValues) => {
-    startTransition(async () => {
-      const formData = new FormData();
-      formData.append("name", values.name);
-
-      const result = await updateProfileAction(formData);
-
-      if (result.success) {
-        toast.success("Profile updated successfully");
-        // Re-sync the form to the saved values (clears isDirty) inside the
-        // transition so it commits with the revalidated UI.
-        startTransition(() => form.reset(values));
-      } else {
-        toast.error(result.error || errors.updateProfile);
-      }
-    });
+    startTransition(() => formAction(values));
   };
 
   return (

@@ -26,7 +26,9 @@ import {
  * defaultOrganizationId, sessions' active org/team, org-attached files).
  */
 export async function deleteOrganizationAction(
-  input: DeleteOrganizationInput
+  input: DeleteOrganizationInput,
+  _prevState: ActionResult | null,
+  _formData: FormData
 ): Promise<ActionResult> {
   const logger = createRequestLogger({ action: "deleteOrganization" });
   try {
