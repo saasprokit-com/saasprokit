@@ -33,11 +33,12 @@ import {
 import { Input } from "@repo/design-system/components/ui/input";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { AlertTriangle, Loader2, Shield } from "lucide-react";
-import { startTransition, useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { useForm } from "react-hook-form";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
 import { initialFormState } from "@/lib/forms";
 import { disable2FAAction, enable2FAAction, verify2FAAction } from "../actions";
 import {
@@ -100,34 +101,34 @@ export function TwoFactorManager({ enabled, errors }: TwoFactorManagerProps) {
   const code = verifyForm.watch("code");
   const disablePassword = disableForm.watch("password");
 
-  useEffect(() => {
-    if (enableState.status === "success" && enableState.data) {
-      setTotpURI(enableState.data.totpURI);
-      setBackupCodes(enableState.data.backupCodes);
+  useActionResult(enableState, {
+    onError: (error) => toast.error(error ?? errors.enable2fa),
+    onSuccess: (data) => {
+      if (!data) {
+        return;
+      }
+      setTotpURI(data.totpURI);
+      setBackupCodes(data.backupCodes);
       setSetupStep("verify");
-    } else if (enableState.status === "error" && enableState.error) {
-      toast.error(enableState.error || errors.enable2fa);
-    }
-  }, [enableState, errors]);
+    },
+  });
 
-  useEffect(() => {
-    if (verifyState.status === "success") {
+  useActionResult(verifyState, {
+    onError: (error) => toast.error(error ?? errors.verify2fa),
+    onSuccess: () => {
       setSetupStep("success");
       toast.success("Two-factor authentication has been enabled");
-    } else if (verifyState.status === "error" && verifyState.error) {
-      toast.error(verifyState.error || errors.verify2fa);
-    }
-  }, [verifyState, errors]);
+    },
+  });
 
-  useEffect(() => {
-    if (disableState.status === "success") {
+  useActionResult(disableState, {
+    onError: (error) => toast.error(error ?? errors.disable2fa),
+    onSuccess: () => {
       toast.success("Two-factor authentication has been disabled");
       setShowDisableDialog(false);
       disableForm.reset();
-    } else if (disableState.status === "error" && disableState.error) {
-      toast.error(disableState.error || errors.disable2fa);
-    }
-  }, [disableState, disableForm, errors]);
+    },
+  });
 
   const onEnableSubmit = (values: TwoFactorPasswordValues) => {
     startTransition(() => enableFormAction(values));

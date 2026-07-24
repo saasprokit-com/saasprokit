@@ -20,10 +20,11 @@ import {
 import { Input } from "@repo/design-system/components/ui/input";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
-import { startTransition, useActionState, useEffect } from "react";
+import { startTransition, useActionState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
 import { initialFormState } from "@/lib/forms";
 import { changePasswordAction } from "../actions";
 import {
@@ -52,14 +53,13 @@ export function ChangePasswordForm({ errors }: ChangePasswordFormProps) {
 
   useActionFieldErrors(form, state);
 
-  useEffect(() => {
-    if (state.status === "success") {
+  useActionResult(state, {
+    onError: (error) => toast.error(error ?? errors.changePassword),
+    onSuccess: () => {
       toast.success("Password changed successfully");
       form.reset();
-    } else if (state.status === "error" && state.error) {
-      toast.error(state.error || errors.changePassword);
-    }
-  }, [state, form, errors]);
+    },
+  });
 
   const onSubmit = (values: ChangePasswordFormValues) => {
     startTransition(() => formAction(values));

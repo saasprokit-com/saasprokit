@@ -49,6 +49,9 @@ Is this a <form> the user submits?
   `fieldErrorsFrom(zodError)`.
 - `@/hooks/use-action-field-errors` — `useActionFieldErrors(form, state)`
   injects server `fieldErrors` onto the matching RHF fields.
+- `@/hooks/use-action-result` — `useActionResult(state, { onSuccess, onError })`
+  runs the result side-effect **exactly once per action result**. Use it instead
+  of a hand-rolled `useEffect`; see "Never hand-roll the result effect" below.
 - `@/lib/auth/action-error` — `toFormError(error, { fallback, logger })` and
   `formActionError(code)` return `FormState`-shaped `{ status: "error", error, code }`
   (the `ActionResult` siblings `toActionError` / `actionError` still exist for
@@ -136,10 +139,11 @@ import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@repo/design-system/components/ui/form";
 import { Input } from "@repo/design-system/components/ui/input";
-import { startTransition, useActionState, useEffect } from "react";
+import { startTransition, useActionState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
 import { initialFormState } from "@/lib/forms";
 import { createThingAction } from "../actions";
 import { type CreateThingValues, createThingSchema } from "../schemas";
@@ -156,14 +160,10 @@ export function CreateThingForm({ organizationId }: { organizationId: string }) 
 
   useActionFieldErrors(form, state);                        // server fieldErrors → RHF fields
 
-  useEffect(() => {
-    if (state.status === "success") {
-      toast.success("Created!");
-      form.reset();
-    } else if (state.status === "error" && state.error) {
-      toast.error(state.error);
-    }
-  }, [state, form]);
+  useActionResult(state, {                                  // fires once per result
+    onSuccess: () => { toast.success("Created!"); form.reset(); },
+    onError: (error) => toast.error(error ?? "Something went wrong"),
+  });
 
   return (
     <Form {...form}>
@@ -200,7 +200,8 @@ Four non-negotiables:
 2. Gate every input and the submit button on **`isPending` from `useActionState`**.
 3. `useActionFieldErrors(form, state)` for field errors; `state.error` (root)
    goes to a toast, or an inline banner for auth pages.
-4. Success/navigation side-effects live in a `useEffect` keyed on `state`.
+4. Success/navigation side-effects go in `useActionResult` — never a hand-rolled
+   `useEffect` (see below).
 
 Auth pages render the root error as an inline banner instead of a toast (see
 `sign-in-form.tsx`): `const rootError = state.status === "error" ? state.error : undefined;`
@@ -215,18 +216,18 @@ No fields → no RHF. Keep the existing typed `ActionResult` action and give it 
 
 ```tsx
 "use client";
-import { useActionState, useEffect } from "react";
+import { useActionState } from "react";
+import { useActionResult } from "@/hooks/use-action-result";
 import { removeThingsFormAction } from "../actions";
 
 export function RemoveThings({ ids }: { ids: string[] }) {
   const boundAction = removeThingsFormAction.bind(null, { ids });   // dynamic args via .bind
   const [state, formAction, isPending] = useActionState(boundAction, null);
 
-  useEffect(() => {
-    if (!state) return;
-    if (state.success) toast.success("Removed");
-    else toast.error(state.error);
-  }, [state]);
+  useActionResult(state, {                     // null/idle skipped — no `if (!state)` guard
+    onSuccess: () => toast.success("Removed"),
+    onError: (error) => toast.error(error ?? "Something went wrong"),
+  });
 
   return (
     <form action={formAction}>
@@ -255,7 +256,41 @@ export async function removeThingsFormAction(
   `(prevState, formData)` wrapper (delete-account pattern).
 - A type-to-confirm guard `Input` (e.g. "type the org name to delete") stays
   plain `useState` gating `disabled` — it is **not** submitted and **not** RHF.
-- Result handling in a `useEffect` keyed on `state` (guard `if (!state) return`).
+- Result handling via `useActionResult` — it skips every idle convention
+  (`"idle"`, `null`, a `{ success: false }` sentinel), so no guard is needed.
+
+## Never hand-roll the result effect
+
+Use `useActionResult`. A hand-rolled `useEffect` replays stale side-effects, and
+the trap is invisible at the call site:
+
+```tsx
+// WRONG — fires again every time an unrelated action revalidates the page
+useEffect(() => {
+  if (state.status === "success") toast.success("Saved");
+}, [state, form, errors]);
+```
+
+`useActionState`'s `state` is stable and **never resets to idle** — after a
+success it stays `"success"` for the component's life. `errors`
+(`dict.errors.action`) is built in a Server Component, so every
+`revalidatePath` ships a new object identity, re-running the effect against that
+stale terminal state. Change your password, then log out another session, and
+the success toast fires a second time. The same applies to any `onSuccess` prop
+re-created on each parent render — after a failed bulk action, every keystroke
+in a search box re-toasts the error.
+
+`useActionResult` reads its handlers from a ref and depends on `state` alone,
+guarding on the last-handled state object. Firing is decided by that guard, not
+by the dependency array, so unstable props cannot replay a result. Two
+consecutive identical failures still toast twice — each dispatch returns a
+freshly deserialized object.
+
+**`onError` does not fire for a `fieldErrors`-only failure.** A `safeParse`
+rejection returns `{ status: "error", fieldErrors }` with no root message, and
+`useActionFieldErrors` already renders those inline on the fields. Toasting
+there would stack a vaguer duplicate on top of the precise field message — so a
+duplicate-slug or over-the-cap rejection shows only its inline text.
 
 ## When it is NOT a form: `useTransition`
 

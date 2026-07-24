@@ -21,10 +21,11 @@ import {
 import { Input } from "@repo/design-system/components/ui/input";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
-import { startTransition, useActionState, useEffect } from "react";
+import { startTransition, useActionState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
 import { initialFormState } from "@/lib/forms";
 import { updateProfileAction } from "../actions";
 import { type ProfileFormValues, profileSchema } from "../schemas";
@@ -55,16 +56,15 @@ export function ProfileForm({ errors, user }: ProfileFormProps) {
 
   useActionFieldErrors(form, state);
 
-  useEffect(() => {
-    if (state.status === "success") {
+  useActionResult(state, {
+    onError: (error) => toast.error(error ?? errors.updateProfile),
+    onSuccess: () => {
       toast.success("Profile updated successfully");
       // Re-sync the form to the saved values so isDirty clears and the
       // submit button disables until the next edit.
       form.reset(form.getValues());
-    } else if (state.status === "error" && state.error) {
-      toast.error(state.error || errors.updateProfile);
-    }
-  }, [state, form, errors]);
+    },
+  });
 
   const onSubmit = (values: ProfileFormValues) => {
     startTransition(() => formAction(values));

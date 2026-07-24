@@ -14,8 +14,9 @@ import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2, XCircle } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { toast } from "sonner";
+import { useActionResult } from "@/hooks/use-action-result";
 import type { ActionResult } from "@/lib/auth/auth";
 import {
   type CancelInvitationsResult,
@@ -52,23 +53,19 @@ export function CancelInvitationsDialog({
     FormData
   >(boundAction, null);
 
-  useEffect(() => {
-    if (!state) {
-      return;
-    }
-
-    if (state.success) {
+  useActionResult(state, {
+    onError: (error) =>
+      toast.error(errors.cancelInvitations, {
+        description: error ?? "Something went wrong",
+      }),
+    onSuccess: (data) => {
       toast.success("Invitations cancelled", {
-        description: `Successfully cancelled ${state.data?.cancelledCount ?? 0} invitation(s)`,
+        description: `Successfully cancelled ${data?.cancelledCount ?? 0} invitation(s)`,
       });
       setOpen(false);
       onSuccess();
-    } else {
-      toast.error(errors.cancelInvitations, {
-        description: state.error ?? "Something went wrong",
-      });
-    }
-  }, [state, errors.cancelInvitations, onSuccess]);
+    },
+  });
 
   return (
     <AlertDialog onOpenChange={setOpen} open={open}>

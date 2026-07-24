@@ -35,11 +35,12 @@ import { formatDate } from "@repo/design-system/lib/date";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { startTransition, useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
 import type { ActionResult } from "@/lib/auth/auth";
 import { initialFormState } from "@/lib/forms";
 import { deleteOrganizationAction, updateOrganizationAction } from "../actions";
@@ -92,28 +93,22 @@ export function OrgSettingsForm({
 
   useActionFieldErrors(form, updateState);
 
-  useEffect(() => {
-    if (updateState.status === "success") {
+  useActionResult(updateState, {
+    onError: (error) => toast.error(error ?? errors.updateOrganization),
+    onSuccess: () => {
       toast.success("Organization updated successfully");
       // Re-baseline defaults on the saved name so isDirty gates the button again.
       form.reset({ name: form.getValues("name") });
-    } else if (updateState.status === "error" && updateState.error) {
-      toast.error(updateState.error || errors.updateOrganization);
-    }
-  }, [updateState, form, errors]);
+    },
+  });
 
-  useEffect(() => {
-    if (!deleteState) {
-      return;
-    }
-
-    if (deleteState.success) {
+  useActionResult(deleteState, {
+    onError: (error) => toast.error(error ?? errors.deleteOrganization),
+    onSuccess: () => {
       toast.success("Organization deleted successfully");
       router.push("/org");
-    } else if (deleteState.error) {
-      toast.error(deleteState.error || errors.deleteOrganization);
-    }
-  }, [deleteState, router, errors]);
+    },
+  });
 
   const isDirty = form.formState.isDirty;
   const canDelete = userRole === ORG_ROLES.OWNER;

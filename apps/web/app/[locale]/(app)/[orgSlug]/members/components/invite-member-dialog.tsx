@@ -31,10 +31,11 @@ import {
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2, Shield, User, UserPlus } from "lucide-react";
 import { useParams } from "next/navigation";
-import { startTransition, useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
 import { initialFormState } from "@/lib/forms";
 import { inviteMemberAction } from "../actions";
 import {
@@ -70,19 +71,18 @@ export function InviteMemberDialog({
 
   useActionFieldErrors(form, state);
 
-  useEffect(() => {
-    if (state.status === "success") {
+  useActionResult(state, {
+    onError: (error) =>
+      toast.error(errors.inviteMember, { description: error }),
+    onSuccess: () => {
+      // Read the email before reset() clears it.
       toast.success("Invitation sent", {
         description: `Invitation sent to ${form.getValues("email")}`,
       });
       setOpen(false);
       form.reset();
-    } else if (state.status === "error" && state.error) {
-      toast.error(errors.inviteMember, {
-        description: state.error,
-      });
-    }
-  }, [state, form, errors]);
+    },
+  });
 
   const onSubmit = (values: InviteMemberFormValues) => {
     startTransition(() => formAction({ ...values, organizationId, orgSlug }));

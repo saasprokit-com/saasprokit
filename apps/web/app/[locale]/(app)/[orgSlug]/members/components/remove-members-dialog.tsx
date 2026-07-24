@@ -13,8 +13,9 @@ import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2, Trash2 } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { toast } from "sonner";
+import { useActionResult } from "@/hooks/use-action-result";
 import { removeMembersFormAction } from "../actions";
 import type { Member } from "../queries";
 
@@ -43,22 +44,19 @@ export function RemoveMembersDialog({
   });
   const [state, formAction, isPending] = useActionState(boundAction, null);
 
-  useEffect(() => {
-    if (!state) {
-      return;
-    }
-    if (state.success) {
+  useActionResult(state, {
+    onError: (error) =>
+      toast.error(errors.removeMember, {
+        description: error ?? "Something went wrong",
+      }),
+    onSuccess: (data) => {
       toast.success("Members removed", {
-        description: `Successfully removed ${state.data?.removedCount ?? memberCount} member(s)`,
+        description: `Successfully removed ${data?.removedCount ?? memberCount} member(s)`,
       });
       setOpen(false);
       onSuccess();
-    } else {
-      toast.error(errors.removeMember, {
-        description: state.error ?? "Something went wrong",
-      });
-    }
-  }, [state, errors, memberCount, onSuccess]);
+    },
+  });
 
   return (
     <AlertDialog onOpenChange={setOpen} open={open}>

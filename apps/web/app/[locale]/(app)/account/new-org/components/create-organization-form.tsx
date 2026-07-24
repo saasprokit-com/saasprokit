@@ -23,10 +23,11 @@ import type { ActionErrorMessages } from "@repo/internationalization";
 import { generateSlug } from "@repo/utils/slug";
 import { Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { startTransition, useActionState, useEffect, useRef } from "react";
+import { startTransition, useActionState, useRef } from "react";
 import { type Control, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
 import { initialFormState } from "@/lib/forms";
 import { createOrganizationAction } from "../actions";
 import { type CreateOrgInput, createOrgSchema } from "../schemas";
@@ -67,14 +68,13 @@ export function CreateOrganizationForm({
 
   useActionFieldErrors(form, state);
 
-  useEffect(() => {
-    if (state.status === "success") {
+  useActionResult(state, {
+    onError: (error) => toast.error(error ?? errors.createOrganization),
+    onSuccess: (data) => {
       toast.success("Workspace created successfully!");
-      router.push(`/${locale}/${state.data?.slug}`);
-    } else if (state.status === "error" && state.error) {
-      toast.error(state.error || errors.createOrganization);
-    }
-  }, [state, router, locale, errors]);
+      router.push(`/${locale}/${data?.slug}`);
+    },
+  });
 
   const onSubmit = (values: CreateOrgInput) => {
     startTransition(() => formAction(values));

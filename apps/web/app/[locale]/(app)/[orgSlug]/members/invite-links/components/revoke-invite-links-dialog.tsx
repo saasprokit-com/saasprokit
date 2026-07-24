@@ -13,8 +13,9 @@ import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2, XCircle } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { toast } from "sonner";
+import { useActionResult } from "@/hooks/use-action-result";
 import type { ActionResult } from "@/lib/auth/auth";
 import { TOKEN_PREVIEW_LENGTH } from "../../utils";
 import { revokeInviteLinksAction } from "../actions";
@@ -49,23 +50,19 @@ export function RevokeInviteLinksDialog({
     FormData
   >(boundAction, null);
 
-  useEffect(() => {
-    if (!state) {
-      return;
-    }
-
-    if (state.success) {
+  useActionResult(state, {
+    onError: (error) =>
+      toast.error(errors.revokeInviteLinks, {
+        description: error ?? "Something went wrong",
+      }),
+    onSuccess: (data) => {
       toast.success("Invite links revoked", {
-        description: `Successfully revoked ${state.data?.revokedCount ?? 0} invite link(s)`,
+        description: `Successfully revoked ${data?.revokedCount ?? 0} invite link(s)`,
       });
       setOpen(false);
       onSuccess();
-    } else {
-      toast.error(errors.revokeInviteLinks, {
-        description: state.error ?? "Something went wrong",
-      });
-    }
-  }, [state, errors.revokeInviteLinks, onSuccess]);
+    },
+  });
 
   return (
     <AlertDialog onOpenChange={setOpen} open={open}>

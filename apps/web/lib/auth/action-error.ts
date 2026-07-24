@@ -18,8 +18,6 @@ interface BaErrorInfo {
   translatedMessage?: string;
 }
 
-// Duck-typed (not `instanceof APIError`): apps/web and @repo/auth resolve
-// different better-auth versions, so class identity is unreliable.
 function baErrorInfo(error: unknown): BaErrorInfo {
   if (
     error == null ||

@@ -33,10 +33,11 @@ import type { ActionErrorMessages } from "@repo/internationalization";
 import { parseEmailInput } from "@repo/utils/user";
 import { Loader2, Shield, User, Users } from "lucide-react";
 import { useParams } from "next/navigation";
-import { startTransition, useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
 import { initialFormState } from "@/lib/forms";
 import { bulkInviteAction } from "../actions";
 import {
@@ -77,9 +78,13 @@ export function BulkInviteDialog({
     parseEmailInput(form.watch("emails"))
   );
 
-  useEffect(() => {
-    if (state.status === "success" && state.data) {
-      const { invited, skipped } = state.data;
+  useActionResult(state, {
+    onError: (error) => toast.error(errors.bulkInvite, { description: error }),
+    onSuccess: (data) => {
+      if (!data) {
+        return;
+      }
+      const { invited, skipped } = data;
 
       if (invited > 0) {
         toast.success(`${invited} invitation${invited > 1 ? "s" : ""} sent`, {
@@ -96,12 +101,8 @@ export function BulkInviteDialog({
 
       setOpen(false);
       form.reset();
-    } else if (state.status === "error" && state.error) {
-      toast.error(errors.bulkInvite, {
-        description: state.error,
-      });
-    }
-  }, [state, form, errors]);
+    },
+  });
 
   const onSubmit = (values: BulkInviteFormValues) => {
     if (valid.length === 0) {
