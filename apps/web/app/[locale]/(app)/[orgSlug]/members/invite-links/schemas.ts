@@ -33,6 +33,15 @@ export const revokeInviteLinksSchema = z.object({
     .min(1, "Select at least one invite link"),
 });
 
+// .required keeps z.input === z.output for RHF + zodResolver (the dialog's
+// Select always supplies expiresInDays, so the server-side default never fires).
+export const createInviteLinkFormSchema = createInviteLinkSchema
+  .pick({ role: true, expiresInDays: true, maxUses: true })
+  .required({ expiresInDays: true });
+
 export type CreateInviteLinkInput = z.infer<typeof createInviteLinkSchema>;
+export type CreateInviteLinkFormValues = z.infer<
+  typeof createInviteLinkFormSchema
+>;
 export type InviteLinkIdInput = z.infer<typeof inviteLinkIdSchema>;
 export type RevokeInviteLinksInput = z.infer<typeof revokeInviteLinksSchema>;

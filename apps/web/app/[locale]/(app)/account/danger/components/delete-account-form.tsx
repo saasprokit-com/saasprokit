@@ -25,8 +25,9 @@ import {
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { toast } from "sonner";
+import { useActionResult } from "@/hooks/use-action-result";
 
 import type { ActionResult } from "@/lib/auth/auth";
 import { deleteAccountFormAction } from "../actions";
@@ -47,23 +48,14 @@ export function DeleteAccountForm({ errors }: DeleteAccountFormProps) {
     initialState
   );
 
-  // Handle action result
-  useEffect(() => {
-    if (state === initialState) {
-      return;
-    }
-
-    if (state.success) {
+  useActionResult(state, {
+    onError: (error) => toast.error(error ?? errors.deleteAccount),
+    onSuccess: () => {
       toast.success("Your account has been permanently deleted.");
-
-      // The server action (auth.api.deleteUser) already cleared the auth cookie,
-      // so just leave the account area and refresh server components.
       router.push("/");
       router.refresh();
-    } else if (state.error) {
-      toast.error(state.error || errors.deleteAccount);
-    }
-  }, [state, router, errors]);
+    },
+  });
 
   return (
     <>

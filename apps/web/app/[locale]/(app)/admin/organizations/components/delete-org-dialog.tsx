@@ -14,9 +14,10 @@ import { Label } from "@repo/design-system/components/ui/label";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import type { ActionResult } from "@/lib/auth/auth";
 import { deleteOrganizationAction } from "../actions";
 import type { AdminOrgRow } from "../queries";
 
@@ -34,8 +35,16 @@ export function DeleteOrgDialog({
   org,
 }: DeleteOrgDialogProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
   const [confirmValue, setConfirmValue] = useState("");
+
+  const boundAction = deleteOrganizationAction.bind(null, {
+    organizationId: org.id,
+  });
+
+  const [state, formAction, isPending] = useActionState<
+    ActionResult | null,
+    FormData
+  >(boundAction, null);
 
   const canDelete = confirmValue === org.slug;
 
@@ -46,30 +55,25 @@ export function DeleteOrgDialog({
     onOpenChange(next);
   };
 
-  const handleDelete = () => {
-    if (!canDelete) {
+  useEffect(() => {
+    if (!state) {
       return;
     }
-    startTransition(async () => {
-      const result = await deleteOrganizationAction({ organizationId: org.id });
-      if (!result.success) {
-        toast.error(errors.deleteOrganization, {
-          description: result.error ?? "Something went wrong",
-        });
-        return;
-      }
-      toast.success("Organization deleted", {
-        description: `${org.name} was permanently deleted.`,
+
+    if (!state.success) {
+      toast.error(errors.deleteOrganization, {
+        description: state.error ?? "Something went wrong",
       });
-      // Re-enter the transition: state updates after an await must be re-wrapped,
-      // or they fall out of it and close the dialog before the list revalidates.
-      startTransition(() => {
-        setConfirmValue("");
-        onOpenChange(false);
-        router.refresh();
-      });
+      return;
+    }
+
+    toast.success("Organization deleted", {
+      description: `${org.name} was permanently deleted.`,
     });
-  };
+    setConfirmValue("");
+    onOpenChange(false);
+    router.refresh();
+  }, [state, errors.deleteOrganization, onOpenChange, org.name, router]);
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
@@ -104,15 +108,17 @@ export function DeleteOrgDialog({
           >
             Cancel
           </Button>
-          <Button
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            disabled={!canDelete || isPending}
-            onClick={handleDelete}
-            variant="destructive"
-          >
-            {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-            Delete
-          </Button>
+          <form action={formAction}>
+            <Button
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={!canDelete || isPending}
+              type="submit"
+              variant="destructive"
+            >
+              {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+              Delete
+            </Button>
+          </form>
         </DialogFooter>
       </DialogContent>
     </Dialog>

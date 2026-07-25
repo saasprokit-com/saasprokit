@@ -2,7 +2,6 @@
 
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -10,11 +9,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@repo/design-system/components/ui/alert-dialog";
+import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
-import { useTransition } from "react";
+import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
 
+import type { ActionResult } from "@/lib/auth/auth";
 import { revokeUserSessionsAction } from "../actions";
 
 interface RevokeSessionsDialogProps {
@@ -30,25 +31,25 @@ export function RevokeSessionsDialog({
   open,
   onOpenChange,
 }: RevokeSessionsDialogProps) {
-  const [isPending, startTransition] = useTransition();
+  const boundAction = revokeUserSessionsAction.bind(null, { userId: user.id });
+  const [state, formAction, isPending] = useActionState<
+    ActionResult | null,
+    FormData
+  >(boundAction, null);
 
-  const handleConfirm = () => {
-    startTransition(async () => {
-      const result = await revokeUserSessionsAction({ userId: user.id });
-      if (!result.success) {
-        toast.error(result.error || errors.revokeUserSessions);
-        return;
-      }
+  useEffect(() => {
+    if (!state) {
+      return;
+    }
+    if (state.success) {
       toast.success("Sessions revoked", {
         description: `${user.name || user.email} has been signed out of all sessions.`,
       });
-      // Re-enter the transition: state updates after an await must be re-wrapped,
-      // or they fall out of it and close the dialog before the list revalidates.
-      startTransition(() => {
-        onOpenChange(false);
-      });
-    });
-  };
+      onOpenChange(false);
+    } else if (state.error) {
+      toast.error(state.error || errors.revokeUserSessions);
+    }
+  }, [state, errors.revokeUserSessions, onOpenChange, user.name, user.email]);
 
   return (
     <AlertDialog onOpenChange={onOpenChange} open={open}>
@@ -62,22 +63,18 @@ export function RevokeSessionsDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={isPending}
-            onClick={(e) => {
-              e.preventDefault();
-              handleConfirm();
-            }}
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Revoking...
-              </>
-            ) : (
-              "Revoke sessions"
-            )}
-          </AlertDialogAction>
+          <form action={formAction}>
+            <Button disabled={isPending} type="submit">
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Revoking...
+                </>
+              ) : (
+                "Revoke sessions"
+              )}
+            </Button>
+          </form>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

@@ -1,5 +1,6 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ORG_ROLES } from "@repo/auth/permissions";
 import { Button } from "@repo/design-system/components/ui/button";
 import {
@@ -11,8 +12,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/design-system/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@repo/design-system/components/ui/form";
 import { Input } from "@repo/design-system/components/ui/input";
-import { Label } from "@repo/design-system/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -23,10 +31,17 @@ import {
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2, Shield, User, UserPlus } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { startTransition, useActionState, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
+import { initialFormState } from "@/lib/forms";
 import { inviteMemberAction } from "../actions";
-import type { InviteMemberInput } from "../schemas";
+import {
+  type InviteMemberFormValues,
+  inviteMemberFormSchema,
+} from "../schemas";
 import { ROLE_DESCRIPTIONS } from "../utils";
 
 interface InviteMemberDialogProps {
@@ -39,42 +54,38 @@ export function InviteMemberDialog({
   organizationId,
 }: InviteMemberDialogProps) {
   const { orgSlug } = useParams<{ orgSlug: string }>();
-  const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState<InviteMemberInput["role"]>(ORG_ROLES.MEMBER);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const [state, formAction, isPending] = useActionState(
+    inviteMemberAction,
+    initialFormState
+  );
 
-    if (!email.trim()) {
-      toast.error("Email required", {
-        description: "Please enter an email address",
+  const form = useForm<InviteMemberFormValues>({
+    resolver: zodResolver(inviteMemberFormSchema),
+    defaultValues: {
+      email: "",
+      role: ORG_ROLES.MEMBER,
+    },
+  });
+
+  useActionFieldErrors(form, state);
+
+  useActionResult(state, {
+    onError: (error) =>
+      toast.error(errors.inviteMember, { description: error }),
+    onSuccess: () => {
+      // Read the email before reset() clears it.
+      toast.success("Invitation sent", {
+        description: `Invitation sent to ${form.getValues("email")}`,
       });
-      return;
-    }
+      setOpen(false);
+      form.reset();
+    },
+  });
 
-    startTransition(async () => {
-      const result = await inviteMemberAction({
-        organizationId,
-        orgSlug,
-        email: email.trim(),
-        role,
-      });
-
-      if (result.success) {
-        toast.success("Invitation sent", {
-          description: `Invitation sent to ${email}`,
-        });
-        setOpen(false);
-        setEmail("");
-        setRole(ORG_ROLES.MEMBER);
-      } else {
-        toast.error(errors.inviteMember, {
-          description: result.error ?? "Something went wrong",
-        });
-      }
-    });
+  const onSubmit = (values: InviteMemberFormValues) => {
+    startTransition(() => formAction({ ...values, organizationId, orgSlug }));
   };
 
   return (
@@ -86,80 +97,96 @@ export function InviteMemberDialog({
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Invite Member</DialogTitle>
-            <DialogDescription>
-              Send an invitation to join your organization. They will receive an
-              email with instructions.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email address</Label>
-              <Input
-                autoComplete="email"
-                disabled={isPending}
-                id="email"
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="colleague@example.com"
-                type="email"
-                value={email}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <DialogHeader>
+              <DialogTitle>Invite Member</DialogTitle>
+              <DialogDescription>
+                Send an invitation to join your organization. They will receive
+                an email with instructions.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email address</FormLabel>
+                    <FormControl>
+                      <Input
+                        autoComplete="email"
+                        disabled={isPending}
+                        placeholder="colleague@example.com"
+                        type="email"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Role</FormLabel>
+                    <Select
+                      disabled={isPending}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={ORG_ROLES.ADMIN}>
+                          <div className="flex items-center gap-2">
+                            <Shield className="size-4" />
+                            Admin
+                          </div>
+                        </SelectItem>
+                        <SelectItem value={ORG_ROLES.MEMBER}>
+                          <div className="flex items-center gap-2">
+                            <User className="size-4" />
+                            Member
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-muted-foreground text-sm">
+                      {ROLE_DESCRIPTIONS[field.value]}
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="role">Role</Label>
-              <Select
+            <DialogFooter>
+              <Button
                 disabled={isPending}
-                onValueChange={(value) =>
-                  setRole(value as InviteMemberInput["role"])
-                }
-                value={role}
+                onClick={() => setOpen(false)}
+                type="button"
+                variant="outline"
               >
-                <SelectTrigger id="role">
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ORG_ROLES.ADMIN}>
-                    <div className="flex items-center gap-2">
-                      <Shield className="size-4" />
-                      Admin
-                    </div>
-                  </SelectItem>
-                  <SelectItem value={ORG_ROLES.MEMBER}>
-                    <div className="flex items-center gap-2">
-                      <User className="size-4" />
-                      Member
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-muted-foreground text-sm">
-                {ROLE_DESCRIPTIONS[role]}
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              disabled={isPending}
-              onClick={() => setOpen(false)}
-              type="button"
-              variant="outline"
-            >
-              Cancel
-            </Button>
-            <Button disabled={isPending} type="submit">
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                "Send Invitation"
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
+                Cancel
+              </Button>
+              <Button disabled={isPending} type="submit">
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Invitation"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

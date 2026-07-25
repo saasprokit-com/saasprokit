@@ -11,6 +11,7 @@ import {
   hasOrgPermission,
 } from "@/lib/auth/auth";
 import { env } from "@/lib/env";
+import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
 import { ORG_PAGES } from "@/lib/routes";
 import {
@@ -22,11 +23,22 @@ import {
   revokeInviteLinksSchema,
 } from "./schemas";
 
+export type CreateInviteLinkFormState = FormState<
+  CreateInviteLinkInput,
+  { token: string; url: string }
+>;
+
 export async function createInviteLinkAction(
+  _prevState: CreateInviteLinkFormState,
   input: CreateInviteLinkInput
-): Promise<ActionResult<{ token: string; url: string }>> {
+): Promise<CreateInviteLinkFormState> {
+  const parsed = createInviteLinkSchema.safeParse(input);
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+  }
+
   try {
-    const validated = createInviteLinkSchema.parse(input);
+    const validated = parsed.data;
 
     const allowed = await hasOrgPermission(validated.organizationId, {
       invitation: ["create"],
@@ -59,7 +71,7 @@ export async function createInviteLinkAction(
     const url = `${env.BETTER_AUTH_URL}/invite/${token}`;
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
-    return { success: true, data: { token, url } };
+    return { status: "success", data: { token, url } };
   } catch (error) {
     return toActionError(error, { fallback: "createInviteLink" });
   }
@@ -103,7 +115,9 @@ export async function revokeInviteLinkAction(
 }
 
 export async function revokeInviteLinksAction(
-  input: RevokeInviteLinksInput
+  input: RevokeInviteLinksInput,
+  _prevState: ActionResult<{ revokedCount: number }> | null,
+  _formData: FormData
 ): Promise<ActionResult<{ revokedCount: number }>> {
   try {
     const validated = revokeInviteLinksSchema.parse(input);

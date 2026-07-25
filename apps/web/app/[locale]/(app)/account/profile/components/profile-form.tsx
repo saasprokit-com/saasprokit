@@ -21,8 +21,12 @@ import {
 import { Input } from "@repo/design-system/components/ui/input";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
+import { startTransition, useActionState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
+import { initialFormState } from "@/lib/forms";
 import { updateProfileAction } from "../actions";
 import { type ProfileFormValues, profileSchema } from "../schemas";
 
@@ -38,6 +42,11 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ errors, user }: ProfileFormProps) {
+  const [state, formAction, isPending] = useActionState(
+    updateProfileAction,
+    initialFormState
+  );
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -45,19 +54,20 @@ export function ProfileForm({ errors, user }: ProfileFormProps) {
     },
   });
 
-  const isPending = form.formState.isSubmitting;
+  useActionFieldErrors(form, state);
 
-  const onSubmit = async (values: ProfileFormValues) => {
-    const formData = new FormData();
-    formData.append("name", values.name);
-
-    const result = await updateProfileAction(formData);
-
-    if (result.success) {
+  useActionResult(state, {
+    onError: (error) => toast.error(error ?? errors.updateProfile),
+    onSuccess: () => {
       toast.success("Profile updated successfully");
-    } else {
-      toast.error(result.error || errors.updateProfile);
-    }
+      // Re-sync the form to the saved values so isDirty clears and the
+      // submit button disables until the next edit.
+      form.reset(form.getValues());
+    },
+  });
+
+  const onSubmit = (values: ProfileFormValues) => {
+    startTransition(() => formAction(values));
   };
 
   return (
@@ -78,7 +88,11 @@ export function ProfileForm({ errors, user }: ProfileFormProps) {
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Your name" {...field} />
+                    <Input
+                      disabled={isPending}
+                      placeholder="Your name"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -36,3 +36,12 @@ export async function resendVerificationEmailAction(
     });
   }
 }
+
+export async function resendVerificationEmailFormAction(
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  return await resendVerificationEmailAction({
+    email: String(formData.get("email") ?? ""),
+  });
+}

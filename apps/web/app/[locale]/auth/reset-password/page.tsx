@@ -1,5 +1,6 @@
 import { getDictionary } from "@repo/internationalization";
-import { ResetPasswordClient } from "./components/reset-password-client";
+import { ResetPasswordForm } from "./components/reset-password-form";
+import { ResetPasswordInvalidLink } from "./components/reset-password-invalid-link";
 
 export const dynamic = "force-dynamic";
 
@@ -15,5 +16,9 @@ export default async function ResetPasswordPage({
   const [{ locale }, { token }] = await Promise.all([params, searchParams]);
   const dict = await getDictionary(locale);
 
-  return <ResetPasswordClient errors={dict.errors.action} token={token} />;
+  if (!token) {
+    return <ResetPasswordInvalidLink />;
+  }
+
+  return <ResetPasswordForm errors={dict.errors.action} token={token} />;
 }

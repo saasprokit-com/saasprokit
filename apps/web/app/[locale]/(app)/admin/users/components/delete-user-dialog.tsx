@@ -13,9 +13,10 @@ import { Input } from "@repo/design-system/components/ui/input";
 import { Label } from "@repo/design-system/components/ui/label";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import type { ActionResult } from "@/lib/auth/auth";
 import { removeUserAction } from "../actions";
 import type { AdminUserRow } from "../queries";
 
@@ -32,8 +33,13 @@ export function DeleteUserDialog({
   open,
   onOpenChange,
 }: DeleteUserDialogProps) {
-  const [isPending, startTransition] = useTransition();
   const [confirmEmail, setConfirmEmail] = useState("");
+
+  const boundAction = removeUserAction.bind(null, { userId: user.id });
+  const [state, formAction, isPending] = useActionState<
+    ActionResult | null,
+    FormData
+  >(boundAction, null);
 
   const canDelete = confirmEmail === user.email;
 
@@ -44,24 +50,18 @@ export function DeleteUserDialog({
     }
   };
 
-  const handleConfirm = () => {
-    if (!canDelete) {
+  useEffect(() => {
+    if (!state) {
       return;
     }
-    startTransition(async () => {
-      const result = await removeUserAction({ userId: user.id });
-      if (!result.success) {
-        toast.error(result.error || errors.deleteUser);
-        return;
-      }
+    if (state.success) {
       toast.success("User deleted");
-      // Re-enter the transition: state updates after an await must be re-wrapped,
-      // or they fall out of it and close the dialog before the list revalidates.
-      startTransition(() => {
-        handleOpenChange(false);
-      });
-    });
-  };
+      onOpenChange(false);
+      setConfirmEmail("");
+    } else if (state.error) {
+      toast.error(state.error || errors.deleteUser);
+    }
+  }, [state, errors.deleteUser, onOpenChange]);
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
@@ -102,20 +102,22 @@ export function DeleteUserDialog({
           >
             Cancel
           </Button>
-          <Button
-            disabled={!canDelete || isPending}
-            onClick={handleConfirm}
-            variant="destructive"
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Deleting...
-              </>
-            ) : (
-              "Delete user"
-            )}
-          </Button>
+          <form action={formAction}>
+            <Button
+              disabled={!canDelete || isPending}
+              type="submit"
+              variant="destructive"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete user"
+              )}
+            </Button>
+          </form>
         </DialogFooter>
       </DialogContent>
     </Dialog>

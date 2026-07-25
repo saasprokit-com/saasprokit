@@ -16,7 +16,7 @@ Two independent RBAC systems run side by side: **platform admin roles** (staff w
 | Role defs, `ac`/`orgAc`, `canOrg`/`canAdmin`/`isAdminAreaRole` | `packages/auth/permissions.ts` |
 | `ActionResult<T>`, `getServerSession`, `requireAuth`, `hasOrgPermission` | `apps/web/lib/auth/auth.ts` |
 | `verifySession()` (server-action guard) | `apps/web/lib/auth/action-auth.ts:9` |
-| `toActionError`/`actionError`/`baErrorMessage`, `ActionErrorCode` | `apps/web/lib/auth/action-error.ts` |
+| `toActionError`/`actionError`, `ActionErrorCode` | `apps/web/lib/auth/action-error.ts` |
 | Org-slug access: `getActiveOrganization`, `validateOrganizationMembership` | `apps/web/servers/organization/queries.ts` |
 | Admin gates: `requireAdminArea`, `hasAdminPermission`, `AdminContext` | `apps/web/lib/auth/admin.ts` |
 | Server-side rate limiting for auth actions | `apps/web/lib/auth/rate-limit.ts` |
@@ -48,7 +48,7 @@ Exports: `@repo/auth/server` (auth instance), `@repo/auth/client` (hooks + `Sess
 4. **Identity from the session, never the payload.**
 5. **Return `ActionResult<T>`**; in `catch`, `return toActionError(error, { fallback })`.
 
-`auth.api.*` calls **bypass** Better Auth's HTTP rate limits (those run only on `/api/auth/*`), so brute-forceable auth flows re-apply `enforceRateLimit(scope)` from `rate-limit.ts` (`RATE_LIMITS`, `:24`) — do not remove it. BA `APIError`s arrive **pre-localized** by the i18n plugin (`server.ts:490`); `toActionError` surfaces that message, else the localized `errors.action[fallback]`. New BA codes go in `packages/internationalization/ba-errors/[locale].json` — **6 locales** (de, en, es, fr, pt, zh; no vi), key-parity enforced by `packages/auth/ba-i18n.test.ts`.
+`auth.api.*` calls **bypass** Better Auth's HTTP rate limits (those run only on `/api/auth/*`), so brute-forceable auth flows re-apply `enforceRateLimit(scope)` from `rate-limit.ts` (`RATE_LIMITS`, `:24`) — do not remove it. BA `APIError`s arrive **pre-localized** by the i18n plugin (`server.ts:490`); `toActionError` surfaces that message, else the localized `errors.action[fallback]`, and always sets `code` (BA `body.code` when present, else the fallback `ActionErrorCode`). New BA codes go in `packages/internationalization/ba-errors/[locale].json` — **6 locales** (de, en, es, fr, pt, zh; no vi), key-parity enforced by `packages/auth/ba-i18n.test.ts`.
 
 ## Platform admin (`/admin`, `apps/web/lib/auth/admin.ts`)
 

@@ -107,7 +107,7 @@ test.describe("17 - Organization Members", () => {
       if (await inviteBtn.isVisible()) {
         await inviteBtn.click();
         await expect(page.locator("[role='dialog']")).toBeVisible();
-        await expect(page.locator("#email")).toBeVisible();
+        await expect(page.getByLabel(/email address/i)).toBeVisible();
       }
     });
 
@@ -116,7 +116,9 @@ test.describe("17 - Organization Members", () => {
       if (await inviteBtn.isVisible()) {
         await inviteBtn.click();
         await page.getByRole("button", { name: /send invitation/i }).click();
-        await expect(page.getByText(/email.*required|required/i).first()).toBeVisible();
+        // zodResolver message from inviteMemberFormSchema — an empty field fails
+        // z.email(), so the copy is "Invalid email address", not "required".
+        await expect(page.getByText(/invalid email address/i).first()).toBeVisible();
       }
     });
 
@@ -281,12 +283,12 @@ test.describe("17 - Organization Members", () => {
       await expect(dialog).toBeVisible();
 
       // Email input exists and is editable
-      const emailInput = dialog.locator("#email");
+      const emailInput = dialog.getByLabel(/email address/i);
       await expect(emailInput).toBeVisible();
       await expect(emailInput).toBeEditable();
 
       // Role selector exists
-      const roleSelector = dialog.locator("#role");
+      const roleSelector = dialog.getByRole("combobox");
       await expect(roleSelector).toBeVisible();
     });
 
@@ -301,32 +303,22 @@ test.describe("17 - Organization Members", () => {
       const dialog = page.locator("[role='dialog']");
       await expect(dialog).toBeVisible();
 
-      // Fill in a test email
-      const emailInput = dialog.locator("#email");
-      await emailInput.fill("invite-test-e2e@example.com");
-      await expect(emailInput).toHaveValue("invite-test-e2e@example.com");
+      // Unique per run: a repeated address comes back "already invited", and the
+      // assertions below could then not tell a working form from a broken one.
+      const email = `invite-test-e2e-${Date.now()}@example.com`;
+      const emailInput = dialog.getByLabel(/email address/i);
+      await emailInput.fill(email);
+      await expect(emailInput).toHaveValue(email);
 
-      // Click "Send Invitation" and verify the form actually submits
-      // (the button should show a loading state or the dialog should close on success,
-      //  or a toast should appear — either success or error)
-      const sendBtn = dialog.getByRole("button", { name: /send invitation/i });
-      await sendBtn.click();
+      await dialog.getByRole("button", { name: /send invitation/i }).click();
 
-      // Wait for a response: either a toast (success or error) appears,
-      // or the dialog closes (success), or a loading spinner shows
-      const toastOrDialogClosed = await Promise.race([
-        page
-          .locator("[data-sonner-toast]")
-          .first()
-          .waitFor({ timeout: TEST_CONFIG.timeouts.action })
-          .then(() => "toast" as const),
-        dialog
-          .waitFor({ state: "hidden", timeout: TEST_CONFIG.timeouts.action })
-          .then(() => "closed" as const),
-      ]).catch(() => "timeout" as const);
-
-      // The form submitted — we got either a toast notification or the dialog closed
-      expect(["toast", "closed"]).toContain(toastOrDialogClosed);
+      // InviteMemberDialog closes only from its success handler, so a hidden
+      // dialog is proof the action succeeded; a failure keeps it open. Asserting
+      // "a toast appeared" would pass on the error toast too.
+      await expect(dialog).toBeHidden({
+        timeout: TEST_CONFIG.timeouts.action,
+      });
+      await expect(page.getByText(/invitation sent/i).first()).toBeVisible();
     });
 
     test("TC-17-F12: invite dialog role defaults to Member", async ({ page }) => {
@@ -341,7 +333,7 @@ test.describe("17 - Organization Members", () => {
       await expect(dialog).toBeVisible();
 
       // The role selector trigger should show "Member" by default
-      const roleTrigger = dialog.locator("#role");
+      const roleTrigger = dialog.getByRole("combobox");
       await expect(roleTrigger).toContainText(/member/i);
     });
   });

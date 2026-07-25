@@ -7,25 +7,21 @@ Registration happens at `/auth/sign-up`. A new user can register with **email + 
 
 ## The sign-up client
 
-`apps/web/app/[locale]/auth/sign-up/components/password-sign-up.tsx` (the `PasswordSignUp` component) is a thin wrapper over `signUp.email`:
+`apps/web/app/[locale]/auth/sign-up/components/sign-up-form.tsx` (the `SignUpForm` component) dispatches `signUpEmailAction` through `useActionState`; the `auth.api.signUpEmail` call happens server-side:
 
 ```tsx
-async function handleSubmit(data: SignUpFormValues) {
-  const normalizedEmail = data.email.toLowerCase().trim();
+const [state, formAction, isPending] = useActionState(
+  signUpEmailAction,
+  initialFormState
+);
 
-  const result = await signUp.email({
-    email: normalizedEmail,
-    password: data.password,
-    name: data.name,
-    callbackURL: "/org",
-  });
+onSubmit={form.handleSubmit((values) =>
+  startTransition(() => formAction({ ...values, callbackUrl }))
+)}
 
-  if (result.error) {
-    throw new Error(result.error.message || errors.signUp);
-  }
-
-  router.push(`/auth/verify-email?email=${encodeURIComponent(normalizedEmail)}`);
-}
+// on success, route to the "check your email" screen
+const email = form.getValues("email").toLowerCase().trim();
+router.push(`${PAGE_ROUTES.VERIFY_EMAIL}?email=${encodeURIComponent(email)}`);
 ```
 
 Two details worth noting:
@@ -67,31 +63,28 @@ emailVerification: {
 
 ## The verify-email page
 
-`/auth/verify-email` is the screen the user lands on after registering. `verify-email/page.tsx` reads the `?email=` query param **server-side** and passes it as a prop, so `VerifyEmailClient` (`components/verify-email-client.tsx`) shows *which* address the link went to without a client `useSearchParams` round-trip. The client renders the presentational `VerifyEmailCard` and offers a **resend** with a 60-second cooldown:
+`/auth/verify-email` is the screen the user lands on after registering. `verify-email/page.tsx` reads the `?email=` query param **server-side** and passes it as a prop, so the colocated `VerifyEmailCard` (`components/verify-email-card.tsx`) shows *which* address the link went to without a client `useSearchParams` round-trip. The card resends via a `useActionState` server action and keeps a **60-second cooldown** as local UI state:
 
 ```tsx
 // verify-email/page.tsx — read the address server-side
 const [{ locale }, { email }] = await Promise.all([params, searchParams]);
-return <VerifyEmailClient email={email ?? null} errors={dict.errors.action} />;
+return <VerifyEmailCard email={email ?? null} errors={dict.errors.action} />;
 
-// components/verify-email-client.tsx — resend with cooldown
-const handleResend = useCallback(() => {
-  if (!email || cooldown > 0) return;
-  startResendTransition(async () => {
-    try {
-      const { error } = await authClient.sendVerificationEmail({ email, callbackURL: PAGE_ROUTES.ORG });
-      if (error) {
-        setResendError(error.message || errors.resendVerificationEmail); // API error → surface it, no false success
-        return;
-      }
-      setResendSuccess(true);
-      setCooldown(RESEND_COOLDOWN_SECONDS); // 60s
-    } catch {
-      setResendError(errors.resendVerificationEmail); // network failure
-    }
-  });
-}, [email, cooldown, errors.resendVerificationEmail]);
+// components/verify-email-card.tsx — Recipe B: the address rides in a hidden input
+const [state, formAction, isPending] = useActionState(
+  resendVerificationEmailFormAction,
+  initialState
+);
+
+<form action={formAction}>
+  <input name="email" type="hidden" value={email} />
+  <Button disabled={isPending || cooldown > 0} type="submit">
+    {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend verification email"}
+  </Button>
+</form>
 ```
+
+The 60-second cooldown is pure UI state: one effect starts it on a successful resend, a second ticks it down once per second.
 
 The page also offers two **alternative sign-in methods** (magic link, email OTP) for users who don't want to wait on the verification email — both are passwordless and verify the address as a side effect.
 
@@ -104,14 +97,16 @@ The alternative-method buttons link to `/auth/sign-in?tab=magic-link` and `/auth
 ```mermaid
 sequenceDiagram
     actor User
-    participant Form as PasswordSignUp
-    participant BA as Better Auth<br/>/api/auth/*
+    participant Form as SignUpForm
+    participant Action as signUpEmailAction<br/>(server)
+    participant BA as Better Auth<br/>auth.api.*
     participant Email as @repo/email
     participant Verify as Email inbox
     participant Org as /org
 
     User->>Form: Submit name + email + password
-    Form->>BA: signUp.email({ email, password, name, callbackURL: "/org" })
+    Form->>Action: formAction({ ...values, callbackUrl })
+    Action->>BA: auth.api.signUpEmail({ email, password, name, callbackURL })
     BA->>BA: Create User (emailVerified = false) + Account
     BA->>Email: sendVerificationEmail({ verificationUrl })
     BA-->>Form: ok
@@ -131,8 +126,9 @@ sequenceDiagram
 ## Source files
 
 - `apps/web/app/[locale]/auth/sign-up/page.tsx` — server page (loads dictionary)
-- `apps/web/app/[locale]/auth/sign-up/components/password-sign-up.tsx` — `PasswordSignUp`: `signUp.email`, social, redirect
+- `apps/web/app/[locale]/auth/sign-up/components/sign-up-form.tsx` — `SignUpForm`: dispatches `signUpEmailAction`, social, redirect
+- `apps/web/app/[locale]/auth/sign-up/actions.ts` — `signUpEmailAction`
 - `apps/web/app/[locale]/auth/verify-email/page.tsx` — server page; reads `?email=` server-side
-- `apps/web/app/[locale]/auth/verify-email/components/verify-email-client.tsx` — resend + cooldown
-- `packages/design-system/components/molecules/auth/verify-email-card.tsx` — presentational card + alternative-method links
+- `apps/web/app/[locale]/auth/verify-email/components/verify-email-card.tsx` — resend card + cooldown + alternative-method links
+- `apps/web/app/[locale]/auth/verify-email/actions.ts` — `resendVerificationEmailFormAction`
 - `packages/auth/server.ts` — `emailAndPassword` + `emailVerification` config

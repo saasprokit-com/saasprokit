@@ -108,9 +108,16 @@ export async function cancelInvitationAction(
   }
 }
 
+export interface CancelInvitationsResult {
+  cancelledCount: number;
+  failedCount: number;
+}
+
 export async function cancelInvitationsAction(
-  input: CancelInvitationsInput
-): Promise<ActionResult<{ cancelledCount: number; failedCount: number }>> {
+  input: CancelInvitationsInput,
+  _prevState: ActionResult<CancelInvitationsResult> | null,
+  _formData: FormData
+): Promise<ActionResult<CancelInvitationsResult>> {
   try {
     const validated = cancelInvitationsSchema.parse(input);
 

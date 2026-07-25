@@ -3,11 +3,11 @@ title: Authentication Overview
 description: "Architecture of the Better Auth integration: the auth instance, plugins, packages, and how the auth pages talk to it"
 ---
 
-Authentication is built on **[Better Auth](https://www.better-auth.com/)** rather than hand-rolled session logic. A single `auth` instance is configured in `packages/auth/server.ts`, mounted at the catch-all route `/api/auth/[...all]`, and backed by the Prisma/PostgreSQL adapter. Every flow — email/password, social, magic link, email OTP, two-factor, and password reset — is dispatched by that one handler. The browser never calls those endpoints directly; it goes through a typed **`authClient`** (`packages/auth/client.ts`).
+Authentication is built on **[Better Auth](https://www.better-auth.com/)** rather than hand-rolled session logic. A single `auth` instance is configured in `packages/auth/server.ts`, mounted at the catch-all route `/api/auth/[...all]`, and backed by the Prisma/PostgreSQL adapter. Every flow — email/password, social, magic link, email OTP, two-factor, and password reset — runs through that one instance. The auth pages reach it **server-side**: a form dispatches a server action, and the action calls `auth.api.*` directly. The typed `authClient` (`packages/auth/client.ts`) remains for session hooks and browser-side plugin calls, but the auth pages no longer use it.
 
 ## Ownership: who owns what
 
-The integration is split between the **`@repo/auth` package** (the Better Auth server + client instances and the RBAC definitions) and the **auth pages** in the web app (`apps/web/app/[locale]/auth/*`), which are thin UIs over `authClient`.
+The integration is split between the **`@repo/auth` package** (the Better Auth server + client instances and the RBAC definitions) and the **auth pages** in the web app (`apps/web/app/[locale]/auth/*`), which are thin UIs over colocated server actions.
 
 ### `@repo/auth` package (`packages/auth/`)
 
@@ -31,27 +31,29 @@ Package exports (`package.json`):
 
 ### The auth pages (`apps/web/app/[locale]/auth/`)
 
-Most pages follow the same **"thin page, fat client"** shape: a Server Component (`page.tsx`) awaits `params`, loads the localized error dictionary, and renders a `"use client"` logic component that does the real work through `authClient`. The split is consistent: the **presentational UI** (the forms, success/error cards) lives in the design system (`packages/design-system/components/molecules/auth/`), while the **client logic** (the `authClient` calls + routing) lives in a `components/` subdir next to the page.
+Most pages follow the same **"thin page, fat client"** shape: a Server Component (`page.tsx`) awaits `params`, loads the localized error dictionary, and renders a `"use client"` form component colocated in a `components/` subdir next to the page. Each form keeps react-hook-form for client-side validation and submits through a **server action** driven by `useActionState`; the action re-validates with `safeParse` and returns field/root errors as state (no design-system split, no `authClient` in the browser).
 
 ```tsx
 // page.tsx — the pattern, repeated for most flows
 export default async function ForgotPasswordPage({ params }: ForgotPasswordPageProps) {
   const { locale } = await params;
   const dict = await getDictionary(locale);
-  return <ForgotPasswordClient errors={dict.errors.action} />;
+  return <ForgotPasswordForm errors={dict.errors.action} />;
 }
 ```
 
-Sign-in is the one exception: its `page.tsx` is a Server Component that hosts the `<Tabs>` shell directly (reading the `?tab=` searchParam to pre-select a tab) and renders three per-method client components rather than a single client.
+Sign-in is the one exception: its `page.tsx` is a Server Component that hosts the `<Tabs>` shell directly (reading `?tab=` to pre-select a tab and `?callbackUrl=` for the post-login destination) and renders three per-method client components rather than a single client.
 
 | Route | Page → Client | Flow |
 | --- | --- | --- |
-| `/auth/sign-in` | `sign-in/page.tsx` → `components/{password,magic-link,email-otp}-sign-in.tsx` | Password, social, magic link, email OTP (page hosts the tabs) |
-| `/auth/sign-up` | `sign-up/page.tsx` → `components/password-sign-up.tsx` | Register with email/password or social |
-| `/auth/verify-email` | `verify-email/page.tsx` → `components/verify-email-client.tsx` | "Check your email" + resend |
-| `/auth/forgot-password` | `forgot-password/page.tsx` → `components/forgot-password-client.tsx` | Request a reset email |
-| `/auth/reset-password` | `reset-password/page.tsx` → `components/reset-password-client.tsx` | Set a new password from a token |
-| `/auth/2fa` | `2fa/page.tsx` → `components/two-factor-client.tsx` | Enter the TOTP second factor |
+| `/auth/sign-in` | `sign-in/page.tsx` → `components/{sign-in-form,magic-link-sign-in,email-otp-sign-in}.tsx` | Password, social, magic link, email OTP (page hosts the tabs) |
+| `/auth/sign-up` | `sign-up/page.tsx` → `components/sign-up-form.tsx` | Register with email/password or social |
+| `/auth/verify-email` | `verify-email/page.tsx` → `components/verify-email-card.tsx` | "Check your email" + resend |
+| `/auth/forgot-password` | `forgot-password/page.tsx` → `components/forgot-password-form.tsx` | Request a reset email |
+| `/auth/reset-password` | `reset-password/page.tsx` → `components/reset-password-form.tsx` | Set a new password from a token |
+| `/auth/2fa` | `2fa/page.tsx` → `components/two-factor-form.tsx` | Enter the TOTP second factor |
+
+Shared pieces (`AuthCard`, `SocialProviders`, and the zod schemas) live at `auth/components/` and `auth/schemas.ts` — there is no design-system auth-molecule layer.
 
 ## Enabled methods & plugins
 
@@ -78,11 +80,11 @@ See [Configuration](./configuration) for the full breakdown of each option.
 flowchart TD
     subgraph Client["Browser (React)"]
       Pages["Auth pages<br/>apps/web/app/[locale]/auth/*"]
-      AC["authClient + plugins<br/>packages/auth/client.ts"]
     end
 
     subgraph Server["Next.js server"]
       PROXY["proxy.ts<br/>route gating + CSP nonce"]
+      ACTIONS["Colocated server actions<br/>auth/*/actions.ts"]
       ROUTE["/api/auth/[...all]<br/>toNextJsHandler(auth)"]
       BA["Better Auth instance<br/>packages/auth/server.ts"]
       HELP["lib/auth/auth.ts<br/>getServerSession / requireAuth"]
@@ -94,9 +96,9 @@ flowchart TD
       OAUTH["Google · GitHub"]
     end
 
-    Pages --> AC
-    AC -->|"fetch /api/auth/*"| ROUTE
-    ROUTE --> BA
+    Pages -->|"useActionState dispatch"| ACTIONS
+    ACTIONS -->|"auth.api.*"| BA
+    ROUTE -->|"email links · OAuth callbacks"| BA
     BA --> DB
     BA -->|"verification / reset / OTP / magic link"| EMAIL
     BA -->|"OAuth redirect"| OAUTH
@@ -105,7 +107,9 @@ flowchart TD
     HELP -->|"getSession()"| BA
 ```
 
-Outbound: the auth pages call typed methods on `authClient`, which `fetch` the plugin-mounted endpoints under `/api/auth/*`. The Better Auth instance runs the flow, persists via Prisma, and sends transactional email through `@repo/email`. Server Components read the resulting session through the cached helpers in `lib/auth/auth.ts`, and the edge `proxy.ts` gates every page on it.
+Outbound: an auth page dispatches its colocated server action, which calls `auth.api.*` in-process — no browser `fetch` to `/api/auth/*` is involved. That route still matters for traffic the server can't originate: the links in verification, reset and magic-link emails, and OAuth provider callbacks. The Better Auth instance runs the flow, persists via Prisma, and sends transactional email through `@repo/email`. Server Components read the resulting session through the cached helpers in `lib/auth/auth.ts`, and the edge `proxy.ts` gates every page on it.
+
+Because `auth.api.*` bypasses Better Auth's HTTP-path rate limiter (which only runs on `/api/auth/*`), brute-forceable actions re-apply `enforceRateLimit` server-side — see `apps/web/lib/auth/rate-limit.ts`.
 
 ## Persistence
 

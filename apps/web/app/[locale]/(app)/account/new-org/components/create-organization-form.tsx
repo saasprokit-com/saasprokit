@@ -23,10 +23,12 @@ import type { ActionErrorMessages } from "@repo/internationalization";
 import { generateSlug } from "@repo/utils/slug";
 import { Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useRef } from "react";
+import { startTransition, useActionState, useRef } from "react";
 import { type Control, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-
+import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
+import { initialFormState } from "@/lib/forms";
 import { createOrganizationAction } from "../actions";
 import { type CreateOrgInput, createOrgSchema } from "../schemas";
 
@@ -51,6 +53,11 @@ export function CreateOrganizationForm({
   const { locale } = useParams<{ locale: string }>();
   const slugTouched = useRef(false);
 
+  const [state, formAction, isPending] = useActionState(
+    createOrganizationAction,
+    initialFormState
+  );
+
   const form = useForm<CreateOrgInput>({
     resolver: zodResolver(createOrgSchema),
     defaultValues: {
@@ -59,24 +66,19 @@ export function CreateOrganizationForm({
     },
   });
 
-  const isSubmitting = form.formState.isSubmitting;
+  useActionFieldErrors(form, state);
 
-  async function onSubmit(values: CreateOrgInput) {
-    const result = await createOrganizationAction(values);
+  useActionResult(state, {
+    onError: (error) => toast.error(error ?? errors.createOrganization),
+    onSuccess: (data) => {
+      toast.success("Workspace created successfully!");
+      router.push(`/${locale}/${data?.slug}`);
+    },
+  });
 
-    if (!result.success) {
-      // Slug conflict — show as field error on the slug input
-      if (result.error?.includes("slug") || result.error?.includes("already")) {
-        form.setError("slug", { message: result.error });
-        return;
-      }
-      toast.error(result.error || errors.createOrganization);
-      return;
-    }
-
-    toast.success("Workspace created successfully!");
-    router.push(`/${locale}/${result.data?.slug}`);
-  }
+  const onSubmit = (values: CreateOrgInput) => {
+    startTransition(() => formAction(values));
+  };
 
   return (
     <Card>
@@ -98,7 +100,7 @@ export function CreateOrganizationForm({
                   <FormControl>
                     <Input
                       {...field}
-                      disabled={isSubmitting}
+                      disabled={isPending}
                       onChange={(e) => {
                         field.onChange(e);
                         if (!slugTouched.current) {
@@ -127,7 +129,7 @@ export function CreateOrganizationForm({
                   <FormControl>
                     <Input
                       {...field}
-                      disabled={isSubmitting}
+                      disabled={isPending}
                       onChange={(e) => {
                         slugTouched.current = true;
                         field.onChange(e);
@@ -142,14 +144,12 @@ export function CreateOrganizationForm({
             />
 
             <div className="flex gap-3">
-              <Button disabled={isSubmitting} type="submit">
-                {isSubmitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+              <Button disabled={isPending} type="submit">
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Workspace
               </Button>
               <Button
-                disabled={isSubmitting}
+                disabled={isPending}
                 onClick={() => {
                   form.reset();
                   slugTouched.current = false;

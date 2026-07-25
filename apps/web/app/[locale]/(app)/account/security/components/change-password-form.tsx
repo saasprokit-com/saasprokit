@@ -20,8 +20,12 @@ import {
 import { Input } from "@repo/design-system/components/ui/input";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
+import { startTransition, useActionState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
+import { initialFormState } from "@/lib/forms";
 import { changePasswordAction } from "../actions";
 import {
   type ChangePasswordFormValues,
@@ -33,6 +37,11 @@ interface ChangePasswordFormProps {
 }
 
 export function ChangePasswordForm({ errors }: ChangePasswordFormProps) {
+  const [state, formAction, isPending] = useActionState(
+    changePasswordAction,
+    initialFormState
+  );
+
   const form = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
     defaultValues: {
@@ -42,17 +51,18 @@ export function ChangePasswordForm({ errors }: ChangePasswordFormProps) {
     },
   });
 
-  const isPending = form.formState.isSubmitting;
+  useActionFieldErrors(form, state);
 
-  const onSubmit = async (values: ChangePasswordFormValues) => {
-    const result = await changePasswordAction(values);
-
-    if (result.success) {
+  useActionResult(state, {
+    onError: (error) => toast.error(error ?? errors.changePassword),
+    onSuccess: () => {
       toast.success("Password changed successfully");
       form.reset();
-    } else {
-      toast.error(result.error || errors.changePassword);
-    }
+    },
+  });
+
+  const onSubmit = (values: ChangePasswordFormValues) => {
+    startTransition(() => formAction(values));
   };
 
   return (
@@ -75,6 +85,7 @@ export function ChangePasswordForm({ errors }: ChangePasswordFormProps) {
                   <FormControl>
                     <Input
                       autoComplete="current-password"
+                      disabled={isPending}
                       placeholder="Enter your current password"
                       type="password"
                       {...field}
@@ -94,6 +105,7 @@ export function ChangePasswordForm({ errors }: ChangePasswordFormProps) {
                   <FormControl>
                     <Input
                       autoComplete="new-password"
+                      disabled={isPending}
                       placeholder="Enter your new password"
                       type="password"
                       {...field}
@@ -113,6 +125,7 @@ export function ChangePasswordForm({ errors }: ChangePasswordFormProps) {
                   <FormControl>
                     <Input
                       autoComplete="new-password"
+                      disabled={isPending}
                       placeholder="Confirm your new password"
                       type="password"
                       {...field}

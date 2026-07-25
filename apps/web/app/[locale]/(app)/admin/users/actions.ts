@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import { hasAdminPermission } from "@/lib/auth/admin";
 import { type ActionResult, getServerSession } from "@/lib/auth/auth";
+import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { revalidateAdminPage } from "@/lib/infrastructure/revalidation";
 import { ADMIN_PAGES } from "@/lib/routes";
 import { ADMIN_AUDIT_ACTIONS, recordAdminAudit } from "@/servers/admin/audit";
@@ -26,12 +27,21 @@ const SECONDS_PER_DAY = 86_400;
  * `before` hook on `/admin/set-role` (packages/auth/server.ts); the pure guard
  * here is the friendly first-line message before the round-trip.
  */
+export type SetUserRoleFormState = FormState<SetUserRoleInput>;
+
 export async function setUserRoleAction(
+  _prevState: SetUserRoleFormState,
   input: SetUserRoleInput
-): Promise<ActionResult> {
+): Promise<SetUserRoleFormState> {
   const logger = createRequestLogger({ action: "setUserRoleAction" });
+
+  const parsed = setUserRoleSchema.safeParse(input);
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+  }
+
   try {
-    const data = setUserRoleSchema.parse(input);
+    const data = parsed.data;
 
     const session = await getServerSession();
     if (!session?.user?.id) {
@@ -66,7 +76,7 @@ export async function setUserRoleAction(
       revalidateAdminPage(ADMIN_PAGES.USERS),
       revalidateAdminPage(`users/${data.userId}`),
     ]);
-    return { success: true };
+    return { status: "success" };
   } catch (error) {
     return toActionError(error, {
       fallback: "updateRole",
@@ -79,12 +89,21 @@ export async function setUserRoleAction(
  * Better Auth blocks self-ban and revokes the target's sessions;
  * the pure guard adds a friendly self-target message before the API call.
  */
+export type BanUserFormState = FormState<BanUserInput>;
+
 export async function banUserAction(
+  _prevState: BanUserFormState,
   input: BanUserInput
-): Promise<ActionResult> {
+): Promise<BanUserFormState> {
   const logger = createRequestLogger({ action: "banUserAction" });
+
+  const parsed = banUserSchema.safeParse(input);
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: fieldErrorsFrom(parsed.error) };
+  }
+
   try {
-    const data = banUserSchema.parse(input);
+    const data = parsed.data;
 
     const session = await getServerSession();
     if (!session?.user?.id) {
@@ -129,7 +148,7 @@ export async function banUserAction(
       revalidateAdminPage(ADMIN_PAGES.USERS),
       revalidateAdminPage(`users/${data.userId}`),
     ]);
-    return { success: true };
+    return { status: "success" };
   } catch (error) {
     return toActionError(error, {
       fallback: "banUser",
@@ -188,7 +207,9 @@ export async function unbanUserAction(
  * revalidation — the client hard-navigates into the impersonated session.
  */
 export async function impersonateUserAction(
-  input: TargetUserInput
+  input: TargetUserInput,
+  _prevState: ActionResult | null,
+  _formData: FormData
 ): Promise<ActionResult> {
   const logger = createRequestLogger({ action: "impersonateUserAction" });
   try {
@@ -237,7 +258,9 @@ export async function impersonateUserAction(
  * pure guard is needed.
  */
 export async function revokeUserSessionsAction(
-  input: TargetUserInput
+  input: TargetUserInput,
+  _prevState: ActionResult | null,
+  _formData: FormData
 ): Promise<ActionResult> {
   const logger = createRequestLogger({ action: "revokeUserSessionsAction" });
   try {
@@ -281,7 +304,9 @@ export async function revokeUserSessionsAction(
  * surfaces a friendly message before the API call.
  */
 export async function removeUserAction(
-  input: TargetUserInput
+  input: TargetUserInput,
+  _prevState: ActionResult | null,
+  _formData: FormData
 ): Promise<ActionResult> {
   const logger = createRequestLogger({ action: "removeUserAction" });
   try {

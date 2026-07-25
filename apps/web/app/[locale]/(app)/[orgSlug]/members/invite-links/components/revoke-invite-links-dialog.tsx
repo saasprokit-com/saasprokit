@@ -2,7 +2,6 @@
 
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -14,8 +13,10 @@ import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2, XCircle } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useActionState, useState } from "react";
 import { toast } from "sonner";
+import { useActionResult } from "@/hooks/use-action-result";
+import type { ActionResult } from "@/lib/auth/auth";
 import { TOKEN_PREVIEW_LENGTH } from "../../utils";
 import { revokeInviteLinksAction } from "../actions";
 import type { InviteLink } from "../queries";
@@ -34,32 +35,34 @@ export function RevokeInviteLinksDialog({
   onSuccess,
 }: RevokeInviteLinksDialogProps) {
   const { orgSlug } = useParams<{ orgSlug: string }>();
-  const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
 
   const count = selectedLinks.length;
 
-  const handleConfirm = () => {
-    startTransition(async () => {
-      const result = await revokeInviteLinksAction({
-        organizationId,
-        orgSlug,
-        inviteLinkIds: selectedLinks.map((link) => link.id),
-      });
+  const boundAction = revokeInviteLinksAction.bind(null, {
+    organizationId,
+    orgSlug,
+    inviteLinkIds: selectedLinks.map((link) => link.id),
+  });
 
-      if (result.success) {
-        toast.success("Invite links revoked", {
-          description: `Successfully revoked ${result.data?.revokedCount ?? count} invite link(s)`,
-        });
-        setOpen(false);
-        onSuccess();
-      } else {
-        toast.error(errors.revokeInviteLinks, {
-          description: result.error ?? "Something went wrong",
-        });
-      }
-    });
-  };
+  const [state, formAction, isPending] = useActionState<
+    ActionResult<{ revokedCount: number }> | null,
+    FormData
+  >(boundAction, null);
+
+  useActionResult(state, {
+    onError: (error) =>
+      toast.error(errors.revokeInviteLinks, {
+        description: error ?? "Something went wrong",
+      }),
+    onSuccess: (data) => {
+      toast.success("Invite links revoked", {
+        description: `Successfully revoked ${data?.revokedCount ?? 0} invite link(s)`,
+      });
+      setOpen(false);
+      onSuccess();
+    },
+  });
 
   return (
     <AlertDialog onOpenChange={setOpen} open={open}>
@@ -97,23 +100,22 @@ export function RevokeInviteLinksDialog({
         </div>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Close</AlertDialogCancel>
-          <AlertDialogAction
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            disabled={isPending}
-            onClick={(e) => {
-              e.preventDefault();
-              handleConfirm();
-            }}
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Revoking...
-              </>
-            ) : (
-              "Revoke Links"
-            )}
-          </AlertDialogAction>
+          <form action={formAction}>
+            <Button
+              className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isPending}
+              type="submit"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Revoking...
+                </>
+              ) : (
+                "Revoke Links"
+              )}
+            </Button>
+          </form>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

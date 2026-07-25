@@ -1,6 +1,6 @@
 import { getDictionary } from "@repo/internationalization";
 import { resolveCallbackUrl } from "@/lib/routes";
-import { PasswordSignUp } from "./components/password-sign-up";
+import { SignUpForm } from "./components/sign-up-form";
 
 interface SignUpPageProps {
   params: Promise<{ locale: string }>;
@@ -18,7 +18,5 @@ export default async function SignUpPage({
   const dict = await getDictionary(locale);
   const callbackUrl = resolveCallbackUrl(rawCallbackUrl);
 
-  return (
-    <PasswordSignUp callbackUrl={callbackUrl} errors={dict.errors.action} />
-  );
+  return <SignUpForm callbackUrl={callbackUrl} errors={dict.errors.action} />;
 }

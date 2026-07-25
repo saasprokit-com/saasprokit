@@ -3,16 +3,13 @@
 import { cn } from "@repo/design-system/lib/utils";
 import { CheckCircle, Mail } from "lucide-react";
 import Link from "next/link";
+import { PAGE_ROUTES } from "@/lib/routes";
 
 export interface MagicLinkSentCardProps {
   className?: string;
-  signInUrl?: string;
 }
 
-export function MagicLinkSentCard({
-  signInUrl = "/auth/sign-in",
-  className,
-}: MagicLinkSentCardProps) {
+export function MagicLinkSentCard({ className }: MagicLinkSentCardProps) {
   return (
     <div className={cn("rounded-lg border bg-card p-8 shadow-sm", className)}>
       <div className="mb-6 flex justify-center">
@@ -44,7 +41,10 @@ export function MagicLinkSentCard({
 
       <p className="mt-6 text-center text-muted-foreground text-sm">
         Didn&apos;t receive the email?{" "}
-        <Link className="text-primary hover:underline" href={signInUrl}>
+        <Link
+          className="text-primary hover:underline"
+          href={PAGE_ROUTES.SIGN_IN}
+        >
           Try again
         </Link>
       </p>

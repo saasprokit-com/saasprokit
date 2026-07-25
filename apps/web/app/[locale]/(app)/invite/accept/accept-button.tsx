@@ -4,8 +4,9 @@ import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState } from "react";
 import { toast } from "sonner";
+import { useActionResult } from "@/hooks/use-action-result";
 
 import type { ActionResult } from "@/lib/auth/auth";
 import { acceptInvitationFormAction } from "../actions";
@@ -29,18 +30,16 @@ export function AcceptInvitationButton({
     initialState
   );
 
-  useEffect(() => {
-    if (state === initialState) {
-      return;
-    }
-
-    if (state.success && state.data) {
+  useActionResult(state, {
+    onError: (error) => toast.error(error ?? errors.acceptInvitation),
+    onSuccess: (data) => {
+      if (!data) {
+        return;
+      }
       toast.success("You've joined the organization!");
-      router.push(`/${state.data.organizationSlug}`);
-    } else if (!state.success && state.error) {
-      toast.error(state.error || errors.acceptInvitation);
-    }
-  }, [state, router, errors]);
+      router.push(`/${data.organizationSlug}`);
+    },
+  });
 
   return (
     <form action={formAction}>

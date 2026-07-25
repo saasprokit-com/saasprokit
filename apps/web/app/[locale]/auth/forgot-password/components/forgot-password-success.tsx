@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { AuthCard } from "./auth-card";
+import { PAGE_ROUTES } from "@/lib/routes";
+import { AuthCard } from "../../components/auth-card";
 
 export interface ForgotPasswordSuccessProps {
   className?: string;
@@ -9,7 +10,7 @@ export interface ForgotPasswordSuccessProps {
 }
 
 export function ForgotPasswordSuccess({
-  signInUrl = "/auth/sign-in",
+  signInUrl = PAGE_ROUTES.SIGN_IN,
   className,
 }: ForgotPasswordSuccessProps) {
   return (

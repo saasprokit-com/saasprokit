@@ -86,10 +86,6 @@ export async function acceptInvitationAction(
       headers: await headers(),
     });
 
-    if (!result) {
-      return actionError("acceptInvitation");
-    }
-
     const org = await database.organization.findUnique({
       where: { id: result.member.organizationId },
       select: { slug: true },
