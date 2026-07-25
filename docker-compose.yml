@@ -135,6 +135,8 @@ services:
     command: pnpm --filter studio dev
     environment:
       - DATABASE_URL=postgresql://dev:dev@postgres:5432/saasprokit_dev
+      # No browser in the container — without this, studio crashes spawning xdg-open
+      - BROWSER=none
     depends_on:
       postgres:
         condition: service_healthy
