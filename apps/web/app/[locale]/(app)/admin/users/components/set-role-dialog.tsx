@@ -114,6 +114,7 @@ export function SetRoleDialog({
                     <FormLabel>Role</FormLabel>
                     <Select
                       defaultValue={field.value}
+                      disabled={isPending}
                       onValueChange={field.onChange}
                     >
                       <FormControl>

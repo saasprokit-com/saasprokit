@@ -177,9 +177,6 @@ export async function logoutAllOtherSessionsAction(): Promise<ActionResult> {
 
 export type ChangePasswordFormState = FormState<ChangePasswordFormValues>;
 
-/**
- * auth.api.changePassword authenticates the caller from the forwarded headers.
- */
 export async function changePasswordAction(
   _prevState: ChangePasswordFormState,
   input: ChangePasswordFormValues

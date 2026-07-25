@@ -85,6 +85,7 @@ export function ChangePasswordForm({ errors }: ChangePasswordFormProps) {
                   <FormControl>
                     <Input
                       autoComplete="current-password"
+                      disabled={isPending}
                       placeholder="Enter your current password"
                       type="password"
                       {...field}
@@ -104,6 +105,7 @@ export function ChangePasswordForm({ errors }: ChangePasswordFormProps) {
                   <FormControl>
                     <Input
                       autoComplete="new-password"
+                      disabled={isPending}
                       placeholder="Enter your new password"
                       type="password"
                       {...field}
@@ -123,6 +125,7 @@ export function ChangePasswordForm({ errors }: ChangePasswordFormProps) {
                   <FormControl>
                     <Input
                       autoComplete="new-password"
+                      disabled={isPending}
                       placeholder="Confirm your new password"
                       type="password"
                       {...field}

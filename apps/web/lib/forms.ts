@@ -22,7 +22,7 @@ export interface FormState<
 export const initialFormState: FormState = { status: "idle" };
 
 export function fieldErrorsFrom<TValues extends FieldValues>(
-  error: z.ZodError
+  error: z.ZodError<TValues>
 ): FormFieldErrors<TValues> {
   const flattened: Record<string, string> = {};
   for (const [field, messages] of Object.entries(

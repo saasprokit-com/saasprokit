@@ -259,6 +259,7 @@ export function InviteLinksToolbar({
                         <FormItem>
                           <FormLabel>Role</FormLabel>
                           <Select
+                            disabled={isPending}
                             onValueChange={field.onChange}
                             value={field.value}
                           >
@@ -288,6 +289,7 @@ export function InviteLinksToolbar({
                         <FormItem>
                           <FormLabel>Expires in</FormLabel>
                           <Select
+                            disabled={isPending}
                             onValueChange={(v) =>
                               field.onChange(Number.parseInt(v, 10))
                             }
@@ -319,6 +321,7 @@ export function InviteLinksToolbar({
                           <FormLabel>Max uses (optional)</FormLabel>
                           <FormControl>
                             <Input
+                              disabled={isPending}
                               max={MAX_INVITE_LINK_USES}
                               min="1"
                               name={field.name}
