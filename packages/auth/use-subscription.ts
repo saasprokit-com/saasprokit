@@ -163,8 +163,9 @@ export function useCancel(options: UseCancelOptions): UseCancelReturn {
   const cancel = async () => {
     const { organizationId, orgSlug, locale } = optionsRef.current;
     if (!organizationId) {
-      setError(new Error("No organization reference"));
-      optionsRef.current.onError?.(new Error("No organization reference"));
+      const noOrgError = new Error("No organization reference");
+      setError(noOrgError);
+      optionsRef.current.onError?.(noOrgError);
       return;
     }
 

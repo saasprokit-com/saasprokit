@@ -9,7 +9,7 @@ import { getPlanLimits } from "@repo/auth/plans";
 import type { createRequestLogger } from "@repo/logger/server";
 import { BYTES_PER_MB } from "@repo/utils/storage";
 import {
-  getCurrentPlanForReference,
+  getCurrentPlanForOrg,
   getOrgStorageUsage,
 } from "@/lib/billing/subscription-queries";
 
@@ -23,7 +23,7 @@ async function getOrganizationStorageUsageBytes(
 async function getOrganizationStorageQuota(
   organizationId: string
 ): Promise<number> {
-  const planName = await getCurrentPlanForReference(organizationId);
+  const planName = await getCurrentPlanForOrg(organizationId);
   const limits = getPlanLimits(planName);
   if (limits.maxStorageMB === -1) {
     return -1;

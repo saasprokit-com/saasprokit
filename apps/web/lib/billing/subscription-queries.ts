@@ -13,26 +13,26 @@ import {
   type PlanName,
 } from "@repo/utils/payment";
 import { ATTACHABLE_TYPE, BYTES_PER_MB } from "@repo/utils/storage";
+import { cache } from "react";
 import { env } from "@/lib/env";
 
-export async function getActiveSubscription(
+// cache() dedupes the query across a single server render — the billing page
+// resolves the active subscription both directly and via getOrgUsageStats.
+export const getActiveSubscription = cache(
+  (organizationId: string): Promise<Subscription | null> =>
+    database.subscription.findFirst({
+      where: {
+        referenceId: organizationId,
+        status: { in: ACTIVE_STATUSES as unknown as string[] },
+      },
+      orderBy: { id: "desc" },
+    })
+);
+
+export async function getCurrentPlanForOrg(
   organizationId: string
-): Promise<Subscription | null> {
-  const subscription = await database.subscription.findFirst({
-    where: {
-      referenceId: organizationId,
-      status: { in: ACTIVE_STATUSES as unknown as string[] },
-    },
-    orderBy: { id: "desc" },
-  });
-
-  return subscription as Subscription | null;
-}
-
-export async function getCurrentPlanForReference(
-  referenceId: string
 ): Promise<PlanName> {
-  const subscription = await getActiveSubscription(referenceId);
+  const subscription = await getActiveSubscription(organizationId);
   if (!subscription) {
     return PLAN_NAMES.FREE;
   }
