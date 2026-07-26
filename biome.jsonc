@@ -1,20 +1,51 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "extends": ["ultracite/core", "ultracite/react", "ultracite/next"],
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/react",
+    "ultracite/biome/next"
+  ],
   "javascript": {
     "globals": ["Liveblocks"]
   },
   "linter": {
     "rules": {
       "performance": {
-        "noBarrelFile": "off"
+        "noBarrelFile": "off",
+        // Deferred: rules newly enabled in ultracite 7.9 that would require a
+        // large repo-wide refactor. Adopt them as a separate, focused pass.
+        "noJsxPropsBind": "off",
+        "noAwaitInLoops": "off"
       },
       "suspicious": {
         "noBitwiseOperators": "off",
-        "noControlCharactersInRegex": "off"
+        "noControlCharactersInRegex": "off",
+        "noLeakedRender": "off",
+        "noUnnecessaryConditions": "off",
+        "noEqualsToNull": "off",
+        "noNestedPromises": "off"
       },
       "style": {
-        "noNonNullAssertion": "off"
+        "noNonNullAssertion": "off",
+        "useDestructuring": "off",
+        "noIncrementDecrement": "off",
+        "useConsistentMethodSignatures": "off",
+        "useErrorCause": "off",
+        "useConsistentArrowReturn": "off"
+      },
+      "complexity": {
+        "noUselessCatchBinding": "off"
+      }
+    }
+  },
+  // useSortedKeys/useSortedAttributes auto-reorder object keys and JSX attributes
+  // repo-wide (including intentionally-ordered constants like ORG_ROLES); disabled
+  // so the 7.9 tooling bump stays zero-churn.
+  "assist": {
+    "actions": {
+      "source": {
+        "useSortedKeys": "off",
+        "useSortedAttributes": "off"
       }
     }
   },

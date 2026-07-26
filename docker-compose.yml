@@ -49,14 +49,12 @@ services:
       - MAILDEV_SMTP_PORT=1025
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:1080"]
+      # 127.0.0.1, not localhost: the web UI binds IPv4-only, and localhost
+      # resolves to ::1 inside the container, failing the check.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:1080"]
       interval: 30s
       timeout: 10s
       retries: 3
-
-  # ============================================================================
-  # App Services (dev mode with hot reload)
-  # ============================================================================
 
   # Web — Main SaaS application (port 3000)
   web:
@@ -135,6 +133,8 @@ services:
     command: pnpm --filter studio dev
     environment:
       - DATABASE_URL=postgresql://dev:dev@postgres:5432/saasprokit_dev
+      # No browser in the container — without this, studio crashes spawning xdg-open
+      - BROWSER=none
     depends_on:
       postgres:
         condition: service_healthy

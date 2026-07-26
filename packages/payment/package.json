@@ -15,12 +15,12 @@
   "dependencies": {
     "@repo/auth": "workspace:*",
     "@repo/utils": "workspace:*",
-    "zod": "^4.1.12"
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0"
+    "@types/react": "^19.2.17"
   }
 }

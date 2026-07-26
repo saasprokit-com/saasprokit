@@ -11,16 +11,16 @@
   },
   "dependencies": {
     "@react-email/components": "1.0.12",
-    "@react-email/ui": "6.6.8",
+    "@react-email/ui": "6.9.1",
     "@repo/email": "workspace:*",
-    "react": "19.2.0",
-    "react-email": "6.6.8"
+    "react": "19.2.8",
+    "react-email": "6.9.1"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/node": "24.9.1",
-    "@types/react": "19.2.2",
-    "next": "16.2.10",
+    "@types/node": "26.1.1",
+    "@types/react": "19.2.17",
+    "next": "16.2.11",
     "typescript": "^5.9.3"
   }
 }

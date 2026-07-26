@@ -12,10 +12,10 @@
     "./user": "./user.ts"
   },
   "dependencies": {
-    "zod": "^4.1.12"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/node": "^22.0.0"
+    "@types/node": "^26.1.1"
   }
 }
