@@ -1,5 +1,10 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 
+// Better Auth's CSRF origin check requires an Origin header on cookie-bearing
+// POSTs; Playwright's `request` fixture / `request.newContext` don't send one
+// like a real browser tab does. (Same requirement as e2e/setup/org.setup.ts.)
+const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+
 interface Organization {
   id: string;
   name: string;
@@ -8,6 +13,12 @@ interface Organization {
 
 interface Invitation {
   id: string;
+}
+
+interface InvitationRecord {
+  email: string;
+  id: string;
+  status: string;
 }
 
 /** Look up an organization the current session belongs to, by slug. */
@@ -35,6 +46,7 @@ export async function inviteMember(
   params: { organizationId: string; email: string; role?: string }
 ): Promise<Invitation> {
   const res = await request.post("/api/auth/organization/invite-member", {
+    headers: { origin: BASE_URL },
     data: {
       organizationId: params.organizationId,
       email: params.email,
@@ -56,9 +68,40 @@ export async function cancelInvitation(
 ): Promise<void> {
   await request
     .post("/api/auth/organization/cancel-invitation", {
+      headers: { origin: BASE_URL },
       data: { invitationId },
     })
     .catch(() => undefined);
+}
+
+/**
+ * Cancel a pending invitation identified only by its email, so a UI-submitted
+ * invite (whose id the test never sees) doesn't accumulate in the shared org.
+ * Best-effort — never throws.
+ */
+export async function cancelInvitationByEmail(
+  request: APIRequestContext,
+  params: { organizationId: string; email: string }
+): Promise<void> {
+  try {
+    const res = await request.get(
+      `/api/auth/organization/list-invitations?organizationId=${params.organizationId}`
+    );
+    if (!res.ok()) {
+      return;
+    }
+    const invitations: InvitationRecord[] = await res.json();
+    const match = invitations.find(
+      (i) =>
+        i.email.toLowerCase() === params.email.toLowerCase() &&
+        i.status === "pending"
+    );
+    if (match) {
+      await cancelInvitation(request, match.id);
+    }
+  } catch {
+    // best-effort cleanup
+  }
 }
 
 /** Remove a member. Best-effort — never throws (cleanup call). */
@@ -68,6 +111,7 @@ export async function removeMember(
 ): Promise<void> {
   await request
     .post("/api/auth/organization/remove-member", {
+      headers: { origin: BASE_URL },
       data: {
         organizationId: params.organizationId,
         memberIdOrEmail: params.memberIdOrEmail,
@@ -83,6 +127,7 @@ export async function signInViaApi(
   password: string
 ): Promise<void> {
   const res = await page.request.post("/api/auth/sign-in/email", {
+    headers: { origin: BASE_URL },
     data: { email, password },
   });
   if (!res.ok()) {
