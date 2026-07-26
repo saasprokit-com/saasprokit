@@ -11,7 +11,10 @@ import {
   sendVerificationOTPEmail,
 } from "@repo/email";
 import { baErrorTranslations } from "@repo/internationalization/ba-errors";
-import { localeFromReferer } from "@repo/internationalization/shared";
+import {
+  DEFAULT_LOCALE,
+  localeFromReferer,
+} from "@repo/internationalization/shared";
 import {
   COOKIE_CACHE_MAX_AGE_MINUTES,
   INVITATION_EXPIRES_IN_DAYS,
@@ -489,7 +492,7 @@ export const auth = betterAuth({
     //   3. header   — Accept-Language, the only signal left on email links
     i18n({
       translations: baErrorTranslations,
-      defaultLocale: "en",
+      defaultLocale: DEFAULT_LOCALE,
       detection: ["callback", "cookie", "header"],
       localeCookie: "Next-Locale",
       getLocale: (ctx) => localeFromReferer(ctx.headers?.get("referer")),
