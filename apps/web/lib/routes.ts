@@ -129,7 +129,6 @@ export const accountRoutes = {
 export const ADMIN_PAGES = {
   DASHBOARD: "",
   USERS: "users",
-  ORGANIZATIONS: "organizations",
 } as const;
 
 export const adminRoutes = {

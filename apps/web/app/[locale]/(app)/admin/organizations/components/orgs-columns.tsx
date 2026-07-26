@@ -7,7 +7,6 @@ import {
   AvatarImage,
 } from "@repo/design-system/components/ui/avatar";
 import { Badge } from "@repo/design-system/components/ui/badge";
-import type { ActionErrorMessages } from "@repo/internationalization";
 import {
   PLAN_DISPLAY_NAMES,
   PLAN_NAMES,
@@ -37,12 +36,7 @@ function initialsOf(value: string): string {
     .slice(0, 2);
 }
 
-interface GetOrgColumnsParams {
-  errors: ActionErrorMessages;
-  isAdmin: boolean;
-}
-
-export function getOrgColumns({ errors, isAdmin }: GetOrgColumnsParams) {
+export function getOrgColumns() {
   const columns: ColumnDef<AdminOrgRow>[] = [];
 
   // Organization (logo + name + slug)
@@ -128,9 +122,7 @@ export function getOrgColumns({ errors, isAdmin }: GetOrgColumnsParams) {
   // Actions
   columns.push({
     id: "actions",
-    cell: ({ row }) => (
-      <OrgActions errors={errors} isAdmin={isAdmin} org={row.original} />
-    ),
+    cell: ({ row }) => <OrgActions org={row.original} />,
     enableSorting: false,
     enableHiding: false,
   });

@@ -98,7 +98,6 @@
       "deleteUser": "Failed to delete user",
       "cannotBanSelf": "You cannot ban your own account",
       "cannotDeleteSelf": "You cannot delete your own account",
-      "orgHasActiveSubscription": "Cancel the organization's active subscription in Stripe before deleting it",
       "unknownError": "An error occurred"
     }
   }
