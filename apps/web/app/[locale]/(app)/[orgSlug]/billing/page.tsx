@@ -7,12 +7,11 @@ import {
   CardTitle,
 } from "@repo/design-system/components/ui/card";
 import { getDictionary } from "@repo/internationalization";
-import { PermissionGate } from "@/components/permission-gate";
+import { OrgPermissionGate } from "@/components/org-permission-gate";
 import { orgRoutes } from "@/lib/routes";
 import { getActiveOrganization } from "@/servers/organization/queries";
 import { BillingActions } from "./components/billing-actions";
 import { ChangePlan } from "./components/change-plan";
-import { CurrentPlan } from "./components/current-plan";
 import { UsageStats } from "./components/usage-stats";
 import { getBillingUsageData } from "./queries";
 
@@ -41,7 +40,7 @@ export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
         description="Manage your organization's subscription and billing"
         title="Billing"
       >
-        <PermissionGate
+        <OrgPermissionGate
           fallback={
             <Card>
               <CardHeader>
@@ -58,7 +57,6 @@ export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
           permissions={{ organization: ["update"] }}
           role={orgContext.role}
         >
-          <CurrentPlan organizationId={orgContext.organizationId} />
           <ChangePlan
             errors={dict.errors.action}
             memberCount={usageData.usageStats.members.current}
@@ -71,7 +69,7 @@ export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
             organizationId={orgContext.organizationId}
             organizationSlug={orgSlug}
           />
-        </PermissionGate>
+        </OrgPermissionGate>
       </ContentSection>
     </>
   );

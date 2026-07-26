@@ -1,18 +1,18 @@
 import { canOrg } from "@repo/auth/permissions";
 import type { ReactNode } from "react";
 
-interface PermissionGateProps {
+interface OrgPermissionGateProps {
   children: ReactNode;
   fallback?: ReactNode;
   permissions: Record<string, string[]>;
   role: string;
 }
 
-export function PermissionGate({
+export function OrgPermissionGate({
   role,
   permissions,
   fallback = null,
   children,
-}: PermissionGateProps) {
+}: OrgPermissionGateProps) {
   return canOrg(role, permissions) ? children : fallback;
 }

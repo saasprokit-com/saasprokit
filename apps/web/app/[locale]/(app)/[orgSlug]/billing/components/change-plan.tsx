@@ -39,7 +39,7 @@ export function ChangePlan({
     planName: currentPlan,
     subscription,
     refetch,
-  } = useSubscription({ referenceId: organizationId });
+  } = useSubscription(organizationId);
   const [billingPeriod, setBillingPeriod] =
     useState<BillingInterval>("monthly");
 

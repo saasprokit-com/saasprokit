@@ -74,9 +74,6 @@ export function getOrgMemberCount(organizationId: string): Promise<number> {
   return database.member.count({ where: { organizationId } });
 }
 
-/**
- * Get organization storage usage in MB.
- */
 export async function getOrgStorageUsage(
   organizationId: string
 ): Promise<number> {
@@ -93,18 +90,12 @@ export async function getOrgStorageUsage(
   return Math.round(bytes / BYTES_PER_MB);
 }
 
-/**
- * Pending invitations reserve seats toward the member limit.
- */
 function getOrgPendingInvitationCount(organizationId: string): Promise<number> {
   return database.invitation.count({
     where: { organizationId, status: INVITATION_STATUS.PENDING },
   });
 }
 
-/**
- * Fetches DB data, then delegates percentage/limit math to pure helper.
- */
 export async function getOrgUsageStats(organizationId: string) {
   const [subscription, memberCount, pendingCount, storageMB] =
     await Promise.all([
@@ -119,10 +110,6 @@ export async function getOrgUsageStats(organizationId: string) {
   return calculateUsageStats(subscription, occupiedSeats, storageMB);
 }
 
-/**
- * Counts both current members and pending invitations toward the plan limit,
- * since both represent reserved seats.
- */
 export async function canOrgAddMember(
   organizationId: string
 ): Promise<{ allowed: boolean; reason?: string; remaining: number }> {

@@ -45,9 +45,7 @@ export function BillingActions({
   const [isCanceling, startTransition] = useTransition();
 
   const { planName, isPaid, isCanceled, refetch, subscription } =
-    useSubscription({
-      referenceId: organizationId,
-    });
+    useSubscription(organizationId);
 
   const handleCancelSubscription = () => {
     startTransition(async () => {

@@ -42,8 +42,6 @@ export function UpgradeForm({
       });
 
       if (result.success && result.data?.url) {
-        // Redirect to Stripe Checkout (new subscription) or the plan-change
-        // confirm flow (existing subscription).
         window.location.href = result.data.url;
         return;
       }

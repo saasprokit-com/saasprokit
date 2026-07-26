@@ -5,8 +5,8 @@ import {
   type PlanName,
   SUBSCRIPTION_STATUS,
 } from "@repo/utils/payment";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { subscription, useActiveOrganization } from "./client";
+import { useEffect, useRef, useState } from "react";
+import { subscription } from "./client";
 import {
   isAlreadyCancelingError,
   isSubscriptionPendingCancel,
@@ -14,163 +14,107 @@ import {
 import { PLANS } from "./plans";
 import type { Subscription, SubscriptionWithPlan } from "./types";
 
-interface UseSubscriptionOptions {
-  referenceId?: string;
+type SubscriptionResult =
+  | { ok: true; subscription: Subscription | null }
+  | { ok: false; error: Error };
+
+async function fetchOrgSubscription(
+  organizationId: string
+): Promise<SubscriptionResult> {
+  try {
+    const { data, error } = await subscription.list({
+      query: { referenceId: organizationId },
+    });
+    if (error) {
+      return { ok: false, error: new Error(error.message) };
+    }
+    return {
+      ok: true,
+      subscription: (data?.[0] || null) as unknown as Subscription | null,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error ? err : new Error("Failed to fetch subscription"),
+    };
+  }
 }
 
 interface UseSubscriptionReturn {
-  /** Error if subscription fetch failed */
   error: Error | null;
-  /** Whether the subscription is active */
   isActive: boolean;
-  /** Whether the subscription is canceled but still active */
   isCanceled: boolean;
-  /** Whether the subscription data is loading */
   isLoading: boolean;
-  /** Whether the user has a paid plan */
   isPaid: boolean;
-  /** The current plan name */
   planName: PlanName;
-  /** Refetch the subscription data */
   refetch: () => Promise<void>;
-  /** The current subscription data */
   subscription: Subscription | null;
-  /** Subscription with plan configuration */
   subscriptionWithPlan: SubscriptionWithPlan | null;
 }
 
-export function useSubscription(
-  options: UseSubscriptionOptions = {}
-): UseSubscriptionReturn {
-  const { data: activeOrg } = useActiveOrganization();
+export function useSubscription(organizationId: string): UseSubscriptionReturn {
   const [subscriptionData, setSubscriptionData] = useState<Subscription | null>(
     null
   );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Monotonic counter for request deduplication (immune to same-ms races)
-  const requestCounterRef = useRef(0);
-  const currentRequestRef = useRef<{ id: number; referenceId: string }>({
-    id: 0,
-    referenceId: "",
-  });
-
-  const referenceId = options.referenceId || activeOrg?.id;
-
-  const isStaleRequest = useCallback(
-    (requestId: number, requestReferenceId: string): boolean =>
-      currentRequestRef.current.id !== requestId ||
-      currentRequestRef.current.referenceId !== requestReferenceId,
-    []
-  );
-
-  const handleSubscriptionSuccess = useCallback(
-    (
-      data: unknown[] | undefined,
-      requestId: number,
-      currentReferenceId: string
-    ) => {
-      if (isStaleRequest(requestId, currentReferenceId)) {
-        return;
-      }
-      const sub = (data?.[0] || null) as unknown as Subscription | null;
-      setSubscriptionData(sub);
-    },
-    [isStaleRequest]
-  );
-
-  const handleSubscriptionError = useCallback(
-    (err: unknown, requestId: number, currentReferenceId: string) => {
-      if (isStaleRequest(requestId, currentReferenceId)) {
-        return;
-      }
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch subscription")
-      );
-      setSubscriptionData(null);
-    },
-    [isStaleRequest]
-  );
-
-  const fetchSubscription = useCallback(async () => {
-    if (!referenceId) {
+  useEffect(() => {
+    if (!organizationId) {
       setSubscriptionData(null);
       setIsLoading(false);
       return;
     }
 
-    const requestId = ++requestCounterRef.current;
-    const currentReferenceId = referenceId;
-    currentRequestRef.current = {
-      id: requestId,
-      referenceId: currentReferenceId,
-    };
-
+    // The cleanup flag drops writes from a request whose organization has since
+    // changed (or that resolves after unmount), avoiding stale-org overwrites.
+    let active = true;
     setIsLoading(true);
     setError(null);
 
-    try {
-      const { data, error: fetchError } = await subscription.list({
-        query: {
-          referenceId: currentReferenceId,
-        },
-      });
-
-      if (fetchError) {
-        throw new Error(fetchError.message);
+    fetchOrgSubscription(organizationId).then((result) => {
+      if (!active) {
+        return;
       }
-
-      handleSubscriptionSuccess(data, requestId, currentReferenceId);
-    } catch (err) {
-      handleSubscriptionError(err, requestId, currentReferenceId);
-    } finally {
-      if (!isStaleRequest(requestId, currentReferenceId)) {
-        setIsLoading(false);
+      if (result.ok) {
+        setSubscriptionData(result.subscription);
+      } else {
+        setError(result.error);
+        setSubscriptionData(null);
       }
-    }
-  }, [
-    referenceId,
-    isStaleRequest,
-    handleSubscriptionSuccess,
-    handleSubscriptionError,
-  ]);
+      setIsLoading(false);
+    });
 
-  useEffect(() => {
-    fetchSubscription();
-  }, [fetchSubscription]);
-
-  const planName: PlanName = useMemo(() => {
-    if (!subscriptionData?.plan) {
-      return PLAN_NAMES.FREE;
-    }
-    return subscriptionData.plan as PlanName;
-  }, [subscriptionData]);
-
-  const subscriptionWithPlan: SubscriptionWithPlan | null = useMemo(() => {
-    if (!subscriptionData) {
-      return null;
-    }
-    return {
-      ...subscriptionData,
-      planConfig: PLANS[planName],
+    return () => {
+      active = false;
     };
-  }, [subscriptionData, planName]);
+  }, [organizationId]);
 
-  const isActive = useMemo(
-    () => subscriptionData?.status === SUBSCRIPTION_STATUS.ACTIVE,
-    [subscriptionData]
-  );
+  const refetch = async () => {
+    setIsLoading(true);
+    setError(null);
+    const result = await fetchOrgSubscription(organizationId);
+    if (result.ok) {
+      setSubscriptionData(result.subscription);
+    } else {
+      setError(result.error);
+      setSubscriptionData(null);
+    }
+    setIsLoading(false);
+  };
 
-  const isPaid = useMemo(
-    () => isActive && planName !== PLAN_NAMES.FREE,
-    [isActive, planName]
-  );
+  const planName: PlanName = subscriptionData?.plan
+    ? (subscriptionData.plan as PlanName)
+    : PLAN_NAMES.FREE;
 
-  const isCanceled = useMemo(
-    () => isActive && isSubscriptionPendingCancel(subscriptionData),
-    [isActive, subscriptionData]
-  );
+  const subscriptionWithPlan: SubscriptionWithPlan | null = subscriptionData
+    ? { ...subscriptionData, planConfig: PLANS[planName] }
+    : null;
+
+  const isActive = subscriptionData?.status === SUBSCRIPTION_STATUS.ACTIVE;
+  const isPaid = isActive && planName !== PLAN_NAMES.FREE;
+  const isCanceled = isActive && isSubscriptionPendingCancel(subscriptionData);
 
   return {
     subscription: subscriptionData,
@@ -181,7 +125,7 @@ export function useSubscription(
     isPaid,
     isActive,
     isCanceled,
-    refetch: fetchSubscription,
+    refetch,
   };
 }
 
@@ -190,6 +134,10 @@ interface UseCancelOptions {
   locale?: string;
   onError?: (error: Error) => void;
   onSuccess?: () => void;
+  /** Organization id whose subscription to cancel */
+  organizationId: string;
+  /** Organization slug for building the billing return URL */
+  orgSlug: string;
 }
 
 interface UseCancelReturn {
@@ -201,19 +149,21 @@ interface UseCancelReturn {
   isCanceling: boolean;
 }
 
-export function useCancel(options: UseCancelOptions = {}): UseCancelReturn {
-  const { data: activeOrg } = useActiveOrganization();
-  const { subscription: currentSubscription } = useSubscription();
+export function useCancel(options: UseCancelOptions): UseCancelReturn {
+  const { subscription: currentSubscription } = useSubscription(
+    options.organizationId
+  );
   const [isCanceling, setIsCanceling] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
-  const cancel = useCallback(async () => {
-    if (!activeOrg) {
-      setError(new Error("No active organization"));
-      optionsRef.current.onError?.(new Error("No active organization"));
+  const cancel = async () => {
+    const { organizationId, orgSlug, locale } = optionsRef.current;
+    if (!organizationId) {
+      setError(new Error("No organization reference"));
+      optionsRef.current.onError?.(new Error("No organization reference"));
       return;
     }
 
@@ -221,13 +171,11 @@ export function useCancel(options: UseCancelOptions = {}): UseCancelReturn {
     setError(null);
 
     try {
-      const localePrefix = optionsRef.current.locale
-        ? `/${optionsRef.current.locale}`
-        : "";
+      const localePrefix = locale ? `/${locale}` : "";
       const { error: cancelError } = await subscription.cancel({
-        referenceId: activeOrg.id,
+        referenceId: organizationId,
         subscriptionId: currentSubscription?.stripeSubscriptionId || undefined,
-        returnUrl: `${window.location.origin}${localePrefix}/${activeOrg.slug}/billing`,
+        returnUrl: `${window.location.origin}${localePrefix}/${orgSlug}/billing`,
       });
 
       // Better Auth client methods resolve with { error } rather than throwing,
@@ -248,7 +196,7 @@ export function useCancel(options: UseCancelOptions = {}): UseCancelReturn {
     } finally {
       setIsCanceling(false);
     }
-  }, [activeOrg, currentSubscription]);
+  };
 
   return {
     cancel,
