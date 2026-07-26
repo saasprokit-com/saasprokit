@@ -1,9 +1,9 @@
+import { getAllPlans, getMonthlyFromAnnual } from "@repo/auth/plans";
 import { CTABanner } from "@repo/design-system/components/blocks/cta-banner/cta-banner";
 import { FeatureShowcase } from "@repo/design-system/components/blocks/feature-showcase/feature-showcase";
 import { FeaturesGrid } from "@repo/design-system/components/blocks/features-grid/features-grid";
 import { Hero } from "@repo/design-system/components/blocks/hero/hero";
 import { Pricing } from "@repo/design-system/components/blocks/pricing/pricing";
-import { getAllPlans, getMonthlyFromAnnual } from "@repo/payment/plans";
 import {
   Boxes,
   Braces,

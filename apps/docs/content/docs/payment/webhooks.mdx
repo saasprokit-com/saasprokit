@@ -110,7 +110,7 @@ if (!(await claimWebhookEvent(args.event))) {
 
 ### Not a webhook handler
 
-`packages/payment/hooks.ts` is a `"use client"` module exporting React hooks (`useSubscription`, `useCancel`) that call the Better Auth client (`subscription.list`, `subscription.cancel`). Despite the filename, it is unrelated to webhook ingestion and runs in the browser.
+`packages/auth/use-subscription.ts` is a `"use client"` module exporting React hooks (`useSubscription`, `useCancel`) that call the Better Auth client (`subscription.list`, `subscription.cancel`). It is unrelated to webhook ingestion (handled server-side in `stripe-hooks.ts`) and runs in the browser.
 
 ## Source files
 
@@ -119,4 +119,4 @@ if (!(await claimWebhookEvent(args.event))) {
 - `packages/auth/server.ts` — wires `stripeWebhookSecret` and the `subscription.*` callbacks into the `stripe()` plugin
 - `packages/auth/keys.ts` — declares `STRIPE_WEBHOOK_SECRET` and the `STRIPE_*_PRICE_ID_*` env vars
 - `packages/database/prisma/schema.prisma` — `WebhookEvent` model, `(provider, eventId)` unique constraint
-- `packages/payment/hooks.ts` — client-side subscription React hooks (not webhook handling)
+- `packages/auth/use-subscription.ts` — client-side subscription React hooks (not webhook handling)

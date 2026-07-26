@@ -12,7 +12,7 @@ that gate features by plan.
 ## The Subscription record
 
 The shape consumed by the app is defined by the `Subscription` interface in
-`packages/payment/types.ts` and validated at the query boundary by `SubscriptionSchema`
+`packages/auth/types.ts` and validated at the query boundary by `SubscriptionSchema`
 (a `zod` schema in the same file). The fields that drive the state model are:
 
 - `plan` — one of `free`, `pro`, `enterprise` (enforced by `SubscriptionSchema` via `PLAN_NAMES`).
@@ -117,7 +117,7 @@ subscription's `plan` (falling back to `free` if `plan` is falsy). So a `past_du
 org is effectively resolved to **free** for entitlement purposes.
 
 The pure-helper equivalent is `getCurrentPlan(subscription)` in
-`packages/payment/helpers.ts`, which gates on `isSubscriptionActive(subscription)`
+`packages/auth/helpers.ts`, which gates on `isSubscriptionActive(subscription)`
 before reading `plan`. `isSubscriptionActive` returns `true` only when
 `subscription.status` is in `ACTIVE_STATUSES`.
 
@@ -129,7 +129,7 @@ guards) rather than only the entitlement-granting one.
 ## Pending cancellation (`cancelAt` / `cancelAtPeriodEnd`)
 
 A subscription scheduled to cancel at period end is still `active`. The detection lives
-in `isSubscriptionPendingCancel(subscription)` in `packages/payment/helpers.ts`:
+in `isSubscriptionPendingCancel(subscription)` in `packages/auth/helpers.ts`:
 
 ```ts
 return (
@@ -142,7 +142,7 @@ cancellation via the legacy `cancelAtPeriodEnd` boolean **or** the newer `cancel
 timestamp; checking only the boolean would miss subscriptions canceled via `cancelAt`.
 This matches Better Auth's own `isPendingCancel`.
 
-On the client, `useSubscription` in `packages/payment/hooks.ts` exposes this as
+On the client, `useSubscription` in `packages/auth/use-subscription.ts` exposes this as
 `isCanceled`, which is intentionally `isActive && isSubscriptionPendingCancel(...)` — i.e.
 "canceled but still active until period end." It also exposes:
 
@@ -165,7 +165,7 @@ settles. This handles drift where local state lags Stripe.
 ## Feature gating by plan
 
 Plan entitlements are defined in `PLANS` (re-exported from `@repo/auth/plans` via
-`packages/payment/plans.ts`). Limits per plan come from `getPlanLimits(planName)`, backed
+`packages/auth/plans.ts`). Limits per plan come from `getPlanLimits(planName)`, backed
 by each plan's `limits` (`maxMembers`, `maxStorageMB`, `prioritySupport`,
 `advancedAnalytics`). The unlimited sentinel is `UNLIMITED = -1`.
 
@@ -177,7 +177,7 @@ by each plan's `limits` (`maxMembers`, `maxStorageMB`, `prioritySupport`,
 ### Downgrade guard
 
 `guardDowngrade(subscription, targetPlan, currentMemberCount, currentStorageMB)` in
-`packages/payment/guards.ts` returns a `GuardResult` and enforces three rules:
+`packages/auth/guards.ts` returns a `GuardResult` and enforces three rules:
 
 1. The move must actually be a downgrade (`comparePlans(...) === "downgrade"`), else
    `allowed: false`.
@@ -216,9 +216,9 @@ strings to UI text/colors. Of note for the state model: `incomplete_expired` dis
 ## Source files
 
 - `packages/utils/payment.ts` — `SUBSCRIPTION_STATUS`, `ACTIVE_STATUSES`, `PLAN_NAMES`, `PLAN_ORDER`, `UNLIMITED`, `checkOrgCreationEligibility`.
-- `packages/payment/types.ts` — `Subscription` interface, `SubscriptionSchema`, `SubscriptionWithPlan`.
-- `packages/payment/helpers.ts` — `isSubscriptionActive`, `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getCurrentPlan`, `calculateUsageStats`, `getStatusDisplayText`, `getStatusColor`.
-- `packages/payment/guards.ts` — `guardDowngrade`, `GuardResult`.
-- `packages/payment/plans.ts` — `PLANS`, `getPlanLimits`, `comparePlans`, `isPlanHigherTier`.
-- `packages/payment/hooks.ts` — `useSubscription`, `useCancel` (client).
+- `packages/auth/types.ts` — `Subscription` interface, `SubscriptionSchema`, `SubscriptionWithPlan`.
+- `packages/auth/helpers.ts` — `isSubscriptionActive`, `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getCurrentPlan`, `calculateUsageStats`, `getStatusDisplayText`, `getStatusColor`.
+- `packages/auth/guards.ts` — `guardDowngrade`, `GuardResult`.
+- `packages/auth/plans.ts` — `PLANS`, `getPlanLimits`, `comparePlans`, `isPlanHigherTier`.
+- `packages/auth/use-subscription.ts` — `useSubscription`, `useCancel` (client).
 - `apps/web/lib/billing/subscription-queries.ts` — `getActiveSubscription`, `getOrgSubscription`, `getCurrentPlanForReference`, `canOrgAddMember`, `canUserCreateOrg`, `getOrgUsageStats`.

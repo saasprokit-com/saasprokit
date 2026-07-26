@@ -3,11 +3,11 @@ title: Payment Overview
 description: "Architecture of the Stripe billing integration: packages, plan tiers, and how the pieces fit"
 ---
 
-Billing in this monorepo is built on the **`@better-auth/stripe`** plugin rather than hand-rolled API routes. Checkout, the billing portal, and the Stripe webhook receiver are all mounted under `/api/auth/*` by the plugin and configured in `packages/auth/server.ts`. The `@repo/payment` package layers plan definitions, pricing math, and subscription helpers on top of that foundation.
+Billing in this monorepo is built on the **`@better-auth/stripe`** plugin rather than hand-rolled API routes. Checkout, the billing portal, and the Stripe webhook receiver are all mounted under `/api/auth/*` by the plugin and configured in `packages/auth/server.ts`. Plan definitions, pricing math, and subscription helpers live alongside that wiring in **`@repo/auth`**.
 
 ## Ownership: who owns what
 
-The integration is split across two concerns: the **auth/plugin layer** (Better Auth + Stripe wiring) and the **payment layer** (`@repo/payment`, plan data, and pure helpers).
+Everything billing-related lives in a single package, **`@repo/auth`**, which spans two layers: the **plugin layer** (Better Auth + Stripe wiring) and the **data/pure-logic layer** (plan data, types, guards, and helpers).
 
 ### `@better-auth/stripe` plugin (`packages/auth/server.ts`)
 
@@ -47,15 +47,17 @@ Note `createCustomerOnSignUp: false` and `organization: { enabled: true }` — s
 
 The Stripe SDK instance itself lives in `packages/auth/stripe-client.ts` as `stripeClient` (null when `STRIPE_SECRET_KEY` is unset), pinned to API version `2026-05-27.dahlia` (`STRIPE_API_VERSION`). On the browser side, `packages/auth/client.ts` registers the matching `stripeClient()` plugin from `@better-auth/stripe/client` so React components call typed subscription methods through `authClient`.
 
-### `@repo/payment` package
+### Data & pure-logic layer (`@repo/auth`)
 
-`@repo/payment` is the data and pure-logic layer. It does **not** talk to Stripe's network API directly — that is the plugin's job. It provides:
+Alongside the plugin wiring, `@repo/auth` exposes the data and pure-logic layer for billing. These modules do **not** talk to Stripe's network API directly — that is the plugin's job. They provide:
 
-- **Plan catalog** — `plans.ts` re-exports `PLANS` and `PlanConfig` from `@repo/auth/plans` (the single source of truth) and adds ordering/comparison helpers: `getPlanLimits`, `getAllPlans`, `isPlanHigherTier`, `getMonthlyFromAnnual`, `getAnnualSavingsPercent`, and `comparePlans` (returns `"upgrade" | "downgrade" | "same"`).
+- **Plan catalog** — `plans.ts` defines `PLANS` and `PlanConfig` (the single source of truth) plus ordering/comparison helpers: `getPlanLimits`, `getAllPlans`, `isPlanHigherTier`, `getMonthlyFromAnnual`, `getAnnualSavingsPercent`, and `comparePlans` (returns `"upgrade" | "downgrade" | "same"`), and the Stripe plumbing `buildStripePlans` / `getPlanNameFromPriceId`.
 - **Types** — `types.ts` defines the `Subscription` shape, its runtime `SubscriptionSchema` (Zod), plus `SubscriptionWithPlan`, `UpgradeOptions`, `CancelOptions`, `BillingPortalSession`, `FeatureAccess`, and `UsageStats`.
 - **Subscription helpers** — `helpers.ts` provides `isSubscriptionActive`, `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getCurrentPlan`, `calculateUsageStats`, `formatStorage`, `formatDate`, `getStatusDisplayText`, and `getStatusColor`.
+- **Guards** — `guards.ts` provides `guardDowngrade` (and `GuardResult`).
+- **Client hooks** — `use-subscription.ts` (`"use client"`) exports `useSubscription` and `useCancel`.
 
-Shared constants (plan names, pricing, limits, statuses) live one level deeper in `@repo/utils/payment` so both the auth package and the payment package import the same values.
+Shared constants (plan names, pricing, limits, statuses) live one level deeper in `@repo/utils/payment` so all billing modules import the same values.
 
 ## Plan tiers
 
@@ -125,13 +127,14 @@ Outbound: the billing UI calls subscription methods through `authClient` (and se
 ## Source files
 
 - `packages/auth/server.ts` — Better Auth config, `stripe()` plugin block, subscription config
-- `packages/auth/plans.ts` — `PLANS`, `PlanConfig`, `buildStripePlans`, `getPlanNameFromPriceId`
+- `packages/auth/plans.ts` — `PLANS`, `PlanConfig`, `buildStripePlans`, `getPlanNameFromPriceId`, plus tier math (`getPlanLimits`, `getAllPlans`, `isPlanHigherTier`, `comparePlans`, …)
 - `packages/auth/stripe-client.ts` — `stripeClient` / `requireStripeClient`
 - `packages/auth/client.ts` — browser `stripeClient()` plugin registration
 - `packages/auth/stripe-hooks.ts` — `handleSubscriptionComplete` / `Update` / `Deleted`
 - `packages/auth/webhook-idempotency.ts` — `claimWebhookEvent`, backed by the `WebhookEvent` model's `(provider, eventId)` unique constraint
 - `packages/auth/keys.ts` — Stripe env var schema (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, price-id vars)
-- `packages/payment/plans.ts` — plan ordering/comparison helpers
-- `packages/payment/types.ts` — `Subscription`, `SubscriptionSchema`, `UpgradeOptions`, `CancelOptions`, `UsageStats`
-- `packages/payment/helpers.ts` — subscription state + display helpers
+- `packages/auth/types.ts` — `Subscription`, `SubscriptionSchema`, `UpgradeOptions`, `CancelOptions`, `UsageStats`
+- `packages/auth/helpers.ts` — subscription state + display helpers
+- `packages/auth/guards.ts` — `guardDowngrade`, `GuardResult`
+- `packages/auth/use-subscription.ts` — client hooks `useSubscription`, `useCancel`
 - `packages/utils/payment.ts` — `PLAN_NAMES`, `PRICING`, `LIMITS`, `SUBSCRIPTION_STATUS`, `STRIPE_API_VERSION`

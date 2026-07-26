@@ -1,16 +1,16 @@
 "use client";
 
-import { Badge } from "@repo/design-system/components/ui/badge";
-import { Button } from "@repo/design-system/components/ui/button";
-import { Card, CardContent } from "@repo/design-system/components/ui/card";
-import type { ActionErrorMessages } from "@repo/internationalization";
-import { guardDowngrade } from "@repo/payment/guards";
+import { guardDowngrade } from "@repo/auth/guards";
 import {
   comparePlans,
   getMonthlyFromAnnual,
   type PlanConfig,
-} from "@repo/payment/plans";
-import type { Subscription } from "@repo/payment/types";
+} from "@repo/auth/plans";
+import type { Subscription } from "@repo/auth/types";
+import { Badge } from "@repo/design-system/components/ui/badge";
+import { Button } from "@repo/design-system/components/ui/button";
+import { Card, CardContent } from "@repo/design-system/components/ui/card";
+import type { ActionErrorMessages } from "@repo/internationalization";
 import { MONTHS_PER_YEAR } from "@repo/utils/date";
 import {
   type BillingInterval,

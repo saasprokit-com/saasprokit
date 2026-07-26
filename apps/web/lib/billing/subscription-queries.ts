@@ -2,17 +2,17 @@
  * Server-only subscription and usage queries.
  *
  * These functions query the database for subscription/member/invitation/file
- * data and delegate pure business-logic checks to @repo/payment helpers.
+ * data and delegate pure business-logic checks to @repo/auth helpers.
  */
 
 import "server-only";
 
+import { calculateUsageStats } from "@repo/auth/helpers";
 import { ORG_ROLES } from "@repo/auth/permissions";
+import { getPlanLimits } from "@repo/auth/plans";
+import type { Subscription } from "@repo/auth/types";
+import { SubscriptionSchema } from "@repo/auth/types";
 import { database } from "@repo/database";
-import { calculateUsageStats } from "@repo/payment/helpers";
-import { getPlanLimits } from "@repo/payment/plans";
-import type { Subscription } from "@repo/payment/types";
-import { SubscriptionSchema } from "@repo/payment/types";
 import { INVITATION_STATUS } from "@repo/utils/organization";
 import {
   ACTIVE_STATUSES,

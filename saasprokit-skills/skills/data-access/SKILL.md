@@ -10,7 +10,7 @@ Server-side code in `apps/web` lives in two folders, split by **what you are bui
 - **`servers/<domain>/`** — the domain data-access layer: `queries.ts` (reads) and `actions.ts` (writes) that touch app-feature tables. **This is where new feature queries/actions go.** Every file is `import "server-only"`.
 - **`lib/`** — the foundation and cross-cutting infrastructure: the auth/session/authorization layer, revalidation, env, routes, parsers, plus a few helper modules coupled to a specific package (billing, storage).
 
-**Decision rule:** building a feature's data layer (list/create/update a domain record) → `servers/<domain>/`. Touching auth/session guards, revalidation, env, routes, or logic tied to `@repo/payment`/storage → `lib/`.
+**Decision rule:** building a feature's data layer (list/create/update a domain record) → `servers/<domain>/`. Touching auth/session guards, revalidation, env, routes, or logic tied to `@repo/auth` billing/storage → `lib/`.
 
 ## Map — `servers/` (by domain)
 
@@ -26,7 +26,7 @@ Server-side code in `apps/web` lives in two folders, split by **what you are bui
 | Path | Purpose |
 | --- | --- |
 | `lib/auth/` | Session + authorization foundation: `getServerSession`/`requireAuth` (`auth.ts`), `verifySession` action guard (`action-auth.ts`), `toActionError` (`action-error.ts`), `enforceRateLimit` (`rate-limit.ts`), platform-admin guard (`admin.ts`), auth server actions (`actions.ts`). See `saasprokit:auth`. |
-| `lib/billing/subscription-queries.ts` | Subscription + usage queries feeding `@repo/payment` plan logic |
+| `lib/billing/subscription-queries.ts` | Subscription + usage queries feeding `@repo/auth` plan logic |
 | `lib/organization/personal-org.ts` | Personal-org creation + unique slug generation |
 | `lib/files/storage-quota.ts` | Per-org storage quota enforcement |
 | `lib/infrastructure/revalidation.ts` | `revalidateOrgPage` / locale resolution (`revalidation.ts:17`) |

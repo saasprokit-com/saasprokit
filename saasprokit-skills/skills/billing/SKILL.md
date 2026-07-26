@@ -1,6 +1,6 @@
 ---
 name: billing
-description: Billing and payment architecture for this repo — Stripe via @better-auth/stripe, plan tiers defined in @repo/auth/plans, org-scoped subscriptions, the @repo/payment logic package, and webhooks mounted on the Better Auth catch-all route. Read before touching checkout, subscriptions, plans, or Stripe webhooks.
+description: Billing and payment architecture for this repo — Stripe via @better-auth/stripe, plan tiers and subscription logic in @repo/auth (plans, guards, helpers, types, use-subscription), org-scoped subscriptions, and webhooks mounted on the Better Auth catch-all route. Read before touching checkout, subscriptions, plans, or Stripe webhooks.
 ---
 
 # Billing & Payment
@@ -12,21 +12,25 @@ and no billing state machine — Better Auth owns checkout, the portal, and webh
 dispatch; the repo supplies plan configs, an authorization callback, and email
 side-effect hooks.
 
-## Two packages, one source of truth
+## One package, one source of truth
+
+All billing config and logic lives in **`packages/auth`** (exports include
+`./plans ./guards ./helpers ./types ./use-subscription` — see
+`packages/auth/package.json`):
 
 - **Plan/tier source of truth is `packages/auth/plans.ts`** — the `PLANS` record
-  (`free`, `pro`, `enterprise`) is defined at `packages/auth/plans.ts:23`, along
-  with `buildStripePlans` and `getPlanNameFromPriceId` (`:94`, `:109`). Prices,
-  limits, and names come from `@repo/utils/payment`.
-- **`packages/payment/` is pure logic** (exports: `./plans ./guards ./helpers
-  ./types ./hooks` — see `packages/payment/package.json`). `plans.ts`
-  **re-exports** `PLANS`/`PlanConfig` from `@repo/auth/plans`
-  (`packages/payment/plans.ts:10`) and adds tier math (`comparePlans`,
-  `isPlanHigherTier`, `getPlanLimits`). `helpers.ts` = status/plan helpers
-  (`getCurrentPlan`, `isSubscriptionActive`, `calculateUsageStats`). `guards.ts` =
-  `guardDowngrade`. `types.ts` = `Subscription` + `SubscriptionSchema`. `hooks.ts`
-  = client `useSubscription` (calls `subscription.list` from `@repo/auth/client`).
-- **Env keys live in `packages/auth/keys.ts:22-27`, NOT in `@repo/payment`.**
+  (`free`, `pro`, `enterprise`), plus `buildStripePlans`/`getPlanNameFromPriceId`
+  (Stripe plumbing) and tier math (`comparePlans`, `isPlanHigherTier`,
+  `getPlanLimits`, `getAllPlans`, `getMonthlyFromAnnual`, `getAnnualSavingsPercent`).
+  Prices, limits, and names come from `@repo/utils/payment`.
+- **`packages/auth/helpers.ts`** = status/plan helpers (`getCurrentPlan`,
+  `isSubscriptionActive`, `calculateUsageStats`, formatters).
+- **`packages/auth/guards.ts`** = `guardDowngrade`.
+- **`packages/auth/types.ts`** = `Subscription` + `SubscriptionSchema`.
+- **`packages/auth/use-subscription.ts`** = client React hooks `useSubscription`
+  / `useCancel` (call `subscription.*` from `@repo/auth/client`). Not to be
+  confused with `packages/auth/stripe-hooks.ts` (server-side webhook lifecycle).
+- **Env keys live in `packages/auth/keys.ts:22-27`.**
 
 ## Where things run
 
@@ -68,6 +72,6 @@ Env vars (`apps/web/.env.example:25-30`): `STRIPE_SECRET_KEY`,
   endpoints silently 404.
 - Don't add `hasOrgPermission` before `auth.api.upgradeSubscription/cancel/portal`
   — `authorizeReference` already enforces owner/admin (see `upgradeSubscriptionAction`).
-- Edit plans in `packages/auth/plans.ts`, never `packages/payment/plans.ts` (re-export only).
+- Edit plans in `packages/auth/plans.ts` — the single source of truth for tiers and tier math.
 
 See `saasprokit:auth`, `saasprokit:data-access`, `saasprokit:env-setup`.

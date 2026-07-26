@@ -1,5 +1,6 @@
 "use client";
 
+import { useSubscription } from "@repo/auth/use-subscription";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +21,6 @@ import {
   CardTitle,
 } from "@repo/design-system/components/ui/card";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { useSubscription } from "@repo/payment/hooks";
 import { PLAN_NAMES } from "@repo/utils/payment";
 import { Loader2, XCircle } from "lucide-react";
 import { useParams } from "next/navigation";

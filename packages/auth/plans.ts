@@ -1,8 +1,10 @@
 import type { StripePlan } from "@better-auth/stripe";
+import { MONTHS_PER_YEAR } from "@repo/utils/date";
 import {
   LIMITS,
   PLAN_DISPLAY_NAMES,
   PLAN_NAMES,
+  PLAN_ORDER,
   type PlanLimits,
   type PlanName,
   PRICING,
@@ -120,4 +122,48 @@ export function getPlanNameFromPriceId(
     return PLAN_NAMES.PRO;
   }
   return null;
+}
+
+const PERCENTAGE_MULTIPLIER = 100;
+
+export function getPlanLimits(planName: PlanName): PlanLimits {
+  return PLANS[planName].limits;
+}
+
+export function getAllPlans(): PlanConfig[] {
+  return PLAN_ORDER.map((name) => PLANS[name]);
+}
+
+export function isPlanHigherTier(planA: PlanName, planB: PlanName): boolean {
+  const indexA = PLAN_ORDER.indexOf(planA);
+  const indexB = PLAN_ORDER.indexOf(planB);
+  return indexA > indexB;
+}
+
+export function getMonthlyFromAnnual(annualPrice: number): number {
+  return (
+    Math.round((annualPrice / MONTHS_PER_YEAR) * PERCENTAGE_MULTIPLIER) /
+    PERCENTAGE_MULTIPLIER
+  );
+}
+
+export function getAnnualSavingsPercent(planName: PlanName): number {
+  const plan = PLANS[planName];
+  if (plan.monthlyPrice === 0) {
+    return 0;
+  }
+
+  const monthlyTotal = plan.monthlyPrice * MONTHS_PER_YEAR;
+  const savings = monthlyTotal - plan.yearlyPrice;
+  return Math.round((savings / monthlyTotal) * PERCENTAGE_MULTIPLIER);
+}
+
+export function comparePlans(
+  currentPlan: PlanName,
+  targetPlan: PlanName
+): "upgrade" | "downgrade" | "same" {
+  if (currentPlan === targetPlan) {
+    return "same";
+  }
+  return isPlanHigherTier(targetPlan, currentPlan) ? "upgrade" : "downgrade";
 }

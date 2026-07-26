@@ -1,7 +1,7 @@
 import "server-only";
 
-import { getPlanLimits } from "@repo/payment/plans";
-import type { UsageStats } from "@repo/payment/types";
+import { getPlanLimits } from "@repo/auth/plans";
+import type { UsageStats } from "@repo/auth/types";
 import { PLAN_NAMES, type PlanName } from "@repo/utils/payment";
 import {
   getOrgSubscription,

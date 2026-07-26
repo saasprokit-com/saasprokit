@@ -1,5 +1,8 @@
 "use client";
 
+import { getStatusColor, getStatusDisplayText } from "@repo/auth/helpers";
+import { PLANS } from "@repo/auth/plans";
+import { useSubscription } from "@repo/auth/use-subscription";
 import { Badge } from "@repo/design-system/components/ui/badge";
 import { Button } from "@repo/design-system/components/ui/button";
 import {
@@ -10,9 +13,6 @@ import {
   CardTitle,
 } from "@repo/design-system/components/ui/card";
 import { Skeleton } from "@repo/design-system/components/ui/skeleton";
-import { getStatusColor, getStatusDisplayText } from "@repo/payment/helpers";
-import { useSubscription } from "@repo/payment/hooks";
-import { PLANS } from "@repo/payment/plans";
 import { formatDate } from "@repo/utils/date";
 import { PLAN_NAMES, type SubscriptionStatus } from "@repo/utils/payment";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";

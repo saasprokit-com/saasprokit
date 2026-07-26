@@ -222,7 +222,7 @@ sequenceDiagram
     participant DB as DowngradeButton<br/>(Client Component)
     participant SA as changePlanAction<br/>(Server Action)
     participant PG as PostgreSQL<br/>(Prisma)
-    participant G as guardDowngrade<br/>(@repo/payment)
+    participant G as guardDowngrade<br/>(@repo/auth)
     participant S as Stripe API
     participant WH as Webhook Handler
     participant E as Email (Resend)
@@ -285,7 +285,7 @@ sequenceDiagram
 sequenceDiagram
     participant U as User (Browser)
     participant BA as BillingActions<br/>(Client Component)
-    participant HC as useCancel Hook<br/>(@repo/payment/hooks)
+    participant HC as useCancel Hook<br/>(@repo/auth/use-subscription)
     participant Auth as Better Auth Client<br/>(subscription.cancel)
     participant API as Better Auth Server<br/>(@repo/auth)
     participant S as Stripe API
@@ -984,7 +984,7 @@ Covers: downgrade dialog, cancel subscription, billing portal redirect.
 - `openBillingPortalAction()` — redirects to Stripe Customer Portal
 
 **Client hook tested:**
-- `useCancel()` from `@repo/payment/hooks` — calls `subscription.cancel()` via Better Auth
+- `useCancel()` from `@repo/auth/use-subscription` — calls `subscription.cancel()` via Better Auth
 
 **Important:** These tests require a paid subscription to interact with downgrade/cancel/manage-billing UI. The test org starts on Free plan, so most tests in this spec **skip gracefully**. They are designed to pass when run against a paid org.
 
@@ -1129,7 +1129,7 @@ Covers: downgrade dialog, cancel subscription, billing portal redirect.
 - After completion: subscription state refreshes, cancel button replaced with reactivation info
 
 #### What it tests
-- `useCancel()` hook from `@repo/payment/hooks` fires correctly
+- `useCancel()` hook from `@repo/auth/use-subscription` fires correctly
 - Better Auth `subscription.cancel()` client method is called
 - Loading/pending state during cancellation
 
@@ -1202,7 +1202,7 @@ Covers: RBAC (billing page access control), organization creation limits, downgr
 
 **Permission check:** `hasOrgPermission(orgId, { organization: ["update"] })`
 **Org creation guard:** `canUserCreateOrg()` → `checkOrgCreationEligibility()` in `@repo/utils/payment`
-**Downgrade guard:** `guardDowngrade()` in `@repo/payment/guards`
+**Downgrade guard:** `guardDowngrade()` in `@repo/auth/guards`
 
 ---
 
@@ -1319,7 +1319,7 @@ Two possible states:
 - `DowngradeButton` renders block reason in an `Alert` component
 - "Yes, Downgrade" button is disabled when `blockReason` is present
 
-#### Guard logic (from `packages/payment/guards.ts`)
+#### Guard logic (from `packages/auth/guards.ts`)
 ```
 guardDowngrade(subscription, targetPlan, memberCount, storageMB) {
   // Check member limit

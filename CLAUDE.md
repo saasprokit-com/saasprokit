@@ -26,7 +26,7 @@ pnpm fix                      # Auto-fix lint issues
 pnpm --filter app typecheck   # Type check web app
 
 # Testing (details: saasprokit:testing skill)
-pnpm test                     # All unit tests via turbo (@repo/auth, @repo/payment, app)
+pnpm test                     # All unit tests via turbo (@repo/auth, app)
 pnpm --filter app test:e2e    # Playwright E2E tests
 
 # Database (details: saasprokit:data-access skill)
@@ -40,7 +40,7 @@ docker compose up postgres maildev   # DB + mail catcher (recommended for app de
 
 **Apps** (independently deployable): `web` (main SaaS app, port 3000), `docs` (Fumadocs, 3004), `email` (React Email previews, 3003), `storybook` (design system, 6006), `studio` (Prisma Studio, 3005).
 
-**Core packages**: `@repo/auth` (Better Auth, dual RBAC), `@repo/database` (Prisma), `@repo/design-system` (shadcn/ui + Radix), `@repo/payment` (Stripe, plans), `@repo/email` (React Email + Resend).
+**Core packages**: `@repo/auth` (Better Auth, dual RBAC, Stripe billing + plans), `@repo/database` (Prisma), `@repo/design-system` (shadcn/ui + Radix), `@repo/email` (React Email + Resend).
 
 **Supporting packages**: `@repo/utils`, `@repo/logger` (Pino, `/server` + `/client` exports), `@repo/internationalization`, `@repo/seo`, `@repo/storage`, `@repo/typescript-config`.
 

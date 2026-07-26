@@ -1,3 +1,4 @@
+import { formatStorage } from "@repo/auth/helpers";
 import {
   Card,
   CardContent,
@@ -6,7 +7,6 @@ import {
   CardTitle,
 } from "@repo/design-system/components/ui/card";
 import { Progress } from "@repo/design-system/components/ui/progress";
-import { formatStorage } from "@repo/payment/helpers";
 import { HardDrive, Users } from "lucide-react";
 import type { BillingUsageData } from "../queries";
 
