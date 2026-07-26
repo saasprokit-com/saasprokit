@@ -1,5 +1,4 @@
 import type { Page } from "@playwright/test";
-import { cancelInvitationByEmail, getOrgBySlug } from "../helpers/org-api";
 import { expect, orgPath, TEST_CONFIG, test } from "../fixtures/fixtures";
 
 test.use({ storageState: "e2e/.auth/user.json" });
@@ -72,25 +71,22 @@ test.describe("Members List", () => {
     ).toBeVisible();
   });
 
-  test("Should see a success toast When a valid invite is submitted", async ({
+  test("Should show a member-limit error When inviting to a full Free-plan org", async ({
     page,
   }) => {
-    const email = `invite-test-e2e-${Date.now()}@example.com`;
-    try {
-      const dialog = await openInviteDialog(page);
-      await dialog.getByLabel(/email address/i).fill(email);
-      await dialog.getByRole("button", { name: /send invitation/i }).click();
+    // The shared test org is on the Free plan (maxMembers=1) and its owner
+    // already fills that seat, so the app's canOrgAddMember seat cap rejects the
+    // invite before any invitation is created — no cleanup needed. This exercises
+    // our seat-cap glue, the deterministic behavior on the Free-plan test org.
+    const dialog = await openInviteDialog(page);
+    await dialog
+      .getByLabel(/email address/i)
+      .fill(`invite-test-e2e-${Date.now()}@example.com`);
+    await dialog.getByRole("button", { name: /send invitation/i }).click();
 
-      await expect(dialog).toBeHidden({
-        timeout: TEST_CONFIG.timeouts.action,
-      });
-      await expect(page.getByText(/invitation sent/i).first()).toBeVisible();
-    } finally {
-      const org = await getOrgBySlug(page.request, TEST_CONFIG.org.slug);
-      await cancelInvitationByEmail(page.request, {
-        organizationId: org.id,
-        email,
-      });
-    }
+    await expect(
+      page.getByText(/reached its member limit/i).first()
+    ).toBeVisible();
+    await expect(dialog).toBeVisible();
   });
 });
