@@ -40,7 +40,7 @@ setup("create organization", async ({ request }) => {
     });
 
     if (createRes.ok()) {
-      org = await createRes.json();
+      org = (await createRes.json()) as Organization;
     } else {
       // Slug collision on a shared/dev database — retry once with a unique slug.
       const retryRes = await request.post("/api/auth/organization/create", {
@@ -55,7 +55,7 @@ setup("create organization", async ({ request }) => {
           `organization/create failed twice: ${await retryRes.text()}`
         );
       }
-      org = await retryRes.json();
+      org = (await retryRes.json()) as Organization;
     }
   }
 
