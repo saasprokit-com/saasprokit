@@ -54,10 +54,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # ============================================================================
-  # App Services (dev mode with hot reload)
-  # ============================================================================
-
   # Web — Main SaaS application (port 3000)
   web:
     build:
