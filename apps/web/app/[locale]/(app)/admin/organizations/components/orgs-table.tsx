@@ -2,7 +2,6 @@
 
 import { DataTableContent } from "@repo/design-system/components/data-table/data-table-content";
 import { DataTablePagination } from "@repo/design-system/components/data-table/pagination";
-import type { ActionErrorMessages } from "@repo/internationalization";
 import { use, useMemo } from "react";
 
 import { useDataTable } from "@/hooks/use-data-table";
@@ -12,8 +11,6 @@ import { getOrgColumns } from "./orgs-columns";
 import { OrgsToolbar } from "./orgs-toolbar";
 
 interface OrgsTableProps {
-  errors: ActionErrorMessages;
-  isAdmin: boolean;
   orgsPromise: Promise<GetListPayload<AdminOrgRow>>;
 }
 
@@ -22,13 +19,10 @@ const filterFields = [
   { id: "plan", urlKey: "plans", type: "array" as const },
 ];
 
-export function OrgsTable({ orgsPromise, errors, isAdmin }: OrgsTableProps) {
+export function OrgsTable({ orgsPromise }: OrgsTableProps) {
   const { data, totalPage } = use(orgsPromise);
 
-  const columns = useMemo(
-    () => getOrgColumns({ errors, isAdmin }),
-    [errors, isAdmin]
-  );
+  const columns = useMemo(() => getOrgColumns(), []);
 
   const { table } = useDataTable({
     data,
