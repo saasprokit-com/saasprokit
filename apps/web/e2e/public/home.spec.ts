@@ -4,22 +4,21 @@ import { localePath } from "../fixtures/test-config";
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe("Home Page", () => {
-  test("Should see the hero section, CTA buttons, pricing, and footer When accessing the home page", async ({ page }) => {
+  test("Should see the hero section, CTA buttons, pricing, and footer When accessing the home page", async ({
+    page,
+  }) => {
     await page.goto(localePath("/"));
     await expect(
-      page.getByRole("heading", {
-        level: 1,
-        name: /The SaaS Boilerplate That Ships Fast/i,
-      })
+      page.getByRole("heading", { level: 1, name: /install custom ship/i })
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /Get Started Free/i })
+      page.getByRole("link", { name: /clone & ship/i }).first()
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /View Demo/i }).first()
+      page.getByRole("link", { name: /dashboard/i }).first()
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: /Simple, Transparent Pricing/i })
+      page.getByRole("heading", { name: /your price here/i })
     ).toBeVisible();
     await expect(page.locator("footer")).toBeVisible();
   });
