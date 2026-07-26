@@ -18,7 +18,7 @@ export default defineConfig({
     baseURL: BASE_URL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
-    video: "on",
+    video: "retain-on-failure",
   },
   projects: [
     // Setup: authenticate user
