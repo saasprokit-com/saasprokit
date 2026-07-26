@@ -14,7 +14,7 @@ import { Switch } from "@repo/design-system/components/ui/switch";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { type BillingInterval, PLAN_NAMES } from "@repo/utils/payment";
 import { useParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { PlanCard } from "./plan-card";
 
@@ -43,17 +43,14 @@ export function ChangePlan({
   const [billingPeriod, setBillingPeriod] =
     useState<BillingInterval>("monthly");
 
-  const handleDowngradeSuccess = useCallback(
-    (action: "cancel" | "changed") => {
-      if (action === "cancel") {
-        toast.info("To downgrade to Free, cancel your subscription below.");
-      } else {
-        toast.success("Plan changed successfully");
-        refetch();
-      }
-    },
-    [refetch]
-  );
+  const handleDowngradeSuccess = (action: "cancel" | "changed") => {
+    if (action === "cancel") {
+      toast.info("To downgrade to Free, cancel your subscription below.");
+    } else {
+      toast.success("Plan changed successfully");
+      refetch();
+    }
+  };
 
   const plans = getAllPlans();
   const savingsPercent = getAnnualSavingsPercent(PLAN_NAMES.PRO);

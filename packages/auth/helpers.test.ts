@@ -1,3 +1,4 @@
+import type { Subscription } from "@repo/database";
 import {
   ACTIVE_STATUSES,
   PLAN_NAMES,
@@ -11,7 +12,6 @@ import {
   isSubscriptionActive,
   isSubscriptionPendingCancel,
 } from "./helpers";
-import type { Subscription } from "./types";
 
 function makeSub(overrides: Partial<Subscription>): Subscription {
   return {
@@ -27,6 +27,10 @@ function makeSub(overrides: Partial<Subscription>): Subscription {
     trialEnd: null,
     cancelAtPeriodEnd: null,
     cancelAt: null,
+    canceledAt: null,
+    endedAt: null,
+    billingInterval: null,
+    stripeScheduleId: null,
     seats: 1,
     createdAt: new Date(0),
     updatedAt: new Date(0),

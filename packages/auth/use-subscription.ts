@@ -1,5 +1,6 @@
 "use client";
 
+import type { Subscription } from "@repo/database";
 import {
   PLAN_NAMES,
   type PlanName,
@@ -12,7 +13,7 @@ import {
   isSubscriptionPendingCancel,
 } from "./helpers";
 import { PLANS } from "./plans";
-import type { Subscription, SubscriptionWithPlan } from "./types";
+import type { SubscriptionWithPlan } from "./types";
 
 type SubscriptionResult =
   | { ok: true; subscription: Subscription | null }

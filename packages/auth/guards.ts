@@ -1,3 +1,4 @@
+import type { Subscription } from "@repo/database";
 import {
   type PlanName,
   SUBSCRIPTION_STATUS,
@@ -5,7 +6,6 @@ import {
 } from "@repo/utils/payment";
 import { getCurrentPlan } from "./helpers";
 import { comparePlans, getPlanLimits } from "./plans";
-import type { Subscription } from "./types";
 
 export interface GuardResult {
   allowed: boolean;

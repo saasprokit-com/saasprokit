@@ -19,10 +19,6 @@ export const MILLISECONDS_PER_DAY = MILLISECONDS_PER_HOUR * HOURS_PER_DAY;
 export const SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR;
 export const SECONDS_PER_DAY = SECONDS_PER_HOUR * HOURS_PER_DAY;
 
-/**
- * Format a date as a long, human-readable string (e.g. "January 1, 2024").
- * Returns "N/A" for a nullish date. Shared across app, payment, and admin surfaces.
- */
 export function formatDate(
   date: Date | string | null | undefined,
   locale = "en-US"

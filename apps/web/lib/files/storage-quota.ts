@@ -65,9 +65,6 @@ async function checkStorageQuota(
   return { allowed, usage, quota, available, percentageUsed };
 }
 
-/**
- * Use this before accepting file uploads to prevent quota exhaustion.
- */
 export async function validateStorageQuota(
   organizationId: string,
   fileSizeBytes: number,

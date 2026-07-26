@@ -92,18 +92,6 @@ export const getUserOrganizations = cache(
   }
 );
 
-/**
- * Every org-scoped page must call this: layouts are not re-rendered on client-side
- * navigation between sibling pages, so the layout's check alone would let a removed
- * member keep browsing.
- *
- * Behavior:
- * - Redirects to sign-in if not authenticated
- * - Returns 404 if the org does not exist OR the user is not a member (identical
- *   responses, so org slugs cannot be enumerated)
- *
- * Reuses the memoized getUserOrganizations(), so it costs no additional query.
- */
 export const getActiveOrganization = cache(
   async (slug: string): Promise<OrganizationContext> => {
     const session = await requireAuth(`/${slug}`);

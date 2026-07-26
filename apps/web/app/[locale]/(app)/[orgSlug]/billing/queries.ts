@@ -4,7 +4,7 @@ import { getPlanLimits } from "@repo/auth/plans";
 import type { UsageStats } from "@repo/auth/types";
 import { PLAN_NAMES, type PlanName } from "@repo/utils/payment";
 import {
-  getOrgSubscription,
+  getActiveSubscription,
   getOrgUsageStats,
 } from "@/lib/billing/subscription-queries";
 
@@ -20,7 +20,7 @@ export async function getBillingUsageData(
 ): Promise<BillingUsageData> {
   const [usageStats, subscription] = await Promise.all([
     getOrgUsageStats(organizationId),
-    getOrgSubscription(organizationId),
+    getActiveSubscription(organizationId),
   ]);
 
   const planName: PlanName =

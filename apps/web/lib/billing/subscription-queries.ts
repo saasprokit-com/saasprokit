@@ -1,18 +1,9 @@
-/**
- * Server-only subscription and usage queries.
- *
- * These functions query the database for subscription/member/invitation/file
- * data and delegate pure business-logic checks to @repo/auth helpers.
- */
-
 import "server-only";
 
 import { calculateUsageStats } from "@repo/auth/helpers";
 import { ORG_ROLES } from "@repo/auth/permissions";
 import { getPlanLimits } from "@repo/auth/plans";
-import type { Subscription } from "@repo/auth/types";
-import { SubscriptionSchema } from "@repo/auth/types";
-import { database } from "@repo/database";
+import { database, type Subscription } from "@repo/database";
 import { INVITATION_STATUS } from "@repo/utils/organization";
 import {
   ACTIVE_STATUSES,
@@ -24,34 +15,12 @@ import {
 import { ATTACHABLE_TYPE, BYTES_PER_MB } from "@repo/utils/storage";
 import { env } from "@/lib/env";
 
-export async function getOrgSubscription(
+export async function getActiveSubscription(
   organizationId: string
 ): Promise<Subscription | null> {
   const subscription = await database.subscription.findFirst({
-    where: { referenceId: organizationId },
-    orderBy: { id: "desc" },
-  });
-
-  if (!subscription) {
-    return null;
-  }
-
-  const validationResult = SubscriptionSchema.safeParse(subscription);
-  if (!validationResult.success) {
-    throw new Error(
-      `Invalid subscription data for organization ${organizationId}`
-    );
-  }
-
-  return validationResult.data as Subscription;
-}
-
-export async function getActiveSubscription(
-  referenceId: string
-): Promise<Subscription | null> {
-  const subscription = await database.subscription.findFirst({
     where: {
-      referenceId,
+      referenceId: organizationId,
       status: { in: ACTIVE_STATUSES as unknown as string[] },
     },
     orderBy: { id: "desc" },
@@ -99,7 +68,7 @@ function getOrgPendingInvitationCount(organizationId: string): Promise<number> {
 export async function getOrgUsageStats(organizationId: string) {
   const [subscription, memberCount, pendingCount, storageMB] =
     await Promise.all([
-      getOrgSubscription(organizationId),
+      getActiveSubscription(organizationId),
       getOrgMemberCount(organizationId),
       getOrgPendingInvitationCount(organizationId),
       getOrgStorageUsage(organizationId),
@@ -114,7 +83,7 @@ export async function canOrgAddMember(
   organizationId: string
 ): Promise<{ allowed: boolean; reason?: string; remaining: number }> {
   const [subscription, memberCount, pendingCount] = await Promise.all([
-    getOrgSubscription(organizationId),
+    getActiveSubscription(organizationId),
     getOrgMemberCount(organizationId),
     getOrgPendingInvitationCount(organizationId),
   ]);

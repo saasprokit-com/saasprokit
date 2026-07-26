@@ -6,7 +6,7 @@ import {
   getMonthlyFromAnnual,
   type PlanConfig,
 } from "@repo/auth/plans";
-import type { Subscription } from "@repo/auth/types";
+import type { Subscription } from "@repo/database";
 import { Badge } from "@repo/design-system/components/ui/badge";
 import { Button } from "@repo/design-system/components/ui/button";
 import { Card, CardContent } from "@repo/design-system/components/ui/card";

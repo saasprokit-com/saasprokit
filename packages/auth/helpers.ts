@@ -1,3 +1,4 @@
+import type { Subscription } from "@repo/database";
 import {
   ACTIVE_STATUSES,
   PLAN_NAMES,
@@ -7,7 +8,7 @@ import {
   UNLIMITED,
 } from "@repo/utils/payment";
 import { getPlanLimits } from "./plans";
-import type { Subscription, UsageStats } from "./types";
+import type { UsageStats } from "./types";
 
 const PERCENTAGE_MULTIPLIER = 100;
 const STORAGE_GB_THRESHOLD = 1000; // MB threshold for displaying as GB
@@ -23,11 +24,6 @@ export function isSubscriptionActive(
     subscription.status as (typeof ACTIVE_STATUSES)[number]
   );
 }
-
-// Stripe expresses a scheduled cancellation via the legacy `cancelAtPeriodEnd`
-// boolean OR the newer `cancelAt` timestamp; either one means pending. Checking
-// only the boolean misses subs canceled via `cancelAt` (matches Better Auth's
-// own isPendingCancel).
 export function isSubscriptionPendingCancel(
   subscription: Subscription | null | undefined
 ): boolean {
@@ -38,9 +34,6 @@ export function isSubscriptionPendingCancel(
 
 const ALREADY_CANCELING_MESSAGE = "already set to be canceled";
 
-// Stripe rejects cancelling a subscription already set to cancel; when local
-// state has drifted this surfaces as an error even though the user's intent is
-// already satisfied, so callers treat it as a no-op success.
 export function isAlreadyCancelingError(message: string | undefined): boolean {
   return message?.includes(ALREADY_CANCELING_MESSAGE) ?? false;
 }
