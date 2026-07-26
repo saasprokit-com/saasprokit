@@ -50,10 +50,18 @@ test("Should delete the account and be unable to sign in again When account dele
     { timeout: TEST_CONFIG.timeouts.navigation }
   );
 
+  // Send the Origin header so this reaches credential validation: the page
+  // context already carries a locale cookie, and Better Auth's CSRF check
+  // rejects cookie-bearing POSTs without Origin (403) BEFORE checking
+  // credentials — which would make `ok() === false` pass even if the account
+  // still existed. With Origin present, a 401 genuinely means "deleted account
+  // can no longer sign in".
   const retrySignIn = await page.request.post("/api/auth/sign-in/email", {
+    headers: { origin: process.env.BASE_URL || "http://localhost:3000" },
     data: { email: throwawayEmail, password: throwawayPassword },
   });
   expect(retrySignIn.ok()).toBe(false);
+  expect(retrySignIn.status()).toBe(401);
 
   await context.close();
 });
