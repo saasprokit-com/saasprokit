@@ -9,7 +9,7 @@ test.use({ storageState: { cookies: [], origins: [] } });
 // on this route either (proxy.ts has no /auth/2fa handling). So a fresh
 // unauthenticated context visiting /auth/2fa deterministically renders the
 // form — it never redirects.
-test("Should render the 2FA verification form when visiting /auth/2fa without a pending session", async ({
+test("Should render the 2FA verification form When visiting /auth/2fa without a pending session", async ({
   page,
 }) => {
   await page.goto(localePath("/auth/2fa"));
