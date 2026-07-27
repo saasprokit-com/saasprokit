@@ -21,10 +21,17 @@ export const keys = () =>
       // Stripe integration
       STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
       STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
-      STRIPE_PRO_PRICE_ID_MONTHLY: z.string().optional(),
-      STRIPE_PRO_PRICE_ID_ANNUAL: z.string().optional(),
-      STRIPE_ENTERPRISE_PRICE_ID_MONTHLY: z.string().optional(),
-      STRIPE_ENTERPRISE_PRICE_ID_ANNUAL: z.string().optional(),
+      // Stripe Checkout needs Price IDs (`price_…`), not Product IDs (`prod_…`).
+      STRIPE_PRO_PRICE_ID_MONTHLY: z.string().startsWith("price_").optional(),
+      STRIPE_PRO_PRICE_ID_ANNUAL: z.string().startsWith("price_").optional(),
+      STRIPE_ENTERPRISE_PRICE_ID_MONTHLY: z
+        .string()
+        .startsWith("price_")
+        .optional(),
+      STRIPE_ENTERPRISE_PRICE_ID_ANNUAL: z
+        .string()
+        .startsWith("price_")
+        .optional(),
 
       // Organization limits
       MAX_ORGS_PER_USER: z.coerce

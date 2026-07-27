@@ -112,9 +112,6 @@ export const getActiveOrganization = cache(
   }
 );
 
-/**
- * Get the user's default organization, falling back to their oldest membership.
- */
 export const getDefaultOrganization = cache(
   async (): Promise<UserOrganization | null> => {
     const { organizations, defaultOrganizationId } =

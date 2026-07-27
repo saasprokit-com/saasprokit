@@ -27,12 +27,10 @@ interface PlanCardProps {
   currentPlan: PlanName;
   errors: ActionErrorMessages;
   locale: string;
-  memberCount: number;
   onDowngradeSuccess: (action: "cancel" | "changed") => void;
   organizationId: string;
   organizationSlug: string;
   plan: PlanConfig;
-  storageMB: number;
   subscription: Subscription | null | undefined;
 }
 
@@ -54,8 +52,6 @@ export function PlanCard({
   plan,
   currentPlan,
   billingPeriod,
-  memberCount,
-  storageMB,
   subscription,
   organizationId,
   organizationSlug,
@@ -69,7 +65,7 @@ export function PlanCard({
   const isDowngrade = direction === "downgrade";
   const price = getMonthlyDisplayPrice(plan.name, billingPeriod);
   const downgradeBlockReason = isDowngrade
-    ? guardDowngrade(subscription, plan.name, memberCount, storageMB).reason
+    ? guardDowngrade(subscription, plan.name, 0, 0).reason
     : undefined;
 
   return (

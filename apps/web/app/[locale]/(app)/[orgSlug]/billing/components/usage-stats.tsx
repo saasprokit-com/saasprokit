@@ -1,3 +1,4 @@
+import { getOrgUsageStats } from "@/lib/billing/subscription-queries";
 import { formatStorage } from "@repo/auth/helpers";
 import {
   Card,
@@ -8,26 +9,25 @@ import {
 } from "@repo/design-system/components/ui/card";
 import { Progress } from "@repo/design-system/components/ui/progress";
 import { HardDrive, Users } from "lucide-react";
-import type { BillingUsageData } from "../queries";
 
-type UsageStatsProps = BillingUsageData;
+interface UsageStatsType {
+  organizationId: string;
+} 
 
-export function UsageStats({
-  usageStats,
-  planName,
-  hasUnlimitedMembers,
-  hasUnlimitedStorage,
-}: UsageStatsProps) {
+export async function UsageStats({
+  organizationId
+}: UsageStatsType) {
+  const usageStats = await getOrgUsageStats(organizationId)
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Usage</CardTitle>
         <CardDescription>
-          Your current resource usage on the {planName} plan
+          Your current resource usage on the {usageStats.members.current} plan
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Members Usage */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -36,13 +36,13 @@ export function UsageStats({
             </div>
             <span className="text-muted-foreground text-sm">
               {usageStats.members.current} /{" "}
-              {hasUnlimitedMembers ? "Unlimited" : usageStats.members.limit}
+              {usageStats?.members?.limit ? "Unlimited" : usageStats.members.limit}
             </span>
           </div>
-          {!hasUnlimitedMembers && (
+          {!usageStats?.members?.limit && (
             <Progress className="h-2" value={usageStats.members.percentage} />
           )}
-          {hasUnlimitedMembers && (
+          {usageStats?.members?.limit && (
             <div className="rounded bg-muted px-3 py-2 text-muted-foreground text-sm">
               Unlimited team members on your plan
             </div>
@@ -58,15 +58,15 @@ export function UsageStats({
             </div>
             <span className="text-muted-foreground text-sm">
               {formatStorage(usageStats.storage.currentMB)} /{" "}
-              {hasUnlimitedStorage
+              {usageStats.storage?.limitMB
                 ? "Unlimited"
                 : formatStorage(usageStats.storage.limitMB)}
             </span>
           </div>
-          {!hasUnlimitedStorage && (
+          {!usageStats.storage?.limitMB && (
             <Progress className="h-2" value={usageStats.storage.percentage} />
           )}
-          {hasUnlimitedStorage && (
+          {usageStats.storage?.limitMB && (
             <div className="rounded bg-muted px-3 py-2 text-muted-foreground text-sm">
               Unlimited storage on your plan
             </div>

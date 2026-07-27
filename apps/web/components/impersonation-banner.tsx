@@ -21,8 +21,6 @@ export function ImpersonationBanner({ name, email }: ImpersonationBannerProps) {
     startTransition(async () => {
       const result = await stopImpersonatingAction();
       if (result.success) {
-        // Full navigation: the session cookie was swapped server-side, so the
-        // router cache and any client session state must be discarded.
         window.location.assign(`/${params.locale}${adminRoutes.users()}`);
         return;
       }

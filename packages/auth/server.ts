@@ -68,8 +68,6 @@ import {
   handleSubscriptionUpdate,
 } from "./stripe-hooks";
 
-// Validated environment variables — throws on startup if BETTER_AUTH_SECRET
-// is missing or < 32 chars, or if any other env var fails its Zod schema.
 const env = keys();
 
 const MAX_ORGS_PER_USER = env.MAX_ORGS_PER_USER;
@@ -110,9 +108,6 @@ const INACTIVE_STRIPE_STATUSES = new Set([
   "incomplete_expired",
 ]);
 
-/**
- * No-op when Stripe isn't configured or the customer id is missing.
- */
 async function cancelActiveStripeSubscriptions(
   customerId: string | null
 ): Promise<void> {
@@ -130,24 +125,6 @@ async function cancelActiveStripeSubscriptions(
   }
 }
 
-/**
- * Cleanup run by Better Auth's `deleteUser.beforeDelete` hook, BEFORE the user
- * row (and its Prisma-cascaded members/invitations/etc.) is removed. Throwing an
- * APIError here aborts the deletion.
- *
- * - Validation runs first and is side-effect-free: blocks deletion (throws
- *   TRANSFER_ORGANIZATION_OWNERSHIP) when the user is the sole owner of an org
- *   that still has other members.
- * - DB cleanup (personal + solo-owned-org subscription rows, which have no FK
- *   cascade, and the solo-owned orgs themselves) runs in a single transaction,
- *   so a failure mid-way rolls everything back together.
- * - Stripe cancellations run LAST, after the DB is consistent, so a failed DB
- *   delete can never leave a cancelled subscription behind; cancelling an
- *   already-inactive subscription is a no-op.
- *
- * Note: Better Auth deletes the user row itself AFTER this hook returns, outside
- * this transaction — a failure in that later step is outside our control.
- */
 async function cleanUpUserBeforeDelete(user: {
   id: string;
   stripeCustomerId?: string | null;
@@ -159,8 +136,6 @@ async function cleanUpUserBeforeDelete(user: {
     select: { organizationId: true },
   });
 
-  // Validate first (no irreversible work yet), capturing each solo-owned org's
-  // Stripe customer id before the org row is deleted.
   const soloOrgs: { id: string; stripeCustomerId: string | null }[] = [];
   for (const { organizationId } of ownedOrgs) {
     const otherOwners = await database.member.count({
@@ -191,8 +166,6 @@ async function cleanUpUserBeforeDelete(user: {
     });
   }
 
-  // Atomic DB cleanup — all deletes roll back together on any failure.
-  // Subscription rows have no FK to user/org, so remove them explicitly.
   await database.$transaction([
     database.subscription.deleteMany({ where: { referenceId: userId } }),
     ...soloOrgs.flatMap((org) => [
@@ -201,7 +174,6 @@ async function cleanUpUserBeforeDelete(user: {
     ]),
   ]);
 
-  // Irreversible Stripe cancellations run AFTER the DB is consistent.
   await cancelActiveStripeSubscriptions(user.stripeCustomerId ?? null);
   for (const org of soloOrgs) {
     await cancelActiveStripeSubscriptions(org.stripeCustomerId);
@@ -225,12 +197,6 @@ export const auth = betterAuth({
   },
 
   hooks: {
-    // Better Auth's admin `setRole` endpoint has NO self-guard, so on its own an
-    // admin could strip their own role and lock themselves out. Enforce the
-    // invariant here — at the auth layer — so it holds for every caller (the
-    // /admin server action's guardUserMutation is only the friendly first-line
-    // message; this is the authoritative backstop, matching how Better Auth
-    // already self-blocks ban / delete / admin-impersonation).
     before: createAuthMiddleware(async (ctx) => {
       if (ctx.path !== "/admin/set-role") {
         return;
@@ -319,11 +285,6 @@ export const auth = betterAuth({
         required: false,
       },
     },
-    // Account deletion goes through auth.api.deleteUser. Immediate (no email
-    // verification) — Better Auth still requires a fresh session (freshAge,
-    // default 1 day) since no password is supplied. Cleanup that Better Auth
-    // and the Prisma cascade don't cover (Stripe, orphaned orgs) runs in the
-    // beforeDelete hook.
     deleteUser: {
       enabled: true,
       beforeDelete: (user) => cleanUpUserBeforeDelete(user),
@@ -482,14 +443,6 @@ export const auth = betterAuth({
         ]
       : []),
 
-    // Translates APIError bodies into the request locale. Runs as an `after`
-    // hook on every endpoint (server-side auth.api.* AND HTTP /api/auth/*),
-    // rewriting error.body to { code, message: <translated>, originalMessage }.
-    // Detection order:
-    //   1. callback — referer path locale, same signal as getLocaleFromRequest
-    //   2. cookie   — "Next-Locale", set by next-international's middleware
-    //                 (SameSite=Strict, so absent on cross-site email links)
-    //   3. header   — Accept-Language, the only signal left on email links
     i18n({
       translations: baErrorTranslations,
       defaultLocale: DEFAULT_LOCALE,

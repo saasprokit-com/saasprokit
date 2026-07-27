@@ -8,6 +8,7 @@ import {
 } from "@repo/design-system/components/ui/card";
 import { XCircle } from "lucide-react";
 import Link from "next/link";
+import { SUPPORT_EMAIL_HREF } from "../support-email";
 
 interface Props {
   params: Promise<{ locale: string; orgSlug: string }>;
@@ -39,7 +40,7 @@ export default async function CheckoutCanceledPage({ params }: Props) {
                 <Link href={`/${locale}/${orgSlug}/billing`}>Try Again</Link>
               </Button>
               <Button asChild className="flex-1" variant="outline">
-                <Link href="mailto:support@example.com">Contact Support</Link>
+                <Link href={SUPPORT_EMAIL_HREF}>Contact Support</Link>
               </Button>
             </div>
           </CardContent>

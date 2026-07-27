@@ -10,10 +10,8 @@ import { getDictionary } from "@repo/internationalization";
 import { OrgPermissionGate } from "@/components/org-permission-gate";
 import { orgRoutes } from "@/lib/routes";
 import { getActiveOrganization } from "@/servers/organization/queries";
-import { BillingActions } from "./components/billing-actions";
 import { ChangePlan } from "./components/change-plan";
 import { UsageStats } from "./components/usage-stats";
-import { getBillingUsageData } from "./queries";
 
 interface OrgBillingPageProps {
   params: Promise<{ locale: string; orgSlug: string }>;
@@ -25,8 +23,6 @@ export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
     getActiveOrganization(orgSlug),
     getDictionary(locale),
   ]);
-
-  const usageData = await getBillingUsageData(orgContext.organizationId);
 
   return (
     <>
@@ -59,16 +55,18 @@ export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
         >
           <ChangePlan
             errors={dict.errors.action}
-            memberCount={usageData.usageStats.members.current}
-            organizationId={orgContext.organizationId}
-            storageMB={usageData.usageStats.storage.currentMB}
-          />
-          <UsageStats {...usageData} />
-          <BillingActions
-            errors={dict.errors.action}
+            locale={locale}
             organizationId={orgContext.organizationId}
             organizationSlug={orgSlug}
           />
+          <UsageStats organizationId={orgContext.organizationId} />
+          {/* <BillingActions
+            errors={dict.errors.action}
+            organizationId={orgContext.organizationId}
+            organizationSlug={orgSlug}
+            planName={usageData.planName}
+            subscription={subscription}
+          /> */}
         </OrgPermissionGate>
       </ContentSection>
     </>

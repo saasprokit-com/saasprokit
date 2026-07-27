@@ -20,7 +20,7 @@ export async function getBillingUsageData(
 ): Promise<BillingUsageData> {
   const [usageStats, subscription] = await Promise.all([
     getOrgUsageStats(organizationId),
-    getActiveSubscription(organizationId),
+    getActiveSubscription({ organizationId }),
   ]);
 
   const planName: PlanName =

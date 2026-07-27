@@ -16,9 +16,20 @@ import { ATTACHABLE_TYPE, BYTES_PER_MB } from "@repo/utils/storage";
 import { cache } from "react";
 import { env } from "@/lib/env";
 
-// cache() dedupes the query across a single server render — the billing page
-// resolves the active subscription both directly and via getOrgUsageStats.
-export const getActiveSubscription = cache(
+export type OrgRef = { organizationId: string } | { orgSlug: string };
+
+async function resolveOrganizationId(ref: OrgRef): Promise<string | null> {
+  if ("organizationId" in ref) {
+    return ref.organizationId;
+  }
+  const org = await database.organization.findUnique({
+    where: { slug: ref.orgSlug },
+    select: { id: true },
+  });
+  return org?.id ?? null;
+}
+
+const findActiveSubscriptionById = cache(
   (organizationId: string): Promise<Subscription | null> =>
     database.subscription.findFirst({
       where: {
@@ -29,14 +40,24 @@ export const getActiveSubscription = cache(
     })
 );
 
+export async function getActiveSubscription(
+  ref: OrgRef
+): Promise<Subscription | null> {
+  const organizationId = await resolveOrganizationId(ref);
+  if (!organizationId) {
+    return null;
+  }
+  return findActiveSubscriptionById(organizationId);
+}
+
+function planFromSubscription(subscription: Subscription | null): PlanName {
+  return (subscription?.plan as PlanName) || PLAN_NAMES.FREE;
+}
+
 export async function getCurrentPlanForOrg(
   organizationId: string
 ): Promise<PlanName> {
-  const subscription = await getActiveSubscription(organizationId);
-  if (!subscription) {
-    return PLAN_NAMES.FREE;
-  }
-  return (subscription.plan as PlanName) || PLAN_NAMES.FREE;
+  return planFromSubscription(await getActiveSubscription({ organizationId }));
 }
 
 export function getOrgMemberCount(organizationId: string): Promise<number> {
@@ -68,7 +89,7 @@ function getOrgPendingInvitationCount(organizationId: string): Promise<number> {
 export async function getOrgUsageStats(organizationId: string) {
   const [subscription, memberCount, pendingCount, storageMB] =
     await Promise.all([
-      getActiveSubscription(organizationId),
+      getActiveSubscription({ organizationId }),
       getOrgMemberCount(organizationId),
       getOrgPendingInvitationCount(organizationId),
       getOrgStorageUsage(organizationId),
@@ -83,7 +104,7 @@ export async function canOrgAddMember(
   organizationId: string
 ): Promise<{ allowed: boolean; reason?: string; remaining: number }> {
   const [subscription, memberCount, pendingCount] = await Promise.all([
-    getActiveSubscription(organizationId),
+    getActiveSubscription({ organizationId }),
     getOrgMemberCount(organizationId),
     getOrgPendingInvitationCount(organizationId),
   ]);

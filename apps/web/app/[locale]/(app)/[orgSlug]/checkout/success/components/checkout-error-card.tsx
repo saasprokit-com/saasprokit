@@ -8,6 +8,7 @@ import {
 } from "@repo/design-system/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { SUPPORT_EMAIL_HREF } from "../../support-email";
 import type { VerificationFailureReason } from "../verify-session";
 
 interface CheckoutErrorCardProps {
@@ -25,8 +26,6 @@ const ERROR_MESSAGES: Record<
   stripe_error:
     "We couldn't verify your checkout session with Stripe. Please contact support if this persists.",
 };
-
-const SUPPORT_HREF = "mailto:support@example.com";
 
 export function CheckoutErrorCard({
   reason,
@@ -57,7 +56,7 @@ export function CheckoutErrorCard({
           </Button>
           {reason === "stripe_error" && (
             <Button asChild className="flex-1">
-              <a href={SUPPORT_HREF}>Contact Support</a>
+              <a href={SUPPORT_EMAIL_HREF}>Contact Support</a>
             </Button>
           )}
         </div>
