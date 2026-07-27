@@ -14,7 +14,7 @@ always a `Promise` — `await` them (see `saasprokit:conventions`).
 1. Create `apps/web/app/[locale]/(app)/[orgSlug]/your-feature/page.tsx`.
    `params: Promise<{ locale: string; orgSlug: string }>`.
 2. Guard with `const org = await getActiveOrganization(orgSlug)` from
-   `@/servers/organization/queries` (`queries.ts:107`). It returns
+   `@/lib/organization/queries` (`queries.ts:107`). It returns
    `OrganizationContext` `{ organizationId, organizationName, organizationSlug,
    role, userId }`, **redirects anonymous users to sign-in** (calls `requireAuth`
    internally), and `notFound()`s non-members (identical response, so slugs can't

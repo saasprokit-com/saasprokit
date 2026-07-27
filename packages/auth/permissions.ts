@@ -56,10 +56,6 @@ export const RESOURCES = {
 
 export type ResourceName = (typeof RESOURCES)[keyof typeof RESOURCES];
 
-/**
- * Define permission statements for the admin plugin.
- * These define what actions can be performed on each resource at the platform level.
- */
 export const statement = {
   ...defaultStatements,
   // Organization permissions
@@ -72,14 +68,8 @@ export const statement = {
   content: ["create", "read", "update", "delete", "publish"],
 } as const;
 
-/**
- * Create the admin access control instance
- */
 export const ac = createAccessControl(statement);
 
-/**
- * Admin role - Full access to everything
- */
 export const adminRole = ac.newRole({
   ...adminAc.statements,
   organization: ["create", "read", "update", "delete"],
@@ -88,10 +78,6 @@ export const adminRole = ac.newRole({
   content: ["create", "read", "update", "delete", "publish"],
 });
 
-/**
- * Moderator role - Limited admin access
- * Can manage content and members but not billing or org settings
- */
 export const moderatorRole = ac.newRole({
   organization: ["read"],
   member: ["invite", "remove"],
@@ -99,35 +85,20 @@ export const moderatorRole = ac.newRole({
   content: ["create", "read", "update", "delete", "publish"],
 });
 
-/**
- * User role - Basic user access
- * Can view and manage their own content
- */
 export const userRole = ac.newRole({
   organization: ["read"],
   billing: ["view"],
   content: ["create", "read", "update"],
 });
 
-/**
- * Admin role definitions map - for programmatic access
- */
 export const adminRoleDefinitions = {
   [ADMIN_ROLES.ADMIN]: adminRole,
   [ADMIN_ROLES.MODERATOR]: moderatorRole,
   [ADMIN_ROLES.USER]: userRole,
 } as const;
 
-/**
- * Create the org access control instance from the plugin's default statements.
- * Cast to AccessControl to satisfy the organization plugin's type signature.
- */
 export const orgAc = createAccessControl(orgDefaultStatements) as AccessControl;
 
-/**
- * Owner role - Full organization control
- * Can manage all aspects of the organization including deletion
- */
 export const orgOwnerRole = orgAc.newRole({
   organization: ["read", "update", "delete"],
   member: ["read", "create", "update", "delete"],
@@ -135,10 +106,6 @@ export const orgOwnerRole = orgAc.newRole({
   team: ["create", "update", "delete"],
 });
 
-/**
- * Org admin role - Organization management without deletion
- * Can manage members and invitations but cannot delete the organization
- */
 export const orgAdminRole = orgAc.newRole({
   organization: ["read", "update"],
   member: ["read", "create", "update", "delete"],
@@ -146,41 +113,22 @@ export const orgAdminRole = orgAc.newRole({
   team: ["create", "update", "delete"],
 });
 
-/**
- * Org member role - Basic organization membership
- * Read-only access with no management capabilities
- */
 export const orgMemberRole = orgAc.newRole({
   organization: ["read"],
   member: ["read"],
   invitation: ["read"],
 });
 
-/**
- * Organization role definitions map - for programmatic access
- */
 export const orgRoleDefinitions = {
   [ORG_ROLES.OWNER]: orgOwnerRole,
   [ORG_ROLES.ADMIN]: orgAdminRole,
   [ORG_ROLES.MEMBER]: orgMemberRole,
 } as const;
 
-/**
- * Check an org role against a permission map, in memory.
- *
- * This is the same evaluation better-auth's `hasPermission` endpoint runs once its
- * own membership query returns the role — so callers that already hold the role
- * (pages, via getActiveOrganization) can skip that query entirely.
- *
- * Only pass a role read from the database. Never one supplied by the client: this
- * function trusts its argument completely.
- */
 export function canOrg(
   role: string,
   permissions: Record<string, string[]>
 ): boolean {
-  // A member's role column may hold several comma-separated roles; holding any one
-  // that grants the permission is enough (matches better-auth's own semantics).
   return role
     .split(",")
     .some(
@@ -190,17 +138,6 @@ export function canOrg(
     );
 }
 
-/**
- * Platform-tier analogue of {@link canOrg}: evaluate a User.role against an admin
- * permission map in memory.
- *
- * This is the same evaluation better-auth's admin `userHasPermission` endpoint runs,
- * so callers that already hold the fresh DB role can skip that round-trip. `User.role`
- * is nullable and defaults to "user"; a null/empty role is treated as the user role.
- *
- * Only pass a role read from the database — never one supplied by the client: this
- * function trusts its argument completely.
- */
 export function canAdmin(
   role: string | null | undefined,
   permissions: Record<string, string[]>
@@ -214,22 +151,11 @@ export function canAdmin(
     );
 }
 
-/**
- * Roles allowed to enter the /admin area at all.
- *
- * An explicit allowlist rather than a permission check: no single statement cleanly
- * separates moderator from user (both hold `organization: ["read"]`), so membership
- * of the staff area is defined by role name, and finer capabilities inside it are
- * gated per-action with {@link canAdmin}.
- */
 export const ADMIN_AREA_ROLES: readonly AdminRoleName[] = [
   ADMIN_ROLES.ADMIN,
   ADMIN_ROLES.MODERATOR,
 ];
 
-/**
- * Whether a User.role grants access to the /admin area. Pass a DB-sourced role only.
- */
 export function isAdminAreaRole(role: string | null | undefined): boolean {
   return (role || ADMIN_ROLES.USER)
     .split(",")

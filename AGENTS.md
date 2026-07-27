@@ -25,7 +25,7 @@ Detailed architecture docs and recipes live as Agent Skills (SKILL.md format) in
 
 - `auth` — Better Auth setup, dual admin + org RBAC, session helpers (`getServerSession`, `requireAuth`, `hasOrgPermission`), org-slug access (`getActiveOrganization`), server action auth (`verifySession`, `toActionError`)
 - `routing` — Route structure, edge middleware (`apps/web/proxy.ts`), centralized routes (`@/lib/routes`), locale handling
-- `data-access` — `servers/` vs `lib/` split in `apps/web`, Prisma workflow
+- `data-access` — the unified `lib/` server-side data layer in `apps/web` (domain queries/actions + foundation), Prisma workflow
 - `forms` — Form patterns (react-hook-form + zod + server actions), scaffold recipes for new forms and dialogs
 - `tables` — Server-driven data table pages (TanStack Table manual mode + nuqs URL state + Prisma), scaffold recipe for list/table pages
 - `billing` — Stripe integration, subscription plans, webhook config

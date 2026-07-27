@@ -1,6 +1,11 @@
 "use client";
 
-import { useSubscription } from "@repo/auth/use-subscription";
+import {
+  getCurrentPlan,
+  isSubscriptionActive,
+  isSubscriptionPendingCancel,
+} from "@repo/auth/helpers";
+import type { Subscription } from "@repo/database";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +28,7 @@ import {
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { PLAN_NAMES } from "@repo/utils/payment";
 import { Loader2, XCircle } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { cancelSubscriptionAction } from "../actions";
@@ -33,21 +38,25 @@ interface BillingActionsProps {
   errors: ActionErrorMessages;
   organizationId: string;
   organizationSlug: string;
+  subscription: Subscription | null;
 }
 
 export function BillingActions({
   errors,
   organizationId,
   organizationSlug,
+  subscription,
 }: BillingActionsProps) {
+  const router = useRouter();
   const { locale } = useParams<{ locale: string }>();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [isCanceling, startTransition] = useTransition();
 
-  const { planName, isPaid, isCanceled, refetch, subscription } =
-    useSubscription({
-      referenceId: organizationId,
-    });
+  const planName = getCurrentPlan(subscription);
+  const isPaid = planName !== PLAN_NAMES.FREE;
+  const isCanceled =
+    isSubscriptionActive(subscription) &&
+    isSubscriptionPendingCancel(subscription);
 
   const handleCancelSubscription = () => {
     startTransition(async () => {
@@ -73,7 +82,7 @@ export function BillingActions({
           description:
             "Your subscription will end at the current billing period.",
         });
-        refetch();
+        router.refresh();
         return;
       }
 
@@ -96,7 +105,6 @@ export function BillingActions({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-3">
-          {/* Manage Billing — Opens Stripe Customer Portal */}
           <ManageBillingForm
             errors={errors}
             locale={locale}
@@ -104,7 +112,6 @@ export function BillingActions({
             organizationSlug={organizationSlug}
           />
 
-          {/* Cancel Subscription Button */}
           {isPaid && !isCanceled && (
             <AlertDialog
               onOpenChange={setShowCancelDialog}

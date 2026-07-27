@@ -34,7 +34,6 @@ import {
   upgradeSubscriptionSchema,
 } from "./schemas";
 
-/** Absolute origin/{locale}/{orgSlug} base for Stripe return URLs (no `window` on the server). */
 function buildOrgBase(locale: string, organizationSlug: string): string {
   return `${env.NEXT_PUBLIC_APP_URL}/${locale}/${organizationSlug}`;
 }
@@ -45,9 +44,7 @@ export interface ChangePlanResult {
 }
 
 export async function changePlanAction(
-  input: ChangePlanRequest,
-  _prevState: ActionResult<ChangePlanResult> | null,
-  _formData: FormData
+  input: ChangePlanRequest
 ): Promise<ActionResult<ChangePlanResult>> {
   const logger = createRequestLogger({ action: "changePlan" });
 
@@ -139,14 +136,6 @@ export async function changePlanAction(
   }
 }
 
-/**
- * Start an upgrade (free→paid or paid→paid) via Better Auth's Stripe plugin.
- *
- * No `hasOrgPermission` pre-check: `upgradeSubscription` runs its own
- * `authorizeReference` (owner/admin) — a pre-check would be
- * redundant and weaker. Returns the Stripe Checkout / confirm URL for the client
- * to redirect to; for a new subscription that's the hosted Checkout page.
- */
 export async function upgradeSubscriptionAction(
   input: UpgradeSubscriptionInput
 ): Promise<ActionResult<{ url?: string }>> {
@@ -162,11 +151,8 @@ export async function upgradeSubscriptionAction(
         plan: validated.planName,
         annual: validated.billingInterval === BILLING_INTERVALS.YEARLY,
         referenceId: validated.organizationId,
-        // free→paid goes through Stripe Checkout (uses success/cancel URLs).
         successUrl: `${orgBase}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${orgBase}/checkout/canceled`,
-        // paid→paid updates the existing subscription via a Stripe-hosted confirm
-        // flow and returns here afterward — without this it falls back to "/".
         returnUrl: `${orgBase}/billing`,
       },
     });
@@ -180,10 +166,6 @@ export async function upgradeSubscriptionAction(
   }
 }
 
-/**
- * Returns the portal URL for the client to redirect to.
- * `createBillingPortal` authorizes the caller itself.
- */
 export async function openBillingPortalAction(
   input: OpenBillingPortalInput
 ): Promise<ActionResult<{ url?: string }>> {
@@ -210,11 +192,6 @@ export async function openBillingPortalAction(
   }
 }
 
-/**
- * `cancelSubscription` returns a Stripe portal URL for the confirmation flow
- * (client redirects to it). The benign "already scheduled to cancel" error is
- * treated as success so the UI settles.
- */
 export async function cancelSubscriptionAction(
   input: CancelSubscriptionInput
 ): Promise<ActionResult<{ url?: string }>> {
@@ -237,8 +214,6 @@ export async function cancelSubscriptionAction(
 
     return { success: true, data: { url: result?.url ?? undefined } };
   } catch (error) {
-    // Stripe already has the cancellation scheduled — local state had drifted.
-    // Surface as success so the UI reloads and settles (mirrors prior behavior).
     if (error instanceof Error && isAlreadyCancelingError(error.message)) {
       return { success: true };
     }

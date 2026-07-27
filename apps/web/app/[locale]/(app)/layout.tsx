@@ -7,7 +7,6 @@ interface AppLayoutProps {
 }
 
 export default async function AppLayout({ children }: AppLayoutProps) {
-  // React.cache-deduped with the child layouts' own getServerSession calls.
   const session = await getServerSession();
   const impersonating = Boolean(session?.session.impersonatedBy);
 

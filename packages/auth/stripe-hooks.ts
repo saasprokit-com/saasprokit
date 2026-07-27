@@ -114,7 +114,6 @@ export async function handleSubscriptionUpdate(args: {
       | undefined
   )?.data;
 
-  // No plan change — skip (status-only updates, period rollovers, etc.)
   if (!previousItems?.length) {
     return;
   }
@@ -166,8 +165,6 @@ export async function handleSubscriptionDeleted(args: {
     return;
   }
 
-  // Stripe v22.2+ moved `current_period_end` from the Subscription root onto
-  // each SubscriptionItem. Use the first item's period as the access cutoff.
   const periodEnd = args.stripeSubscription.items.data[0]?.current_period_end;
   const accessUntil = periodEnd
     ? new Date(periodEnd * MILLISECONDS_PER_SECOND).toLocaleDateString()

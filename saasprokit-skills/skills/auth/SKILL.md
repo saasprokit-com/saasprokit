@@ -17,7 +17,7 @@ Two independent RBAC systems run side by side: **platform admin roles** (staff w
 | `ActionResult<T>`, `getServerSession`, `requireAuth`, `hasOrgPermission` | `apps/web/lib/auth/auth.ts` |
 | `verifySession()` (server-action guard) | `apps/web/lib/auth/action-auth.ts:9` |
 | `toActionError`/`actionError`, `ActionErrorCode` | `apps/web/lib/auth/action-error.ts` |
-| Org-slug access: `getActiveOrganization`, `validateOrganizationMembership` | `apps/web/servers/organization/queries.ts` |
+| Org-slug access: `getActiveOrganization`, `validateOrganizationMembership` | `apps/web/lib/organization/queries.ts` |
 | Admin gates: `requireAdminArea`, `hasAdminPermission`, `AdminContext` | `apps/web/lib/auth/admin.ts` |
 | Server-side rate limiting for auth actions | `apps/web/lib/auth/rate-limit.ts` |
 
@@ -35,7 +35,7 @@ Exports: `@repo/auth/server` (auth instance), `@repo/auth/client` (hooks + `Sess
 - `requireAuth(returnTo?)` (`:22`) — session or redirect to sign-in.
 - `hasOrgPermission(orgId, { member: ["read"] })` (`:35`) → `Promise<boolean>` via `auth.api.hasPermission`.
 
-## Org access (`apps/web/servers/organization/queries.ts`)
+## Org access (`apps/web/lib/organization/queries.ts`)
 
 - `getActiveOrganization(slug)` (`:107`) is the **slug guard every org-scoped page calls**. Returns `OrganizationContext { organizationId, organizationName, organizationSlug, role, userId }`; redirects anon to sign-in, `notFound()` if the org is missing OR the user isn't a member (identical response so slugs can't be enumerated). (`validateOrgMembershipBySlug` does **not** exist.)
 - `validateOrganizationMembership(organizationId, userId)` (`:49`) → `Promise<boolean>` — a lower-level membership check, not the page guard.

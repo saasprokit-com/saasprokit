@@ -3,13 +3,13 @@
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
+import { ADMIN_AUDIT_ACTIONS, recordAdminAudit } from "@/lib/admin/audit";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import { hasAdminPermission } from "@/lib/auth/admin";
 import { type ActionResult, getServerSession } from "@/lib/auth/auth";
 import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { revalidateAdminPage } from "@/lib/infrastructure/revalidation";
 import { ADMIN_PAGES } from "@/lib/routes";
-import { ADMIN_AUDIT_ACTIONS, recordAdminAudit } from "@/servers/admin/audit";
 import { guardUserMutation } from "./guards";
 import {
   type BanUserInput,

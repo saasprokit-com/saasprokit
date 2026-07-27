@@ -4,8 +4,8 @@ import { createRequestLogger } from "@repo/logger/server";
 import { deleteFile, uploadFile } from "@repo/storage";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { handlePostUploadOperations } from "@/servers/files/actions";
-import { setupFileType, validateUploadedFile } from "@/servers/files/queries";
+import { handlePostUploadOperations } from "@/lib/files/actions";
+import { setupFileType, validateUploadedFile } from "@/lib/files/queries";
 
 export async function POST(request: Request) {
   const logger = createRequestLogger({

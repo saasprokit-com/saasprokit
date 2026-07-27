@@ -40,15 +40,16 @@ All billing config and logic lives in **`packages/auth`** (exports include
   → authorizeBillingAction` (`packages/auth/billing-authorize.ts:50` — members may
   read, owners/admins may mutate).
 - **Web helpers (server-only)**: `apps/web/lib/billing/subscription-queries.ts`
-  is the **only** file in that folder (`getOrgSubscription`,
-  `getActiveSubscription`, `getOrgUsageStats`, `canOrgAddMember`, …).
+  is the **only** file in that folder (`getActiveSubscription`,
+  `getCurrentPlanForOrg`, `getOrgUsageStats`, `getOrgMemberCount`,
+  `canOrgAddMember`, `canOrgAcceptMember`, `canUserCreateOrg`, …).
 - **Org billing page**: `apps/web/app/[locale]/(app)/[orgSlug]/billing/`. Its
   `actions.ts` server actions wrap `auth.api.*`: `upgradeSubscriptionAction`,
   `openBillingPortalAction`, and `cancelSubscriptionAction` return
   `ActionResult<{ url? }>` for the client to redirect to, while `changePlanAction`
   returns `ActionResult<ChangePlanResult>` (`{ action: "cancel" | "changed";
   blockReason? }`) to drive cancel-vs-change UI, not a redirect. Page gated by
-  `PermissionGate` `organization:["update"]` (`page.tsx:44`).
+  `OrgPermissionGate` `organization:["update"]` (`page.tsx:53`).
 
 ## Stripe webhook
 
@@ -70,8 +71,16 @@ Env vars (`apps/web/.env.example:25-30`): `STRIPE_SECRET_KEY`,
   path and has **no handler**. Do not point Stripe at it or reference it.
 - Plugin is **conditional** — miss `STRIPE_WEBHOOK_SECRET` and all billing
   endpoints silently 404.
-- Don't add `hasOrgPermission` before `auth.api.upgradeSubscription/cancel/portal`
-  — `authorizeReference` already enforces owner/admin (see `upgradeSubscriptionAction`).
+- Don't add `hasOrgPermission` before the thin `auth.api.*` wrappers
+  (`upgradeSubscriptionAction`, `openBillingPortalAction`, `cancelSubscriptionAction`) —
+  `authorizeReference` already enforces owner/admin. **`changePlanAction` is the
+  exception**: it gates with `hasOrgPermission(orgId, { organization: ["update"] })`
+  because it does authorization-sensitive pre-work (`guardDowngrade`, member/storage
+  reads) and can return early (cancel / blocked) *without* ever reaching `auth.api.*`.
+  No separate session-existence guard is needed there — `hasOrgPermission` throws
+  `UNAUTHORIZED` when unauthenticated (it runs behind Better Auth's `sessionMiddleware`);
+  the `getServerSession` call in `changePlanAction` exists only to source the `userId`
+  log field, so its `if (!session)` branch is effectively dead.
 - Edit plans in `packages/auth/plans.ts` — the single source of truth for tiers and tier math.
 
 See `saasprokit:auth`, `saasprokit:data-access`, `saasprokit:env-setup`.

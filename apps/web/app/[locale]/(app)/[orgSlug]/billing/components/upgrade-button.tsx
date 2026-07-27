@@ -8,27 +8,25 @@ import {
   type PlanName,
 } from "@repo/utils/payment";
 import { ArrowUp, Loader2 } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { upgradeSubscriptionAction } from "../actions";
 
-interface UpgradeFormProps {
+interface UpgradeButtonProps {
   billingInterval: BillingInterval;
   errors: ActionErrorMessages;
-  locale: string;
   organizationId: string;
-  organizationSlug: string;
   planName: Exclude<PlanName, "free">;
 }
 
-export function UpgradeForm({
+export function UpgradeButton({
   planName,
   organizationId,
-  organizationSlug,
   billingInterval,
-  locale,
   errors,
-}: UpgradeFormProps) {
+}: UpgradeButtonProps) {
+  const { locale, orgSlug } = useParams<{ locale: string; orgSlug: string }>();
   const [isPending, startTransition] = useTransition();
 
   const handleUpgrade = () => {
@@ -36,14 +34,12 @@ export function UpgradeForm({
       const result = await upgradeSubscriptionAction({
         planName,
         organizationId,
-        organizationSlug,
+        organizationSlug: orgSlug,
         locale,
         billingInterval,
       });
 
       if (result.success && result.data?.url) {
-        // Redirect to Stripe Checkout (new subscription) or the plan-change
-        // confirm flow (existing subscription).
         window.location.href = result.data.url;
         return;
       }

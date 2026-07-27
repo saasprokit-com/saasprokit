@@ -3,11 +3,6 @@ import { Prisma } from "./generated/client/client";
 const SLOW_QUERY_THRESHOLD_MS = 100;
 const ARGS_PREVIEW_LENGTH = 200;
 
-/**
- * Query logging extension for Prisma v7
- * Logs slow queries (>100ms) and query errors for monitoring.
- * Usage: client.$extends(queryLoggingExtension)
- */
 export const queryLoggingExtension = Prisma.defineExtension({
   query: {
     $allModels: {

@@ -1,3 +1,4 @@
+import type { Subscription } from "@repo/database";
 import {
   ACTIVE_STATUSES,
   PLAN_NAMES,
@@ -7,7 +8,7 @@ import {
   UNLIMITED,
 } from "@repo/utils/payment";
 import { getPlanLimits } from "./plans";
-import type { Subscription, UsageStats } from "./types";
+import type { UsageStats } from "./types";
 
 const PERCENTAGE_MULTIPLIER = 100;
 const STORAGE_GB_THRESHOLD = 1000; // MB threshold for displaying as GB
@@ -24,10 +25,6 @@ export function isSubscriptionActive(
   );
 }
 
-// Stripe expresses a scheduled cancellation via the legacy `cancelAtPeriodEnd`
-// boolean OR the newer `cancelAt` timestamp; either one means pending. Checking
-// only the boolean misses subs canceled via `cancelAt` (matches Better Auth's
-// own isPendingCancel).
 export function isSubscriptionPendingCancel(
   subscription: Subscription | null | undefined
 ): boolean {
@@ -37,10 +34,6 @@ export function isSubscriptionPendingCancel(
 }
 
 const ALREADY_CANCELING_MESSAGE = "already set to be canceled";
-
-// Stripe rejects cancelling a subscription already set to cancel; when local
-// state has drifted this surfaces as an error even though the user's intent is
-// already satisfied, so callers treat it as a no-op success.
 export function isAlreadyCancelingError(message: string | undefined): boolean {
   return message?.includes(ALREADY_CANCELING_MESSAGE) ?? false;
 }
@@ -78,7 +71,10 @@ export function calculateUsageStats(
       percentage:
         memberLimit === Number.POSITIVE_INFINITY
           ? 0
-          : Math.round((currentMembers / memberLimit) * PERCENTAGE_MULTIPLIER),
+          : Math.min(
+              PERCENTAGE_MULTIPLIER,
+              Math.round((currentMembers / memberLimit) * PERCENTAGE_MULTIPLIER)
+            ),
     },
     storage: {
       currentMB: currentStorageMB,
@@ -86,8 +82,11 @@ export function calculateUsageStats(
       percentage:
         storageLimit === Number.POSITIVE_INFINITY
           ? 0
-          : Math.round(
-              (currentStorageMB / storageLimit) * PERCENTAGE_MULTIPLIER
+          : Math.min(
+              PERCENTAGE_MULTIPLIER,
+              Math.round(
+                (currentStorageMB / storageLimit) * PERCENTAGE_MULTIPLIER
+              )
             ),
     },
   };
