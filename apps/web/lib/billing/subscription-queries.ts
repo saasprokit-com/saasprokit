@@ -1,6 +1,6 @@
 import "server-only";
 
-import { calculateUsageStats } from "@repo/auth/helpers";
+import { calculateUsageStats, getCurrentPlan } from "@repo/auth/helpers";
 import { ORG_ROLES } from "@repo/auth/permissions";
 import { getPlanLimits } from "@repo/auth/plans";
 import { database, type Subscription } from "@repo/database";
@@ -50,14 +50,10 @@ export async function getActiveSubscription(
   return findActiveSubscriptionById(organizationId);
 }
 
-function planFromSubscription(subscription: Subscription | null): PlanName {
-  return (subscription?.plan as PlanName) || PLAN_NAMES.FREE;
-}
-
 export async function getCurrentPlanForOrg(
   organizationId: string
 ): Promise<PlanName> {
-  return planFromSubscription(await getActiveSubscription({ organizationId }));
+  return getCurrentPlan(await getActiveSubscription({ organizationId }));
 }
 
 export function getOrgMemberCount(organizationId: string): Promise<number> {

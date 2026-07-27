@@ -55,9 +55,7 @@ export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
         >
           <ChangePlan
             errors={dict.errors.action}
-            locale={locale}
             organizationId={orgContext.organizationId}
-            organizationSlug={orgSlug}
           />
           <UsageStats organizationId={orgContext.organizationId} />
           {/* <BillingActions

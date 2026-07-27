@@ -44,9 +44,7 @@ export interface ChangePlanResult {
 }
 
 export async function changePlanAction(
-  input: ChangePlanRequest,
-  _prevState: ActionResult<ChangePlanResult> | null,
-  _formData: FormData
+  input: ChangePlanRequest
 ): Promise<ActionResult<ChangePlanResult>> {
   const logger = createRequestLogger({ action: "changePlan" });
 

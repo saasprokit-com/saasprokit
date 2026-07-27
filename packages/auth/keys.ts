@@ -4,6 +4,8 @@ import { z } from "zod";
 
 const BETTER_AUTH_SECRET_LENGTH = 32;
 
+const stripePriceId = z.string().startsWith("price_").optional();
+
 export const keys = () =>
   createEnv({
     server: {
@@ -21,17 +23,10 @@ export const keys = () =>
       // Stripe integration
       STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
       STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
-      // Stripe Checkout needs Price IDs (`price_…`), not Product IDs (`prod_…`).
-      STRIPE_PRO_PRICE_ID_MONTHLY: z.string().startsWith("price_").optional(),
-      STRIPE_PRO_PRICE_ID_ANNUAL: z.string().startsWith("price_").optional(),
-      STRIPE_ENTERPRISE_PRICE_ID_MONTHLY: z
-        .string()
-        .startsWith("price_")
-        .optional(),
-      STRIPE_ENTERPRISE_PRICE_ID_ANNUAL: z
-        .string()
-        .startsWith("price_")
-        .optional(),
+      STRIPE_PRO_PRICE_ID_MONTHLY: stripePriceId,
+      STRIPE_PRO_PRICE_ID_ANNUAL: stripePriceId,
+      STRIPE_ENTERPRISE_PRICE_ID_MONTHLY: stripePriceId,
+      STRIPE_ENTERPRISE_PRICE_ID_ANNUAL: stripePriceId,
 
       // Organization limits
       MAX_ORGS_PER_USER: z.coerce

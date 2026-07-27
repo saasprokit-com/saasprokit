@@ -1,7 +1,6 @@
 "use client";
 
-import { getCurrentPlan } from "@repo/auth/helpers";
-import { getAllPlans, getAnnualSavingsPercent } from "@repo/auth/plans";
+import type { PlanConfig } from "@repo/auth/plans";
 import type { Subscription } from "@repo/database";
 import { Badge } from "@repo/design-system/components/ui/badge";
 import {
@@ -13,28 +12,28 @@ import {
 } from "@repo/design-system/components/ui/card";
 import { Switch } from "@repo/design-system/components/ui/switch";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { type BillingInterval, PLAN_NAMES } from "@repo/utils/payment";
+import type { BillingInterval, PlanName } from "@repo/utils/payment";
 import { useState } from "react";
 import { toast } from "sonner";
 import { PlanCard } from "./plan-card";
 
 interface ChangePlanViewProps {
+  currentPlan: PlanName;
   errors: ActionErrorMessages;
-  locale: string;
   organizationId: string;
-  organizationSlug: string;
+  plans: PlanConfig[];
+  savingsPercent: number;
   subscription: Subscription | null;
 }
 
 export function ChangePlanView({
+  currentPlan,
   errors,
-  locale,
   organizationId,
-  organizationSlug,
+  plans,
+  savingsPercent,
   subscription,
 }: ChangePlanViewProps) {
-  const currentPlan = getCurrentPlan(subscription);
-
   const [billingPeriod, setBillingPeriod] =
     useState<BillingInterval>("monthly");
 
@@ -45,9 +44,6 @@ export function ChangePlanView({
       toast.success("Plan changed successfully");
     }
   };
-
-  const plans = getAllPlans();
-  const savingsPercent = getAnnualSavingsPercent(PLAN_NAMES.PRO);
 
   return (
     <Card>
@@ -98,10 +94,8 @@ export function ChangePlanView({
               currentPlan={currentPlan}
               errors={errors}
               key={plan.name}
-              locale={locale}
               onDowngradeSuccess={handleDowngradeSuccess}
               organizationId={organizationId}
-              organizationSlug={organizationSlug}
               plan={plan}
               subscription={subscription}
             />

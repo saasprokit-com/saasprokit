@@ -24,7 +24,6 @@ export interface PlanLimits {
   [key: string]: number | boolean;
 }
 
-// Mirrors `Stripe.Subscription.Status` from the Stripe SDK (all 8 statuses)
 export const SUBSCRIPTION_STATUS = {
   INCOMPLETE: "incomplete",
   INCOMPLETE_EXPIRED: "incomplete_expired",
@@ -39,10 +38,6 @@ export const SUBSCRIPTION_STATUS = {
 export type SubscriptionStatus =
   (typeof SUBSCRIPTION_STATUS)[keyof typeof SUBSCRIPTION_STATUS];
 
-// Statuses that grant a paid plan's entitlements. `trialing` is a valid in-trial
-// paid state; `past_due` keeps access during Stripe's dunning retries (Stripe
-// revokes at `unpaid`, not `past_due`). Access is dropped for unpaid / canceled /
-// incomplete / incomplete_expired / paused.
 export const ACTIVE_STATUSES = [
   SUBSCRIPTION_STATUS.ACTIVE,
   SUBSCRIPTION_STATUS.TRIALING,
@@ -83,10 +78,6 @@ export const FEATURE_KEYS = {
   ADVANCED_ANALYTICS: "advanced_analytics",
 } as const;
 
-// Stripe sends all monetary values in the smallest currency unit. For USD
-// that's cents — divide by 100 to render dollars. Zero-decimal currencies
-// (JPY, KRW, VND, …) skip this scaling entirely; revisit when we expand
-// beyond USD pricing.
 export const CENTS_PER_DOLLAR = 100;
 
 export const PRICING = {
@@ -112,10 +103,6 @@ export interface OrgCreationCheck {
   reason?: string;
 }
 
-/**
- * Pure business-logic check for org creation eligibility.
- * Both auth plugin callback and billing UI call this to stay in sync.
- */
 export function checkOrgCreationEligibility(
   ownedOrgCount: number,
   freePlanCount: number,

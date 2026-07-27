@@ -22,10 +22,9 @@ import {
   type PlanName,
 } from "@repo/utils/payment";
 import { AlertTriangle, ArrowDown, Loader2 } from "lucide-react";
-import { useActionState, useEffect, useState } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import type { ActionResult } from "@/lib/auth/auth";
-import { type ChangePlanResult, changePlanAction } from "../actions";
+import { changePlanAction } from "../actions";
 
 interface DowngradeButtonProps {
   billingInterval: BillingInterval;
@@ -47,42 +46,35 @@ export function DowngradeButton({
   onSuccess,
 }: DowngradeButtonProps) {
   const [open, setOpen] = useState(false);
+  const [serverBlockReason, setServerBlockReason] = useState<string>();
+  const [isPending, startTransition] = useTransition();
 
-  const boundAction = changePlanAction.bind(null, {
-    organizationId,
-    targetPlan: planName,
-    billingInterval,
-  });
+  const handleDowngrade = () => {
+    startTransition(async () => {
+      const result = await changePlanAction({
+        organizationId,
+        targetPlan: planName,
+        billingInterval,
+      });
 
-  const [state, formAction, isPending] = useActionState<
-    ActionResult<ChangePlanResult> | null,
-    FormData
-  >(boundAction, null);
-
-  const serverBlockReason = state?.success
-    ? state.data?.blockReason
-    : undefined;
-
-  useEffect(() => {
-    if (!state) {
-      return;
-    }
-
-    if (!state.success && state.error) {
-      toast.error(errors.changePlan, { description: state.error });
-      setOpen(false);
-      return;
-    }
-
-    if (state.success && state.data) {
-      if (state.data.blockReason) {
-        // Keep dialog open to show block reason
+      if (!result.success) {
+        toast.error(errors.changePlan, { description: result.error });
+        setOpen(false);
         return;
       }
+
+      if (result.data?.blockReason) {
+        // Keep dialog open to show block reason
+        setServerBlockReason(result.data.blockReason);
+        return;
+      }
+
       setOpen(false);
-      onSuccess?.(state.data.action);
-    }
-  }, [state, errors.changePlan, onSuccess]);
+      if (result.data) {
+        onSuccess?.(result.data.action);
+      }
+    });
+  };
 
   if (blockReason) {
     return (
@@ -130,22 +122,20 @@ export function DowngradeButton({
           <AlertDialogCancel>
             Keep {PLAN_DISPLAY_NAMES[currentPlan]}
           </AlertDialogCancel>
-          <form action={formAction}>
-            <Button
-              className="w-full"
-              disabled={isPending || !!serverBlockReason}
-              type="submit"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Downgrading...
-                </>
-              ) : (
-                "Yes, Downgrade"
-              )}
-            </Button>
-          </form>
+          <Button
+            disabled={isPending || !!serverBlockReason}
+            onClick={handleDowngrade}
+            type="button"
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Downgrading...
+              </>
+            ) : (
+              "Yes, Downgrade"
+            )}
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

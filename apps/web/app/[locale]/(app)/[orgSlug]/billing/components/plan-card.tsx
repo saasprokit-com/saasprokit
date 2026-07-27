@@ -20,16 +20,14 @@ import {
 } from "@repo/utils/payment";
 import { CheckCircle2 } from "lucide-react";
 import { DowngradeButton } from "./downgrade-button";
-import { UpgradeForm } from "./upgrade-form";
+import { UpgradeButton } from "./upgrade-button";
 
 interface PlanCardProps {
   billingPeriod: BillingInterval;
   currentPlan: PlanName;
   errors: ActionErrorMessages;
-  locale: string;
   onDowngradeSuccess: (action: "cancel" | "changed") => void;
   organizationId: string;
-  organizationSlug: string;
   plan: PlanConfig;
   subscription: Subscription | null | undefined;
 }
@@ -54,8 +52,6 @@ export function PlanCard({
   billingPeriod,
   subscription,
   organizationId,
-  organizationSlug,
-  locale,
   errors,
   onDowngradeSuccess,
 }: PlanCardProps) {
@@ -107,12 +103,10 @@ export function PlanCard({
         )}
 
         {isUpgrade && (plan.name === "pro" || plan.name === "enterprise") && (
-          <UpgradeForm
+          <UpgradeButton
             billingInterval={billingPeriod}
             errors={errors}
-            locale={locale}
             organizationId={organizationId}
-            organizationSlug={organizationSlug}
             planName={plan.name}
           />
         )}

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  getCurrentPlan,
   isSubscriptionActive,
   isSubscriptionPendingCancel,
 } from "@repo/auth/helpers";
@@ -25,7 +26,7 @@ import {
   CardTitle,
 } from "@repo/design-system/components/ui/card";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { PLAN_NAMES, type PlanName } from "@repo/utils/payment";
+import { PLAN_NAMES } from "@repo/utils/payment";
 import { Loader2, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -37,7 +38,6 @@ interface BillingActionsProps {
   errors: ActionErrorMessages;
   organizationId: string;
   organizationSlug: string;
-  planName: PlanName;
   subscription: Subscription | null;
 }
 
@@ -45,7 +45,6 @@ export function BillingActions({
   errors,
   organizationId,
   organizationSlug,
-  planName,
   subscription,
 }: BillingActionsProps) {
   const router = useRouter();
@@ -53,9 +52,11 @@ export function BillingActions({
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [isCanceling, startTransition] = useTransition();
 
-  const isActive = isSubscriptionActive(subscription);
-  const isPaid = isActive && planName !== PLAN_NAMES.FREE;
-  const isCanceled = isActive && isSubscriptionPendingCancel(subscription);
+  const planName = getCurrentPlan(subscription);
+  const isPaid = planName !== PLAN_NAMES.FREE;
+  const isCanceled =
+    isSubscriptionActive(subscription) &&
+    isSubscriptionPendingCancel(subscription);
 
   const handleCancelSubscription = () => {
     startTransition(async () => {

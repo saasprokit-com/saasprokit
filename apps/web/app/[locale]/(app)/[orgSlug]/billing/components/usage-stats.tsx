@@ -1,4 +1,3 @@
-import { getOrgUsageStats } from "@/lib/billing/subscription-queries";
 import { formatStorage } from "@repo/auth/helpers";
 import {
   Card,
@@ -9,15 +8,14 @@ import {
 } from "@repo/design-system/components/ui/card";
 import { Progress } from "@repo/design-system/components/ui/progress";
 import { HardDrive, Users } from "lucide-react";
+import { getOrgUsageStats } from "@/lib/billing/subscription-queries";
 
 interface UsageStatsType {
   organizationId: string;
-} 
+}
 
-export async function UsageStats({
-  organizationId
-}: UsageStatsType) {
-  const usageStats = await getOrgUsageStats(organizationId)
+export async function UsageStats({ organizationId }: UsageStatsType) {
+  const usageStats = await getOrgUsageStats(organizationId);
 
   return (
     <Card>
@@ -36,7 +34,9 @@ export async function UsageStats({
             </div>
             <span className="text-muted-foreground text-sm">
               {usageStats.members.current} /{" "}
-              {usageStats?.members?.limit ? "Unlimited" : usageStats.members.limit}
+              {usageStats?.members?.limit
+                ? "Unlimited"
+                : usageStats.members.limit}
             </span>
           </div>
           {!usageStats?.members?.limit && (
