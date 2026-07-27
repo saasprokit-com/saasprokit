@@ -11,7 +11,7 @@ interface ChangePlanProps {
 }
 
 export async function ChangePlan({ errors, organizationId }: ChangePlanProps) {
-  const subscription = await getActiveSubscription({ organizationId });
+  const subscription = await getActiveSubscription(organizationId);
 
   return (
     <ChangePlanView

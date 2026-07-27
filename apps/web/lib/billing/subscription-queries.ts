@@ -16,20 +16,7 @@ import { ATTACHABLE_TYPE, BYTES_PER_MB } from "@repo/utils/storage";
 import { cache } from "react";
 import { env } from "@/lib/env";
 
-export type OrgRef = { organizationId: string } | { orgSlug: string };
-
-async function resolveOrganizationId(ref: OrgRef): Promise<string | null> {
-  if ("organizationId" in ref) {
-    return ref.organizationId;
-  }
-  const org = await database.organization.findUnique({
-    where: { slug: ref.orgSlug },
-    select: { id: true },
-  });
-  return org?.id ?? null;
-}
-
-const findActiveSubscriptionById = cache(
+export const getActiveSubscription = cache(
   (organizationId: string): Promise<Subscription | null> =>
     database.subscription.findFirst({
       where: {
@@ -40,20 +27,10 @@ const findActiveSubscriptionById = cache(
     })
 );
 
-export async function getActiveSubscription(
-  ref: OrgRef
-): Promise<Subscription | null> {
-  const organizationId = await resolveOrganizationId(ref);
-  if (!organizationId) {
-    return null;
-  }
-  return findActiveSubscriptionById(organizationId);
-}
-
 export async function getCurrentPlanForOrg(
   organizationId: string
 ): Promise<PlanName> {
-  return getCurrentPlan(await getActiveSubscription({ organizationId }));
+  return getCurrentPlan(await getActiveSubscription(organizationId));
 }
 
 export function getOrgMemberCount(organizationId: string): Promise<number> {
@@ -85,7 +62,7 @@ function getOrgPendingInvitationCount(organizationId: string): Promise<number> {
 export async function getOrgUsageStats(organizationId: string) {
   const [subscription, memberCount, pendingCount, storageMB] =
     await Promise.all([
-      getActiveSubscription({ organizationId }),
+      getActiveSubscription(organizationId),
       getOrgMemberCount(organizationId),
       getOrgPendingInvitationCount(organizationId),
       getOrgStorageUsage(organizationId),
@@ -100,7 +77,7 @@ export async function canOrgAddMember(
   organizationId: string
 ): Promise<{ allowed: boolean; reason?: string; remaining: number }> {
   const [subscription, memberCount, pendingCount] = await Promise.all([
-    getActiveSubscription({ organizationId }),
+    getActiveSubscription(organizationId),
     getOrgMemberCount(organizationId),
     getOrgPendingInvitationCount(organizationId),
   ]);

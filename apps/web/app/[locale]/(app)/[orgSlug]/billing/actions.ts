@@ -65,9 +65,9 @@ export async function changePlanAction(
 
     const userLogger = logger.child({ userId: session.user.id });
 
-    const currentSubscription = await getActiveSubscription({
-      organizationId: validated.organizationId,
-    });
+    const currentSubscription = await getActiveSubscription(
+      validated.organizationId
+    );
     if (!currentSubscription) {
       return actionError("changePlan");
     }
