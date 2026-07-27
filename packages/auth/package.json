@@ -14,7 +14,11 @@
     "./permissions": "./permissions.ts",
     "./keys": "./keys.ts",
     "./plans": "./plans.ts",
-    "./stripe-client": "./stripe-client.ts"
+    "./stripe-client": "./stripe-client.ts",
+    "./guards": "./guards.ts",
+    "./helpers": "./helpers.ts",
+    "./types": "./types.ts",
+    "./use-subscription": "./use-subscription.ts"
   },
   "dependencies": {
     "@better-auth/i18n": "^1.6.25",
@@ -27,5 +31,11 @@
     "better-auth": "^1.6.25",
     "stripe": "^22.3.2",
     "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0"
   }
 }

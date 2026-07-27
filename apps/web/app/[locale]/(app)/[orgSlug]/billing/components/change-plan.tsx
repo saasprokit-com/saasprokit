@@ -1,5 +1,7 @@
 "use client";
 
+import { getAllPlans, getAnnualSavingsPercent } from "@repo/auth/plans";
+import { useSubscription } from "@repo/auth/use-subscription";
 import { Badge } from "@repo/design-system/components/ui/badge";
 import {
   Card,
@@ -10,8 +12,6 @@ import {
 } from "@repo/design-system/components/ui/card";
 import { Switch } from "@repo/design-system/components/ui/switch";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { useSubscription } from "@repo/payment/hooks";
-import { getAllPlans, getAnnualSavingsPercent } from "@repo/payment/plans";
 import { type BillingInterval, PLAN_NAMES } from "@repo/utils/payment";
 import { useParams } from "next/navigation";
 import { useCallback, useState } from "react";

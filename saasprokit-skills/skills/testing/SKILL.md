@@ -1,6 +1,6 @@
 ---
 name: testing
-description: Testing and CI for this repo — Vitest unit tests (app, @repo/auth, @repo/payment), the four Playwright E2E projects and their setup dependency chain, the accurate Turbo task graph, and CI's self-containment rules. Read before writing, running, or debugging tests or editing GitHub Actions workflows.
+description: Testing and CI for this repo — Vitest unit tests (app, @repo/auth), the four Playwright E2E projects and their setup dependency chain, the accurate Turbo task graph, and CI's self-containment rules. Read before writing, running, or debugging tests or editing GitHub Actions workflows.
 ---
 
 # Testing & CI
@@ -11,9 +11,8 @@ E2E (real Postgres + Maildev + a built app). They share no runner and no config.
 ## Commands
 
 ```bash
-pnpm test                        # all unit tests via `turbo test` (app, @repo/auth, @repo/payment)
+pnpm test                        # all unit tests via `turbo test` (app, @repo/auth)
 pnpm --filter @repo/auth test    # one package's unit tests (vitest run)
-pnpm --filter @repo/payment test # vitest run --passWithNoTests
 pnpm --filter app test           # web-app unit tests (vitest run)
 pnpm --filter app test:e2e       # all Playwright projects
 pnpm --filter app test:e2e:ui    # Playwright UI mode
@@ -27,15 +26,12 @@ pnpm --filter app test:e2e:app   # --project=authenticated
 ## Layout — unit tests
 
 Runner: Vitest 4.x, one `vitest.config.mts` per runnable package. Tests are
-co-located as `**/*.test.{ts,tsx}` (`apps/web/vitest.config.mts:10`). Three
+co-located as `**/*.test.{ts,tsx}` (`apps/web/vitest.config.mts:10`). Two
 packages have configs + a `test` script: **app** (`environment: "jsdom"`,
-`apps/web/vitest.config.mts:8`), **@repo/auth** and **@repo/payment** (both
-`environment: "node"`). Real files:
-`packages/auth/permissions.test.ts`, `billing-authorize.test.ts`,
-`ba-i18n.test.ts`; `packages/payment/helpers.test.ts`;
+`apps/web/vitest.config.mts:8`) and **@repo/auth** (`environment: "node"`).
+Real files: `packages/auth/permissions.test.ts`, `billing-authorize.test.ts`,
+`ba-i18n.test.ts`, `helpers.test.ts`;
 `apps/web/lib/routes.test.ts`, `lib/parsers.test.ts`, `lib/auth/action-error.test.ts`.
-Note @repo/payment uses `--passWithNoTests` (`packages/payment/package.json:6`)
-as a safety net even though `helpers.test.ts` exists.
 
 ## Layout — E2E (Playwright)
 

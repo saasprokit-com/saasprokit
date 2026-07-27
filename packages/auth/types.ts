@@ -1,4 +1,3 @@
-import type { PlanConfig } from "@repo/auth/plans";
 import {
   type FEATURE_KEYS,
   PLAN_NAMES,
@@ -6,6 +5,7 @@ import {
   type SubscriptionStatus,
 } from "@repo/utils/payment";
 import { z } from "zod";
+import type { PlanConfig } from "./plans";
 
 export interface Subscription {
   cancelAt: Date | null;

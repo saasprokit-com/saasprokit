@@ -207,7 +207,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Unit Tests | Partial | 70 tests: 37 in `@repo/auth`, 13 in `@repo/payment`, 20 in `apps/web`; `@repo/storage`/`@repo/utils` have no test setup at all |
+| Unit Tests | Partial | 70 tests: 50 in `@repo/auth`, 20 in `apps/web`; `@repo/storage`/`@repo/utils` have no test setup at all |
 | E2E Tests | Implemented | 341 Playwright tests across 26 spec files (see [Testing](/docs/testing)) |
 | Integration Tests | Planned | Not yet implemented |
 
@@ -225,9 +225,8 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 
 | Package | Features |
 |---------|----------|
-| `@repo/auth` | Authentication, dual RBAC (admin + org), permissions, 2FA, magic links, email OTP |
+| `@repo/auth` | Authentication, dual RBAC (admin + org), permissions, 2FA, magic links, email OTP, Stripe billing, subscriptions, plan management, checkout |
 | `@repo/database` | Prisma schema, client, types, migrations |
-| `@repo/payment` | Stripe billing, subscriptions, plan management, checkout |
 | `@repo/email` | 21 React Email templates with Resend + Nodemailer |
 | `@repo/design-system` | 50+ shadcn/ui components, 11 landing page blocks, dark mode |
 | `@repo/storage` | File uploads with local + S3 providers, quota management |

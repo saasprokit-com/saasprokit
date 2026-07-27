@@ -14,10 +14,8 @@ export interface GuardResult {
   upgradeUrl?: string;
 }
 
-/**
- * Blocks past_due / incomplete subscriptions because Stripe's retry logic
- * doesn't compose cleanly with mid-flight plan changes.
- */
+// Blocks past_due / incomplete subscriptions because Stripe's retry logic
+// doesn't compose cleanly with mid-flight plan changes.
 export function guardDowngrade(
   subscription: Subscription | null | undefined,
   targetPlan: PlanName,

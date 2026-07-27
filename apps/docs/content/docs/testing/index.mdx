@@ -10,7 +10,7 @@ This project uses two levels of testing:
 | Type | Tool | Location | Test Cases | Status |
 |------|------|----------|------------|--------|
 | **E2E Tests** | Playwright | `apps/web/e2e/` | **341** | Comprehensive |
-| **Unit Tests** | Vitest | `packages/auth/`, `packages/payment/`, `apps/web/` | **70** | Growing |
+| **Unit Tests** | Vitest | `packages/auth/`, `apps/web/` | **70** | Growing |
 | **Integration Tests** | — | — | **0** | Not started |
 
 **Total test cases: 411**
@@ -37,8 +37,7 @@ See [Unit Tests](/docs/testing/unit-tests) for details. `@repo/storage` and `@re
 
 | Package/App | Files | Test Cases |
 |---------|------|------------|
-| `@repo/auth` | 2 | 37 |
-| `@repo/payment` | 1 | 13 |
+| `@repo/auth` | 3 | 50 |
 | `apps/web` | 3 | 20 |
 
 ### Uncovered Areas
@@ -96,7 +95,7 @@ Unit tests are co-located with their source files:
 ```
 packages/auth/permissions.test.ts
 packages/auth/billing-authorize.test.ts
-packages/payment/helpers.test.ts
+packages/auth/helpers.test.ts
 apps/web/lib/routes.test.ts
 apps/web/lib/parsers.test.ts
 apps/web/app/[locale]/(app)/[orgSlug]/checkout/success/verify-session.test.ts

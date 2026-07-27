@@ -3,14 +3,14 @@ title: Unit Tests
 description: Catalog of Vitest unit tests and coverage gaps
 ---
 
-**Total: 70 test cases** across 6 files in 3 packages/apps (`@repo/auth`: 37, `@repo/payment`: 13, `apps/web`: 20).
+**Total: 70 test cases** across 6 files in 2 packages/apps (`@repo/auth`: 50, `apps/web`: 20).
 
 ## Other test files
 
 | File | Tests | Covers |
 |------|-------|--------|
 | `packages/auth/billing-authorize.test.ts` | 11 | `isOrgMember`, `canManageBilling`, `authorizeBillingAction` — the allow/deny matrix from [Billing Authorization](/docs/payment/billing-authorization), including the suspended-member and unknown-action cases |
-| `packages/payment/helpers.test.ts` | 13 | `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, and `isSubscriptionActive` across all 8 Stripe subscription statuses |
+| `packages/auth/helpers.test.ts` | 13 | `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, and `isSubscriptionActive` across all 8 Stripe subscription statuses |
 | `apps/web/lib/routes.test.ts` | 6 | `orgRoutes`, `accountRoutes`, and the `AUTH_ROUTE_PREFIXES`/`PUBLIC_ROUTE_PREFIXES` middleware prefixes |
 | `apps/web/lib/parsers.test.ts` | 5 | `sortingStateParser` (table sort-state URL serialization) |
 | `apps/web/app/.../checkout/success/verify-session.test.ts` | 9 | `verifyCheckoutSession` — the independent post-checkout verification described in [Subscribe & Checkout](/docs/payment/subscribe-and-checkout) |
@@ -105,9 +105,9 @@ These are pure functions with no external dependencies — ideal for unit testin
 
 | Function | Location | Why |
 |----------|----------|-----|
-| `getPlanLimits()` | `packages/payment/plans.ts` | Core billing logic, multiple plan tiers |
-| `isPlanHigherTier()` | `packages/payment/plans.ts` | Upgrade/downgrade decisions |
-| `getAnnualSavingsPercent()` | `packages/payment/plans.ts` | Pricing display |
+| `getPlanLimits()` | `packages/auth/plans.ts` | Core billing logic, multiple plan tiers |
+| `isPlanHigherTier()` | `packages/auth/plans.ts` | Upgrade/downgrade decisions |
+| `getAnnualSavingsPercent()` | `packages/auth/plans.ts` | Pricing display |
 | `checkOrgCreationEligibility()` | `packages/utils/payment.ts` | Org creation eligibility |
 | `generateSlug()` | `packages/utils/slug.ts` | Used across org creation |
 | `slugSchema` | `packages/utils/slug.ts` | Reserved slug validation |

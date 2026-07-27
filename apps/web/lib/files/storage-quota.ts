@@ -5,8 +5,8 @@ import "server-only";
  * Enforces per-organization storage limits based on subscription plan
  */
 
+import { getPlanLimits } from "@repo/auth/plans";
 import type { createRequestLogger } from "@repo/logger/server";
-import { getPlanLimits } from "@repo/payment/plans";
 import { BYTES_PER_MB } from "@repo/utils/storage";
 import {
   getCurrentPlanForReference,

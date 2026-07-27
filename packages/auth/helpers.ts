@@ -24,12 +24,10 @@ export function isSubscriptionActive(
   );
 }
 
-/**
- * Stripe expresses pending cancellation via the legacy `cancelAtPeriodEnd`
- * boolean OR the newer `cancelAt` timestamp; either
- * one means pending cancellation. This matches Better Auth's own isPendingCancel
- * — checking only the boolean misses subs canceled via `cancelAt`.
- */
+// Stripe expresses a scheduled cancellation via the legacy `cancelAtPeriodEnd`
+// boolean OR the newer `cancelAt` timestamp; either one means pending. Checking
+// only the boolean misses subs canceled via `cancelAt` (matches Better Auth's
+// own isPendingCancel).
 export function isSubscriptionPendingCancel(
   subscription: Subscription | null | undefined
 ): boolean {
@@ -40,19 +38,13 @@ export function isSubscriptionPendingCancel(
 
 const ALREADY_CANCELING_MESSAGE = "already set to be canceled";
 
-/**
- * Detect Better Auth's benign "already scheduled to cancel" error. Stripe
- * rejects cancelling a subscription that is already set to cancel; when local
- * state has drifted from Stripe this surfaces as an error even though the
- * user's intent is already satisfied, so callers treat it as a no-op success.
- */
+// Stripe rejects cancelling a subscription already set to cancel; when local
+// state has drifted this surfaces as an error even though the user's intent is
+// already satisfied, so callers treat it as a no-op success.
 export function isAlreadyCancelingError(message: string | undefined): boolean {
   return message?.includes(ALREADY_CANCELING_MESSAGE) ?? false;
 }
 
-/**
- * Get the current plan name (defaults to free if no active subscription)
- */
 export function getCurrentPlan(
   subscription: Subscription | null | undefined
 ): PlanName {
@@ -109,6 +101,20 @@ export function formatStorage(mb: number): string {
     return `${(mb / STORAGE_GB_THRESHOLD).toFixed(FRACTION_DIGITS)} GB`;
   }
   return `${mb} MB`;
+}
+
+export function formatDate(
+  date: Date | string | null,
+  locale = "en-US"
+): string {
+  if (!date) {
+    return "N/A";
+  }
+  return new Date(date).toLocaleDateString(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 export function getStatusDisplayText(

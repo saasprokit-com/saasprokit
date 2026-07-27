@@ -2,17 +2,14 @@ import { writeFileSync } from "node:fs";
 
 import { test as setup } from "@playwright/test";
 
-import { localePath, TEST_CONFIG } from "../fixtures/test-config";
+import { BASE_URL, TEST_CONFIG } from "../fixtures/test-config";
+import type { Organization } from "../helpers/org-api";
 
 const ORG_SLUG_PATH = "e2e/.auth/org-slug.txt";
-const NEW_ORG_RE = /\/new-org/;
-const ORG_SLUG_RE = /^\/([a-z0-9-]+)\/?$/;
-const ORG_SLUG_LOCALE_RE = /\/en\/([a-z0-9-]+)/;
-const CREATE_RE = /create/i;
+const DEFAULT_SLUG = "e2e-test-org";
 
-setup("create organization", async ({ page }) => {
-  // Check if the database is healthy before attempting org setup
-  const healthRes = await page.request.get("/api/health");
+setup("create organization", async ({ request }) => {
+  const healthRes = await request.get("/api/health");
   const health = await healthRes.json().catch(() => null);
   const dbHealthy = health?.checks?.database?.status === "ok";
 
@@ -21,39 +18,37 @@ setup("create organization", async ({ page }) => {
     return;
   }
 
-  // Navigate to org selection — will redirect to default org or new-org page
-  await page.goto(localePath("/org"));
-
-  // Wait for any navigation to complete (org dashboard, new-org page, or auth redirect)
-  await page.waitForLoadState("networkidle");
-
-  const currentPath = new URL(page.url()).pathname;
-
-  // If we're on an auth page, auth setup didn't work — skip
-  if (currentPath.includes("/auth/")) {
-    setup.skip(true, "Not authenticated — cannot create organization");
-    return;
+  const listRes = await request.get("/api/auth/organization/list");
+  if (!listRes.ok()) {
+    throw new Error(`organization/list failed: ${listRes.status()}`);
   }
+  const orgs: Organization[] = await listRes.json();
+  let org = orgs.find((o) => o.name === TEST_CONFIG.org.name);
 
-  // If we're on the new-org page, create the org
-  if (currentPath.includes("/account/new-org")) {
-    await page.locator("input").first().fill(TEST_CONFIG.org.name);
-    await page.getByRole("button", { name: CREATE_RE }).click();
-    await page.waitForURL((url) => !NEW_ORG_RE.test(url.pathname), {
-      timeout: TEST_CONFIG.timeouts.navigation,
+  if (!org) {
+    const createRes = await request.post("/api/auth/organization/create", {
+      headers: { origin: BASE_URL },
+      data: { name: TEST_CONFIG.org.name, slug: DEFAULT_SLUG },
     });
+
+    if (createRes.ok()) {
+      org = (await createRes.json()) as Organization;
+    } else {
+      const retryRes = await request.post("/api/auth/organization/create", {
+        headers: { origin: BASE_URL },
+        data: {
+          name: TEST_CONFIG.org.name,
+          slug: `${DEFAULT_SLUG}-${Date.now()}`,
+        },
+      });
+      if (!retryRes.ok()) {
+        throw new Error(
+          `organization/create failed twice: ${await retryRes.text()}`
+        );
+      }
+      org = (await retryRes.json()) as Organization;
+    }
   }
 
-  // Extract the org slug from the final URL.
-  // With rewriteDefault, URLs are /<orgSlug> or /en/<orgSlug> (non-default locale).
-  const finalPath = new URL(page.url()).pathname;
-  // Try without locale prefix first, then with
-  const slugMatch =
-    finalPath.match(ORG_SLUG_RE) || finalPath.match(ORG_SLUG_LOCALE_RE);
-  const orgSlug = slugMatch?.[1];
-  const reserved = new Set(["account", "org", "auth", "api", "en"]);
-
-  if (orgSlug && !reserved.has(orgSlug)) {
-    writeFileSync(ORG_SLUG_PATH, orgSlug);
-  }
+  writeFileSync(ORG_SLUG_PATH, org.slug);
 });

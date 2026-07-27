@@ -7,7 +7,7 @@ This page documents how an organization changes its subscription tier and how ca
 
 ## The four decisions
 
-The billing UI reduces every tier transition to one of four outcomes, decided by comparing the current plan against the target plan with `comparePlans(currentPlan, targetPlan)` in `packages/payment/plans.ts` (which returns `"upgrade" | "downgrade" | "same"` based on `PLAN_ORDER` index):
+The billing UI reduces every tier transition to one of four outcomes, decided by comparing the current plan against the target plan with `comparePlans(currentPlan, targetPlan)` in `packages/auth/plans.ts` (which returns `"upgrade" | "downgrade" | "same"` based on `PLAN_ORDER` index):
 
 | Decision | Trigger | Mechanism |
 | --- | --- | --- |
@@ -43,7 +43,7 @@ Downgrades are a **server action**, not a client plugin call, because they must 
 1. Validates input with `changePlanRequestSchema` (`schemas.ts`) — `organizationId`, `targetPlan` enum, optional `billingInterval` defaulting to monthly.
 2. Authorizes with `hasOrgPermission(organizationId, { organization: ["update"] })`.
 3. Loads the active subscription via `getActiveSubscription` and re-runs `comparePlans`; if the direction is **not** `"downgrade"` it rejects with `actionError("changePlan")` (defense in depth — the UI already filtered).
-4. Runs `guardDowngrade(subscription, targetPlan, memberCount, storageMB)` from `packages/payment/guards.ts`.
+4. Runs `guardDowngrade(subscription, targetPlan, memberCount, storageMB)` from `packages/auth/guards.ts`.
 5. If `targetPlan === free`, returns `{ action: "cancel" }` — downgrade to free is expressed as a **cancellation**, not a plan swap.
 6. Otherwise calls `auth.api.upgradeSubscription({ plan, annual, referenceId, scheduleAtPeriodEnd: true })`. The `scheduleAtPeriodEnd: true` flag is what makes a paid→paid downgrade take effect at the end of the current period rather than immediately.
 
@@ -57,7 +57,7 @@ On a successful downgrade, `ChangePlan.handleDowngradeSuccess` shows `"Plan chan
 
 ## Cancellation
 
-Cancellation lives in `BillingActions` (`billing-actions.tsx`) and the `useCancel` hook (`packages/payment/hooks.ts`). The Cancel button only renders when `isPaid && !isCanceled`. Clicking it opens an `AlertDialog`; confirming calls `cancel()`, which invokes `subscription.cancel()` with the org `referenceId`, the `stripeSubscriptionId`, and a `returnUrl` back to the billing page.
+Cancellation lives in `BillingActions` (`billing-actions.tsx`) and the `useCancel` hook (`packages/auth/use-subscription.ts`). The Cancel button only renders when `isPaid && !isCanceled`. Clicking it opens an `AlertDialog`; confirming calls `cancel()`, which invokes `subscription.cancel()` with the org `referenceId`, the `stripeSubscriptionId`, and a `returnUrl` back to the billing page.
 
 Stripe does **not** delete the subscription immediately — it schedules cancellation at period end, so the row stays `active` with a pending-cancel marker until the period boundary passes, at which point a webhook flips the status to `canceled`.
 
@@ -138,9 +138,9 @@ stateDiagram-v2
 - `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/billing-actions.tsx` — Cancel dialog, `useCancel`, canceled-state copy
 - `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/current-plan.tsx` — cancel banner, `periodEnd` messaging
 - `apps/web/lib/billing/subscription-queries.ts` — `getActiveSubscription`, `getOrgMemberCount`, `getOrgStorageUsage`
-- `packages/payment/hooks.ts` — `useSubscription` (`isCanceled`), `useCancel` (error surfacing)
-- `packages/payment/helpers.ts` — `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getStatusColor`, `formatDate`
-- `packages/payment/guards.ts` — `guardDowngrade`
-- `packages/payment/plans.ts` — `comparePlans`, `isPlanHigherTier`
-- `packages/payment/types.ts` — `Subscription` (`cancelAt`, `cancelAtPeriodEnd`), `SubscriptionSchema`
+- `packages/auth/use-subscription.ts` — `useSubscription` (`isCanceled`), `useCancel` (error surfacing)
+- `packages/auth/helpers.ts` — `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getStatusColor`, `formatDate`
+- `packages/auth/guards.ts` — `guardDowngrade`
+- `packages/auth/plans.ts` — `comparePlans`, `isPlanHigherTier`
+- `packages/auth/types.ts` — `Subscription` (`cancelAt`, `cancelAtPeriodEnd`), `SubscriptionSchema`
 - `packages/auth/client.ts` — `subscription` client export (`upgrade` / `cancel`)

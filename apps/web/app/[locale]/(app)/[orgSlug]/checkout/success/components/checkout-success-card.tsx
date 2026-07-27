@@ -1,3 +1,4 @@
+import { PLANS } from "@repo/auth/plans";
 import { Button } from "@repo/design-system/components/ui/button";
 import {
   Card,
@@ -6,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/design-system/components/ui/card";
-import { PLANS } from "@repo/payment/plans";
 import type { PlanName } from "@repo/utils/payment";
 import { CheckCircle } from "lucide-react";
 import Link from "next/link";

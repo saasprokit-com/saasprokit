@@ -263,9 +263,6 @@ importers:
       '@repo/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@repo/payment':
-        specifier: workspace:*
-        version: link:../../packages/payment
       '@repo/seo':
         specifier: workspace:*
         version: link:../../packages/seo
@@ -384,12 +381,19 @@ importers:
       better-auth:
         specifier: ^1.6.25
         version: 1.6.25(@opentelemetry/api@1.9.0)(@prisma/client@7.9.0(prisma@7.9.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(typescript@5.9.3))(mysql2@3.15.3)(next@16.2.11(@opentelemetry/api@1.9.0)(@playwright/test@1.62.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(pg@8.19.0)(prisma@7.9.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vitest@4.1.10(@opentelemetry/api@1.9.0)(@types/node@26.1.1)(jsdom@29.1.1(@noble/hashes@2.0.1))(vite@8.1.5(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.1)(yaml@2.9.0)))
+      react:
+        specifier: ^18.0.0 || ^19.0.0
+        version: 19.2.8
       stripe:
         specifier: ^22.3.2
         version: 22.3.2(@types/node@26.1.1)
       zod:
         specifier: ^4.4.3
         version: 4.4.3
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.17
 
   packages/database:
     dependencies:
@@ -644,25 +648,6 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
-
-  packages/payment:
-    dependencies:
-      '@repo/auth':
-        specifier: workspace:*
-        version: link:../auth
-      '@repo/utils':
-        specifier: workspace:*
-        version: link:../utils
-      react:
-        specifier: ^18.0.0 || ^19.0.0
-        version: 19.2.8
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@types/react':
-        specifier: ^19.2.17
-        version: 19.2.17
 
   packages/seo:
     dependencies:
@@ -4656,9 +4641,6 @@ packages:
 
   '@types/react@19.2.17':
     resolution: {integrity: sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw==}
-
-  '@types/react@19.2.7':
-    resolution: {integrity: sha512-MWtvHrGZLFttgeEj28VXHxpmwYbor/ATPYbBfSFZEIRK0ecCFLl2Qo55z52Hss+UV9CRN7trSeq1zbgx7YDWWg==}
 
   '@types/resolve@1.20.6':
     resolution: {integrity: sha512-A4STmOXPhMUtHH+S6ymgE2GiBSMqf4oTvcQZMcHzokuTLVYzXTB8ttjcgxOVaAp2lGwEdzZ0J+cRbbeevQj1UQ==}
@@ -12759,10 +12741,6 @@ snapshots:
     dependencies:
       csstype: 3.2.3
 
-  '@types/react@19.2.7':
-    dependencies:
-      csstype: 3.2.3
-
   '@types/resolve@1.20.6': {}
 
   '@types/unist@2.0.11': {}
@@ -12830,12 +12808,12 @@ snapshots:
 
   '@visx/event@4.0.1-alpha.0':
     dependencies:
-      '@types/react': 19.2.7
+      '@types/react': 19.2.17
       '@visx/point': 4.0.1-alpha.0
 
   '@visx/grid@4.0.1-alpha.0(react@19.2.8)':
     dependencies:
-      '@types/react': 19.2.7
+      '@types/react': 19.2.17
       '@visx/curve': 4.0.1-alpha.0
       '@visx/group': 4.0.1-alpha.0(react@19.2.8)
       '@visx/point': 4.0.1-alpha.0
@@ -12846,7 +12824,7 @@ snapshots:
 
   '@visx/group@4.0.1-alpha.0(react@19.2.8)':
     dependencies:
-      '@types/react': 19.2.7
+      '@types/react': 19.2.17
       classnames: 2.5.1
       react: 19.2.8
 
@@ -12855,7 +12833,7 @@ snapshots:
   '@visx/responsive@4.0.1-alpha.0(react@19.2.8)':
     dependencies:
       '@types/lodash': 4.17.16
-      '@types/react': 19.2.7
+      '@types/react': 19.2.17
       lodash: 4.17.21
       react: 19.2.8
 
@@ -12866,7 +12844,7 @@ snapshots:
   '@visx/shape@4.0.1-alpha.0(react@19.2.8)':
     dependencies:
       '@types/lodash': 4.17.16
-      '@types/react': 19.2.7
+      '@types/react': 19.2.17
       '@visx/curve': 4.0.1-alpha.0
       '@visx/group': 4.0.1-alpha.0(react@19.2.8)
       '@visx/scale': 4.0.1-alpha.0
