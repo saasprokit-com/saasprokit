@@ -7,22 +7,31 @@ import {
   CardTitle,
 } from "@repo/design-system/components/ui/card";
 import { Progress } from "@repo/design-system/components/ui/progress";
+import { UNLIMITED } from "@repo/utils/payment";
 import { HardDrive, Users } from "lucide-react";
-import { getOrgUsageStats } from "@/lib/billing/subscription-queries";
+import {
+  getCurrentPlanForOrg,
+  getOrgUsageStats,
+} from "@/lib/billing/subscription-queries";
 
 interface UsageStatsType {
   organizationId: string;
 }
 
 export async function UsageStats({ organizationId }: UsageStatsType) {
-  const usageStats = await getOrgUsageStats(organizationId);
+  const [usageStats, planName] = await Promise.all([
+    getOrgUsageStats(organizationId),
+    getCurrentPlanForOrg(organizationId),
+  ]);
+  const membersUnlimited = usageStats.members.limit === UNLIMITED;
+  const storageUnlimited = usageStats.storage.limitMB === UNLIMITED;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Usage</CardTitle>
         <CardDescription>
-          Your current resource usage on the {usageStats.members.current} plan
+          Your current resource usage on the {planName} plan
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -34,18 +43,15 @@ export async function UsageStats({ organizationId }: UsageStatsType) {
             </div>
             <span className="text-muted-foreground text-sm">
               {usageStats.members.current} /{" "}
-              {usageStats?.members?.limit
-                ? "Unlimited"
-                : usageStats.members.limit}
+              {membersUnlimited ? "Unlimited" : usageStats.members.limit}
             </span>
           </div>
-          {!usageStats?.members?.limit && (
-            <Progress className="h-2" value={usageStats.members.percentage} />
-          )}
-          {usageStats?.members?.limit && (
+          {membersUnlimited ? (
             <div className="rounded bg-muted px-3 py-2 text-muted-foreground text-sm">
               Unlimited team members on your plan
             </div>
+          ) : (
+            <Progress className="h-2" value={usageStats.members.percentage} />
           )}
         </div>
 
@@ -58,18 +64,17 @@ export async function UsageStats({ organizationId }: UsageStatsType) {
             </div>
             <span className="text-muted-foreground text-sm">
               {formatStorage(usageStats.storage.currentMB)} /{" "}
-              {usageStats.storage?.limitMB
+              {storageUnlimited
                 ? "Unlimited"
                 : formatStorage(usageStats.storage.limitMB)}
             </span>
           </div>
-          {!usageStats.storage?.limitMB && (
-            <Progress className="h-2" value={usageStats.storage.percentage} />
-          )}
-          {usageStats.storage?.limitMB && (
+          {storageUnlimited ? (
             <div className="rounded bg-muted px-3 py-2 text-muted-foreground text-sm">
               Unlimited storage on your plan
             </div>
+          ) : (
+            <Progress className="h-2" value={usageStats.storage.percentage} />
           )}
         </div>
       </CardContent>

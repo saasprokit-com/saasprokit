@@ -8,6 +8,7 @@ const stripePriceId = z.string().startsWith("price_").optional();
 
 export const keys = () =>
   createEnv({
+    emptyStringAsUndefined: true,
     server: {
       // Better Auth core
       BETTER_AUTH_SECRET: z.string().min(BETTER_AUTH_SECRET_LENGTH),

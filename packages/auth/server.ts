@@ -27,11 +27,6 @@ import {
   TWO_FACTOR_OTP_PERIOD_MINUTES,
 } from "@repo/utils/auth";
 import { SECONDS_PER_DAY, SECONDS_PER_MINUTE } from "@repo/utils/date";
-import {
-  ACTIVE_STATUSES,
-  checkOrgCreationEligibility,
-  PLAN_NAMES,
-} from "@repo/utils/payment";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import {
@@ -48,6 +43,7 @@ import { organization } from "better-auth/plugins/organization";
 import { twoFactor } from "better-auth/plugins/two-factor";
 import { authorizeBillingAction } from "./billing-authorize";
 import { keys } from "./keys";
+import { canUserCreateOrg } from "./org-eligibility";
 import {
   ADMIN_ROLES,
   ac,
@@ -67,118 +63,12 @@ import {
   handleSubscriptionDeleted,
   handleSubscriptionUpdate,
 } from "./stripe-hooks";
+import { cleanUpUserBeforeDelete } from "./user-deletion";
 
 const env = keys();
 
 const MAX_ORGS_PER_USER = env.MAX_ORGS_PER_USER;
 const baseUrl = env.BETTER_AUTH_URL || "http://localhost:3000";
-
-async function canUserCreateOrg(userId: string): Promise<boolean> {
-  const memberships = await database.member.findMany({
-    where: { userId, role: ORG_ROLES.OWNER },
-    select: { organizationId: true },
-  });
-
-  const orgIds = memberships.map((m) => m.organizationId);
-  const orgSubs = await database.subscription.findMany({
-    where: {
-      referenceId: { in: orgIds },
-      status: { in: [...ACTIVE_STATUSES] },
-    },
-  });
-
-  let freePlanCount = 0;
-  for (const sub of orgSubs) {
-    if (sub.plan === PLAN_NAMES.FREE) {
-      freePlanCount++;
-    }
-  }
-
-  return checkOrgCreationEligibility(
-    memberships.length,
-    freePlanCount,
-    MAX_ORGS_PER_USER
-  ).allowed;
-}
-
-// Stripe subscription statuses that are already inactive and need no cancelling.
-const INACTIVE_STRIPE_STATUSES = new Set([
-  "canceled",
-  "incomplete",
-  "incomplete_expired",
-]);
-
-async function cancelActiveStripeSubscriptions(
-  customerId: string | null
-): Promise<void> {
-  if (!(stripeClient && customerId)) {
-    return;
-  }
-
-  for await (const sub of stripeClient.subscriptions.list({
-    customer: customerId,
-    status: "all",
-  })) {
-    if (!INACTIVE_STRIPE_STATUSES.has(sub.status)) {
-      await stripeClient.subscriptions.cancel(sub.id);
-    }
-  }
-}
-
-async function cleanUpUserBeforeDelete(user: {
-  id: string;
-  stripeCustomerId?: string | null;
-}): Promise<void> {
-  const userId = user.id;
-
-  const ownedOrgs = await database.member.findMany({
-    where: { userId, role: ORG_ROLES.OWNER },
-    select: { organizationId: true },
-  });
-
-  const soloOrgs: { id: string; stripeCustomerId: string | null }[] = [];
-  for (const { organizationId } of ownedOrgs) {
-    const otherOwners = await database.member.count({
-      where: { organizationId, role: ORG_ROLES.OWNER, userId: { not: userId } },
-    });
-    if (otherOwners > 0) {
-      continue; // Org keeps an owner after this user leaves.
-    }
-
-    const otherMembers = await database.member.count({
-      where: { organizationId, userId: { not: userId } },
-    });
-    if (otherMembers > 0) {
-      throw new APIError("BAD_REQUEST", {
-        code: "TRANSFER_ORGANIZATION_OWNERSHIP",
-        message:
-          "Transfer ownership of your organizations before deleting your account.",
-      });
-    }
-
-    const org = await database.organization.findUnique({
-      where: { id: organizationId },
-      select: { stripeCustomerId: true },
-    });
-    soloOrgs.push({
-      id: organizationId,
-      stripeCustomerId: org?.stripeCustomerId ?? null,
-    });
-  }
-
-  await database.$transaction([
-    database.subscription.deleteMany({ where: { referenceId: userId } }),
-    ...soloOrgs.flatMap((org) => [
-      database.organization.delete({ where: { id: org.id } }),
-      database.subscription.deleteMany({ where: { referenceId: org.id } }),
-    ]),
-  ]);
-
-  await cancelActiveStripeSubscriptions(user.stripeCustomerId ?? null);
-  for (const org of soloOrgs) {
-    await cancelActiveStripeSubscriptions(org.stripeCustomerId);
-  }
-}
 
 export const auth = betterAuth({
   appName: env.NEXT_PUBLIC_APP_NAME,
@@ -377,7 +267,8 @@ export const auth = betterAuth({
       creatorRole: ORG_ROLES.OWNER,
       memberRole: ORG_ROLES.MEMBER,
       organizationLimit: MAX_ORGS_PER_USER,
-      allowUserToCreateOrganization: (user) => canUserCreateOrg(user.id),
+      allowUserToCreateOrganization: (user) =>
+        canUserCreateOrg(user.id, MAX_ORGS_PER_USER),
       invitationExpiresIn: INVITATION_EXPIRES_IN_DAYS * SECONDS_PER_DAY,
       cancelPendingInvitationsOnReInvite: false,
       async sendInvitationEmail(data) {
