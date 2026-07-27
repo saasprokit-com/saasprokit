@@ -8,8 +8,8 @@ import {
 } from "@repo/design-system/components/ui/card";
 import { getDictionary } from "@repo/internationalization";
 import { OrgPermissionGate } from "@/components/org-permission-gate";
+import { getActiveOrganization } from "@/lib/organization/queries";
 import { orgRoutes } from "@/lib/routes";
-import { getActiveOrganization } from "@/servers/organization/queries";
 import { ChangePlan } from "./components/change-plan";
 import { UsageStats } from "./components/usage-stats";
 

@@ -3,8 +3,8 @@ import { SetBreadcrumbs } from "@repo/design-system/components/layout/breadcrumb
 import { ContentSection } from "@repo/design-system/components/layout/content-section";
 import { getDictionary } from "@repo/internationalization";
 import { Suspense } from "react";
+import { getActiveOrganization } from "@/lib/organization/queries";
 import { orgRoutes } from "@/lib/routes";
-import { getActiveOrganization } from "@/servers/organization/queries";
 import { getMemberPermissions } from "../utils";
 import { InvitationsTable } from "./components/invitations-table";
 import { getInvitations } from "./queries";

@@ -3,8 +3,8 @@ import {
   buildLocalePath,
   revalidateOrgPage,
 } from "@/lib/infrastructure/revalidation";
+import { getActiveOrganization } from "@/lib/organization/queries";
 import { ORG_PAGES, orgRoutes } from "@/lib/routes";
-import { getActiveOrganization } from "@/servers/organization/queries";
 import { CheckoutErrorCard } from "./components/checkout-error-card";
 import { CheckoutProcessingCard } from "./components/checkout-processing-card";
 import { CheckoutSuccessCard } from "./components/checkout-success-card";

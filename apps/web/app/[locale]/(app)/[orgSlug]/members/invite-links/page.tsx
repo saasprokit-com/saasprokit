@@ -4,8 +4,8 @@ import { ContentSection } from "@repo/design-system/components/layout/content-se
 import { getDictionary } from "@repo/internationalization";
 import { Suspense } from "react";
 import { env } from "@/lib/env";
+import { getActiveOrganization } from "@/lib/organization/queries";
 import { orgRoutes } from "@/lib/routes";
-import { getActiveOrganization } from "@/servers/organization/queries";
 import { getMemberPermissions } from "../utils";
 import { InviteLinksTable } from "./components/invite-links-table";
 import { getInviteLinks } from "./queries";

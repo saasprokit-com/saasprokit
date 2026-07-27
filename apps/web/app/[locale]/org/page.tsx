@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
+import { getDefaultOrganization } from "@/lib/organization/queries";
 import { PAGE_ROUTES } from "@/lib/routes";
-import { getDefaultOrganization } from "@/servers/organization/queries";
 
 interface OrgRedirectPageProps {
   params: Promise<{ locale: string }>;

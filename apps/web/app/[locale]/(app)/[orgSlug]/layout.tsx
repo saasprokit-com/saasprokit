@@ -9,11 +9,11 @@ import {
 import type { ReactNode } from "react";
 import { ActivityTracker } from "@/components/activity-tracker";
 import { requireAuth } from "@/lib/auth/auth";
-import { adminRoutes } from "@/lib/routes";
 import {
   getActiveOrganization,
   getUserOrganizations,
-} from "@/servers/organization/queries";
+} from "@/lib/organization/queries";
+import { adminRoutes } from "@/lib/routes";
 import { OrgSidebar } from "./components/org-sidebar";
 
 interface OrgLayoutProps {

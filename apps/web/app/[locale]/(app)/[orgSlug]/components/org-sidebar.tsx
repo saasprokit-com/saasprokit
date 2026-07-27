@@ -26,8 +26,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { signOutAction } from "@/lib/auth/actions";
+import type { UserOrganization } from "@/lib/organization/queries";
 import { orgRoutes, PAGE_ROUTES } from "@/lib/routes";
-import type { UserOrganization } from "@/servers/organization/queries";
 import { setDefaultWorkspaceAction } from "../actions";
 
 interface OrgSidebarProps {

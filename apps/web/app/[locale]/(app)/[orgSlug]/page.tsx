@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/design-system/components/ui/card";
-import { getActiveOrganization } from "@/servers/organization/queries";
+import { getActiveOrganization } from "@/lib/organization/queries";
 import { getOrgDashboardData } from "./queries";
 
 interface OrgDashboardPageProps {

@@ -9,7 +9,7 @@ import {
   buildLocalePath,
   getLocaleFromRequest,
 } from "@/lib/infrastructure/revalidation";
-import { validateOrganizationMembership } from "@/servers/organization/queries";
+import { validateOrganizationMembership } from "@/lib/organization/queries";
 
 export async function setDefaultWorkspaceAction(
   organizationId: string

@@ -3,8 +3,8 @@ import { SetBreadcrumbs } from "@repo/design-system/components/layout/breadcrumb
 import { ContentSection } from "@repo/design-system/components/layout/content-section";
 import { getDictionary } from "@repo/internationalization";
 import { notFound } from "next/navigation";
+import { getActiveOrganization } from "@/lib/organization/queries";
 import { orgRoutes } from "@/lib/routes";
-import { getActiveOrganization } from "@/servers/organization/queries";
 import { OrgSettingsForm } from "./components/org-settings-form";
 import { getOrgSettingsData } from "./queries";
 
