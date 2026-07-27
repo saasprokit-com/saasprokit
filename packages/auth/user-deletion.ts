@@ -1,13 +1,14 @@
 import { database } from "@repo/database";
+import { SUBSCRIPTION_STATUS } from "@repo/utils/payment";
 import { APIError } from "better-auth/api";
 import { ORG_ROLES } from "./permissions";
 import { stripeClient } from "./stripe-client";
 
 // Stripe subscription statuses that are already inactive and need no cancelling.
-const INACTIVE_STRIPE_STATUSES = new Set([
-  "canceled",
-  "incomplete",
-  "incomplete_expired",
+const INACTIVE_STRIPE_STATUSES = new Set<string>([
+  SUBSCRIPTION_STATUS.CANCELED,
+  SUBSCRIPTION_STATUS.INCOMPLETE,
+  SUBSCRIPTION_STATUS.INCOMPLETE_EXPIRED,
 ]);
 
 export async function cancelActiveStripeSubscriptions(
