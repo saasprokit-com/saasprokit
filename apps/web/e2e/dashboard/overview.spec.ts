@@ -16,8 +16,7 @@ test.describe("Organization Dashboard", () => {
   }) => {
     await page.goto(orgPath("/"));
     const sidebar = page.locator("aside, [data-sidebar]").first();
-    // "Members" is a collapsible group trigger (button), not a direct link;
-    // its sub-links (Members/Invitations/Invite Links) unmount while closed.
+    // "Members" is a collapsible group trigger (button), not a link — click it to reveal the sub-links.
     const membersTrigger = sidebar.getByRole("button", { name: "Members" });
     await expect(membersTrigger).toBeVisible({
       timeout: TEST_CONFIG.timeouts.navigation,

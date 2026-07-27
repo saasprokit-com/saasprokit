@@ -37,7 +37,6 @@ test.describe("Sign Up", () => {
       .fill("DifferentPassword123!");
     await page.getByRole("button", { name: /Create Account/i }).click();
 
-    // Exact string from the zod .refine() in app/[locale]/auth/schemas.ts
     await expect(page.getByText("Passwords don't match")).toBeVisible();
   });
 

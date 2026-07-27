@@ -4,7 +4,6 @@ const SIGN_IN_RE = /^Sign In$/i;
 const CREATE_ACCOUNT_RE = /Create Account/i;
 const SIGN_IN_PATH_RE = /\/auth\/sign-in/;
 
-/** Fill and submit the sign-in form. Does not wait for the resulting redirect. */
 export async function fillSignInForm(
   page: Page,
   email: string,
@@ -15,7 +14,6 @@ export async function fillSignInForm(
   await page.getByRole("button", { name: SIGN_IN_RE }).click();
 }
 
-/** Fill and submit the sign-up form. Does not wait for the resulting redirect. */
 export async function fillSignUpForm(
   page: Page,
   params: { name: string; email: string; password: string }
@@ -31,7 +29,6 @@ export async function fillSignUpForm(
   await page.getByRole("button", { name: CREATE_ACCOUNT_RE }).click();
 }
 
-/** Assert that visiting `path` while unauthenticated redirects to sign-in. */
 export async function expectRedirectToSignIn(
   page: Page,
   path: string

@@ -46,9 +46,6 @@ test.describe("Sign In", () => {
     await page.locator("[data-sidebar='menu-button']").last().click();
     await page.getByText("Sign out").click();
 
-    // handleSignOut awaits signOutAction() (clears the session) then
-    // router.push(`/${locale}`); wait for that navigation away from /account so
-    // the cookie is cleared before we probe a protected route.
     await page.waitForURL((url) => !url.pathname.includes("/account"), {
       timeout: TEST_CONFIG.timeouts.navigation,
     });

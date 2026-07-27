@@ -68,9 +68,7 @@ test.describe("Invite Accept — real invitation flow", () => {
       );
       await page.goto(localePath(`/invite/accept?token=${invitationId}`));
 
-      // Scope to the mismatch banner paragraph itself: the invitation-email
-      // also appears in the "Invited as: {email}" details line above it, so
-      // a page-wide getByText(targetEmail) hits both and violates strict mode.
+      // Scope to the banner: targetEmail also appears in the "Invited as:" line, so a page-wide match violates strict mode.
       const mismatchBanner = page.getByText(/this invitation was sent to/i);
       await expect(mismatchBanner).toBeVisible();
       await expect(mismatchBanner).toContainText(targetEmail);
@@ -102,7 +100,6 @@ test.describe("Invite Accept — real invitation flow", () => {
     let invitationId: string | undefined;
 
     try {
-      // Verify the invitee (so they can sign in); this signs them in on `page`.
       const { verified } = await ensureVerifiedUser(page.request, invitee);
       expect(verified).toBe(true);
 
@@ -121,8 +118,6 @@ test.describe("Invite Accept — real invitation flow", () => {
         .getByRole("button", { name: "Accept Invitation" })
         .click();
 
-      // The Free org is at its 1-member cap, so acceptInvitationAction's
-      // seat-cap guard rejects the accept with the member-limit error.
       await expect(
         page.getByText(/reached its member limit/i)
       ).toBeVisible({ timeout: TEST_CONFIG.timeouts.action });

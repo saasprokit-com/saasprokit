@@ -57,8 +57,6 @@ test.describe("Password Reset", () => {
   }) => {
     test.skip(!maildevUp, "Maildev is not available");
 
-    // A dedicated throwaway user, never the shared TEST_CONFIG.user — resetting
-    // its password can't break sign-in tests that depend on the shared password.
     const resetUser = {
       name: "E2E Reset User",
       email: `e2e-reset-${Date.now()}@example.com`,

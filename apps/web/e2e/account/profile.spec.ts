@@ -45,21 +45,20 @@ test.describe("Account Profile", () => {
     ).toBeVisible({ timeout: TEST_CONFIG.timeouts.toast });
 
     await page.reload();
-    await expect(page.getByLabel(/name/i).first()).toHaveValue(updatedName, {
+    await expect(nameInput).toHaveValue(updatedName, {
       timeout: TEST_CONFIG.timeouts.navigation,
     });
 
-    await page.getByLabel(/name/i).first().clear();
-    await page.getByLabel(/name/i).first().fill(TEST_CONFIG.user.name);
-    await page.getByRole("button", { name: /save changes/i }).click();
+    await nameInput.clear();
+    await nameInput.fill(TEST_CONFIG.user.name);
+    await saveBtn.click();
     await expect(
       page.getByText(/profile updated successfully/i)
     ).toBeVisible({ timeout: TEST_CONFIG.timeouts.toast });
 
     await page.reload();
-    await expect(page.getByLabel(/name/i).first()).toHaveValue(
-      TEST_CONFIG.user.name,
-      { timeout: TEST_CONFIG.timeouts.navigation }
-    );
+    await expect(nameInput).toHaveValue(TEST_CONFIG.user.name, {
+      timeout: TEST_CONFIG.timeouts.navigation,
+    });
   });
 });

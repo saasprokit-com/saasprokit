@@ -3,10 +3,6 @@ import { expect, localePath, TEST_CONFIG, test } from "../fixtures/fixtures";
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
-// Note: the standalone /auth/magic-link error page was removed from the app
-// (commit e834862); magic-link now lives only in the sign-in page's tab, so
-// there is no failure-state page left to test — the request→click flow below
-// is the real coverage.
 test("Should sign in When the magic link is requested, emailed, and clicked", async ({
   page,
 }) => {

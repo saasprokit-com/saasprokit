@@ -2,19 +2,11 @@ import { writeFileSync } from "node:fs";
 
 import { test as setup } from "@playwright/test";
 
-import { TEST_CONFIG } from "../fixtures/test-config";
+import { BASE_URL, TEST_CONFIG } from "../fixtures/test-config";
+import type { Organization } from "../helpers/org-api";
 
 const ORG_SLUG_PATH = "e2e/.auth/org-slug.txt";
 const DEFAULT_SLUG = "e2e-test-org";
-// Better Auth's CSRF origin check requires an Origin header on cookie-bearing
-// POSTs; Playwright's `request` fixture doesn't send one like a real browser tab.
-const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
-
-interface Organization {
-  id: string;
-  name: string;
-  slug: string;
-}
 
 setup("create organization", async ({ request }) => {
   const healthRes = await request.get("/api/health");
@@ -42,7 +34,6 @@ setup("create organization", async ({ request }) => {
     if (createRes.ok()) {
       org = (await createRes.json()) as Organization;
     } else {
-      // Slug collision on a shared/dev database — retry once with a unique slug.
       const retryRes = await request.post("/api/auth/organization/create", {
         headers: { origin: BASE_URL },
         data: {
