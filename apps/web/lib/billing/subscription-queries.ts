@@ -55,7 +55,11 @@ export async function getOrgStorageUsage(
 
 function getOrgPendingInvitationCount(organizationId: string): Promise<number> {
   return database.invitation.count({
-    where: { organizationId, status: INVITATION_STATUS.PENDING },
+    where: {
+      organizationId,
+      status: INVITATION_STATUS.PENDING,
+      expiresAt: { gt: new Date() },
+    },
   });
 }
 
@@ -101,6 +105,30 @@ export async function canOrgAddMember(
   }
 
   return { allowed: true, remaining };
+}
+
+// Accepting an emailed invite converts an already-reserved seat (the invite is
+// itself one of the pending rows), so it checks members-only — counting pending
+// here would double-count the invite being accepted and block the final seat.
+export async function canOrgAcceptMember(
+  organizationId: string
+): Promise<{ allowed: boolean; reason?: string }> {
+  const [subscription, memberCount] = await Promise.all([
+    getActiveSubscription(organizationId),
+    getOrgMemberCount(organizationId),
+  ]);
+
+  const planName = (subscription?.plan as PlanName) || PLAN_NAMES.FREE;
+  const limits = getPlanLimits(planName);
+
+  if (limits.maxMembers === -1 || memberCount < limits.maxMembers) {
+    return { allowed: true };
+  }
+
+  return {
+    allowed: false,
+    reason: `You have reached the maximum of ${limits.maxMembers} members on your ${planName} plan`,
+  };
 }
 
 export async function canUserCreateOrg(

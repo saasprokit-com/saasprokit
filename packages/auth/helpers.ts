@@ -71,7 +71,10 @@ export function calculateUsageStats(
       percentage:
         memberLimit === Number.POSITIVE_INFINITY
           ? 0
-          : Math.round((currentMembers / memberLimit) * PERCENTAGE_MULTIPLIER),
+          : Math.min(
+              PERCENTAGE_MULTIPLIER,
+              Math.round((currentMembers / memberLimit) * PERCENTAGE_MULTIPLIER)
+            ),
     },
     storage: {
       currentMB: currentStorageMB,
@@ -79,8 +82,11 @@ export function calculateUsageStats(
       percentage:
         storageLimit === Number.POSITIVE_INFINITY
           ? 0
-          : Math.round(
-              (currentStorageMB / storageLimit) * PERCENTAGE_MULTIPLIER
+          : Math.min(
+              PERCENTAGE_MULTIPLIER,
+              Math.round(
+                (currentStorageMB / storageLimit) * PERCENTAGE_MULTIPLIER
+              )
             ),
     },
   };

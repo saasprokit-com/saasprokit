@@ -9,7 +9,10 @@ import type { z } from "zod";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
 import { getServerSession } from "@/lib/auth/auth";
-import { canOrgAddMember } from "@/lib/billing/subscription-queries";
+import {
+  canOrgAcceptMember,
+  canOrgAddMember,
+} from "@/lib/billing/subscription-queries";
 import { acceptInvitationSchema, acceptInviteLinkSchema } from "./schemas";
 
 async function handleExistingMember(
@@ -74,8 +77,7 @@ export async function acceptInvitationAction(
       );
     }
 
-    // Check member capacity before accepting
-    const memberCheck = await canOrgAddMember(invitation.organizationId);
+    const memberCheck = await canOrgAcceptMember(invitation.organizationId);
     if (!memberCheck.allowed) {
       return actionError("memberLimitReached");
     }
