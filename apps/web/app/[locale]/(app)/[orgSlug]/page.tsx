@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/design-system/components/ui/card";
+import { formatDate } from "@repo/design-system/lib/date";
 import { getActiveOrganization } from "@/lib/organization/queries";
 import { getOrgDashboardData } from "./queries";
 
@@ -75,7 +76,7 @@ export default async function OrgDashboardPage({
             <CardContent>
               <div className="font-bold text-2xl">
                 {organization?.createdAt
-                  ? new Date(organization.createdAt).toLocaleDateString()
+                  ? formatDate(organization.createdAt)
                   : "N/A"}
               </div>
               <p className="text-muted-foreground text-xs">Organization age</p>

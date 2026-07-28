@@ -9,12 +9,13 @@ A multi-organization SaaS dashboard built with Next.js 16, pnpm workspaces, and 
 ## Tech Stack
 
 - **Framework** — Next.js 16 (App Router, Server Components)
-- **Auth** — Better Auth (email/password, social, magic links, 2FA)
+- **Auth & Billing** — Better Auth (email/password, social, magic links, 2FA) + Stripe subscription billing per organization
 - **Database** — Prisma ORM + PostgreSQL (Neon)
-- **Payments** — Stripe (subscription billing per organization)
-- **UI** — shadcn/ui + Radix + Tailwind CSS
+- **UI** — shadcn/ui + Radix + Tailwind CSS 4
+- **Forms & Tables** — React Hook Form + Zod, TanStack Table + nuqs URL state
 - **Email** — React Email + Resend
-- **Monorepo** — pnpm workspaces + Turborepo
+- **Testing** — Vitest (unit) + Playwright (E2E)
+- **Tooling** — Biome (via ultracite), pnpm workspaces + Turborepo
 
 ## Structure
 
@@ -27,11 +28,10 @@ saasprokit/
 │   ├── storybook/  # Component library (port 6006)
 │   └── studio/     # Prisma Studio (port 3005)
 └── packages/
-    ├── auth/              # Better Auth config + RBAC
+    ├── auth/              # Better Auth config + dual RBAC + Stripe billing
     ├── database/          # Prisma schema + client
     ├── design-system/     # shadcn/ui components
     ├── email/             # React Email templates + Resend
-    ├── payment/           # Stripe integration
     ├── internationalization/  # i18n support
     ├── utils/             # Shared utilities
     ├── logger/            # Structured logging (Pino)
@@ -69,10 +69,6 @@ pnpm test                     # Unit tests (Vitest)
 pnpm --filter app test:e2e    # E2E tests (Playwright)
 pnpm build                    # Build all
 ```
-
-## Contributing
-
-See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for guidelines.
 
 ## License
 

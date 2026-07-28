@@ -1,4 +1,5 @@
 import type { Subscription } from "@repo/database";
+import { PERCENTAGE_MULTIPLIER } from "@repo/utils/number";
 import {
   ACTIVE_STATUSES,
   PLAN_NAMES,
@@ -10,7 +11,6 @@ import {
 import { getPlanLimits } from "./plans";
 import type { UsageStats } from "./types";
 
-const PERCENTAGE_MULTIPLIER = 100;
 const STORAGE_GB_THRESHOLD = 1000; // MB threshold for displaying as GB
 const FRACTION_DIGITS = 1; // For storage formatting
 
@@ -100,20 +100,6 @@ export function formatStorage(mb: number): string {
     return `${(mb / STORAGE_GB_THRESHOLD).toFixed(FRACTION_DIGITS)} GB`;
   }
   return `${mb} MB`;
-}
-
-export function formatDate(
-  date: Date | string | null,
-  locale = "en-US"
-): string {
-  if (!date) {
-    return "N/A";
-  }
-  return new Date(date).toLocaleDateString(locale, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
 }
 
 export function getStatusDisplayText(

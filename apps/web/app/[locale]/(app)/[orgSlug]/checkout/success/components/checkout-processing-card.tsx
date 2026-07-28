@@ -14,12 +14,6 @@ interface CheckoutProcessingCardProps {
   readonly billingHref: string;
 }
 
-/**
- * Shown when the Stripe Checkout session exists and looks complete but the
- * payment is not yet marked `paid` (or the BA webhook hasn't written the
- * Subscription row yet). Most users land here for ~1-3s during the webhook
- * race — rendering it as a hard error would be misleading.
- */
 export function CheckoutProcessingCard({
   billingHref,
 }: CheckoutProcessingCardProps) {

@@ -2,7 +2,7 @@
 
 import { DataTableContent } from "@repo/design-system/components/data-table/data-table-content";
 import { DataTablePagination } from "@repo/design-system/components/data-table/pagination";
-import { use, useMemo } from "react";
+import { use } from "react";
 
 import { useDataTable } from "@/hooks/use-data-table";
 import type { GetListPayload } from "@/types/queries";
@@ -22,7 +22,7 @@ const filterFields = [
 export function OrgsTable({ orgsPromise }: OrgsTableProps) {
   const { data, totalPage } = use(orgsPromise);
 
-  const columns = useMemo(() => getOrgColumns(), []);
+  const columns = getOrgColumns();
 
   const { table } = useDataTable({
     data,

@@ -55,8 +55,6 @@ async function validateOrgLogoPermissions(
     };
   }
 
-  // CRITICAL: Validate organization exists before attempting file creation
-  // This prevents orphaned file records if org is deleted between validation and upload
   const organization = await database.organization.findUnique({
     where: { id: organizationId },
     select: { id: true },
@@ -76,7 +74,6 @@ async function validateOrgLogoPermissions(
     };
   }
 
-  // Check permission via BA permission system
   const allowed = await hasOrgPermission(organizationId, {
     organization: ["update"],
   });

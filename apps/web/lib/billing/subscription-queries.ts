@@ -11,6 +11,7 @@ import {
   type OrgCreationCheck,
   PLAN_NAMES,
   type PlanName,
+  UNLIMITED,
 } from "@repo/utils/payment";
 import { ATTACHABLE_TYPE, BYTES_PER_MB } from "@repo/utils/storage";
 import { cache } from "react";
@@ -77,6 +78,29 @@ export async function getOrgUsageStats(organizationId: string) {
   return calculateUsageStats(subscription, occupiedSeats, storageMB);
 }
 
+function evaluateMemberCapacity(
+  subscription: Subscription | null,
+  occupiedSeats: number
+): { allowed: boolean; reason?: string; remaining: number } {
+  const planName = getCurrentPlan(subscription);
+  const { maxMembers } = getPlanLimits(planName);
+
+  if (maxMembers === UNLIMITED) {
+    return { allowed: true, remaining: UNLIMITED };
+  }
+
+  const remaining = Math.max(0, maxMembers - occupiedSeats);
+  if (remaining === 0) {
+    return {
+      allowed: false,
+      reason: `You have reached the maximum of ${maxMembers} members on your ${planName} plan`,
+      remaining: 0,
+    };
+  }
+
+  return { allowed: true, remaining };
+}
+
 export async function canOrgAddMember(
   organizationId: string
 ): Promise<{ allowed: boolean; reason?: string; remaining: number }> {
@@ -85,31 +109,9 @@ export async function canOrgAddMember(
     getOrgMemberCount(organizationId),
     getOrgPendingInvitationCount(organizationId),
   ]);
-
-  const planName = (subscription?.plan as PlanName) || PLAN_NAMES.FREE;
-  const limits = getPlanLimits(planName);
-
-  if (limits.maxMembers === -1) {
-    return { allowed: true, remaining: -1 };
-  }
-
-  const occupiedSeats = memberCount + pendingCount;
-  const remaining = Math.max(0, limits.maxMembers - occupiedSeats);
-
-  if (remaining === 0) {
-    return {
-      allowed: false,
-      reason: `You have reached the maximum of ${limits.maxMembers} members on your ${planName} plan`,
-      remaining: 0,
-    };
-  }
-
-  return { allowed: true, remaining };
+  return evaluateMemberCapacity(subscription, memberCount + pendingCount);
 }
 
-// Accepting an emailed invite converts an already-reserved seat (the invite is
-// itself one of the pending rows), so it checks members-only — counting pending
-// here would double-count the invite being accepted and block the final seat.
 export async function canOrgAcceptMember(
   organizationId: string
 ): Promise<{ allowed: boolean; reason?: string }> {
@@ -117,18 +119,9 @@ export async function canOrgAcceptMember(
     getActiveSubscription(organizationId),
     getOrgMemberCount(organizationId),
   ]);
+  const { allowed, reason } = evaluateMemberCapacity(subscription, memberCount);
 
-  const planName = (subscription?.plan as PlanName) || PLAN_NAMES.FREE;
-  const limits = getPlanLimits(planName);
-
-  if (limits.maxMembers === -1 || memberCount < limits.maxMembers) {
-    return { allowed: true };
-  }
-
-  return {
-    allowed: false,
-    reason: `You have reached the maximum of ${limits.maxMembers} members on your ${planName} plan`,
-  };
+  return { allowed, reason };
 }
 
 export async function canUserCreateOrg(

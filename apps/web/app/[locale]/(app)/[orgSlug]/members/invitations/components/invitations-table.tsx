@@ -4,7 +4,7 @@ import { DataTableContent } from "@repo/design-system/components/data-table/data
 import { DataTablePagination } from "@repo/design-system/components/data-table/pagination";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { INVITATION_STATUS } from "@repo/utils/organization";
-import { use, useMemo } from "react";
+import { use } from "react";
 
 import { useDataTable } from "@/hooks/use-data-table";
 import type { GetListPayload } from "@/types/queries";
@@ -37,10 +37,7 @@ export function InvitationsTable({
 }: InvitationsTableProps) {
   const { data, totalPage } = use(invitationsPromise);
 
-  const columns = useMemo(
-    () => getInvitationColumns({ errors, organizationId, canManage }),
-    [errors, organizationId, canManage]
-  );
+  const columns = getInvitationColumns({ errors, organizationId, canManage });
 
   const { table } = useDataTable({
     data,

@@ -1,5 +1,6 @@
 import type { StripePlan } from "@better-auth/stripe";
 import { MONTHS_PER_YEAR } from "@repo/utils/date";
+import { PERCENTAGE_MULTIPLIER } from "@repo/utils/number";
 import {
   LIMITS,
   PLAN_DISPLAY_NAMES,
@@ -123,8 +124,6 @@ export function getPlanNameFromPriceId(
   }
   return null;
 }
-
-const PERCENTAGE_MULTIPLIER = 100;
 
 export function getPlanLimits(planName: PlanName): PlanLimits {
   return PLANS[planName].limits;

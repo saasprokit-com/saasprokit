@@ -17,7 +17,7 @@ vi.mock("@repo/database", () => ({
   database: { subscription: { findFirst } },
 }));
 
-import { verifyCheckoutSession } from "./verify-session";
+import { verifyCheckoutSession } from "./checkout-queries";
 
 const ORG_ID = "org_1";
 const SESSION_ID = "cs_test_1";

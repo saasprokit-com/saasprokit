@@ -53,7 +53,7 @@ Alongside the plugin wiring, `@repo/auth` exposes the data and pure-logic layer 
 
 - **Plan catalog** — `plans.ts` defines `PLANS` and `PlanConfig` (the single source of truth) plus ordering/comparison helpers: `getPlanLimits`, `getAllPlans`, `isPlanHigherTier`, `getMonthlyFromAnnual`, `getAnnualSavingsPercent`, and `comparePlans` (returns `"upgrade" | "downgrade" | "same"`), and the Stripe plumbing `buildStripePlans` / `getPlanNameFromPriceId`.
 - **Types** — `types.ts` defines the `Subscription` shape, its runtime `SubscriptionSchema` (Zod), plus `SubscriptionWithPlan`, `UpgradeOptions`, `CancelOptions`, `BillingPortalSession`, `FeatureAccess`, and `UsageStats`.
-- **Subscription helpers** — `helpers.ts` provides `isSubscriptionActive`, `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getCurrentPlan`, `calculateUsageStats`, `formatStorage`, `formatDate`, `getStatusDisplayText`, and `getStatusColor`.
+- **Subscription helpers** — `helpers.ts` provides `isSubscriptionActive`, `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getCurrentPlan`, `calculateUsageStats`, `formatStorage`, `getStatusDisplayText`, and `getStatusColor`.
 - **Guards** — `guards.ts` provides `guardDowngrade` (and `GuardResult`).
 - **Client hooks** — `use-subscription.ts` (`"use client"`) exports `useSubscription` and `useCancel`.
 

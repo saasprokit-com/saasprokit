@@ -39,10 +39,12 @@ All billing config and logic lives in **`packages/auth`** (exports include
   the `handleSubscription*` hooks, `buildStripePlans(...)`, and `authorizeReference
   → authorizeBillingAction` (`packages/auth/billing-authorize.ts:50` — members may
   read, owners/admins may mutate).
-- **Web helpers (server-only)**: `apps/web/lib/billing/subscription-queries.ts`
-  is the **only** file in that folder (`getActiveSubscription`,
-  `getCurrentPlanForOrg`, `getOrgUsageStats`, `getOrgMemberCount`,
-  `canOrgAddMember`, `canOrgAcceptMember`, `canUserCreateOrg`, …).
+- **Web helpers (server-only)**: `apps/web/lib/billing/` holds
+  `subscription-queries.ts` (`getActiveSubscription`, `getCurrentPlanForOrg`,
+  `getOrgUsageStats`, `getOrgMemberCount`, `canOrgAddMember`,
+  `canOrgAcceptMember`, `canUserCreateOrg`, …) and `checkout-queries.ts`
+  (`verifyCheckoutSession` — confirms a Stripe Checkout session is paid and
+  owned by the org; consumed by the checkout success page).
 - **Org billing page**: `apps/web/app/[locale]/(app)/[orgSlug]/billing/`. Its
   `actions.ts` server actions wrap `auth.api.*`: `upgradeSubscriptionAction`,
   `openBillingPortalAction`, and `cancelSubscriptionAction` return
@@ -65,6 +67,20 @@ Env vars (`apps/web/.env.example:25-30`): `STRIPE_SECRET_KEY`,
 `STRIPE_ENTERPRISE_PRICE_ID_MONTHLY`, `STRIPE_ENTERPRISE_PRICE_ID_ANNUAL`.
 
 ## Gotchas
+
+- **Upgrading an org that already has an active subscription never reaches Stripe
+  Checkout.** With this repo's plan shape (single price, no seats/line-items),
+  `@better-auth/stripe` routes it to the Stripe customer portal's
+  `subscription_update_confirm` flow; the `successUrl`/`cancelUrl` passed by
+  `upgradeSubscriptionAction` are ignored (user returns via `returnUrl`). Charge
+  timing is controlled by the **Stripe portal configuration**, not repo code:
+  `features.subscription_update.proration_behavior` must be `always_invoice` so the
+  prorated true-up is charged at confirm time — the default (`create_prorations`)
+  silently defers it to the next cycle. The plugin's per-plan `prorationBehavior`
+  option is dead code for this plan shape. This is per-Stripe-account config
+  (API-only, not in the Dashboard portal settings UI); re-apply it on any new or
+  live-mode account via
+  `POST /v1/billing_portal/configurations/:id` on the default configuration.
 
 - **`API_ROUTES.STRIPE_WEBHOOK = "/api/stripe/webhook"`** (`apps/web/lib/routes.ts:138`)
   is a stale constant — it does **not** match the real `/api/auth/stripe/webhook`

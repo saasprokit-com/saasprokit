@@ -6,6 +6,7 @@
     "./slug": "./slug.ts",
     "./auth": "./auth.ts",
     "./date": "./date.ts",
+    "./number": "./number.ts",
     "./organization": "./organization.ts",
     "./payment": "./payment.ts",
     "./storage": "./storage.ts",
