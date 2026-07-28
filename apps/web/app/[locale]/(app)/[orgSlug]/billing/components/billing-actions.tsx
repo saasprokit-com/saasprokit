@@ -37,18 +37,16 @@ import { ManageBillingForm } from "./manage-billing-form";
 interface BillingActionsProps {
   errors: ActionErrorMessages;
   organizationId: string;
-  organizationSlug: string;
-  subscription: Subscription | null;
+  subscription: Subscription
 }
 
 export function BillingActions({
   errors,
   organizationId,
-  organizationSlug,
   subscription,
 }: BillingActionsProps) {
   const router = useRouter();
-  const { locale } = useParams<{ locale: string }>();
+  const { locale, orgSlug: organizationSlug } = useParams<{ locale: string, orgSlug: string }>();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [isCanceling, startTransition] = useTransition();
 
@@ -90,7 +88,6 @@ export function BillingActions({
     });
   };
 
-  // Don't show billing actions on free plan
   if (planName === PLAN_NAMES.FREE) {
     return null;
   }

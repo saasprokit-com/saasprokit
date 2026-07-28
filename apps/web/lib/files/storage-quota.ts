@@ -1,12 +1,8 @@
 import "server-only";
 
-/**
- * Storage quota management and validation
- * Enforces per-organization storage limits based on subscription plan
- */
-
 import { getPlanLimits } from "@repo/auth/plans";
 import type { createRequestLogger } from "@repo/logger/server";
+import { PERCENTAGE_MULTIPLIER } from "@repo/utils/number";
 import { BYTES_PER_MB } from "@repo/utils/storage";
 import {
   getCurrentPlanForOrg,
@@ -59,7 +55,6 @@ async function checkStorageQuota(
   const newTotal = usage + fileSizeBytes;
   const allowed = newTotal <= quota;
   const available = quota - usage;
-  const PERCENTAGE_MULTIPLIER = 100;
   const percentageUsed = Math.round((usage / quota) * PERCENTAGE_MULTIPLIER);
 
   return { allowed, usage, quota, available, percentageUsed };

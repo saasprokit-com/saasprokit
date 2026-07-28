@@ -8,8 +8,10 @@ import {
 } from "@repo/design-system/components/ui/card";
 import { getDictionary } from "@repo/internationalization";
 import { OrgPermissionGate } from "@/components/org-permission-gate";
+import { getActiveSubscription } from "@/lib/billing/subscription-queries";
 import { getActiveOrganization } from "@/lib/organization/queries";
 import { orgRoutes } from "@/lib/routes";
+import { BillingActions } from "./components/billing-actions";
 import { ChangePlan } from "./components/change-plan";
 import { UsageStats } from "./components/usage-stats";
 
@@ -23,6 +25,7 @@ export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
     getActiveOrganization(orgSlug),
     getDictionary(locale),
   ]);
+  const subscription = await getActiveSubscription(orgContext.organizationId);
 
   return (
     <>
@@ -58,13 +61,13 @@ export default async function OrgBillingPage({ params }: OrgBillingPageProps) {
             organizationId={orgContext.organizationId}
           />
           <UsageStats organizationId={orgContext.organizationId} />
-          {/* <BillingActions
-            errors={dict.errors.action}
-            organizationId={orgContext.organizationId}
-            organizationSlug={orgSlug}
-            planName={usageData.planName}
-            subscription={subscription}
-          /> */}
+          {subscription ? (
+            <BillingActions
+              errors={dict.errors.action}
+              organizationId={orgContext.organizationId}
+              subscription={subscription}
+            />
+          ) : null}
         </OrgPermissionGate>
       </ContentSection>
     </>
