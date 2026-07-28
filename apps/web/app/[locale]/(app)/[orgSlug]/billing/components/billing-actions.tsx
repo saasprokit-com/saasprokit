@@ -25,6 +25,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/design-system/components/ui/card";
+import { formatDate } from "@repo/design-system/lib/date";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { PLAN_NAMES } from "@repo/utils/payment";
 import { Loader2, XCircle } from "lucide-react";
@@ -58,6 +59,8 @@ export function BillingActions({
   const isCanceled =
     isSubscriptionActive(subscription) &&
     isSubscriptionPendingCancel(subscription);
+  // Stripe may end a pending-cancel sub at cancelAt rather than periodEnd.
+  const endsAt = subscription.cancelAt ?? subscription.periodEnd;
 
   const handleCancelSubscription = () => {
     startTransition(async () => {
@@ -104,6 +107,15 @@ export function BillingActions({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!isCanceled && subscription.periodEnd && (
+          <p className="text-muted-foreground text-sm">
+            Next billing date:{" "}
+            <span className="font-medium text-foreground">
+              {formatDate(subscription.periodEnd)}
+            </span>
+          </p>
+        )}
+
         <div className="flex flex-wrap gap-3">
           <ManageBillingForm
             errors={errors}
@@ -158,8 +170,18 @@ export function BillingActions({
 
         {isCanceled && (
           <p className="text-muted-foreground text-sm">
-            Your subscription has been canceled and will end at the current
-            billing period. You can reactivate it from the billing portal.
+            {endsAt ? (
+              <>
+                Your subscription has been canceled and will end on{" "}
+                <span className="font-medium text-foreground">
+                  {formatDate(endsAt)}
+                </span>
+                .
+              </>
+            ) : (
+              "Your subscription has been canceled and will end at the current billing period."
+            )}{" "}
+            You can reactivate it from the billing portal.
           </p>
         )}
       </CardContent>

@@ -11,7 +11,7 @@ The billing UI reduces every tier transition to one of four outcomes, decided by
 
 | Decision | Trigger | Mechanism |
 | --- | --- | --- |
-| **Upgrade** | target is a higher tier | `subscription.upgrade()` → redirect to Stripe Checkout (`UpgradeForm`) |
+| **Upgrade** | target is a higher tier | `upgradeSubscriptionAction` → Stripe Checkout (first subscription) or portal `subscription_update_confirm` (existing subscription) |
 | **Downgrade** (to paid) | target is lower but not `free` | `changePlanAction` → `auth.api.upgradeSubscription({ scheduleAtPeriodEnd: true })` |
 | **Downgrade to free** | target is `free` | server returns `{ action: "cancel" }`; client routes the user to the Cancel flow |
 | **Cancel** | user clicks "Cancel Subscription" | `subscription.cancel()` → Stripe schedules cancellation at period end |
@@ -20,8 +20,8 @@ The billing UI reduces every tier transition to one of four outcomes, decided by
 flowchart TD
   Start[User picks a target plan in PlanCard] --> Cmp{comparePlans<br/>currentPlan vs targetPlan}
   Cmp -->|same| Current[Disabled 'Current Plan' button]
-  Cmp -->|upgrade| Up[UpgradeForm: subscription.upgrade]
-  Up --> Checkout[Redirect to Stripe Checkout]
+  Cmp -->|upgrade| Up[UpgradeButton: upgradeSubscriptionAction]
+  Up --> Checkout[First sub: Stripe Checkout<br/>Existing sub: portal update-confirm]
   Cmp -->|downgrade| Guard{guardDowngrade allowed?}
   Guard -->|no: past_due / over member or storage limit| Block[Show blockReason Alert, submit disabled]
   Guard -->|yes, target = free| ToCancel[action: 'cancel' → toast: cancel below]
@@ -32,9 +32,14 @@ flowchart TD
 
 ## Upgrades
 
-`UpgradeForm` (`upgrade-form.tsx`) is purely client-side. It calls `subscription.upgrade()` with the target `plan`, `annual` derived from the billing-interval toggle, the org `referenceId`, and `successUrl` / `cancelUrl` pointing at `/{locale}/{orgSlug}/checkout/...`. On success the plugin redirects the browser to Stripe Checkout, so there is no local success toast — only `errors.startCheckout` is surfaced on failure. Upgrades take effect immediately (Stripe proration), unlike downgrades.
+`UpgradeButton` (`upgrade-button.tsx`) calls the `upgradeSubscriptionAction` server action with the target `plan`, `annual` derived from the billing-interval toggle, and the org `referenceId`. The action wraps `auth.api.upgradeSubscription` and returns a redirect URL; only `errors.startCheckout` is surfaced on failure. Which URL comes back depends on the org's subscription state:
 
-`PlanCard` only renders `UpgradeForm` when `comparePlans` returns `"upgrade"` and the plan is `pro` or `enterprise`.
+- **No active subscription** — the plugin creates a Stripe Checkout session; `successUrl` / `cancelUrl` point at `/{locale}/{orgSlug}/checkout/...`.
+- **Active subscription** (e.g. Pro → Enterprise) — the plugin skips Checkout and redirects to the Stripe customer portal's `subscription_update_confirm` flow. The `successUrl` / `cancelUrl` are ignored; the user returns via `returnUrl` (the billing page). Stripe swaps the price immediately with proration, and the local `plan` only updates when the `customer.subscription.updated` webhook lands.
+
+Whether the prorated true-up is **charged at confirm time** is governed by the Stripe **portal configuration**, not repo code: `features.subscription_update.proration_behavior` must be `always_invoice`. With Stripe's default (`create_prorations`) the upgrade collects nothing and the proration is rolled into the next cycle's invoice. This is per-Stripe-account, API-only configuration — apply it to the default portal configuration (`POST /v1/billing_portal/configurations/:id`) on every new or live-mode account.
+
+`PlanCard` only renders `UpgradeButton` when `comparePlans` returns `"upgrade"` and the plan is `pro` or `enterprise`.
 
 ## Downgrades
 
