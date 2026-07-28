@@ -7,6 +7,7 @@ import {
   AvatarImage,
 } from "@repo/design-system/components/ui/avatar";
 import { Badge } from "@repo/design-system/components/ui/badge";
+import { formatDate } from "@repo/design-system/lib/date";
 import {
   PLAN_DISPLAY_NAMES,
   PLAN_NAMES,
@@ -114,7 +115,7 @@ export function getOrgColumns() {
     ),
     cell: ({ row }) => (
       <span className="text-muted-foreground">
-        {new Date(row.original.createdAt).toLocaleDateString()}
+        {formatDate(row.original.createdAt)}
       </span>
     ),
   });

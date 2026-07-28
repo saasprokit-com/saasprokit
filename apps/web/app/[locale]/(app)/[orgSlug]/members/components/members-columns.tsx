@@ -9,6 +9,7 @@ import {
 } from "@repo/design-system/components/ui/avatar";
 import { Badge } from "@repo/design-system/components/ui/badge";
 import { Checkbox } from "@repo/design-system/components/ui/checkbox";
+import { formatDate } from "@repo/design-system/lib/date";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
@@ -179,7 +180,7 @@ export function getColumns({
     ),
     cell: ({ row }) => (
       <span className="text-muted-foreground">
-        {new Date(row.getValue("createdAt")).toLocaleDateString()}
+        {formatDate(row.original.createdAt)}
       </span>
     ),
   });

@@ -18,17 +18,3 @@ export const MILLISECONDS_PER_DAY = MILLISECONDS_PER_HOUR * HOURS_PER_DAY;
 
 export const SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR;
 export const SECONDS_PER_DAY = SECONDS_PER_HOUR * HOURS_PER_DAY;
-
-export function formatDate(
-  date: Date | string | null | undefined,
-  locale = "en-US"
-): string {
-  if (!date) {
-    return "N/A";
-  }
-  return new Date(date).toLocaleDateString(locale, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}

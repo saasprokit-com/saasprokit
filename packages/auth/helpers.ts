@@ -102,20 +102,6 @@ export function formatStorage(mb: number): string {
   return `${mb} MB`;
 }
 
-export function formatDate(
-  date: Date | string | null,
-  locale = "en-US"
-): string {
-  if (!date) {
-    return "N/A";
-  }
-  return new Date(date).toLocaleDateString(locale, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
 export function getStatusDisplayText(
   status: SubscriptionStatus | null | undefined
 ): string {

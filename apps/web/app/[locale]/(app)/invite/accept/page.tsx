@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/design-system/components/ui/card";
+import { formatDate } from "@repo/design-system/lib/date";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { getDictionary } from "@repo/internationalization";
 import { INVITATION_STATUS } from "@repo/utils/organization";
@@ -241,10 +242,7 @@ export default async function AcceptInvitePage({
               {invitation.expiresAt && (
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  <span>
-                    Expires:{" "}
-                    {new Date(invitation.expiresAt).toLocaleDateString()}
-                  </span>
+                  <span>Expires: {formatDate(invitation.expiresAt)}</span>
                 </div>
               )}
             </div>

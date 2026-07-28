@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/design-system/components/ui/table";
+import { formatDate } from "@repo/design-system/lib/date";
 import { getDictionary } from "@repo/internationalization";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
@@ -104,7 +105,7 @@ export default async function AdminUserDetailPage({
                 </div>
                 <div className="flex items-center justify-between">
                   <dt className="text-muted-foreground">Joined</dt>
-                  <dd>{new Date(user.createdAt).toLocaleDateString()}</dd>
+                  <dd>{formatDate(user.createdAt)}</dd>
                 </div>
                 <div className="flex items-center justify-between">
                   <dt className="text-muted-foreground">Last active</dt>
@@ -254,7 +255,7 @@ export default async function AdminUserDetailPage({
                       {member.role}
                     </Badge>
                     <span className="text-muted-foreground">
-                      Joined {new Date(member.createdAt).toLocaleDateString()}
+                      Joined {formatDate(member.createdAt)}
                     </span>
                   </div>
                 </li>

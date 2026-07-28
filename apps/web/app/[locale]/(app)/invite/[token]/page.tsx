@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/design-system/components/ui/card";
+import { formatDate } from "@repo/design-system/lib/date";
 import { getDictionary } from "@repo/internationalization";
 import {
   AlertCircle,
@@ -204,10 +205,7 @@ export default async function InviteLinkPage({ params }: InviteLinkPageProps) {
               {inviteLink.expiresAt && (
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  <span>
-                    Expires:{" "}
-                    {new Date(inviteLink.expiresAt).toLocaleDateString()}
-                  </span>
+                  <span>Expires: {formatDate(inviteLink.expiresAt)}</span>
                 </div>
               )}
               {remainingUses !== null && (

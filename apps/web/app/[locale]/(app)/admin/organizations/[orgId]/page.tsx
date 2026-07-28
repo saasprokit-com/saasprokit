@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/design-system/components/ui/table";
-import { formatDate } from "@repo/utils/date";
+import { formatDate } from "@repo/design-system/lib/date";
 import { PLAN_DISPLAY_NAMES, type PlanName } from "@repo/utils/payment";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
@@ -136,8 +136,8 @@ export default async function AdminOrganizationDetailPage({
                 <div>
                   <dt className="text-muted-foreground">Current period</dt>
                   <dd className="font-medium">
-                    {formatDate(subscription.periodStart)} –{" "}
-                    {formatDate(subscription.periodEnd)}
+                    {formatDate(subscription.periodStart) || "N/A"} –{" "}
+                    {formatDate(subscription.periodEnd) || "N/A"}
                   </dd>
                 </div>
                 <div>
