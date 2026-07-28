@@ -8,8 +8,8 @@ import {
 } from "@repo/design-system/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
+import type { VerificationFailureReason } from "@/lib/billing/checkout-queries";
 import { SUPPORT_EMAIL_HREF } from "../../support-email";
-import type { VerificationFailureReason } from "../verify-session";
 
 interface CheckoutErrorCardProps {
   readonly billingHref: string;

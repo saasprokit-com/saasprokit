@@ -1,14 +1,11 @@
 import type React from "react";
-import {
-  buildLocalePath,
-  revalidateOrgPage,
-} from "@/lib/infrastructure/revalidation";
+import { verifyCheckoutSession } from "@/lib/billing/checkout-queries";
+import { buildLocalePath } from "@/lib/infrastructure/revalidation";
 import { getActiveOrganization } from "@/lib/organization/queries";
-import { ORG_PAGES, orgRoutes } from "@/lib/routes";
+import { orgRoutes } from "@/lib/routes";
 import { CheckoutErrorCard } from "./components/checkout-error-card";
 import { CheckoutProcessingCard } from "./components/checkout-processing-card";
 import { CheckoutSuccessCard } from "./components/checkout-success-card";
-import { verifyCheckoutSession } from "./verify-session";
 
 interface CheckoutSuccessPageProps {
   params: Promise<{ locale: string; orgSlug: string }>;
@@ -30,14 +27,6 @@ export default async function CheckoutSuccessPage({
     sessionId,
     orgContext.organizationId
   );
-
-  if (result.ok) {
-    // Subscription is paid and belongs to this org — refresh the billing
-    // page cache so the new plan is visible immediately. Pass the locale
-    // explicitly so we don't depend on the Referer (Stripe Checkout's
-    // domain) for the rewrite target.
-    await revalidateOrgPage(orgSlug, ORG_PAGES.BILLING, locale);
-  }
 
   const { heading, body } = renderCheckoutResult({
     result,

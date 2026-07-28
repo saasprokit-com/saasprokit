@@ -22,6 +22,7 @@ All server-side code in `apps/web` lives under a single **`lib/`** folder, organ
 | `lib/files/actions.ts` | File mutation helpers (`server-only`, not a `"use server"` module). |
 | `lib/files/storage-quota.ts` | Per-org storage quota enforcement (coupled to plan limits via `lib/billing`). |
 | `lib/billing/subscription-queries.ts` | Subscription + usage queries feeding `@repo/auth` plan logic. **No `billing` action module — reads only.** |
+| `lib/billing/checkout-queries.ts` | `verifyCheckoutSession` — Stripe Checkout session verification (paid + owned by org) for the checkout success page. |
 | `lib/admin/audit.ts` | `AuditLog` write helpers for platform-admin mutations. |
 
 ## Map — `lib/` foundation & infrastructure

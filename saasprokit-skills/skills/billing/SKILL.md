@@ -39,10 +39,12 @@ All billing config and logic lives in **`packages/auth`** (exports include
   the `handleSubscription*` hooks, `buildStripePlans(...)`, and `authorizeReference
   → authorizeBillingAction` (`packages/auth/billing-authorize.ts:50` — members may
   read, owners/admins may mutate).
-- **Web helpers (server-only)**: `apps/web/lib/billing/subscription-queries.ts`
-  is the **only** file in that folder (`getActiveSubscription`,
-  `getCurrentPlanForOrg`, `getOrgUsageStats`, `getOrgMemberCount`,
-  `canOrgAddMember`, `canOrgAcceptMember`, `canUserCreateOrg`, …).
+- **Web helpers (server-only)**: `apps/web/lib/billing/` holds
+  `subscription-queries.ts` (`getActiveSubscription`, `getCurrentPlanForOrg`,
+  `getOrgUsageStats`, `getOrgMemberCount`, `canOrgAddMember`,
+  `canOrgAcceptMember`, `canUserCreateOrg`, …) and `checkout-queries.ts`
+  (`verifyCheckoutSession` — confirms a Stripe Checkout session is paid and
+  owned by the org; consumed by the checkout success page).
 - **Org billing page**: `apps/web/app/[locale]/(app)/[orgSlug]/billing/`. Its
   `actions.ts` server actions wrap `auth.api.*`: `upgradeSubscriptionAction`,
   `openBillingPortalAction`, and `cancelSubscriptionAction` return

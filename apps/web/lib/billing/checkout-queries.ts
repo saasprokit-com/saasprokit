@@ -39,9 +39,6 @@ function findOwningSubscription(
   const subscriptionId = extractId(session.subscription);
   const customerId = extractId(session.customer);
 
-  // Look up the BA-managed Subscription row to confirm Stripe's session
-  // resolves back to a subscription owned by this org. Defends against
-  // bookmarked or shared success URLs from another org.
   return database.subscription.findFirst({
     where: {
       referenceId: organizationId,
