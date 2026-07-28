@@ -37,7 +37,7 @@ import { ManageBillingForm } from "./manage-billing-form";
 interface BillingActionsProps {
   errors: ActionErrorMessages;
   organizationId: string;
-  subscription: Subscription
+  subscription: Subscription;
 }
 
 export function BillingActions({
@@ -46,7 +46,10 @@ export function BillingActions({
   subscription,
 }: BillingActionsProps) {
   const router = useRouter();
-  const { locale, orgSlug: organizationSlug } = useParams<{ locale: string, orgSlug: string }>();
+  const { locale, orgSlug: organizationSlug } = useParams<{
+    locale: string;
+    orgSlug: string;
+  }>();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [isCanceling, startTransition] = useTransition();
 

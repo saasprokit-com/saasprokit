@@ -4,7 +4,7 @@ import { ORG_ROLES } from "@repo/auth/permissions";
 import { DataTableContent } from "@repo/design-system/components/data-table/data-table-content";
 import { DataTablePagination } from "@repo/design-system/components/data-table/pagination";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { use, useMemo } from "react";
+import { use } from "react";
 import { useDataTable } from "@/hooks/use-data-table";
 import type { GetListPayload } from "@/types/queries";
 import type { Member } from "../queries";
@@ -34,10 +34,12 @@ export function MembersTable({
 }: MembersTableProps) {
   const { data: members, totalPage } = use(membersPromise);
 
-  const columns = useMemo(
-    () => getColumns({ currentUserId, errors, organizationId, permissions }),
-    [currentUserId, errors, organizationId, permissions]
-  );
+  const columns = getColumns({
+    currentUserId,
+    errors,
+    organizationId,
+    permissions,
+  });
 
   const { table } = useDataTable({
     data: members,
