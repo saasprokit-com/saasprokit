@@ -6,7 +6,6 @@ import {
   SidebarProvider,
 } from "@repo/design-system/components/ui/sidebar";
 import type { ReactNode } from "react";
-import { ActivityTracker } from "@/components/activity-tracker";
 import { requireAdminArea } from "@/lib/auth/admin";
 import { getServerSession } from "@/lib/auth/auth";
 import { AdminSidebar } from "./components/admin-sidebar";
@@ -28,7 +27,6 @@ export default async function AdminLayout({
 
   return (
     <SidebarProvider>
-      <ActivityTracker />
       {session?.user ? (
         <AdminSidebar
           isAdmin={ctx.isAdmin}
