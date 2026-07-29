@@ -18,6 +18,7 @@ const env = keys(); // throws if BETTER_AUTH_SECRET is missing / < 32 chars, etc
 | `BETTER_AUTH_SECRET` | `string().min(32)` | **Required.** Signs cookies/tokens. |
 | `BETTER_AUTH_URL` | `url().optional()` | Base URL; falls back to `NEXT_PUBLIC_APP_URL`. |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | `string().optional()` | Comma-separated; split into `trustedOrigins`. |
+| `ADMIN_EMAILS` | `string().optional()` | Comma-separated emails promoted to platform admin **at signup** (first-admin bootstrap; see below). |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional | Google OAuth. |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | optional | GitHub OAuth. |
 | `STRIPE_*` | optional | Billing — see [Payment](../payment). |
@@ -127,6 +128,16 @@ plugins: [
 | `organization` | Orgs, members, teams, invitations | `INVITATION_EXPIRES_IN_DAYS` (7) |
 | `stripe` | Billing (conditional) | — |
 | `nextCookies` | Wires Better Auth cookie handling into Next.js | — |
+
+### First-admin bootstrap (`ADMIN_EMAILS`)
+
+The `admin` plugin assigns `defaultRole: "user"` at signup, and the only role-change endpoint (`/admin/set-role`) requires an existing admin — so a fresh deployment has no way to mint its first admin. `ADMIN_EMAILS` solves this: a `databaseHooks.user.create.before` hook in `packages/auth/server.ts` promotes any signup whose email matches the comma-separated list (case-insensitive) to `role: "admin"`. It covers every signup method — email/password, OAuth, magic link, email OTP — since all funnel through the same user create.
+
+Rules of engagement:
+
+- **Applies at signup only.** Set the var *before* the first sign-up; changing it later does not touch existing users. To promote an existing user, use the admin UI as an existing admin (or update the `user.role` column directly).
+- **Verification still gates access.** With `requireEmailVerification` enabled, a matching signup cannot sign in until the email is verified — listing an address you don't control does not hand out a session.
+- The dev seed (`packages/database/prisma/seed.ts`) creates `admin@example.com` directly, so local development does not need this var.
 
 ### Email delivery is dependency-injected
 

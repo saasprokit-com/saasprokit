@@ -55,6 +55,8 @@ After either guide's deploy step:
 
 4. **Production URLs** — `NEXT_PUBLIC_APP_URL`, `BETTER_AUTH_URL`, and `BETTER_AUTH_TRUSTED_ORIGINS` must all match the final domain. `NEXT_PUBLIC_*` values are baked in at build time — changing them requires a rebuild, not just a restart.
 
+5. **First admin** — set `ADMIN_EMAILS` to your email *before anyone signs up*, then sign up normally with that address and verify it. You land with `role: "admin"` and can open `/admin`. The var only applies at signup — see [Authentication → Configuration](/docs/authentication/configuration#first-admin-bootstrap-admin_emails). Do **not** run the dev seed against production; it wipes every table.
+
 ## Verification checklist
 
 Run this after every deploy, on both platforms:
