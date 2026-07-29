@@ -36,6 +36,7 @@ const RANDOM_SUBSTRING_LENGTH = 8; // Length of random suffix (8 chars)
 interface S3Config {
   accessKeyId: string;
   bucket: string;
+  endpoint?: string;
   publicUrl?: string;
   region: string;
   secretAccessKey: string;
@@ -62,6 +63,7 @@ function getS3Config(): S3Config {
     secretAccessKey,
     region: env.AWS_REGION,
     bucket,
+    endpoint: env.AWS_S3_ENDPOINT,
     publicUrl: env.AWS_S3_PUBLIC_URL,
     signedUrlExpires: env.AWS_S3_SIGNED_URL_EXPIRES,
   };
@@ -100,6 +102,7 @@ export class S3StorageProvider implements StorageProvider {
 
   private readonly client: S3Client;
   private readonly bucket: string;
+  private readonly endpoint: string | undefined;
   private readonly publicUrl: string | undefined;
   private readonly signedUrlExpires: number;
   private readonly region: string;
@@ -110,11 +113,15 @@ export class S3StorageProvider implements StorageProvider {
 
     this.region = config.region;
     this.bucket = config.bucket;
+    this.endpoint = config.endpoint;
     this.publicUrl = config.publicUrl;
     this.signedUrlExpires = config.signedUrlExpires;
 
     this.client = new S3Client({
       region: this.region,
+      // S3-compatible stores (R2, MinIO) need an explicit endpoint; path-style
+      // addressing is the reliable choice on account-scoped endpoints
+      ...(this.endpoint && { endpoint: this.endpoint, forcePathStyle: true }),
       credentials: {
         accessKeyId: config.accessKeyId,
         secretAccessKey: config.secretAccessKey,
@@ -141,8 +148,9 @@ export class S3StorageProvider implements StorageProvider {
       Key: key,
       Body: buffer,
       ContentType: mimeType,
-      // Set ACL based on visibility
-      ...(visibility === "public" && { ACL: "public-read" }),
+      // R2 and other S3-compatible stores reject per-object ACLs — public
+      // access is bucket-level (custom domain), so only send ACLs to real AWS
+      ...(visibility === "public" && !this.endpoint && { ACL: "public-read" }),
     });
 
     // Upload to S3
