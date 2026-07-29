@@ -23,6 +23,13 @@ import { toast } from "sonner";
 
 import { removeOrganizationLogoAction } from "../actions";
 
+// Shape returned by POST /api/upload — response.json() is untyped, so narrow it
+// here rather than trusting the payload
+interface UploadResponse {
+  error?: string;
+  file?: { publicUrl: string | null };
+}
+
 interface LogoUploadProps {
   canEdit: boolean;
   currentLogo: string | null;
@@ -79,14 +86,14 @@ export function LogoUpload({
           body: formData,
         });
 
-        const result = await response.json();
+        const result = (await response.json()) as UploadResponse;
 
         if (!response.ok) {
           throw new Error(result.error || "Upload failed");
         }
 
         toast.success("Logo updated successfully");
-        setPreviewUrl(result.file.publicUrl);
+        setPreviewUrl(result.file?.publicUrl ?? null);
         router.refresh();
       } catch (error) {
         toast.error(errors.uploadLogo, {
