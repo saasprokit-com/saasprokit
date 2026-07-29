@@ -41,6 +41,7 @@ import { magicLink } from "better-auth/plugins/magic-link";
 import { multiSession } from "better-auth/plugins/multi-session";
 import { organization } from "better-auth/plugins/organization";
 import { twoFactor } from "better-auth/plugins/two-factor";
+import { isBootstrapAdminEmail } from "./admin-bootstrap";
 import { authorizeBillingAction } from "./billing-authorize";
 import { keys } from "./keys";
 import { canUserCreateOrg } from "./org-eligibility";
@@ -104,6 +105,19 @@ export const auth = betterAuth({
         });
       }
     }),
+  },
+
+  databaseHooks: {
+    user: {
+      create: {
+        before: (user) =>
+          Promise.resolve(
+            isBootstrapAdminEmail(user.email, env.ADMIN_EMAILS)
+              ? { data: { role: ADMIN_ROLES.ADMIN } }
+              : undefined
+          ),
+      },
+    },
   },
 
   // Rate limiting — persistent storage for serverless (Vercel)
