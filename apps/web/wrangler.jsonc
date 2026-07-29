@@ -44,6 +44,9 @@
 	// `wrangler secret put` — never here.
 	"vars": {
 		"NODE_ENV": "production",
+		// Public URL, not a credential. Organization invite links are built from
+		// this (packages/auth/server.ts) and fall back to localhost without it.
+		"BETTER_AUTH_URL": "https://multi-tenant.saasprokit.com",
 		"EMAIL_PROVIDER": "resend",
 		"STORAGE_PROVIDER": "s3",
 		"AWS_REGION": "auto",
