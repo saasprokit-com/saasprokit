@@ -12,10 +12,5 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
-  ],
-  // cloudflare-env.d.ts (from `pnpm cf-typegen`) applies @cloudflare/workers-types
-  // globally, which overrides DOM types in client components and e2e tests that
-  // never run on Workers. Bindings are read via process.env, which OpenNext
-  // populates — re-include this only if you start using getCloudflareContext().
-  "exclude": ["node_modules", "cloudflare-env.d.ts"]
+  ]
 }

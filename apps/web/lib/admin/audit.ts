@@ -1,7 +1,9 @@
 import "server-only";
 
+import { IP_ADDRESS_HEADERS } from "@repo/auth/ip-headers";
 import { database } from "@repo/database";
 import { createRequestLogger } from "@repo/logger/server";
+import { getIp } from "better-auth/api";
 import { headers } from "next/headers";
 
 export const ADMIN_AUDIT_ACTIONS = {
@@ -25,8 +27,14 @@ interface RecordAdminAuditInput {
 
 async function buildAdminAuditData(input: RecordAdminAuditInput) {
   const requestHeaders = await headers();
+  // Same resolution the rate limiter uses. Reading x-forwarded-for[0] directly
+  // would record a client-supplied value: behind a CDN the real address is
+  // appended to that chain, so the first entry is attacker-controlled — and an
+  // audit trail of forged IPs is worse than none.
   const ipAddress =
-    requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+    getIp(requestHeaders, {
+      advanced: { ipAddress: { ipAddressHeaders: IP_ADDRESS_HEADERS } },
+    }) ?? null;
   const userAgent = requestHeaders.get("user-agent") ?? null;
 
   return {

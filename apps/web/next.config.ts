@@ -81,21 +81,11 @@ const nextConfig: NextConfig = {
             value:
               "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
           },
-          // Content-Security-Policy is set dynamically in proxy.ts with per-request nonces
+          // Content-Security-Policy is set dynamically in middleware.ts with per-request nonces
         ],
       },
     ];
   },
 };
-
-// Cloudflare-only: expose Worker bindings under `next dev`. Dynamic import
-// keeps @opennextjs/cloudflare an optional dep for Vercel/Docker deployments.
-if (process.env.CF_BUILD || process.env.CF_DEV) {
-  import("@opennextjs/cloudflare")
-    .then((m) => m.initOpenNextCloudflareForDev())
-    .catch((error: unknown) => {
-      console.error("[next.config] OpenNext dev init failed:", error);
-    });
-}
 
 export default nextConfig;

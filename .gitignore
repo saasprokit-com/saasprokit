@@ -300,4 +300,3 @@ logs/security/
 .open-next/
 .wrangler/
 .dev.vars
-apps/web/cloudflare-env.d.ts
