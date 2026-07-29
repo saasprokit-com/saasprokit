@@ -11,6 +11,14 @@
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"
 	},
+	// Custom domain. wrangler creates the DNS record + certificate on deploy,
+	// so this does not need to be wired up by hand in the dashboard.
+	"routes": [
+		{
+			"pattern": "multi-tenant.saasprokit.com",
+			"custom_domain": true
+		}
+	],
 	"observability": {
 		"enabled": true
 	},
