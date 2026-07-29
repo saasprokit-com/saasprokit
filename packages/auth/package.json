@@ -17,7 +17,8 @@
     "./stripe-client": "./stripe-client.ts",
     "./guards": "./guards.ts",
     "./helpers": "./helpers.ts",
-    "./types": "./types.ts"
+    "./types": "./types.ts",
+    "./ip-headers": "./ip-headers.ts"
   },
   "dependencies": {
     "@better-auth/i18n": "^1.6.25",

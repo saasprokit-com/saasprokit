@@ -1,5 +1,6 @@
 import "server-only";
 
+import { IP_ADDRESS_HEADERS } from "@repo/auth/ip-headers";
 import { database } from "@repo/database";
 import { createRequestLogger } from "@repo/logger/server";
 import { MILLISECONDS_PER_SECOND } from "@repo/utils/date";
@@ -56,7 +57,11 @@ let ipWarningLogged = false;
  * dev/test, and returns null in production when no trustworthy IP resolves.
  */
 async function getClientIp(): Promise<string> {
-  const ip = getIp(await headers(), {});
+  // Same header list Better Auth's own limiter uses, so both resolve the same
+  // IP behind a CDN instead of collapsing into one shared bucket.
+  const ip = getIp(await headers(), {
+    advanced: { ipAddress: { ipAddressHeaders: IP_ADDRESS_HEADERS } },
+  });
   if (ip) {
     return ip;
   }
