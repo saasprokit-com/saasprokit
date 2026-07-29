@@ -295,3 +295,9 @@ logs/security/
 
 .docs/
 .gstack/
+
+# Cloudflare / OpenNext build artifacts and local secrets
+.open-next/
+.wrangler/
+.dev.vars
+apps/web/cloudflare-env.d.ts

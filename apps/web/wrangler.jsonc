@@ -1,0 +1,46 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "saasprokit-web",
+	"main": ".open-next/worker.js",
+	"compatibility_date": "2026-07-29",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"observability": {
+		"enabled": true
+	},
+	// Self-reference lets server actions / ISR revalidation call back into the
+	// Worker. The service name MUST equal "name" above.
+	"services": [
+		{
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "saasprokit-web"
+		}
+	],
+	// ISR / revalidatePath cache (open-next.config.ts r2IncrementalCache).
+	// Uploads do NOT use a binding — they go through the S3-compatible API so the
+	// storage code stays portable across hosts.
+	"r2_buckets": [
+		{
+			"binding": "NEXT_INC_CACHE_R2_BUCKET",
+			"bucket_name": "saasprokit-web-cache"
+		}
+	],
+	// Non-secret runtime config. Secrets (DATABASE_URL, BETTER_AUTH_SECRET,
+	// STRIPE_*, RESEND_API_KEY, AWS keys, CRON_SECRET) are set via
+	// `wrangler secret put` — never here.
+	"vars": {
+		"NODE_ENV": "production",
+		"EMAIL_PROVIDER": "resend",
+		"STORAGE_PROVIDER": "s3",
+		"AWS_REGION": "auto",
+		"AWS_S3_BUCKET": "saasprokit-uploads",
+		"AWS_S3_PUBLIC_URL": "https://cdn.saasprokit.com",
+		"AWS_S3_ENDPOINT": "https://1524d8469d86b81e21633a819a679f32.r2.cloudflarestorage.com"
+	}
+}

@@ -8,6 +8,7 @@
       "dependsOn": ["^build"],
       "env": [
         "DATABASE_URL",
+        "ADMIN_EMAILS",
         "BETTER_AUTH_*",
         "GOOGLE_*",
         "GITHUB_CLIENT_*",

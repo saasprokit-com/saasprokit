@@ -1,6 +1,6 @@
-import { auth } from "@repo/auth";
 import { internationalizationMiddleware } from "@repo/internationalization/proxy";
 import { locales } from "@repo/internationalization/shared";
+import { getSessionCookie } from "better-auth/cookies";
 import { type NextRequest, NextResponse } from "next/server";
 import {
   AUTH_ROUTE_PREFIXES,
@@ -8,6 +8,13 @@ import {
   PUBLIC_ROUTE_EXACT,
   PUBLIC_ROUTE_PREFIXES,
 } from "@/lib/routes";
+
+// Edge middleware (middleware.ts, not proxy.ts): Next 16's proxy convention is
+// Node-runtime-only, which OpenNext/Cloudflare cannot run, and a DB-backed
+// session check here would break Vercel's Edge runtime (no TCP). This layer
+// therefore does an OPTIMISTIC cookie-presence check only — real session
+// verification happens in the route-group layouts (requireAuth/getServerSession)
+// and in server actions (verifySession).
 
 const HTTP_OK = 200;
 
@@ -58,9 +65,9 @@ function applyNonceCsp(response: NextResponse): NextResponse {
   return response;
 }
 
-export async function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  // Skip proxy for API routes and static files
+  // Skip middleware for API routes and static files
   if (
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next") ||
@@ -92,35 +99,23 @@ export async function proxy(request: NextRequest) {
     return applyNonceCsp(i18nResponse);
   }
 
-  try {
-    // Get the session using better-auth
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-    // Redirect unauthenticated users away from protected routes
-    if (!(isAuthRoute || session)) {
-      const signInUrl = new URL(PAGE_ROUTES.SIGN_IN, request.url);
-      signInUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(signInUrl);
-    }
-    // Redirect authenticated users away from auth routes
-    if (isAuthRoute && session) {
-      return NextResponse.redirect(new URL(PAGE_ROUTES.ORG, request.url));
-    }
+  // Presence of the httpOnly session cookie — spoofing it only gets an
+  // attacker past this redirect; every layout re-verifies against the DB
+  const hasSessionCookie = Boolean(getSessionCookie(request));
 
-    // Return i18n response (may have modified headers for locale)
-    return applyNonceCsp(i18nResponse);
-  } catch (error) {
-    console.error("[proxy] Session check failed:", error);
-    // Fail closed: deny access on protected routes when auth check fails
-    if (!(isPublicRoute || isAuthRoute)) {
-      const signInUrl = new URL(PAGE_ROUTES.SIGN_IN, request.url);
-      signInUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(signInUrl);
-    }
-    // Allow public and auth routes to proceed despite auth failure
-    return applyNonceCsp(i18nResponse);
+  // Redirect unauthenticated users away from protected routes
+  if (!(isAuthRoute || hasSessionCookie)) {
+    const signInUrl = new URL(PAGE_ROUTES.SIGN_IN, request.url);
+    signInUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(signInUrl);
   }
+  // Redirect authenticated users away from auth routes
+  if (isAuthRoute && hasSessionCookie) {
+    return NextResponse.redirect(new URL(PAGE_ROUTES.ORG, request.url));
+  }
+
+  // Return i18n response (may have modified headers for locale)
+  return applyNonceCsp(i18nResponse);
 }
 
 export const config = {

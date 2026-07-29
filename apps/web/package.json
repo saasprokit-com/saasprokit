@@ -6,6 +6,10 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
+    "preview": "CF_BUILD=1 opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "CF_BUILD=1 opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "CF_BUILD=1 opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "vitest run",
@@ -41,6 +45,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.2",
     "@playwright/test": "^1.62.0",
     "@repo/typescript-config": "workspace:*",
     "@testing-library/dom": "^10.4.1",

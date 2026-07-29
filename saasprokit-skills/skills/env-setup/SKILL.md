@@ -21,7 +21,7 @@ consolidates all of them into `apps/web/.env.local`.
 
 - **App** (required): `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_DOCS_URL`
 - **Database** (required): `DATABASE_URL` — default `postgresql://dev:dev@localhost:5432/saasprokit_dev` matches the Docker postgres (`docker-compose.yml:20-28`)
-- **Better Auth** (required): `BETTER_AUTH_SECRET` (generate `openssl rand -base64 48`), `BETTER_AUTH_URL`, `BETTER_AUTH_TRUSTED_ORIGINS`
+- **Better Auth** (required): `BETTER_AUTH_SECRET` (generate `openssl rand -base64 48`), `BETTER_AUTH_URL`, `BETTER_AUTH_TRUSTED_ORIGINS`; optional `ADMIN_EMAILS` — comma-separated emails promoted to platform admin at signup (first-admin bootstrap for production; dev uses the seeded `admin@example.com`)
 - **OAuth** (optional): `GOOGLE_CLIENT_ID`/`_SECRET`, `GITHUB_CLIENT_ID`/`_SECRET`
 - **Stripe** (optional in dev): `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_{PRO,ENTERPRISE}_PRICE_ID_{MONTHLY,ANNUAL}`
 - **Email**: `EMAIL_FROM`, `RESEND_API_KEY` (prod), `SMTP_*` (dev — defaults to MailDev on `localhost:1025`); `EMAIL_PROVIDER` auto-detected (prod + `RESEND_API_KEY` → resend, else nodemailer)

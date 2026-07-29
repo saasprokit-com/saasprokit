@@ -15,6 +15,9 @@ export const keys = () =>
       BETTER_AUTH_URL: z.url().optional(),
       BETTER_AUTH_TRUSTED_ORIGINS: z.string().optional(),
 
+      // Platform admin bootstrap — comma-separated emails promoted to admin at signup
+      ADMIN_EMAILS: z.string().optional(),
+
       // OAuth providers
       GOOGLE_CLIENT_ID: z.string().optional(),
       GOOGLE_CLIENT_SECRET: z.string().optional(),
@@ -44,6 +47,7 @@ export const keys = () =>
       BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
       BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
       BETTER_AUTH_TRUSTED_ORIGINS: process.env.BETTER_AUTH_TRUSTED_ORIGINS,
+      ADMIN_EMAILS: process.env.ADMIN_EMAILS,
       GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
       GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
       GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,

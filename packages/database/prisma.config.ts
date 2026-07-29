@@ -11,6 +11,9 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: env("DATABASE_URL"),
+    // DIRECT_URL (optional): migrations need a direct TCP endpoint when
+    // DATABASE_URL points at a pooled/serverless proxy (e.g. Neon -pooler).
+    // Prisma's env() throws on missing vars, so the optional one uses process.env.
+    url: process.env.DIRECT_URL ?? env("DATABASE_URL"),
   },
 });

@@ -1,20 +1,22 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  // Docker/VPS needs the standalone server; the OpenNext/Cloudflare build
+  // (CF_BUILD=1) does its own bundling and must not use it
+  output: process.env.CF_BUILD ? undefined : "standalone",
 
   // Monorepo root for Turbopack resolution (two levels up from apps/web/)
   turbopack: {
     root: "../../",
+    // Workers can't run the pg driver (raw TCP + the optional pg-cloudflare
+    // native socket, which esbuild cannot resolve). The Neon adapter is used
+    // there instead, so alias pg out of the Cloudflare build entirely.
+    resolveAlias: process.env.CF_BUILD
+      ? { "@prisma/adapter-pg": "./lib/stubs/prisma-adapter-pg.ts" }
+      : {},
   },
 
-  serverExternalPackages: [
-    "@prisma/client",
-    "pino",
-    "pino-pretty",
-    "thread-stream",
-    "stripe",
-  ],
+  serverExternalPackages: ["@prisma/client", "stripe"],
 
   images: {
     remotePatterns: [
@@ -85,5 +87,15 @@ const nextConfig: NextConfig = {
     ];
   },
 };
+
+// Cloudflare-only: expose Worker bindings under `next dev`. Dynamic import
+// keeps @opennextjs/cloudflare an optional dep for Vercel/Docker deployments.
+if (process.env.CF_BUILD || process.env.CF_DEV) {
+  import("@opennextjs/cloudflare")
+    .then((m) => m.initOpenNextCloudflareForDev())
+    .catch((error: unknown) => {
+      console.error("[next.config] OpenNext dev init failed:", error);
+    });
+}
 
 export default nextConfig;
