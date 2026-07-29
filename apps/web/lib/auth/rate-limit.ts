@@ -74,7 +74,7 @@ async function getClientIp(): Promise<string> {
   return NO_TRUSTED_IP_KEY;
 }
 
-function getRetryAfter(lastRequest: bigint, windowMs: number): number {
+function getRetryAfter(lastRequest: bigint | number, windowMs: number): number {
   return Math.ceil(
     (Number(lastRequest) + windowMs - Date.now()) / MILLISECONDS_PER_SECOND
   );
@@ -91,6 +91,12 @@ function getRetryAfter(lastRequest: bigint, windowMs: number): number {
  *            means at-cap or a concurrent reset — re-read and decide.
  * Like Better Auth, `lastRequest` advances on every allowed hit (the window is
  * inactivity-anchored, stricter than a fixed window).
+ *
+ * `lastRequest` is a BigInt column, but every value crossing the Prisma boundary
+ * is a plain number: the workerd/wasm query compiler JSON-encodes query
+ * arguments and throws "Do not know how to serialize a BigInt". Epoch millis are
+ * ~1.8e12, far below Number.MAX_SAFE_INTEGER, so nothing is lost. Better Auth's
+ * own limiter writes numbers to this same column.
  */
 async function consume(
   key: string,
@@ -103,7 +109,7 @@ async function consume(
   if (!row) {
     try {
       await database.rateLimit.create({
-        data: { key, count: 1, lastRequest: BigInt(now) },
+        data: { key, count: 1, lastRequest: now },
       });
       return;
     } catch (error) {
@@ -118,8 +124,8 @@ async function consume(
   // Window elapsed -> reset, guarded so only one concurrent racer wins.
   if (now - Number(row.lastRequest) > windowMs) {
     const reset = await database.rateLimit.updateMany({
-      where: { key, lastRequest: { lte: row.lastRequest } },
-      data: { count: 1, lastRequest: BigInt(now) },
+      where: { key, lastRequest: { lte: Number(row.lastRequest) } },
+      data: { count: 1, lastRequest: now },
     });
     if (reset.count > 0) {
       return;
@@ -132,10 +138,10 @@ async function consume(
   const hit = await database.rateLimit.updateMany({
     where: {
       key,
-      lastRequest: { gt: BigInt(now - windowMs) },
+      lastRequest: { gt: now - windowMs },
       count: { lt: max },
     },
-    data: { count: { increment: 1 }, lastRequest: BigInt(now) },
+    data: { count: { increment: 1 }, lastRequest: now },
   });
   if (hit.count > 0) {
     return;
