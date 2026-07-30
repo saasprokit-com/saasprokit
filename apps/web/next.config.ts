@@ -26,11 +26,18 @@ const nextConfig: NextConfig = {
         port: "3000",
         pathname: "/uploads/**",
       },
-      {
-        protocol: "https",
-        hostname: "cdn.saasprokit.com",
-        pathname: "/**",
-      },
+      // The uploads CDN host comes from env so the kit ships no hardcoded
+      // domain; AWS_S3_PUBLIC_URL must be present at build time
+      // (apps/web/.env.production.local) for remote logos to render.
+      ...(process.env.AWS_S3_PUBLIC_URL
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: new URL(process.env.AWS_S3_PUBLIC_URL).hostname,
+              pathname: "/**",
+            },
+          ]
+        : []),
     ],
   },
 

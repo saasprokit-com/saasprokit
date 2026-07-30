@@ -8,6 +8,7 @@
     "start": "next start",
     "preview": "pnpm cf:build && opennextjs-cloudflare preview",
     "deploy": "pnpm cf:build && opennextjs-cloudflare deploy",
+    "deploy:demo": "pnpm cf:build && opennextjs-cloudflare deploy --env=demo",
     "upload": "pnpm cf:build && opennextjs-cloudflare upload",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
