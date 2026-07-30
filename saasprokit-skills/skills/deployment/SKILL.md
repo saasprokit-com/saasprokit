@@ -15,7 +15,7 @@ files (`wrangler.jsonc`, `open-next.config.ts`) that only that host reads.
 ## Deploy
 
 ```bash
-pnpm --filter app deploy     # Cloudflare — build vars come from apps/web/.env.production.local
+pnpm --filter=app run deploy     # Cloudflare — build vars come from apps/web/.env.production.local
 docker build -f apps/web/Dockerfile .    # Docker/AWS
 # Vercel: git push, root apps/web — no code changes, but see the env warning below
 ```
@@ -96,7 +96,7 @@ fine either way.
 ## Verify before deploying server changes
 
 ```bash
-pnpm --filter app preview     # localhost:8787 on real workerd
+pnpm --filter=app run preview     # localhost:8787 on real workerd
 ```
 
 This is the only check that catches workerd failures. Then exercise: a protected route

@@ -84,8 +84,6 @@ export function middleware(request: NextRequest) {
 
   // Strip locale prefix so route checks work for all locales
   const normalizedPath = stripLocale(pathname);
-
-  // Check if this is an auth route (redirect logged-in users away)
   const isAuthRoute = AUTH_ROUTE_PREFIXES.some((route) =>
     normalizedPath.startsWith(route)
   );
@@ -109,11 +107,6 @@ export function middleware(request: NextRequest) {
     signInUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(signInUrl);
   }
-  // Redirect authenticated users away from auth routes
-  if (isAuthRoute && hasSessionCookie) {
-    return NextResponse.redirect(new URL(PAGE_ROUTES.ORG, request.url));
-  }
-
   // Return i18n response (may have modified headers for locale)
   return applyNonceCsp(i18nResponse);
 }
