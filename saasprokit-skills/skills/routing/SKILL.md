@@ -1,11 +1,11 @@
 ---
 name: routing
-description: Route structure, edge middleware (apps/web/proxy.ts), and centralized route definitions (@/lib/routes) for this Next.js 16 web app — the [locale] route groups plus the top-level org route, the public/auth allowlists, locale handling, and the CSP nonce. Read before adding pages or API routes, editing route allowlists, or touching middleware, locale, or CSP handling.
+description: Route structure, edge middleware (apps/web/middleware.ts), and centralized route definitions (@/lib/routes) for this Next.js 16 web app — the [locale] route groups plus the top-level org route, the public/auth allowlists, locale handling, and the CSP nonce. Read before adding pages or API routes, editing route allowlists, or touching middleware, locale, or CSP handling.
 ---
 
 # Routing
 
-**Mental model:** one edge entry (`apps/web/proxy.ts`) runs i18n, strips the
+**Mental model:** one edge entry (`apps/web/middleware.ts`) runs i18n, strips the
 locale, then gates every path against allowlists — **default-deny**: anything not
 public and not an auth route needs a session. Route strings live in one file
 (`apps/web/lib/routes.ts`); import them, never hardcode.
@@ -31,9 +31,9 @@ default-deny (`routes.ts:44`).
 **API** (`app/api/`, all bypass the proxy): `auth/[...all]` (Better Auth handler,
 incl. Stripe webhook via `@better-auth/stripe`), `health`, `upload`, `user/activity`.
 
-## Edge middleware — `apps/web/proxy.ts`
+## Edge middleware — `apps/web/middleware.ts`
 
-Next.js 16 renamed `middleware.ts` → `proxy.ts`. Ordered flow:
+Next.js 16 renamed `middleware.ts` → `proxy.ts`, but this app uses `middleware.ts`: `proxy` is Node-runtime-only and OpenNext/Cloudflare rejects Node middleware (see saasprokit:deployment). Ordered flow:
 
 1. **Skip** `/api`, `/_next`, or any path with a `.` — `NextResponse.next()`, no CSP (`proxy.ts:57`).
 2. **i18n first** — `internationalizationMiddleware(request)`; return immediately if `status !== 200` (locale redirect) (`proxy.ts:66`).
