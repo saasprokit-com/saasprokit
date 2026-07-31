@@ -33,6 +33,7 @@ const FIXTURE_FILES: Record<string, string> = {
   "apps/web/scripts/skip-ci.js": "// x\n",
   "apps/web/.env.example": 'NEXT_PUBLIC_APP_NAME="MyApp"\nDATABASE_URL="postgresql://dev"\nBETTER_AUTH_SECRET=\n',
   "packages/database/prisma/schema.prisma": `generator client {\n  provider = "prisma-client"\n  runtime       = "workerd"\n}\n`,
+  "docker-compose.yml": `services:\n  postgres:\n    environment:\n      POSTGRES_DB: saasprokit_dev\n  web:\n    environment:\n      - DATABASE_URL=postgresql://dev:dev@postgres:5432/saasprokit_dev\n`,
 };
 
 function makeFixture(): string {
@@ -100,5 +101,13 @@ describe("applyInit", () => {
     applyInit(root, { ...CONFIG("vercel"), keepAllHosts: true });
     expect(existsSync(join(root, "apps/web/wrangler.jsonc"))).toBe(true);
     expect(existsSync(join(root, "apps/web/.env.local"))).toBe(true);
+  });
+
+  it("rebrands docker-compose.yml so the DB name matches the generated DATABASE_URL", () => {
+    root = makeFixture();
+    applyInit(root, CONFIG("docker"));
+    const compose = readFileSync(join(root, "docker-compose.yml"), "utf8");
+    expect(compose).toContain("acme_dev");
+    expect(compose).not.toContain("saasprokit");
   });
 });

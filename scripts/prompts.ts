@@ -42,11 +42,28 @@ function assertSupportedNode(): void {
   }
 }
 
-async function confirmDirtyTree(rootDir: string, yes: boolean): Promise<void> {
-  const dirty = execSync("git status --porcelain", { cwd: rootDir })
-    .toString()
-    .trim();
-  if (!dirty || yes) {
+interface GitStatus {
+  dirty: boolean;
+  isRepo: boolean;
+}
+
+function checkGitStatus(rootDir: string): GitStatus {
+  try {
+    const output = execSync("git status --porcelain", { cwd: rootDir })
+      .toString()
+      .trim();
+    return { isRepo: true, dirty: output.length > 0 };
+  } catch {
+    // No .git here — e.g. a zip/tarball download. Nothing to check or commit.
+    return { isRepo: false, dirty: false };
+  }
+}
+
+async function confirmDirtyTree(
+  status: GitStatus,
+  yes: boolean
+): Promise<void> {
+  if (!status.dirty || yes) {
     return;
   }
   const proceed = await confirm({
@@ -180,8 +197,16 @@ function maybeInstall(flags: InitFlags, rootDir: string): void {
 async function maybeCommit(
   flags: InitFlags,
   rootDir: string,
-  slug: string
+  slug: string,
+  isGitRepo: boolean
 ): Promise<void> {
+  if (!isGitRepo) {
+    // Only worth mentioning if the caller actually wanted a commit.
+    if (flags.commit) {
+      log.step("skipped commit (not a git repository)");
+    }
+    return;
+  }
   let doCommit = flags.commit;
   if (doCommit && !flags.yes) {
     const confirmed = await confirm({
@@ -202,7 +227,8 @@ export async function runInit(
 ): Promise<void> {
   intro("SaaSProKit setup");
   assertSupportedNode();
-  await confirmDirtyTree(rootDir, flags.yes);
+  const gitStatus = checkGitStatus(rootDir);
+  await confirmDirtyTree(gitStatus, flags.yes);
 
   const name = await resolveName(flags);
   const slug = slugify(name);
@@ -238,7 +264,7 @@ export async function runInit(
   // already has the modules loaded in memory.
   maybeInstall(flags, rootDir);
 
-  await maybeCommit(flags, rootDir, slug);
+  await maybeCommit(flags, rootDir, slug, gitStatus.isRepo);
 
   note(HOST_TARGETS[host].nextSteps.join("\n"), "Next steps");
   outro("Done. Start hacking: pnpm dev");

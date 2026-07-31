@@ -132,7 +132,12 @@ jobs:
       # Real pruning on this disposable checkout: a host file added without
       # a manifest entry breaks the pruned build and fails this job.
       - name: Run setup CLI (prune for ${{ matrix.host }})
-        run: pnpm run setup --name acme-ci --host ${{ matrix.host }} --yes --no-commit --keep-setup
+        run: pnpm run setup --name acme-ci --host ${{ matrix.host }} --yes --no-commit
+
+      # The customer's first command on a fresh clone — fails if the
+      # committed-state lockfile doesn't match the pruned manifests.
+      - name: Customer frozen install
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck pruned project
         run: pnpm --filter app typecheck

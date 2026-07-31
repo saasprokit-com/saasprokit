@@ -71,6 +71,18 @@ export function applyInit(rootDir: string, config: ApplyConfig): string[] {
     log.push("customized wrangler.jsonc (demo env removed, rebranded)");
   }
 
+  const dockerComposePath = join(rootDir, "docker-compose.yml");
+  if (existsSync(dockerComposePath)) {
+    writeFileSync(
+      dockerComposePath,
+      readFileSync(dockerComposePath, "utf8").replaceAll(
+        "saasprokit",
+        config.slug
+      )
+    );
+    log.push("rebranded docker-compose.yml");
+  }
+
   editJson(join(rootDir, "package.json"), (pkg) =>
     renameRootPackage(pkg, config.slug)
   );

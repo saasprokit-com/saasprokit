@@ -31,6 +31,12 @@ Ensure you have the following installed:
 
 3. **Set up environment variables**
 
+   **Recommended:** run the interactive setup CLI. It asks for your project name and deploy target (Cloudflare Workers / Vercel / Docker), then generates both `apps/web/.env.local` and `packages/database/.env` for you and removes the other hosts' configuration:
+   ```bash
+   pnpm run setup
+   ```
+   The manual steps below remain for reference and for adjusting values later.
+
    Create `.env.local` in `apps/web/` (see `.env.example` for the full list):
    ```bash
    # App Configuration (required)
