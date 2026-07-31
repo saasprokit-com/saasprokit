@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { applyInit } from "./apply";
+import { applyInit, devDbName, stripCliTooling } from "./apply";
 
 const FIXTURE_FILES: Record<string, string> = {
   "package.json": JSON.stringify({
@@ -34,7 +34,18 @@ const FIXTURE_FILES: Record<string, string> = {
   "apps/web/.env.example": 'NEXT_PUBLIC_APP_NAME="MyApp"\nDATABASE_URL="postgresql://dev"\nBETTER_AUTH_SECRET=\n',
   "packages/database/prisma/schema.prisma": `generator client {\n  provider = "prisma-client"\n  runtime       = "workerd"\n}\n`,
   "docker-compose.yml": `services:\n  postgres:\n    environment:\n      POSTGRES_DB: saasprokit_dev\n  web:\n    environment:\n      - DATABASE_URL=postgresql://dev:dev@postgres:5432/saasprokit_dev\n`,
+  "tsup.config.ts": "export default {};",
+  "vitest.config.mts": "export default {};",
+  "scripts/index.ts": "// cli\n",
+  "dist/index.js": "// bundle\n",
 };
+
+const CLI_OWNED_FILES = [
+  "scripts",
+  "tsup.config.ts",
+  "vitest.config.mts",
+  "dist",
+];
 
 function makeFixture(): string {
   const root = mkdtempSync(join(tmpdir(), "saasprokit-cli-"));
@@ -118,5 +129,34 @@ describe("applyInit", () => {
     expect(compose).toContain("acme_co_dev");
     expect(compose).not.toContain("acme-co_dev");
     expect(compose).not.toContain("saasprokit");
+  });
+
+  it("slugs containing the brand keep the compose DB name equal to devDbName", () => {
+    root = makeFixture();
+    const slug = "my-saasprokit";
+    applyInit(root, { ...CONFIG("docker"), slug });
+    const compose = readFileSync(join(root, "docker-compose.yml"), "utf8");
+    expect(compose).toContain(devDbName(slug));
+    expect(compose).not.toContain("my_my-saasprokit_dev");
+  });
+});
+
+describe("stripCliTooling", () => {
+  it("removes every file the CLI owns", () => {
+    root = makeFixture();
+    stripCliTooling(root);
+    for (const file of CLI_OWNED_FILES) {
+      expect(existsSync(join(root, file))).toBe(false);
+    }
+  });
+
+  it("drops the CLI's bin and deps but leaves the project's own scripts", () => {
+    root = makeFixture();
+    stripCliTooling(root);
+    const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+    expect(pkg.bin).toBeUndefined();
+    expect(pkg.scripts.setup).toBeUndefined();
+    expect(pkg.dependencies).toBeUndefined();
+    expect(pkg.scripts.build).toBe("turbo build");
   });
 });

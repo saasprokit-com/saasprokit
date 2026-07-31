@@ -129,8 +129,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Real pruning on this disposable checkout: a host file added without
-      # a manifest entry breaks the pruned build and fails this job.
+      # Exercises the CLI against a real checkout rather than a fixture. Scope,
+      # so nobody over-trusts this job: the steps below catch over-pruning (a
+      # deleted module that typed code still imports) and a lockfile that no
+      # longer matches the pruned manifests. Under-pruning is invisible here —
+      # a stray host file that nothing imports type-checks fine — so that
+      # guard has to be a manifest test, not CI.
       - name: Run setup CLI (prune for ${{ matrix.host }})
         run: pnpm run setup --name acme-ci --host ${{ matrix.host }} --yes --no-commit
 

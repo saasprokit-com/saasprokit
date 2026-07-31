@@ -14,8 +14,6 @@ describe("host manifest", () => {
     ]);
   });
 
-  // The local drift guard: a manifest path that no longer exists means a
-  // host file moved without the manifest being updated.
   it("only references files that exist in the repo", () => {
     for (const target of Object.values(HOST_TARGETS)) {
       for (const file of target.deleteFiles) {

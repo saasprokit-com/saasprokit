@@ -42,9 +42,34 @@ function assertSupportedNode(): void {
   }
 }
 
-interface GitStatus {
+export interface GitStatus {
   dirty: boolean;
   isRepo: boolean;
+}
+
+export type CommitPlan =
+  | { kind: "ask" }
+  | { kind: "commit" }
+  | { kind: "skip"; message?: string };
+
+export function planCommit(
+  flags: Pick<InitFlags, "commit" | "yes">,
+  status: GitStatus
+): CommitPlan {
+  if (!flags.commit) {
+    return { kind: "skip" };
+  }
+  if (!status.isRepo) {
+    return { kind: "skip", message: "skipped commit (not a git repository)" };
+  }
+  if (status.dirty && flags.yes) {
+    return {
+      kind: "skip",
+      message:
+        "skipped commit — the working tree already had uncommitted changes; review and commit yourself",
+    };
+  }
+  return flags.yes ? { kind: "commit" } : { kind: "ask" };
 }
 
 function checkGitStatus(rootDir: string): GitStatus {
@@ -54,7 +79,6 @@ function checkGitStatus(rootDir: string): GitStatus {
       .trim();
     return { isRepo: true, dirty: output.length > 0 };
   } catch {
-    // No .git here — e.g. a zip/tarball download. Nothing to check or commit.
     return { isRepo: false, dirty: false };
   }
 }
@@ -82,7 +106,7 @@ async function resolveName(flags: InitFlags): Promise<string> {
   const answer = await text({
     message: "Project name?",
     placeholder: "acme",
-    validate: (v) => (v.trim() ? undefined : "Required"),
+    validate: (v) => (v?.trim() ? undefined : "Required"),
   });
   if (isCancel(answer)) {
     bail("Aborted.");
@@ -189,7 +213,6 @@ function maybeInstall(flags: InitFlags, rootDir: string): void {
   if (!flags.install) {
     return;
   }
-  // Pruned devDeps invalidate the committed lockfile on purpose.
   run("pnpm install --no-frozen-lockfile", rootDir);
   run("pnpm --filter @repo/database build", rootDir);
 }
@@ -198,27 +221,26 @@ async function maybeCommit(
   flags: InitFlags,
   rootDir: string,
   slug: string,
-  isGitRepo: boolean
+  status: GitStatus
 ): Promise<void> {
-  if (!isGitRepo) {
-    // Only worth mentioning if the caller actually wanted a commit.
-    if (flags.commit) {
-      log.step("skipped commit (not a git repository)");
+  const plan = planCommit(flags, status);
+  if (plan.kind === "skip") {
+    if (plan.message) {
+      log.step(plan.message);
     }
     return;
   }
-  let doCommit = flags.commit;
-  if (doCommit && !flags.yes) {
+  if (plan.kind === "ask") {
     const confirmed = await confirm({
       message: "Commit the initialized project?",
       initialValue: true,
     });
-    doCommit = !isCancel(confirmed) && confirmed;
+    if (isCancel(confirmed) || !confirmed) {
+      return;
+    }
   }
-  if (doCommit) {
-    run("git add -A", rootDir);
-    run(`git commit -m "chore: initialize ${slug} from saasprokit"`, rootDir);
-  }
+  run("git add -A", rootDir);
+  run(`git commit -m "chore: initialize ${slug} from saasprokit"`, rootDir);
 }
 
 export async function runInit(
@@ -255,16 +277,9 @@ export async function runInit(
     log.step("removed setup tooling");
   }
 
-  // Self-removal must happen before install: pnpm install regenerates
-  // pnpm-lock.yaml against whatever package manifests exist on disk at
-  // that moment. Installing first would commit a lockfile still shaped
-  // by the (soon-to-be-stripped) CLI deps, so the customer's very first
-  // `pnpm install --frozen-lockfile` would fail. Deleting scripts/ and
-  // dist/ while this process is still running off them is safe — Node
-  // already has the modules loaded in memory.
   maybeInstall(flags, rootDir);
 
-  await maybeCommit(flags, rootDir, slug, gitStatus.isRepo);
+  await maybeCommit(flags, rootDir, slug, gitStatus);
 
   note(HOST_TARGETS[host].nextSteps.join("\n"), "Next steps");
   outro("Done. Start hacking: pnpm dev");

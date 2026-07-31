@@ -17,12 +17,4 @@ program
     await runInit(process.cwd(), options);
   });
 
-// pnpm keeps a literal "--" when forwarding script args; commander would
-// treat everything after it as positionals. This CLI has no positionals,
-// so dropping the separator is safe.
-//
-// parseAsync (not parse): commander does not await async .action handlers
-// under parse(), so a throw inside runInit (e.g. renderEnvLocal's
-// both-quotes error) would surface as a raw unhandled rejection instead
-// of a clean CLI failure.
 await program.parseAsync(process.argv.filter((arg) => arg !== "--"));

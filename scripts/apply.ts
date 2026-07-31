@@ -29,9 +29,6 @@ export function slugify(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-// Slugs are hyphenated (URL/package-name safe); Postgres DB names conventionally
-// use underscores — shared so the compose rebrand and the generated
-// DATABASE_URL never disagree on the DB name for a hyphenated slug.
 export function devDbName(slug: string): string {
   return `${slug.replaceAll("-", "_")}_dev`;
 }
@@ -80,12 +77,10 @@ export function applyInit(rootDir: string, config: ApplyConfig): string[] {
 
   const dockerComposePath = join(rootDir, "docker-compose.yml");
   if (existsSync(dockerComposePath)) {
-    // Ordered: rewrite the DB name first (underscore form) before the
-    // generic brand replace, so a hyphenated slug doesn't leave the DB name
-    // hyphenated and out of sync with the underscore-form DATABASE_URL.
-    const rebranded = readFileSync(dockerComposePath, "utf8")
-      .replaceAll("saasprokit_dev", devDbName(config.slug))
-      .replaceAll("saasprokit", config.slug);
+    const rebranded = readFileSync(dockerComposePath, "utf8").replaceAll(
+      "saasprokit_dev",
+      devDbName(config.slug)
+    );
     writeFileSync(dockerComposePath, rebranded);
     log.push("rebranded docker-compose.yml");
   }

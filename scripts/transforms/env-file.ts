@@ -29,11 +29,6 @@ function quoteEnvValue(value: string): string {
   );
 }
 
-// Rewrites KEY=... lines in place (uncommenting if needed) so the
-// .env.example ordering and its guidance comments survive. A function
-// replacer keeps $-sequences in secrets literal (string replacements
-// expand $&, $$, ...); dotenv has no quote-escape syntax, so values get
-// whichever quote style they don't contain.
 function setKey(text: string, key: string, value: string): string {
   const pattern = new RegExp(`^#?\\s*${key}=.*$`, "m");
   return text.replace(pattern, () => `${key}=${quoteEnvValue(value)}`);
