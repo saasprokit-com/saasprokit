@@ -1,7 +1,7 @@
 import { SetBreadcrumbs } from "@repo/design-system/components/layout/breadcrumb-context";
 import { ContentSection } from "@repo/design-system/components/layout/content-section";
 import { getDictionary } from "@repo/internationalization";
-import { getServerSession } from "@/lib/auth/auth";
+import { requireAuth } from "@/lib/auth/auth";
 import { canUserCreateOrg } from "@/lib/billing/subscription-queries";
 import { accountRoutes } from "@/lib/routes";
 import { CreateOrganizationForm } from "./components/create-organization-form";
@@ -20,11 +20,11 @@ export default async function NewOrgPage({ params }: NewOrgPageProps) {
   const { locale } = await params;
 
   const [session, dict] = await Promise.all([
-    getServerSession(),
+    requireAuth(),
     getDictionary(locale),
   ]);
 
-  const { allowed, reason, code } = await canUserCreateOrg(session!.user.id);
+  const { allowed, reason, code } = await canUserCreateOrg(session.user.id);
 
   return (
     <>

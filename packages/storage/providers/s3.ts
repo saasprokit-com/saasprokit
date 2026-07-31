@@ -138,6 +138,16 @@ export class S3StorageProvider implements StorageProvider {
       visibility = DEFAULT_VISIBILITY,
     } = options;
 
+    // S3-compatible stores can't serve public objects from the API endpoint
+    // (R2 public access is bucket-level, via a domain) — without a public URL
+    // the fallback below would fabricate a dead amazonaws.com link, so refuse
+    // before putting the object.
+    if (visibility === "public" && this.endpoint && !this.publicUrl) {
+      throw new Error(
+        "Public uploads to an S3-compatible endpoint (AWS_S3_ENDPOINT) require AWS_S3_PUBLIC_URL — the bucket's public domain, e.g. your R2 custom domain"
+      );
+    }
+
     // Generate unique S3 key
     const key = generateS3Key(originalFilename, mimeType, folder);
     const filename = key.split("/").pop() || originalFilename;
@@ -163,7 +173,8 @@ export class S3StorageProvider implements StorageProvider {
         // Use CloudFront or custom domain
         publicUrlResult = `${this.publicUrl}/${key}`;
       } else {
-        // Use direct S3 URL
+        // Real AWS only (the guard above excludes custom endpoints) — with the
+        // public-read ACL set this is the object's genuine public URL
         publicUrlResult = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
       }
     }

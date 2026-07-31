@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { requireAuth } from "@/lib/auth/auth";
 import { getDefaultOrganization } from "@/lib/organization/queries";
 import { PAGE_ROUTES } from "@/lib/routes";
 
@@ -12,6 +13,7 @@ export default async function OrgRedirectPage({
   const [{ locale }, defaultOrg] = await Promise.all([
     params,
     getDefaultOrganization(),
+    requireAuth(PAGE_ROUTES.ORG),
   ]);
 
   if (!defaultOrg) {

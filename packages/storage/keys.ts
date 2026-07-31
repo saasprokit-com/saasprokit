@@ -14,7 +14,7 @@ export const keys = () =>
 
       // Local storage configuration
       STORAGE_LOCAL_PATH: z.string().default("./public/uploads"),
-      STORAGE_BASE_URL: z.string().optional(),
+      STORAGE_BASE_URL: z.url().optional(),
 
       // AWS S3 configuration
       AWS_ACCESS_KEY_ID: z.string().optional(),

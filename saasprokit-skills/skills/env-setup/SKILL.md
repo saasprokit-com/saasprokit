@@ -11,7 +11,7 @@ separate process from the Next app, so `DATABASE_URL` must exist in both places.
 | File | Copy from | Loaded by |
 | --- | --- | --- |
 | `apps/web/.env.local` | `apps/web/.env.example` (~28 vars) | the Next.js app (`turbo dev` / build) |
-| `packages/database/.env` | `packages/database/.env.example` — one var, `DATABASE_URL` (`packages/database/.env.example:1`) | Prisma CLI: `pnpm migrate`, `pnpm --filter @repo/database studio`, `... db:seed` |
+| `packages/database/.env` | `packages/database/.env.example` — `DATABASE_URL` plus optional `DIRECT_URL` (`packages/database/.env.example:1`) | Prisma CLI: `pnpm migrate`, `pnpm --filter @repo/database studio`, `... db:seed` |
 
 Per-package `.env.example` files also exist as reference for their var families
 (`packages/auth`, `packages/storage`, `packages/email`); the web app
@@ -20,12 +20,12 @@ consolidates all of them into `apps/web/.env.local`.
 ## Variable families (apps/web/.env.example)
 
 - **App** (required): `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_DOCS_URL`
-- **Database** (required): `DATABASE_URL` — default `postgresql://dev:dev@localhost:5432/saasprokit_dev` matches the Docker postgres (`docker-compose.yml:20-28`)
+- **Database** (required): `DATABASE_URL` — default `postgresql://dev:dev@localhost:5432/saasprokit_dev` matches the Docker postgres (`docker-compose.yml:20-28`); optional `DIRECT_URL` — non-pooled endpoint for the Prisma CLI when `DATABASE_URL` is pooled (e.g. Neon `-pooler`)
 - **Better Auth** (required): `BETTER_AUTH_SECRET` (generate `openssl rand -base64 48`), `BETTER_AUTH_URL`, `BETTER_AUTH_TRUSTED_ORIGINS`; optional `ADMIN_EMAILS` — comma-separated emails promoted to platform admin at signup (first-admin bootstrap for production; dev uses the seeded `admin@example.com`)
 - **OAuth** (optional): `GOOGLE_CLIENT_ID`/`_SECRET`, `GITHUB_CLIENT_ID`/`_SECRET`
 - **Stripe** (optional in dev): `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_{PRO,ENTERPRISE}_PRICE_ID_{MONTHLY,ANNUAL}`
 - **Email**: `EMAIL_FROM`, `RESEND_API_KEY` (prod), `SMTP_*` (dev — defaults to MailDev on `localhost:1025`); `EMAIL_PROVIDER` auto-detected (prod + `RESEND_API_KEY` → resend, else nodemailer)
-- **Storage**: `STORAGE_PROVIDER` (`local` default / `s3`), `STORAGE_LOCAL_PATH`, `STORAGE_BASE_URL`, `AWS_*` (for s3)
+- **Storage**: `STORAGE_PROVIDER` (`local` default / `s3`), `STORAGE_LOCAL_PATH`, `STORAGE_BASE_URL`, `AWS_*` (for s3; `AWS_S3_ENDPOINT` for S3-compatible stores like R2, and `AWS_S3_PUBLIC_URL` is then required for public uploads)
 - **Optional tunables** (commented, defaults shown): `MAX_ORGS_PER_USER`, `ALLOWED_ORIGINS`, `HEALTH_CHECK_TIMEOUT_MS`, `ORG_QUERY_TIMEOUT_MS`
 
 ## Database schema

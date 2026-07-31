@@ -31,10 +31,9 @@ async function buildAdminAuditData(input: RecordAdminAuditInput) {
   // would record a client-supplied value: behind a CDN the real address is
   // appended to that chain, so the first entry is attacker-controlled — and an
   // audit trail of forged IPs is worse than none.
-  const ipAddress =
-    getIp(requestHeaders, {
-      advanced: { ipAddress: { ipAddressHeaders: IP_ADDRESS_HEADERS } },
-    }) ?? null;
+  const ipAddress = getIp(requestHeaders, {
+    advanced: { ipAddress: { ipAddressHeaders: IP_ADDRESS_HEADERS } },
+  });
   const userAgent = requestHeaders.get("user-agent") ?? null;
 
   return {
