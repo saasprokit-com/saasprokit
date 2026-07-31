@@ -14,7 +14,7 @@ import {
 import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { imageFileSchema } from "@repo/storage/constants";
-import { ALLOWED_IMAGE_TYPES } from "@repo/utils/storage";
+import { ALLOWED_IMAGE_TYPES, MAX_FILE_SIZE_MB } from "@repo/utils/storage";
 import { Building2, Loader2, Trash2, Upload } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -231,7 +231,8 @@ export function LogoUpload({
         )}
 
         <p className="text-muted-foreground text-xs">
-          Accepted formats: JPEG, PNG, WebP, GIF. Max size: 5MB.
+          Accepted formats: JPEG, PNG, WebP, GIF. Max size: {MAX_FILE_SIZE_MB}
+          MB.
         </p>
       </div>
     </div>
