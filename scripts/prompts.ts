@@ -206,6 +206,9 @@ export async function runInit(
 
   const name = await resolveName(flags);
   const slug = slugify(name);
+  if (!slug) {
+    bail(`Project name "${name}" contains no usable characters (a-z, 0-9).`);
+  }
   const host = await resolveHost(flags);
   const answers = flags.yes
     ? defaultAnswers(name, slug)
@@ -221,12 +224,19 @@ export async function runInit(
     log.step(line);
   }
 
-  maybeInstall(flags, rootDir);
-
   if (!flags.keepSetup) {
     stripCliTooling(rootDir);
     log.step("removed setup tooling");
   }
+
+  // Self-removal must happen before install: pnpm install regenerates
+  // pnpm-lock.yaml against whatever package manifests exist on disk at
+  // that moment. Installing first would commit a lockfile still shaped
+  // by the (soon-to-be-stripped) CLI deps, so the customer's very first
+  // `pnpm install --frozen-lockfile` would fail. Deleting scripts/ and
+  // dist/ while this process is still running off them is safe — Node
+  // already has the modules loaded in memory.
+  maybeInstall(flags, rootDir);
 
   await maybeCommit(flags, rootDir, slug);
 
