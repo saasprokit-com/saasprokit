@@ -17,4 +17,7 @@ program
     process.stdout.write(`saasprokit init ${JSON.stringify(options)}\n`);
   });
 
-program.parse();
+// pnpm keeps a literal "--" when forwarding script args; commander would
+// treat everything after it as positionals. This CLI has no positionals,
+// so dropping the separator is safe.
+program.parse(process.argv.filter((arg) => arg !== "--"));
