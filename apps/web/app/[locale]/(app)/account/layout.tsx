@@ -7,7 +7,6 @@ import {
   SidebarProvider,
 } from "@repo/design-system/components/ui/sidebar";
 import type { ReactNode } from "react";
-import { ActivityTracker } from "@/components/activity-tracker";
 import { requireAuth } from "@/lib/auth/auth";
 import { AccountSidebar } from "./components/account-sidebar";
 
@@ -25,7 +24,6 @@ export default async function AccountLayout({
 
   return (
     <SidebarProvider>
-      <ActivityTracker />
       <AccountSidebar
         locale={locale}
         showAdmin={showAdmin}

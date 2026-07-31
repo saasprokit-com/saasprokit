@@ -107,16 +107,6 @@ export default async function AdminUserDetailPage({
                   <dt className="text-muted-foreground">Joined</dt>
                   <dd>{formatDate(user.createdAt)}</dd>
                 </div>
-                <div className="flex items-center justify-between">
-                  <dt className="text-muted-foreground">Last active</dt>
-                  <dd>
-                    {user.lastActiveAt
-                      ? formatDistanceToNow(new Date(user.lastActiveAt), {
-                          addSuffix: true,
-                        })
-                      : "Never"}
-                  </dd>
-                </div>
               </dl>
             </CardContent>
           </Card>

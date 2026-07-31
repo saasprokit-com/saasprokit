@@ -16,7 +16,6 @@ const listMemberSelect = {
       name: true,
       email: true,
       image: true,
-      lastActiveAt: true,
     },
   },
 } satisfies Prisma.MemberSelect;
@@ -101,9 +100,6 @@ function buildOrderBy(
         break;
       case "email":
         orderBy.user = { ...orderBy.user, email: direction };
-        break;
-      case "lastActiveAt":
-        orderBy.user = { ...orderBy.user, lastActiveAt: direction };
         break;
       default:
         if (SORTABLE_MEMBER_COLUMNS.has(s.id)) {

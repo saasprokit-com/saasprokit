@@ -12,7 +12,6 @@ import { Checkbox } from "@repo/design-system/components/ui/checkbox";
 import { formatDate } from "@repo/design-system/lib/date";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import type { ColumnDef } from "@tanstack/react-table";
-import { formatDistanceToNow } from "date-fns";
 import { Crown, Shield, User } from "lucide-react";
 import type { Member } from "../queries";
 import type { MemberPermissions } from "../utils";
@@ -148,26 +147,6 @@ export function getColumns({
           memberId={member.id}
           organizationId={organizationId}
         />
-      );
-    },
-  });
-
-  // Last Active column
-  columns.push({
-    accessorKey: "lastActiveAt",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Last Active" />
-    ),
-    cell: ({ row }) => {
-      const member = row.original;
-      const lastActive = member.user.lastActiveAt;
-      if (!lastActive) {
-        return <span className="text-muted-foreground">Never</span>;
-      }
-      return (
-        <span className="text-muted-foreground">
-          {formatDistanceToNow(new Date(lastActive), { addSuffix: true })}
-        </span>
       );
     },
   });

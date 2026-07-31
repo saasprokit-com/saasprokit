@@ -1,0 +1,91 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "saasprokit-web",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-07-29",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // No routes at top level: a fresh clone deploys to
+  // <name>.<account>.workers.dev, which succeeds in any Cloudflare account.
+  // Attach a custom domain via an environment block (see env.demo) — wrangler
+  // creates the DNS record + certificate on deploy when the zone is in your
+  // account.
+  "observability": {
+    "enabled": true
+  },
+  // Self-reference lets server actions / ISR revalidation call back into the
+  // Worker. The service name MUST equal the deployed worker name.
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "saasprokit-web"
+    }
+  ],
+  // Incremental page cache (open-next.config.ts r2IncrementalCache). Uploads
+  // do NOT use a binding — they go through the S3-compatible API so the
+  // storage code stays portable across hosts. R2 bucket names are
+  // account-scoped: create this one in your own account with
+  // `wrangler r2 bucket create saasprokit-web-cache`.
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "saasprokit-web-cache"
+    }
+  ],
+  // Non-secret runtime config. Secrets (DATABASE_URL, BETTER_AUTH_SECRET,
+  // STRIPE_*, RESEND_API_KEY, AWS keys, AWS_S3_ENDPOINT, CRON_SECRET) are set
+  // via `wrangler secret put` — never here. AWS_S3_ENDPOINT is a secret
+  // because the R2 endpoint embeds your Cloudflare account ID.
+  "vars": {
+    // Public URL, not a credential. Organization invite links are built from
+    // this (packages/auth/server.ts) and fall back to localhost without it —
+    // set it to your workers.dev URL (or custom domain) after the first deploy.
+    // "BETTER_AUTH_URL": "https://saasprokit-web.<your-account>.workers.dev",
+    "EMAIL_PROVIDER": "resend",
+    "STORAGE_PROVIDER": "s3",
+    "AWS_REGION": "auto",
+    "AWS_S3_BUCKET": "saasprokit-uploads"
+    // AWS_S3_PUBLIC_URL (your uploads CDN domain) goes here once you have
+    // one; next.config.ts derives the image allowlist from it at build time.
+  },
+  // Named environments do NOT inherit vars/routes/services/r2_buckets —
+  // each block must restate them in full.
+  "env": {
+    // The maintainers' demo deployment: `pnpm --filter=app run deploy:demo`.
+    "demo": {
+      // Keep the original worker name: without this the env would deploy a
+      // second worker named "saasprokit-web-demo", orphaning the existing
+      // one (and its secrets) and breaking WORKER_SELF_REFERENCE below.
+      "name": "saasprokit-web",
+      "routes": [
+        {
+          "pattern": "multi-tenant.saasprokit.com",
+          "custom_domain": true
+        }
+      ],
+      "services": [
+        {
+          "binding": "WORKER_SELF_REFERENCE",
+          "service": "saasprokit-web"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "NEXT_INC_CACHE_R2_BUCKET",
+          "bucket_name": "saasprokit-web-cache"
+        }
+      ],
+      "vars": {
+        "BETTER_AUTH_URL": "https://multi-tenant.saasprokit.com",
+        "EMAIL_PROVIDER": "resend",
+        "STORAGE_PROVIDER": "s3",
+        "AWS_REGION": "auto",
+        "AWS_S3_BUCKET": "saasprokit-uploads",
+        "AWS_S3_PUBLIC_URL": "https://cdn.saasprokit.com"
+      }
+    }
+  }
+}

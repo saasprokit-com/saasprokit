@@ -7,7 +7,6 @@ import {
   SidebarProvider,
 } from "@repo/design-system/components/ui/sidebar";
 import type { ReactNode } from "react";
-import { ActivityTracker } from "@/components/activity-tracker";
 import { requireAuth } from "@/lib/auth/auth";
 import {
   getActiveOrganization,
@@ -39,7 +38,6 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
 
   return (
     <SidebarProvider>
-      <ActivityTracker />
       <OrgSidebar
         activeOrganization={organizations.find(
           (item) => item.id === org.organizationId

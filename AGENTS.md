@@ -24,12 +24,13 @@ pnpm migrate                  # Format, generate, and push Prisma schema
 Detailed architecture docs and recipes live as Agent Skills (SKILL.md format) in `.agents/skills/` — symlinked to their canonical home in `saasprokit-skills/skills/`. Codex and Cursor discover them automatically; invoke explicitly with `$<name>` (Codex) or `/` in Agent chat (Cursor), or let the description trigger them. **Read the relevant skill BEFORE writing code in its area:**
 
 - `auth` — Better Auth setup, dual admin + org RBAC, session helpers (`getServerSession`, `requireAuth`, `hasOrgPermission`), org-slug access (`getActiveOrganization`), server action auth (`verifySession`, `toActionError`)
-- `routing` — Route structure, edge middleware (`apps/web/proxy.ts`), centralized routes (`@/lib/routes`), locale handling
+- `routing` — Route structure, edge middleware (`apps/web/middleware.ts`), centralized routes (`@/lib/routes`), locale handling
 - `data-access` — the unified `lib/` server-side data layer in `apps/web` (domain queries/actions + foundation), Prisma workflow
 - `forms` — Form patterns (react-hook-form + zod + server actions), scaffold recipes for new forms and dialogs
 - `tables` — Server-driven data table pages (TanStack Table manual mode + nuqs URL state + Prisma), scaffold recipe for list/table pages
 - `billing` — Stripe integration, subscription plans, webhook config
 - `conventions` — No barrel imports, Next.js 16 async params, interface-over-type, comments explain why (no redundant docblocks)
+- `deployment` — Cloudflare Workers / Vercel / AWS targets: which changes are host-specific vs shared, the four env-driven seams, and the workerd constraints that only fail at runtime
 - `workflows` — Recipes for new org-scoped pages, account pages, API routes
 - `testing` — Vitest/Playwright layout, CI rules, Turbo build graph
 - `env-setup` — Env vars, Docker Compose, MailDev

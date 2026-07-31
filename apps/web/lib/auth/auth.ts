@@ -27,7 +27,7 @@ export async function requireAuth(returnTo?: string) {
     const returnUrl = returnTo
       ? encodeURIComponent(returnTo)
       : encodeURIComponent(PAGE_ROUTES.ORG);
-    redirect(`${PAGE_ROUTES.SIGN_IN}?returnTo=${returnUrl}`);
+    redirect(`${PAGE_ROUTES.SIGN_IN}?callbackUrl=${returnUrl}`);
   }
 
   return session;

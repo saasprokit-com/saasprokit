@@ -6,8 +6,16 @@ type StripeInstance = InstanceType<typeof Stripe>;
 
 const env = keys();
 
+// createFetchHttpClient is required on workerd: with no httpClient the SDK calls
+// createNodeHttpClient (stripe.core.js) and every request fails, surfacing as
+// UNABLE_TO_CREATE_CUSTOMER at checkout. `stripe` is in serverExternalPackages,
+// so the package's own "workerd" export condition never gets applied. Passing it
+// explicitly is host-agnostic — fetch is global on Node 18+ too.
 export const stripeClient: StripeInstance | null = env.STRIPE_SECRET_KEY
-  ? new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: STRIPE_API_VERSION })
+  ? new Stripe(env.STRIPE_SECRET_KEY, {
+      apiVersion: STRIPE_API_VERSION,
+      httpClient: Stripe.createFetchHttpClient(),
+    })
   : null;
 
 export function requireStripeClient(): StripeInstance {

@@ -11,12 +11,7 @@ Complete the [shared prerequisites](/docs/deployment) first (Neon, Stripe, Resen
 
 1. Push the repository to GitHub and import it at **vercel.com/new**
 2. Set **Root Directory** to `apps/web`
-3. Leave the framework preset on **Next.js**. Vercel detects the pnpm workspace and Turborepo automatically and builds `app` together with its workspace dependencies
-4. If the build ever fails to resolve `@repo/*` packages, override the build command with:
-
-   ```bash
-   cd ../.. && pnpm turbo build --filter=app
-   ```
+3. Leave the framework preset on **Next.js**. `apps/web/vercel.json` already sets a custom **Build Command** — `cd ../.. && pnpm turbo build --filter=app` — so Vercel doesn't fall back to a bare `next build`, which would skip Prisma client generation. The generated client is gitignored, so without the Turbo build the deploy fails; this isn't optional and needs no manual setup
 
 ## 2. Environment variables
 
@@ -65,6 +60,8 @@ AWS_S3_PUBLIC_URL=https://your-bucket.s3.amazonaws.com
 
 > `STORAGE_PROVIDER=local` writes to `./public/uploads`, which does not persist on Vercel's serverless filesystem. Use `s3` for any real deployment.
 
+> Vercel's Hobby plan caps request bodies at 4.5 MB. The kit's upload limit (`MAX_FILE_SIZE_MB` in `packages/utils/storage.ts`) is set to 4 MB for this reason.
+
 ## 3. Push the database schema
 
 From your machine, with the production `DATABASE_URL` in `packages/database/.env`:
@@ -87,6 +84,6 @@ Run the full [verification checklist](/docs/deployment#verification-checklist).
 
 ## Vercel-specific notes
 
-- **Middleware** (`apps/web/proxy.ts`) runs on Vercel's edge runtime. The session check calls Better Auth over the request's own origin; if it ever throws, the middleware fails closed and redirects protected routes to sign-in — watch the function logs if you see unexpected sign-in redirects.
+- **Middleware** (`apps/web/middleware.ts`) runs on Vercel's edge runtime. It performs an optimistic `getSessionCookie()` check with no database access — it never calls Better Auth directly, so it can't distinguish a valid session from a stale cookie. It has no error handling of its own — the cookie read cannot fail meaningfully, so there is nothing to fail open or closed on. Real enforcement happens in the layouts via `requireAuth`, which do hit the database — watch for unexpected sign-in redirects there, not in the middleware.
 - **Preview deployments** get `*.vercel.app` URLs that won't match `BETTER_AUTH_TRUSTED_ORIGINS`; auth flows on previews will be limited unless you add the preview origin.
 - **Rollback**: `vercel rollback` restores the previous deployment; the schema is managed separately via Prisma, so roll it back deliberately if a deploy included schema changes.

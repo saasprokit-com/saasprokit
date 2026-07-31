@@ -183,23 +183,6 @@ export function getUserColumns({
       ),
     },
     {
-      accessorKey: "lastActiveAt",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Last active" />
-      ),
-      cell: ({ row }) => {
-        const lastActive = row.original.lastActiveAt;
-        if (!lastActive) {
-          return <span className="text-muted-foreground">Never</span>;
-        }
-        return (
-          <span className="text-muted-foreground">
-            {formatDistanceToNow(new Date(lastActive), { addSuffix: true })}
-          </span>
-        );
-      },
-    },
-    {
       id: "actions",
       cell: ({ row }) => (
         <UserActions

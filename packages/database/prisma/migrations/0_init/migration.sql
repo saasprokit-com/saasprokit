@@ -1,5 +1,3 @@
-Loaded Prisma config from prisma.config.ts.
-
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 
@@ -80,6 +78,7 @@ CREATE TABLE "twoFactor" (
     "secret" TEXT NOT NULL,
     "backupCodes" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "verified" BOOLEAN DEFAULT true,
 
     CONSTRAINT "twoFactor_pkey" PRIMARY KEY ("id")
 );
@@ -92,6 +91,7 @@ CREATE TABLE "organization" (
     "logo" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "metadata" TEXT,
+    "stripeCustomerId" TEXT,
 
     CONSTRAINT "organization_pkey" PRIMARY KEY ("id")
 );
@@ -103,9 +103,6 @@ CREATE TABLE "member" (
     "userId" TEXT NOT NULL,
     "role" TEXT NOT NULL DEFAULT 'member',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "suspendedAt" TIMESTAMP(3),
-    "suspendedBy" TEXT,
-    "suspendReason" TEXT,
 
     CONSTRAINT "member_pkey" PRIMARY KEY ("id")
 );
@@ -138,6 +135,11 @@ CREATE TABLE "subscription" (
     "trialStart" TIMESTAMP(3),
     "trialEnd" TIMESTAMP(3),
     "cancelAtPeriodEnd" BOOLEAN DEFAULT false,
+    "cancelAt" TIMESTAMP(3),
+    "canceledAt" TIMESTAMP(3),
+    "endedAt" TIMESTAMP(3),
+    "billingInterval" TEXT,
+    "stripeScheduleId" TEXT,
     "seats" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -235,6 +237,16 @@ CREATE TABLE "teamMember" (
     CONSTRAINT "teamMember_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "rateLimit" (
+    "id" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "count" INTEGER NOT NULL,
+    "lastRequest" BIGINT NOT NULL,
+
+    CONSTRAINT "rateLimit_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
 
@@ -272,10 +284,7 @@ CREATE INDEX "member_userId_organizationId_idx" ON "member"("userId", "organizat
 CREATE INDEX "member_organizationId_userId_role_idx" ON "member"("organizationId", "userId", "role");
 
 -- CreateIndex
-CREATE INDEX "member_userId_organizationId_suspendedAt_idx" ON "member"("userId", "organizationId", "suspendedAt");
-
--- CreateIndex
-CREATE INDEX "member_organizationId_role_suspendedAt_idx" ON "member"("organizationId", "role", "suspendedAt");
+CREATE INDEX "member_organizationId_role_idx" ON "member"("organizationId", "role");
 
 -- CreateIndex
 CREATE INDEX "invitation_organizationId_idx" ON "invitation"("organizationId");
@@ -352,6 +361,9 @@ CREATE INDEX "teamMember_userId_idx" ON "teamMember"("userId");
 -- CreateIndex
 CREATE INDEX "teamMember_teamId_userId_idx" ON "teamMember"("teamId", "userId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "rateLimit_key_key" ON "rateLimit"("key");
+
 -- AddForeignKey
 ALTER TABLE "session" ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -393,4 +405,3 @@ ALTER TABLE "teamMember" ADD CONSTRAINT "teamMember_teamId_fkey" FOREIGN KEY ("t
 
 -- AddForeignKey
 ALTER TABLE "teamMember" ADD CONSTRAINT "teamMember_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-

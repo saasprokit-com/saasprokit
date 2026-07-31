@@ -16,7 +16,6 @@ const adminUserSelect = {
   banExpires: true,
   twoFactorEnabled: true,
   createdAt: true,
-  lastActiveAt: true,
   _count: { select: { members: true, sessions: true } },
 } satisfies Prisma.UserSelect;
 
@@ -33,7 +32,6 @@ const SORTABLE_USER_COLUMNS = new Set([
   "email",
   "role",
   "createdAt",
-  "lastActiveAt",
   "banned",
 ]);
 
@@ -117,7 +115,6 @@ const adminUserDetailSelect = {
   banExpires: true,
   twoFactorEnabled: true,
   createdAt: true,
-  lastActiveAt: true,
   members: {
     select: {
       role: true,

@@ -1,6 +1,7 @@
 import { SetBreadcrumbs } from "@repo/design-system/components/layout/breadcrumb-context";
 import { ContentSection } from "@repo/design-system/components/layout/content-section";
 import { getDictionary } from "@repo/internationalization";
+import { requireAuth } from "@/lib/auth/auth";
 import { accountRoutes } from "@/lib/routes";
 import { DeleteAccountForm } from "./components/delete-account-form";
 
@@ -15,7 +16,7 @@ interface DangerZonePageProps {
 
 export default async function DangerZonePage({ params }: DangerZonePageProps) {
   const { locale } = await params;
-  const dict = await getDictionary(locale);
+  const [, dict] = await Promise.all([requireAuth(), getDictionary(locale)]);
 
   return (
     <>

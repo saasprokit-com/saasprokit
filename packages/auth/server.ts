@@ -43,6 +43,7 @@ import { organization } from "better-auth/plugins/organization";
 import { twoFactor } from "better-auth/plugins/two-factor";
 import { isBootstrapAdminEmail } from "./admin-bootstrap";
 import { authorizeBillingAction } from "./billing-authorize";
+import { IP_ADDRESS_HEADERS } from "./ip-headers";
 import { keys } from "./keys";
 import { canUserCreateOrg } from "./org-eligibility";
 import {
@@ -85,6 +86,13 @@ export const auth = betterAuth({
 
   advanced: {
     useSecureCookies: process.env.NODE_ENV === "production",
+    ipAddress: {
+      // Without this, no client IP resolves behind a CDN and every visitor
+      // shares ONE rate-limit bucket ("no-trusted-ip|<path>") — a few requests
+      // lock out the whole site. Only headers the edge sets itself are listed;
+      // a client-supplied x-forwarded-for would be forgeable.
+      ipAddressHeaders: IP_ADDRESS_HEADERS,
+    },
   },
 
   hooks: {
@@ -110,6 +118,10 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
+        // First-admin bootstrap: ADMIN_EMAILS signups get role "admin". Covers
+        // every signup method (password, OAuth, magic link, OTP) since they all
+        // funnel through this create. Wins over the admin plugin's defaultRole
+        // hook because that one spreads incoming data over its default.
         before: (user) =>
           Promise.resolve(
             isBootstrapAdminEmail(user.email, env.ADMIN_EMAILS)

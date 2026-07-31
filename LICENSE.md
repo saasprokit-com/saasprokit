@@ -35,7 +35,7 @@ The Licensee MAY:
 
 The Licensee MAY NOT:
 
-1. **Redistribute** the Software, in source or compiled form, to any third party, including in public or private repositories, package registries, marketplaces, file-sharing services, or as part of a derivative boilerplate, template, course, or tutorial. <!-- LAWYER REVIEW: load-bearing clause for boilerplate licensing -->
+1. **Redistribute** the Software, in source or compiled form, to any third party, including in public or private repositories, package registries, marketplaces, file-sharing services, or as part of a derivative boilerplate, template, course, or tutorial.
 2. **Resell** the Software, in original or modified form, as a standalone product or as the substantial value of a derivative product.
 3. **Sublicense** the Software to any party other than End Users of the Application.
 4. **Open-source** the Software or any substantial portion of it.

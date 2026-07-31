@@ -1,20 +1,22 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  // Docker/VPS needs the standalone server; the OpenNext/Cloudflare build
+  // (CF_BUILD=1) and Vercel both do their own bundling and must not use it
+  output: process.env.CF_BUILD || process.env.VERCEL ? undefined : "standalone",
 
   // Monorepo root for Turbopack resolution (two levels up from apps/web/)
   turbopack: {
     root: "../../",
+    // Workers can't run the pg driver (raw TCP + the optional pg-cloudflare
+    // native socket, which esbuild cannot resolve). The Neon adapter is used
+    // there instead, so alias pg out of the Cloudflare build entirely.
+    resolveAlias: process.env.CF_BUILD
+      ? { "@prisma/adapter-pg": "./lib/stubs/prisma-adapter-pg.ts" }
+      : {},
   },
 
-  serverExternalPackages: [
-    "@prisma/client",
-    "pino",
-    "pino-pretty",
-    "thread-stream",
-    "stripe",
-  ],
+  serverExternalPackages: ["@prisma/client", "stripe"],
 
   images: {
     remotePatterns: [
@@ -24,6 +26,18 @@ const nextConfig: NextConfig = {
         port: "3000",
         pathname: "/uploads/**",
       },
+      // The uploads CDN host comes from env so the kit ships no hardcoded
+      // domain; AWS_S3_PUBLIC_URL must be present at build time
+      // (apps/web/.env.production.local) for remote logos to render.
+      ...(process.env.AWS_S3_PUBLIC_URL
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: new URL(process.env.AWS_S3_PUBLIC_URL).hostname,
+              pathname: "/**",
+            },
+          ]
+        : []),
     ],
   },
 
@@ -74,7 +88,7 @@ const nextConfig: NextConfig = {
             value:
               "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
           },
-          // Content-Security-Policy is set dynamically in proxy.ts with per-request nonces
+          // Content-Security-Policy is set dynamically in middleware.ts with per-request nonces
         ],
       },
     ];

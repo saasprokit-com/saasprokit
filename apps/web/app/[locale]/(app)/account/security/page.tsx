@@ -1,7 +1,7 @@
 import { SetBreadcrumbs } from "@repo/design-system/components/layout/breadcrumb-context";
 import { ContentSection } from "@repo/design-system/components/layout/content-section";
 import { getDictionary } from "@repo/internationalization";
-import { getServerSession } from "@/lib/auth/auth";
+import { requireAuth } from "@/lib/auth/auth";
 import { accountRoutes } from "@/lib/routes";
 import { ChangePasswordForm } from "./components/change-password-form";
 import { SessionsManager } from "./components/sessions-manager";
@@ -20,11 +20,11 @@ interface SecurityPageProps {
 export default async function SecurityPage({ params }: SecurityPageProps) {
   const { locale } = await params;
   const [session, dict] = await Promise.all([
-    getServerSession(),
+    requireAuth(),
     getDictionary(locale),
   ]);
 
-  const sessions = await getUserSessions(session!.user.id);
+  const sessions = await getUserSessions(session.user.id);
 
   const errors = dict.errors.action;
 
@@ -44,13 +44,13 @@ export default async function SecurityPage({ params }: SecurityPageProps) {
         <ChangePasswordForm errors={errors} />
 
         <SessionsManager
-          currentSessionId={session!.session.id}
+          currentSessionId={session.session.id}
           errors={errors}
           sessions={sessions}
         />
 
         <TwoFactorManager
-          enabled={session!.user.twoFactorEnabled ?? false}
+          enabled={session.user.twoFactorEnabled ?? false}
           errors={errors}
         />
       </ContentSection>

@@ -36,6 +36,7 @@ const RANDOM_SUBSTRING_LENGTH = 8; // Length of random suffix (8 chars)
 interface S3Config {
   accessKeyId: string;
   bucket: string;
+  endpoint?: string;
   publicUrl?: string;
   region: string;
   secretAccessKey: string;
@@ -62,6 +63,7 @@ function getS3Config(): S3Config {
     secretAccessKey,
     region: env.AWS_REGION,
     bucket,
+    endpoint: env.AWS_S3_ENDPOINT,
     publicUrl: env.AWS_S3_PUBLIC_URL,
     signedUrlExpires: env.AWS_S3_SIGNED_URL_EXPIRES,
   };
@@ -100,6 +102,7 @@ export class S3StorageProvider implements StorageProvider {
 
   private readonly client: S3Client;
   private readonly bucket: string;
+  private readonly endpoint: string | undefined;
   private readonly publicUrl: string | undefined;
   private readonly signedUrlExpires: number;
   private readonly region: string;
@@ -110,11 +113,15 @@ export class S3StorageProvider implements StorageProvider {
 
     this.region = config.region;
     this.bucket = config.bucket;
+    this.endpoint = config.endpoint;
     this.publicUrl = config.publicUrl;
     this.signedUrlExpires = config.signedUrlExpires;
 
     this.client = new S3Client({
       region: this.region,
+      // S3-compatible stores (R2, MinIO) need an explicit endpoint; path-style
+      // addressing is the reliable choice on account-scoped endpoints
+      ...(this.endpoint && { endpoint: this.endpoint, forcePathStyle: true }),
       credentials: {
         accessKeyId: config.accessKeyId,
         secretAccessKey: config.secretAccessKey,
@@ -131,6 +138,16 @@ export class S3StorageProvider implements StorageProvider {
       visibility = DEFAULT_VISIBILITY,
     } = options;
 
+    // S3-compatible stores can't serve public objects from the API endpoint
+    // (R2 public access is bucket-level, via a domain) — without a public URL
+    // the fallback below would fabricate a dead amazonaws.com link, so refuse
+    // before putting the object.
+    if (visibility === "public" && this.endpoint && !this.publicUrl) {
+      throw new Error(
+        "Public uploads to an S3-compatible endpoint (AWS_S3_ENDPOINT) require AWS_S3_PUBLIC_URL — the bucket's public domain, e.g. your R2 custom domain"
+      );
+    }
+
     // Generate unique S3 key
     const key = generateS3Key(originalFilename, mimeType, folder);
     const filename = key.split("/").pop() || originalFilename;
@@ -141,8 +158,9 @@ export class S3StorageProvider implements StorageProvider {
       Key: key,
       Body: buffer,
       ContentType: mimeType,
-      // Set ACL based on visibility
-      ...(visibility === "public" && { ACL: "public-read" }),
+      // R2 and other S3-compatible stores reject per-object ACLs — public
+      // access is bucket-level (custom domain), so only send ACLs to real AWS
+      ...(visibility === "public" && !this.endpoint && { ACL: "public-read" }),
     });
 
     // Upload to S3
@@ -155,7 +173,8 @@ export class S3StorageProvider implements StorageProvider {
         // Use CloudFront or custom domain
         publicUrlResult = `${this.publicUrl}/${key}`;
       } else {
-        // Use direct S3 URL
+        // Real AWS only (the guard above excludes custom endpoints) — with the
+        // public-read ACL set this is the object's genuine public URL
         publicUrlResult = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
       }
     }

@@ -49,12 +49,13 @@ docker compose up postgres maildev   # DB + mail catcher (recommended for app de
 Detailed architecture docs live as skills in the `saasprokit` plugin at `saasprokit-skills/skills/*/SKILL.md`. Once the plugin is installed they are invocable as `/saasprokit:<name>`; either way, read the relevant SKILL.md BEFORE writing code in its area:
 
 - `saasprokit:auth` — Better Auth setup, dual admin + org RBAC, server-side session helpers (`getServerSession`, `requireAuth`, `hasOrgPermission`), org-slug access (`getActiveOrganization`), server action auth (`verifySession`, `toActionError`), platform `/admin` gates
-- `saasprokit:routing` — Route structure, edge middleware (`apps/web/proxy.ts`), centralized routes (`@/lib/routes`), locale handling
+- `saasprokit:routing` — Route structure, edge middleware (`apps/web/middleware.ts`), centralized routes (`@/lib/routes`), locale handling
 - `saasprokit:data-access` — the unified `lib/` server-side data layer in `apps/web` (domain queries/actions + foundation), Prisma workflow
 - `saasprokit:forms` — Form patterns (RHF + zod + server actions), scaffold recipes for new forms and dialogs
 - `saasprokit:tables` — Server-driven data table pages (TanStack Table manual mode + nuqs URL state + Prisma), scaffold recipe for list/table pages
 - `saasprokit:billing` — Stripe integration, subscription plans, webhook config
 - `saasprokit:conventions` — No barrel imports, Next.js 16 async params, interface-over-type, comments explain why (no redundant docblocks)
+- `saasprokit:deployment` — Cloudflare Workers / Vercel / AWS targets: which changes are host-specific vs shared, the four env-driven seams, and the workerd constraints that only fail at runtime
 - `saasprokit:workflows` — Recipes for new org-scoped pages, account pages, API routes
 - `saasprokit:testing` — Vitest/Playwright layout, CI rules, Turbo build graph
 - `saasprokit:env-setup` — Env vars, Docker Compose, MailDev

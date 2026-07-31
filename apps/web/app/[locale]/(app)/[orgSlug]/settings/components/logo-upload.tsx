@@ -14,7 +14,7 @@ import {
 import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { imageFileSchema } from "@repo/storage/constants";
-import { ALLOWED_IMAGE_TYPES } from "@repo/utils/storage";
+import { ALLOWED_IMAGE_TYPES, MAX_FILE_SIZE_MB } from "@repo/utils/storage";
 import { Building2, Loader2, Trash2, Upload } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -22,6 +22,13 @@ import { type ChangeEvent, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { removeOrganizationLogoAction } from "../actions";
+
+// Shape returned by POST /api/upload — response.json() is untyped, so narrow it
+// here rather than trusting the payload
+interface UploadResponse {
+  error?: string;
+  file?: { publicUrl: string | null };
+}
 
 interface LogoUploadProps {
   canEdit: boolean;
@@ -79,14 +86,14 @@ export function LogoUpload({
           body: formData,
         });
 
-        const result = await response.json();
+        const result = (await response.json()) as UploadResponse;
 
         if (!response.ok) {
           throw new Error(result.error || "Upload failed");
         }
 
         toast.success("Logo updated successfully");
-        setPreviewUrl(result.file.publicUrl);
+        setPreviewUrl(result.file?.publicUrl ?? null);
         router.refresh();
       } catch (error) {
         toast.error(errors.uploadLogo, {
@@ -224,7 +231,8 @@ export function LogoUpload({
         )}
 
         <p className="text-muted-foreground text-xs">
-          Accepted formats: JPEG, PNG, WebP, GIF. Max size: 5MB.
+          Accepted formats: JPEG, PNG, WebP, GIF. Max size: {MAX_FILE_SIZE_MB}
+          MB.
         </p>
       </div>
     </div>

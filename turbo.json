@@ -7,7 +7,9 @@
     "build": {
       "dependsOn": ["^build"],
       "env": [
+        "CF_BUILD",
         "DATABASE_URL",
+        "ADMIN_EMAILS",
         "BETTER_AUTH_*",
         "GOOGLE_*",
         "GITHUB_CLIENT_*",
