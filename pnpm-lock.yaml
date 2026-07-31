@@ -19,6 +19,9 @@ importers:
       commander:
         specifier: ^15.0.0
         version: 15.0.0
+      comment-json:
+        specifier: ^4.4.1
+        version: 4.6.2
     devDependencies:
       '@auto-it/first-time-contributor':
         specifier: ^11.3.6

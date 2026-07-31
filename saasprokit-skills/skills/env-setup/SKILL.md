@@ -5,6 +5,10 @@ description: Local environment setup for this monorepo — the two required .env
 
 # Environment Setup
 
+`pnpm run setup` generates `apps/web/.env.local` and `packages/database/.env`
+interactively (project name, deploy target, dev env prompts) — the manual
+steps below remain for reference and for adjusting values later.
+
 Two `.env` files are **both** required — the Prisma CLI loads its own env in a
 separate process from the Next app, so `DATABASE_URL` must exist in both places.
 

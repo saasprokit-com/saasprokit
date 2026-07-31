@@ -21,7 +21,7 @@ Ensure you have the following installed:
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd next-nest-monorepo
+   cd saasprokit
    ```
 
 2. **Install dependencies**
@@ -30,6 +30,33 @@ Ensure you have the following installed:
    ```
 
 3. **Set up environment variables**
+
+   **Recommended:** run the interactive setup CLI. It asks for your project name and deploy target (Cloudflare Workers / Vercel / Docker), then generates both `apps/web/.env.local` and `packages/database/.env` for you and removes the other hosts' configuration:
+   ```bash
+   pnpm run setup
+   ```
+
+   <Callout type="warn">
+     **Setup rewrites this clone in place and cannot be re-run.** Two deletions
+     happen without a prompt: the deploy configs for the hosts you did not pick,
+     and the CLI's own tooling — `scripts/`, `dist/`, `tsup.config.ts` and
+     `vitest.config.mts`. Run it on a clean checkout, and pass flags if you
+     want to keep any of it:
+
+     | Flag | Effect |
+     | --- | --- |
+     | `--keep-setup` | Keep the CLI so you can run setup again |
+     | `--keep-all-hosts` | Keep every host's deploy config |
+     | `--no-install` | Skip `pnpm install` and the Prisma client build |
+     | `--no-commit` | Skip the git commit step |
+     | `--yes` | Accept defaults and ask nothing |
+
+     The interactive run asks before committing. `--yes` does not — it commits
+     straight away on a clean tree, and on a dirty tree it skips the commit
+     rather than sweeping your uncommitted work into it.
+   </Callout>
+
+   The manual steps below remain for reference and for adjusting values later.
 
    Create `.env.local` in `apps/web/` (see `.env.example` for the full list):
    ```bash

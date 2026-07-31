@@ -17,8 +17,15 @@ files (`wrangler.jsonc`, `open-next.config.ts`) that only that host reads.
 ```bash
 pnpm --filter=app run deploy     # Cloudflare — build vars come from apps/web/.env.production.local
 docker build -f apps/web/Dockerfile .    # Docker/AWS
-# Vercel: git push, root apps/web — no code changes, but see the env warning below
+# Vercel: git push, root apps/web — vercel.json forces the Turbo build (see apps/docs deployment/vercel)
 ```
+
+`pnpm run setup` is the customer entry point (interactive: project name, deploy target, dev env
+vars). It prunes the other hosts' files/scripts/devDeps and removes its own tooling, then
+reinstalls. The host manifest in `scripts/hosts.ts` is the ONLY thing deciding what each host's
+customers receive — any new host-specific file MUST be added there, or customers on other hosts
+get it. The CI `setup-cli` job is a partial net only: it fails just when an omission happens to
+break the pruned typecheck.
 
 **Adding a second host is not just code.** Every non-secret runtime value lives in
 `wrangler.jsonc` `vars` and is read *only* by Cloudflare: `EMAIL_PROVIDER`, `STORAGE_PROVIDER`,
@@ -55,7 +62,7 @@ and even the REST API all pass while they are broken.
 | `Stripe.createFetchHttpClient()` in `packages/auth/stripe-client.ts` | Without `httpClient` the SDK picks `createNodeHttpClient`. `stripe` is in `serverExternalPackages`, so its own `workerd` export condition never applies | ✅ `fetch` is global on Node 18+ |
 | Plain numbers, never `BigInt`, across the Prisma boundary (`apps/web/lib/auth/rate-limit.ts`) | The wasm query compiler JSON-encodes query args: *"Do not know how to serialize a BigInt"*. `lastRequest` stays a BigInt **column**; only the values passed in/out are numbers, wrapped in `Number()` on read | ✅ Prisma accepts numbers for BigInt columns |
 | `ipAddressHeaders: ["cf-connecting-ip", "x-real-ip"]` (`packages/auth/ip-headers.ts`) | No IP resolves behind a CDN, so Better Auth collapses every visitor into one `no-trusted-ip` bucket — 3 signups lock out the whole site. Bare `x-forwarded-for` is excluded: a client can forge it | ⚠️ Vercel sets `x-real-ip`. **Bare Docker with no reverse proxy sets neither** — nginx/ALB must add it |
-| `runtime = "workerd"` in the Prisma generator | Prisma 7 embeds its query compiler as base64 WASM and instantiates it at runtime, which workerd forbids (*"Wasm code generation disallowed by embedder"*) | ⚠️ **The one item to revisit.** Makes the generated client target workerd everywhere. Local `next dev` verified working; Vercel/Docker **not** tested. Fix if needed: two generate outputs behind a `workerd` export condition in `packages/database/package.json` |
+| `runtime = "workerd"` in the Prisma generator | Prisma 7 embeds its query compiler as base64 WASM and instantiates it at runtime, which workerd forbids (*"Wasm code generation disallowed by embedder"*) | ⚠️ **The one item to revisit — for the un-pruned maintainer repo only.** `pnpm run setup` removes this line for vercel/docker customer projects, so they get the standard Node client; the workerd-on-Node question doesn't apply to them. It still applies to this repo, which is never pruned: local `next dev` verified working, Vercel/Docker **not yet** verified. **Pending verification** — update this row with the result after the maintainer's own Vercel deploy. Fix if needed: two generate outputs behind a `workerd` export condition in `packages/database/package.json` |
 
 ## Cloudflare requirements
 
@@ -69,6 +76,9 @@ and even the REST API all pass while they are broken.
   block in `next.config.ts` never reaches `/_next/static/*`.
 - Build vars come from gitignored `apps/web/.env.production.local`. It outranks `.env.local`, so
   its localhost values cannot shadow them and bake a broken URL into the bundle.
+
+**Vercel, for comparison:** Hobby plan request bodies cap at 4.5 MB — that's why the kit's upload
+limit (`MAX_FILE_SIZE_MB` in `packages/utils/storage.ts`) is set to 4 MB.
 
 ## Verified, so don't re-investigate
 

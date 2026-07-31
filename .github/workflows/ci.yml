@@ -64,6 +64,9 @@ jobs:
       - name: Typecheck web app
         run: pnpm --filter app typecheck
 
+      - name: Typecheck setup CLI
+        run: pnpm typecheck:cli
+
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -96,3 +99,52 @@ jobs:
 
       - name: Run tests
         run: pnpm test
+
+      - name: Run setup CLI tests
+        run: pnpm test:cli
+
+  setup-cli:
+    name: Setup CLI (${{ matrix.host }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [cloudflare, vercel, docker]
+    env:
+      DATABASE_URL: postgresql://stub:stub@localhost:5432/stub
+      BETTER_AUTH_SECRET: ci-setup-cli-secret-at-least-32-chars
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_NAME: SaaSProKit
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Exercises the CLI against a real checkout rather than a fixture. Scope,
+      # so nobody over-trusts this job: the steps below catch over-pruning (a
+      # deleted module that typed code still imports) and a lockfile that no
+      # longer matches the pruned manifests. Under-pruning is invisible here —
+      # a stray host file that nothing imports type-checks fine — so that
+      # guard has to be a manifest test, not CI.
+      - name: Run setup CLI (prune for ${{ matrix.host }})
+        run: pnpm run setup --name acme-ci --host ${{ matrix.host }} --yes --no-commit
+
+      # The customer's first command on a fresh clone — fails if the
+      # committed-state lockfile doesn't match the pruned manifests.
+      - name: Customer frozen install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck pruned project
+        run: pnpm --filter app typecheck

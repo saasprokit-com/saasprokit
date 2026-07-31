@@ -22,7 +22,7 @@ export const BYTES_PER_KB = 1024;
 export const BYTES_PER_MB = BYTES_PER_KB * BYTES_PER_KB;
 
 // Maximum upload size for images
-export const MAX_FILE_SIZE_MB = 5;
+export const MAX_FILE_SIZE_MB = 4;
 export const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * BYTES_PER_MB;
 
 // Default upload settings
