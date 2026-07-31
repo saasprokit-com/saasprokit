@@ -19,7 +19,9 @@
     "bump-ui": "npx shadcn@latest add --all --overwrite -c packages/design-system",
     "skills:install": "npx --yes skills experimental_install",
     "migrate": "cd packages/database && npx prisma format && npx prisma generate && npx prisma db push",
-    "clean": "git clean -xdf node_modules"
+    "clean": "git clean -xdf node_modules",
+    "setup": "tsup --silent && node dist/index.js init",
+    "test:cli": "vitest run"
   },
   "devDependencies": {
     "@auto-it/first-time-contributor": "^11.3.6",
@@ -40,7 +42,8 @@
   "packageManager": "pnpm@10.19.0",
   "dependencies": {
     "@clack/prompts": "^1.7.0",
-    "commander": "^15.0.0"
+    "commander": "^15.0.0",
+    "comment-json": "^4.4.1"
   },
   "pnpm": {
     "overrides": {
