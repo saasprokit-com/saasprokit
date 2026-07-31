@@ -39,6 +39,23 @@ describe("renderEnvLocal", () => {
     const out = renderEnvLocal(EXAMPLE, { ...BASE, stripeSecretKey: "sk_test_1" });
     expect(out).toContain('STRIPE_SECRET_KEY="sk_test_1"');
   });
+
+  it("keeps replacement-pattern characters in values literal", () => {
+    const url = "postgresql://u:p@ss$&w$$d@h:5432/db";
+    const out = renderEnvLocal(EXAMPLE, { ...BASE, databaseUrl: url });
+    expect(out).toContain(`DATABASE_URL="${url}"`);
+  });
+
+  it("single-quotes values that contain double quotes", () => {
+    const out = renderEnvLocal(EXAMPLE, { ...BASE, appName: 'Acme "Beta"' });
+    expect(out).toContain(`NEXT_PUBLIC_APP_NAME='Acme "Beta"'`);
+  });
+
+  it("throws on values containing both quote types", () => {
+    expect(() =>
+      renderEnvLocal(EXAMPLE, { ...BASE, appName: `A"B'C` })
+    ).toThrow(/both quote types/);
+  });
 });
 
 describe("generateAuthSecret", () => {

@@ -17,11 +17,26 @@ export function generateAuthSecret(): string {
   return randomBytes(48).toString("base64");
 }
 
+function quoteEnvValue(value: string): string {
+  if (!value.includes('"')) {
+    return `"${value}"`;
+  }
+  if (!value.includes("'")) {
+    return `'${value}'`;
+  }
+  throw new Error(
+    `Cannot write env value containing both quote types for a .env file: ${value.slice(0, 16)}...`
+  );
+}
+
 // Rewrites KEY=... lines in place (uncommenting if needed) so the
-// .env.example ordering and its guidance comments survive into .env.local.
+// .env.example ordering and its guidance comments survive. A function
+// replacer keeps $-sequences in secrets literal (string replacements
+// expand $&, $$, ...); dotenv has no quote-escape syntax, so values get
+// whichever quote style they don't contain.
 function setKey(text: string, key: string, value: string): string {
   const pattern = new RegExp(`^#?\\s*${key}=.*$`, "m");
-  return text.replace(pattern, `${key}="${value}"`);
+  return text.replace(pattern, () => `${key}=${quoteEnvValue(value)}`);
 }
 
 export function renderEnvLocal(example: string, answers: EnvAnswers): string {
