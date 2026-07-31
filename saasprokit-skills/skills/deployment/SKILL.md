@@ -22,8 +22,10 @@ docker build -f apps/web/Dockerfile .    # Docker/AWS
 
 `pnpm run setup` is the customer entry point (interactive: project name, deploy target, dev env
 vars). It prunes the other hosts' files/scripts/devDeps and removes its own tooling, then
-reinstalls. The host manifest lives in `scripts/hosts.ts` — **new host-specific files MUST be
-added there**, or the CI `setup-cli` job ships them to the wrong customers.
+reinstalls. The host manifest in `scripts/hosts.ts` is the ONLY thing deciding what each host's
+customers receive — any new host-specific file MUST be added there, or customers on other hosts
+get it. The CI `setup-cli` job is a partial net only: it fails just when an omission happens to
+break the pruned typecheck.
 
 **Adding a second host is not just code.** Every non-secret runtime value lives in
 `wrangler.jsonc` `vars` and is read *only* by Cloudflare: `EMAIL_PROVIDER`, `STORAGE_PROVIDER`,
