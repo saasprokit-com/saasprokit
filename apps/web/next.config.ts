@@ -2,8 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Docker/VPS needs the standalone server; the OpenNext/Cloudflare build
-  // (CF_BUILD=1) does its own bundling and must not use it
-  output: process.env.CF_BUILD ? undefined : "standalone",
+  // (CF_BUILD=1) and Vercel both do their own bundling and must not use it
+  output: process.env.CF_BUILD || process.env.VERCEL ? undefined : "standalone",
 
   // Monorepo root for Turbopack resolution (two levels up from apps/web/)
   turbopack: {
