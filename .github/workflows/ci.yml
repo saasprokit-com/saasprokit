@@ -96,3 +96,43 @@ jobs:
 
       - name: Run tests
         run: pnpm test
+
+      - name: Run setup CLI tests
+        run: pnpm test:cli
+
+  setup-cli:
+    name: Setup CLI (${{ matrix.host }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [cloudflare, vercel, docker]
+    env:
+      DATABASE_URL: postgresql://stub:stub@localhost:5432/stub
+      BETTER_AUTH_SECRET: ci-setup-cli-secret-at-least-32-chars
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_NAME: SaaSProKit
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Real pruning on this disposable checkout: a host file added without
+      # a manifest entry breaks the pruned build and fails this job.
+      - name: Run setup CLI (prune for ${{ matrix.host }})
+        run: pnpm run setup --name acme-ci --host ${{ matrix.host }} --yes --no-commit --keep-setup
+
+      - name: Typecheck pruned project
+        run: pnpm --filter app typecheck
