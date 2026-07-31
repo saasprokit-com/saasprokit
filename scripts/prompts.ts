@@ -59,7 +59,7 @@ async function confirmDirtyTree(rootDir: string, yes: boolean): Promise<void> {
 }
 
 async function resolveName(flags: InitFlags): Promise<string> {
-  if (flags.name) {
+  if (flags.name !== undefined) {
     return flags.name;
   }
   const answer = await text({
