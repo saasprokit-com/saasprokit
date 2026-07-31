@@ -10,7 +10,7 @@ import {
   select,
   text,
 } from "@clack/prompts";
-import { applyInit, slugify, stripCliTooling } from "./apply";
+import { applyInit, devDbName, slugify, stripCliTooling } from "./apply";
 import { HOST_TARGETS, type HostId } from "./hosts";
 import { type EnvAnswers, generateAuthSecret } from "./transforms/env-file";
 
@@ -180,7 +180,7 @@ async function collectAnswers(name: string, slug: string): Promise<EnvAnswers> {
 function defaultAnswers(name: string, slug: string): EnvAnswers {
   return {
     appName: name,
-    databaseUrl: `postgresql://dev:dev@localhost:5432/${slug.replaceAll("-", "_")}_dev`,
+    databaseUrl: `postgresql://dev:dev@localhost:5432/${devDbName(slug)}`,
     authSecret: generateAuthSecret(),
   };
 }

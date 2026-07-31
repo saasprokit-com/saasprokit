@@ -110,4 +110,13 @@ describe("applyInit", () => {
     expect(compose).toContain("acme_dev");
     expect(compose).not.toContain("saasprokit");
   });
+
+  it("hyphenated slugs get an underscore DB name in docker-compose.yml, matching the generated DATABASE_URL", () => {
+    root = makeFixture();
+    applyInit(root, { ...CONFIG("docker"), slug: "acme-co" });
+    const compose = readFileSync(join(root, "docker-compose.yml"), "utf8");
+    expect(compose).toContain("acme_co_dev");
+    expect(compose).not.toContain("acme-co_dev");
+    expect(compose).not.toContain("saasprokit");
+  });
 });
