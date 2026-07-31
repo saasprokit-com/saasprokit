@@ -58,7 +58,7 @@ export function renderEnvLocal(example: string, answers: EnvAnswers): string {
 
 export function renderDatabaseEnv(databaseUrl: string): string {
   return [
-    `DATABASE_URL="${databaseUrl}"`,
+    `DATABASE_URL=${quoteEnvValue(databaseUrl)}`,
     "# Direct (non-pooled) endpoint for migrations when DATABASE_URL is pooled:",
     "# DIRECT_URL=",
     "",

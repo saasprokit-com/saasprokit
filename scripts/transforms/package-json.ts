@@ -11,7 +11,7 @@ export interface PackageJsonShape {
 }
 
 const CLI_DEPS = ["@clack/prompts", "commander", "comment-json"];
-const CLI_SCRIPTS = ["setup", "test:cli"];
+const CLI_SCRIPTS = ["setup", "test:cli", "typecheck:cli"];
 const CLI_DEV_DEPS = ["tsup"];
 
 function omit(record: Record<string, string> | undefined, keys: string[]) {

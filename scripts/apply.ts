@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { HOST_TARGETS, type HostId } from "./hosts";
+import { stripCliCi } from "./transforms/ci-workflow";
 import {
   type EnvAnswers,
   renderDatabaseEnv,
@@ -19,7 +20,17 @@ export interface ApplyConfig {
   answers: EnvAnswers;
   host: HostId;
   keepAllHosts: boolean;
+  overwriteEnv: boolean;
   slug: string;
+}
+
+export const ENV_TARGETS = [
+  "apps/web/.env.local",
+  "packages/database/.env",
+] as const;
+
+export function existingEnvFiles(rootDir: string): string[] {
+  return ENV_TARGETS.filter((file) => existsSync(join(rootDir, file)));
 }
 
 export function slugify(name: string): string {
@@ -90,21 +101,33 @@ export function applyInit(rootDir: string, config: ApplyConfig): string[] {
   );
 
   const example = readFileSync(join(rootDir, "apps/web/.env.example"), "utf8");
-  writeFileSync(
-    join(rootDir, "apps/web/.env.local"),
-    renderEnvLocal(example, config.answers)
-  );
-  writeFileSync(
-    join(rootDir, "packages/database/.env"),
-    renderDatabaseEnv(config.answers.databaseUrl)
-  );
-  log.push("wrote apps/web/.env.local and packages/database/.env");
+  const rendered: Record<(typeof ENV_TARGETS)[number], string> = {
+    "apps/web/.env.local": renderEnvLocal(example, config.answers),
+    "packages/database/.env": renderDatabaseEnv(config.answers.databaseUrl),
+  };
+  for (const file of ENV_TARGETS) {
+    const path = join(rootDir, file);
+    // Both paths are gitignored, so the dirty-tree check upstream cannot see
+    // them — without this guard a second run silently replaces live secrets.
+    if (!config.overwriteEnv && existsSync(path)) {
+      log.push(`kept existing ${file}`);
+      continue;
+    }
+    writeFileSync(path, rendered[file]);
+    log.push(`wrote ${file}`);
+  }
 
   return log;
 }
 
 export function stripCliTooling(rootDir: string): void {
   editJson(join(rootDir, "package.json"), stripCliFromRootPackage);
+
+  const ciPath = join(rootDir, ".github/workflows/ci.yml");
+  if (existsSync(ciPath)) {
+    writeFileSync(ciPath, stripCliCi(readFileSync(ciPath, "utf8")));
+  }
+
   for (const file of [
     "scripts",
     "tsup.config.ts",

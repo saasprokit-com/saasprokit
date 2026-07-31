@@ -84,6 +84,6 @@ Run the full [verification checklist](/docs/deployment#verification-checklist).
 
 ## Vercel-specific notes
 
-- **Middleware** (`apps/web/middleware.ts`) runs on Vercel's edge runtime. It performs an optimistic `getSessionCookie()` check with no database access — it never calls Better Auth directly, so it can't distinguish a valid session from a stale cookie. It **fails open**: on any error it lets the request through rather than blocking it. Real enforcement happens in the layouts via `requireAuth`, which do hit the database — watch for unexpected sign-in redirects there, not in the middleware.
+- **Middleware** (`apps/web/middleware.ts`) runs on Vercel's edge runtime. It performs an optimistic `getSessionCookie()` check with no database access — it never calls Better Auth directly, so it can't distinguish a valid session from a stale cookie. It has no error handling of its own — the cookie read cannot fail meaningfully, so there is nothing to fail open or closed on. Real enforcement happens in the layouts via `requireAuth`, which do hit the database — watch for unexpected sign-in redirects there, not in the middleware.
 - **Preview deployments** get `*.vercel.app` URLs that won't match `BETTER_AUTH_TRUSTED_ORIGINS`; auth flows on previews will be limited unless you add the preview origin.
 - **Rollback**: `vercel rollback` restores the previous deployment; the schema is managed separately via Prisma, so roll it back deliberately if a deploy included schema changes.

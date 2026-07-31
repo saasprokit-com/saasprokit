@@ -1,4 +1,6 @@
 import { execSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import {
   cancel,
   confirm,
@@ -10,7 +12,13 @@ import {
   select,
   text,
 } from "@clack/prompts";
-import { applyInit, devDbName, slugify, stripCliTooling } from "./apply";
+import {
+  applyInit,
+  devDbName,
+  existingEnvFiles,
+  slugify,
+  stripCliTooling,
+} from "./apply";
 import { HOST_TARGETS, type HostId } from "./hosts";
 import { type EnvAnswers, generateAuthSecret } from "./transforms/env-file";
 
@@ -209,6 +217,41 @@ function defaultAnswers(name: string, slug: string): EnvAnswers {
   };
 }
 
+async function resolveOverwriteEnv(
+  rootDir: string,
+  yes: boolean
+): Promise<boolean> {
+  const existing = existingEnvFiles(rootDir);
+  if (existing.length === 0) {
+    return true;
+  }
+  if (yes) {
+    return false;
+  }
+  const answer = await confirm({
+    message: `Overwrite existing ${existing.join(" and ")}? A new BETTER_AUTH_SECRET invalidates current sessions.`,
+    initialValue: false,
+  });
+  return !isCancel(answer) && answer;
+}
+
+// comment-json and JSON.stringify both emit shapes Biome rejects, so the
+// customer's first `pnpm check` would fail on files the CLI wrote.
+function formatGeneratedFiles(rootDir: string, files: string[]): void {
+  const present = files.filter((file) => existsSync(join(rootDir, file)));
+  if (present.length === 0) {
+    return;
+  }
+  try {
+    execSync(`pnpm exec biome format --write ${present.join(" ")}`, {
+      cwd: rootDir,
+      stdio: "ignore",
+    });
+  } catch {
+    log.warn("could not run biome format — run `pnpm fix` after install");
+  }
+}
+
 function maybeInstall(flags: InitFlags, rootDir: string): void {
   if (!flags.install) {
     return;
@@ -262,11 +305,13 @@ export async function runInit(
     ? defaultAnswers(name, slug)
     : await collectAnswers(name, slug);
 
+  const overwriteEnv = await resolveOverwriteEnv(rootDir, flags.yes);
   const applyLog = applyInit(rootDir, {
     slug,
     host,
     keepAllHosts: flags.keepAllHosts,
     answers,
+    overwriteEnv,
   });
   for (const line of applyLog) {
     log.step(line);
@@ -276,6 +321,12 @@ export async function runInit(
     stripCliTooling(rootDir);
     log.step("removed setup tooling");
   }
+
+  formatGeneratedFiles(rootDir, [
+    "package.json",
+    "apps/web/package.json",
+    "apps/web/wrangler.jsonc",
+  ]);
 
   maybeInstall(flags, rootDir);
 

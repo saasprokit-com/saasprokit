@@ -18,7 +18,7 @@ vi.mock("@clack/prompts", () => ({
   confirm: () => Promise.resolve(true),
   intro: () => undefined,
   isCancel: () => false,
-  log: { step: () => undefined },
+  log: { step: () => undefined, warn: () => undefined },
   note: () => undefined,
   outro: () => undefined,
   select: () => Promise.resolve("docker"),

@@ -21,7 +21,8 @@
     "migrate": "cd packages/database && npx prisma format && npx prisma generate && npx prisma db push",
     "clean": "git clean -xdf node_modules",
     "setup": "tsup --silent && node dist/index.js init",
-    "test:cli": "vitest run"
+    "test:cli": "vitest run",
+    "typecheck:cli": "tsc -p scripts"
   },
   "devDependencies": {
     "@auto-it/first-time-contributor": "^11.3.6",

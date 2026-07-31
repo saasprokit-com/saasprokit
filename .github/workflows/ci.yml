@@ -64,6 +64,9 @@ jobs:
       - name: Typecheck web app
         run: pnpm --filter app typecheck
 
+      - name: Typecheck setup CLI
+        run: pnpm typecheck:cli
+
   test:
     name: Unit Tests
     runs-on: ubuntu-latest

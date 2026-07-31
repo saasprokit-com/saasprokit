@@ -38,6 +38,23 @@ const FIXTURE_FILES: Record<string, string> = {
   "vitest.config.mts": "export default {};",
   "scripts/index.ts": "// cli\n",
   "dist/index.js": "// bundle\n",
+  ".github/workflows/ci.yml": `jobs:
+  test:
+    steps:
+      - name: Run tests
+        run: pnpm test
+
+      - name: Run setup CLI tests
+        run: pnpm test:cli
+
+  setup-cli:
+    strategy:
+      matrix:
+        host: [cloudflare, vercel, docker]
+    steps:
+      - name: Run setup CLI
+        run: pnpm run setup --yes
+`,
 };
 
 const CLI_OWNED_FILES = [
@@ -60,6 +77,7 @@ const CONFIG = (host: "cloudflare" | "vercel" | "docker") => ({
   slug: "acme",
   host,
   keepAllHosts: false,
+  overwriteEnv: true,
   answers: { appName: "Acme", databaseUrl: "postgresql://dev", authSecret: "s" },
 });
 
@@ -141,6 +159,29 @@ describe("applyInit", () => {
   });
 });
 
+describe("env file safety", () => {
+  it("keeps existing env files when overwrite was declined", () => {
+    root = makeFixture();
+    writeFileSync(join(root, "apps/web/.env.local"), "BETTER_AUTH_SECRET=live\n");
+    const log = applyInit(root, { ...CONFIG("vercel"), overwriteEnv: false });
+    expect(readFileSync(join(root, "apps/web/.env.local"), "utf8")).toBe(
+      "BETTER_AUTH_SECRET=live\n"
+    );
+    expect(log).toContain("kept existing apps/web/.env.local");
+    // The file that did not exist is still written
+    expect(existsSync(join(root, "packages/database/.env"))).toBe(true);
+  });
+
+  it("replaces them when overwrite was approved", () => {
+    root = makeFixture();
+    writeFileSync(join(root, "apps/web/.env.local"), "BETTER_AUTH_SECRET=live\n");
+    applyInit(root, { ...CONFIG("vercel"), overwriteEnv: true });
+    expect(readFileSync(join(root, "apps/web/.env.local"), "utf8")).toContain(
+      'NEXT_PUBLIC_APP_NAME="Acme"'
+    );
+  });
+});
+
 describe("stripCliTooling", () => {
   it("removes every file the CLI owns", () => {
     root = makeFixture();
@@ -148,6 +189,16 @@ describe("stripCliTooling", () => {
     for (const file of CLI_OWNED_FILES) {
       expect(existsSync(join(root, file))).toBe(false);
     }
+  });
+
+  it("strips the CI jobs that call the now-deleted CLI scripts", () => {
+    root = makeFixture();
+    stripCliTooling(root);
+    const ci = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
+    expect(ci).not.toContain("test:cli");
+    expect(ci).not.toContain("setup-cli");
+    expect(ci).not.toContain("pnpm run setup");
+    expect(ci).toContain("run: pnpm test\n");
   });
 
   it("drops the CLI's bin and deps but leaves the project's own scripts", () => {
