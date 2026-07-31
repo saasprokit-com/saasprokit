@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { type InitFlags, runInit } from "./prompts";
 
 const program = new Command("saasprokit");
 
@@ -12,9 +13,8 @@ program
   .option("--keep-setup", "keep the CLI tooling in the repo", false)
   .option("--keep-all-hosts", "skip host pruning", false)
   .option("--no-install", "skip pnpm install + prisma generate")
-  .action((options) => {
-    // Wired to the real flow in the apply/prompts task
-    process.stdout.write(`saasprokit init ${JSON.stringify(options)}\n`);
+  .action(async (options: InitFlags) => {
+    await runInit(process.cwd(), options);
   });
 
 // pnpm keeps a literal "--" when forwarding script args; commander would
