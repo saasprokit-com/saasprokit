@@ -1,107 +1,112 @@
 # Design System — SaaSProKit
 
-**This file documents what the code actually ships.** A previous version described a
-"Terminal Minimal" direction — monospace headings, a neutral near-black primary — that was
-never built. Every value below was read out of `packages/design-system/styles/globals.css`
-and the block components. If you change a token, change this file in the same commit.
+**This file holds rules and pointers, never values.** Colors, radii, spacing and font
+choices live in CSS, and this is a boilerplate — you are expected to change all of them. A
+line here that would go stale when you edit a token does not belong here.
 
-## Foundation
+Earlier versions of this file listed a palette and a type scale. They drifted out of sync with
+the code and misled anyone who trusted them, which is the failure this format exists to
+prevent.
 
-**shadcn/ui new-york** is the base. The design system extends shadcn, never fights it.
+## Where things actually live
 
-- Style: `new-york`
-- CSS variables: OKLCH, defined in `packages/design-system/styles/globals.css`
-- Components: shadcn primitives in `packages/design-system/components/ui/`
-- Border radius: `0.625rem` (`--radius`)
+| What | File |
+|---|---|
+| Default tokens (light + dark) | `packages/design-system/styles/globals.css` — the `:root` and `.dark` blocks |
+| Design presets | `packages/design-system/styles/design-presets.css` |
+| Font loading | `packages/design-system/lib/fonts.ts` |
+| Preset switching | `packages/design-system/providers/design-preset.tsx` |
+| Motion presets | `packages/design-system/components/blocks/motion-presets.ts` |
+| Reduced motion | `packages/design-system/providers/motion.tsx` |
+| Marketing blocks | `packages/design-system/components/blocks/` |
+| Primitives | `packages/design-system/components/ui/` (shadcn `new-york`) |
 
-## Product Context
+Read the file, not this table, for any actual value.
 
-- **What this is:** Production-ready SaaS boilerplate with auth, billing, organizations
-- **Who it's for:** Developers building SaaS products
-- **Project type:** Marketing homepage + SaaS web app
+## Re-theming for your product
 
-## Color
+The presets are runtime-switchable via `:root[data-design="<name>"]`, with dark variants at
+`:root.dark[data-design="<name>"]`. Preset specificity `(0,2,1)` intentionally beats the
+`:root` defaults in `globals.css`.
 
-The base scale is neutral; **the primary is a vermilion orange** and is the only chromatic
-token in the system. That is deliberate — developer tooling clusters on violet, indigo and
-acid green, so vermilion is the differentiator.
+To make the kit yours:
 
-| Token | Light | Dark |
-|---|---|---|
-| `--background` | `oklch(1 0 0)` | `oklch(0.145 0 0)` |
-| `--foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` |
-| `--primary` | `oklch(0.553 0.195 38.402)` | `oklch(0.47 0.157 37.304)` |
-| `--primary-foreground` | near-white | `oklch(0.98 0.016 73.684)` |
-| `--accent` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` |
-| `--border` | `oklch(0.922 0 0)` | `oklch(0.269 0 0)` |
-| `--muted-foreground` | `oklch(0.556 0 0)` | `oklch(0.708 0 0)` |
+1. **Brand color** — change `--primary` (and `--primary-foreground` for contrast) in the
+   `:root` and `.dark` blocks of `globals.css`. If you use presets, change it in each preset
+   block you actually ship.
+2. **Corner style** — `--radius`, same places. Presets override it per theme.
+3. **Typeface** — add the family to `lib/fonts.ts` via `next/font`, then point `--font-sans`
+   at the variable it creates. See the font rule below before reaching for a `<link>`.
+4. **Density** — `--density-scale` in the preset blocks.
+5. **Delete the presets you don't ship.** Multiple themes are a demo feature; a real product
+   picks one. Removing the rest shrinks the CSS and the decision surface.
 
-Syntax highlighting has its own tokens: `--code-keyword`, `--code-string`, `--code-function`,
-`--code-type`. Dark mode is a `.dark` class via `next-themes`.
+## Rules
 
-**Do not add a second accent colour.** One chromatic token is what makes the vermilion read
-as intentional.
+These survive re-theming. Break them and things quietly stop working.
 
-## Typography
+### Fonts must be self-hosted
 
-Two families, both self-hosted through `next/font` via the `geist` package
-(`packages/design-system/lib/fonts.ts`). **No webfonts are fetched over the network** — the
-CSP has no third-party font host, and adding one would need a CSP change too.
+Load every family through `next/font` in `lib/fonts.ts`, and reference it by the CSS variable
+it generates. **Never add `@import url(...)` from the Google Fonts CDN**, and never add a
+`<link rel="preconnect">` to a font host. Three reasons:
 
-- **Display / headings:** Geist Sans (`--font-sans`), `font-bold`, `tracking-tight`
-- **Body:** Geist Sans, weight 400
-- **Code and data:** Geist Mono (`--font-mono`)
+- CSS `@import` is render-blocking, and a font host is a third-party round trip before first
+  paint.
+- The CDN sends every visitor's IP to Google. A 2022 Munich ruling found that needs consent
+  or self-hosting, and the kit sells into the EU.
+- `apps/web/middleware.ts` sets `style-src` and `font-src` to `'self'`. A CDN font would be
+  blocked outright unless you reopen the CSP, which is the wrong trade.
 
-**Mono is reserved for content that is literally code or data** — `code-preview`,
-`deps-table`, version strings, identifiers. It is not a decorative choice. Headings are sans;
-setting them in mono is the single most common look in this category and signals nothing.
+`fonts` from `lib/fonts.ts` must be applied to `<body>` in the root layout. It is what defines
+the font variables — without it, `--font-sans` resolves to nothing and every `font-sans`
+utility silently falls back to the browser default.
 
-Heading scale as used by the blocks: `text-3xl` / `text-4xl` for section headings
-(`sm:text-4xl` responsive step), `text-5xl`–`text-6xl` reserved for the hero `h1`,
-`text-xl`–`text-2xl` for card titles.
+**Known gap:** Storybook renders in the browser default sans, not your app's typeface.
+Importing `lib/fonts.ts` there pulls in `next/font`, which the Vite builder cannot resolve.
+Matching it needs a plain `@font-face` declaration in the Storybook preview.
 
-## Spacing and layout
+### Monospace is for code and data
 
-- **Section padding:** `py-24` is the standard (`py-32` for the hero)
-- **Max content width:** `max-w-7xl` with `mx-auto`; prose columns cap at `max-w-2xl`
-- **Card padding:** `p-8`
-- **Base unit:** 8px
+Use `font-mono` for content that is literally code, identifiers, versions or tabular figures.
+Setting headings in mono is the most common look in developer tooling and signals nothing.
 
-`GridSection`, `GridBlock` and `GridSeparator` live in
-`packages/design-system/components/ui/grid.tsx` for border-disciplined layouts.
+### One accent color
 
-## Motion
+`--primary` is the only chromatic token. Everything else is the neutral scale. A second accent
+is what makes a palette read as unplanned — if something needs emphasis, use weight, size or
+space.
 
-framer-motion 12. Presets are shared from
-`packages/design-system/components/blocks/motion-presets.ts` — import them, never redeclare
-the values locally.
+### Motion
 
-| Preset | Value | Used for |
-|---|---|---|
-| `EASE` | `[0.22, 1, 0.36, 1]` | everything — expo-out, fast start and long settle |
-| `containerVariants` | `staggerChildren: 0.08`, `delayChildren: 0.1` | lists and grids |
-| `itemVariants` | `opacity 0→1`, `y 24→0`, `0.5s` | individual cards and rows |
-| `revealVariants` | `opacity 0→1`, `y 32→0`, `0.6s` | whole-section reveals |
-| `VIEWPORT_ONCE` | `{ once: true, amount: 0.2 }` | every scroll trigger |
-
-Rules:
+Import from `blocks/motion-presets.ts`; never redeclare easing or variants locally. They were
+copy-pasted into two files once already.
 
 - **Opacity and transform only.** Anything that triggers layout is off-limits.
-- **`once: true` everywhere.** Re-animating on scroll-back reads as a glitch.
+- **`viewport={{ once: true }}` on every scroll trigger.** Re-animating on scroll-back reads
+  as a glitch.
 - **No parallax, no scroll-linked effects.**
-- **Reduced motion is handled globally** by `MotionProvider`
-  (`packages/design-system/providers/motion.tsx`), which sets `MotionConfig
-  reducedMotion="user"`. Transform animations are suppressed for visitors who ask for it;
-  opacity fades stay, because they are not a vestibular trigger. Individual components do
-  not need their own `useReducedMotion` check unless they animate outside framer-motion.
+- **Reduced motion is global.** `MotionProvider` sets `MotionConfig reducedMotion="user"`,
+  which suppresses transform animations for visitors who ask for it while keeping opacity
+  fades. Components do not need their own check unless they animate outside framer-motion.
+
+### Match the shipped blocks
+
+New sections should sit alongside the existing ones without looking imported from elsewhere.
+Read two or three blocks in `components/blocks/` and follow what they do for section padding,
+container width and heading sizes. They are consistent; copying them is cheaper than inventing
+a parallel scale.
 
 ## Decisions log
 
-- **2026-07-31** — Rewrote this file to match the shipped code. It had claimed a neutral
-  `oklch(0.205 0 0)` primary and monospace headings; neither was ever implemented. `CLAUDE.md`
-  points every agent here first, so the wrong spec was propagating into new work.
-- **2026-07-31** — Removed three unused Google Fonts imports (Inter, DM Sans, Plus Jakarta
-  Sans). Five families were loading and two were rendering. The CSP's
-  `fonts.googleapis.com` / `fonts.gstatic.com` allowances went with them.
-- **2026-07-31** — Extracted the duplicated `EASE` constant into `motion-presets.ts` and
-  added global reduced-motion support, which nothing had before.
+- **2026-07-31** — Rewrote this file to hold rules and pointers only. It had specified a
+  palette and type scale that were never implemented, and a values-based rewrite would have
+  drifted again the first time anyone edited a token or switched preset.
+- **2026-07-31** — Moved Inter, DM Sans and Plus Jakarta Sans from Google CDN `@import` to
+  self-hosted `next/font`, and tightened `style-src`/`font-src` to `'self'`. The three
+  families are used by the non-Geist presets; the CDN imports were also render-blocking and a
+  GDPR exposure.
+- **2026-07-31** — Fixed `fonts` never being applied to `<body>`, which meant Geist had never
+  rendered in the web app despite being a dependency.
+- **2026-07-31** — Added global reduced-motion support. Nothing in the codebase respected the
+  setting except a CSS smooth-scroll guard.
