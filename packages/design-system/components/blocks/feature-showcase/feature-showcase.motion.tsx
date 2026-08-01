@@ -3,8 +3,7 @@
 import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 import type { ReactNode } from "react";
-
-const EASE = [0.22, 1, 0.36, 1] as const;
+import { EASE } from "../motion-presets";
 
 interface FeatureShowcaseMotionItemProps {
   badge: ReactNode;
