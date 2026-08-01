@@ -31,17 +31,15 @@ export const fonts = cn(brand.variable, /* … */);
 --font-sans: var(--font-brand), sans-serif;
 ```
 
-**4. Trim the themes.** `packages/design-system/styles/design-presets.css` ships several
-alternative looks, switchable at runtime via `data-design="…"`. They exist to show what the
-system can do. Pick the one you want, delete the rest, and delete
-`providers/design-preset.tsx` if you are not letting users switch themes.
+**4. Check it took.** `.font-sans` compiles to the resolved value, so a stray
+`--font-sans` override elsewhere will not do anything — change it in `@theme inline` in
+`globals.css` and confirm in DevTools that `.font-sans` resolves to your variable.
 
 ## Where things live
 
 | What | Where |
 |---|---|
 | Color, radius, spacing tokens | `packages/design-system/styles/globals.css` |
-| Alternative themes | `packages/design-system/styles/design-presets.css` |
 | Font loading | `packages/design-system/lib/fonts.ts` |
 | Animation presets | `packages/design-system/components/blocks/motion-presets.ts` |
 | Reduced-motion handling | `packages/design-system/providers/motion.tsx` |
@@ -57,9 +55,11 @@ to `'self'`, so a CDN font is blocked outright. Self-hosting is also faster (no 
 round trip before first paint) and avoids sending every visitor's IP to Google, which matters
 if you sell into the EU.
 
-**`fonts` must be on `<body>`.** It is what defines the font CSS variables. Leave it off and
-`--font-sans` resolves to nothing, every `font-sans` class silently falls back to the browser
-default, and your typeface never appears. It is applied in `apps/web/app/layout.tsx`.
+**`fonts` must be on every `<body>`.** It is what defines the font CSS variables. Leave it off
+and `--font-sans` resolves to nothing, every `font-sans` class silently falls back to the
+browser default, and your typeface never appears. The app has two: `app/layout.tsx` and
+`app/global-error.tsx`, which renders its own document and bypasses the root layout entirely.
+Add a `<body>` anywhere else and it needs `fonts` too.
 
 **Storybook renders in the default sans**, not your app's typeface. Importing `lib/fonts.ts`
 there pulls in `next/font`, which Storybook's Vite builder cannot resolve. If matching fonts
