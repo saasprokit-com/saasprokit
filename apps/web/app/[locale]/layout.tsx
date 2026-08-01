@@ -1,4 +1,5 @@
 import { Toaster } from "@repo/design-system/components/ui/sonner";
+import { MotionProvider } from "@repo/design-system/providers/motion";
 import { ThemeProvider } from "@repo/design-system/providers/theme";
 import { locales } from "@repo/internationalization";
 import {
@@ -54,7 +55,9 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
       <JsonLd code={generateOrganizationSchema()} />
       <JsonLd code={generateWebSiteSchema()} />
       <ThemeProvider nonce={nonce}>
-        <NuqsAdapter>{children}</NuqsAdapter>
+        <MotionProvider>
+          <NuqsAdapter>{children}</NuqsAdapter>
+        </MotionProvider>
         <Toaster closeButton position="top-right" richColors />
       </ThemeProvider>
     </>

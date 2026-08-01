@@ -52,8 +52,11 @@ function applyNonceCsp(response: NextResponse): NextResponse {
     [
       "default-src 'self'",
       scriptSrc,
-      `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
-      "font-src 'self' https://fonts.gstatic.com",
+      // Fonts are self-hosted via next/font (geist), so no third-party font
+      // host is allowed. 'unsafe-inline' stays: framer-motion writes inline
+      // style attributes, which a nonce cannot cover.
+      "style-src 'self' 'unsafe-inline'",
+      "font-src 'self'",
       "img-src 'self' data: https:",
       "connect-src 'self' https:",
       "frame-ancestors 'none'",
