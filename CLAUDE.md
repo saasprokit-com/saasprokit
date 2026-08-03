@@ -71,7 +71,7 @@ Detailed architecture docs live as skills in the `saasprokit` plugin at `saaspro
 
 ### Linting & Formatting
 
-**Biome** (`biome.jsonc`) extends `ultracite/core`, `ultracite/react`, `ultracite/next`. Test files are excluded from linting; `noBarrelFile` and `noNonNullAssertion` are disabled; design system `ui/`, `lib/`, `hooks/` directories are excluded.
+**Biome** (`biome.jsonc`) extends `ultracite/biome/core`, `ultracite/biome/react`, `ultracite/biome/next`. Test files are excluded from linting; `noBarrelFile` and `noNonNullAssertion` are disabled (among 16 rule overrides — read `biome.jsonc` rather than assuming a rule is on); design system `ui/`, `lib/`, `hooks/` directories are excluded.
 
 ### Design System
 

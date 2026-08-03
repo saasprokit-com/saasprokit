@@ -62,9 +62,12 @@ middleware (see `saasprokit:deployment`). Ordered flow:
 **This check is optimistic, not authoritative.** It reads cookie *presence* only —
 it never calls `auth.api.getSession`, never touches the DB, and has no try/catch,
 because the edge has no TCP on Vercel and no Node runtime on workerd. Spoofing the
-cookie only gets an attacker past the redirect; **every layout re-verifies**
-(`requireAuth`/`getServerSession`) and every server action calls `verifySession`.
-Never treat middleware as the security boundary.
+cookie only gets an attacker past the redirect; **the layout gating each subtree
+re-verifies against the DB** (`[orgSlug]` and `account` call `requireAuth`, `admin`
+calls `requireAdminArea`), and every server action authenticates — either through
+`verifySession` or through the `auth.api.*` call it wraps (`saasprokit:auth`).
+`(app)/layout.tsx` itself only *reads* the session for the impersonation banner; it
+is not a gate. Never treat middleware as the security boundary.
 
 The reverse redirect — a signed-in user landing on an auth page goes to `/org` —
 is **not** in middleware; it lives in `app/[locale]/auth/layout.tsx`.
