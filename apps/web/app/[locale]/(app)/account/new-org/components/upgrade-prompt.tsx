@@ -11,7 +11,7 @@ import {
 import { ArrowLeft, Ban, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { accountRoutes } from "@/lib/routes";
+import { accountRoutes, PAGE_ROUTES } from "@/lib/routes";
 
 interface UpgradePromptProps {
   reason?: string;
@@ -44,7 +44,7 @@ export function UpgradePrompt({
       <CardContent className="flex flex-col gap-3">
         {showUpgrade && (
           <Button asChild>
-            <Link href={`/${locale}/org`}>Upgrade Plan</Link>
+            <Link href={`/${locale}${PAGE_ROUTES.ORG}`}>Upgrade Plan</Link>
           </Button>
         )}
         <Button asChild variant="outline">

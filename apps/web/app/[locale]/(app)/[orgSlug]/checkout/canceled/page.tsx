@@ -8,6 +8,9 @@ import {
 } from "@repo/design-system/components/ui/card";
 import { XCircle } from "lucide-react";
 import Link from "next/link";
+import { buildLocalePath } from "@/lib/infrastructure/revalidation";
+import { getActiveOrganization } from "@/lib/organization/queries";
+import { orgRoutes } from "@/lib/routes";
 import { SUPPORT_EMAIL_HREF } from "../support-email";
 
 interface Props {
@@ -16,6 +19,10 @@ interface Props {
 
 export default async function CheckoutCanceledPage({ params }: Props) {
   const { locale, orgSlug } = await params;
+
+  await getActiveOrganization(orgSlug);
+  const billingHref = buildLocalePath(locale, orgRoutes.billing(orgSlug));
+
   return (
     <div className="container mx-auto px-4 py-16">
       <div className="mx-auto max-w-2xl">
@@ -37,7 +44,7 @@ export default async function CheckoutCanceledPage({ params }: Props) {
 
             <div className="flex gap-3">
               <Button asChild className="flex-1">
-                <Link href={`/${locale}/${orgSlug}/billing`}>Try Again</Link>
+                <Link href={billingHref}>Try Again</Link>
               </Button>
               <Button asChild className="flex-1" variant="outline">
                 <Link href={SUPPORT_EMAIL_HREF}>Contact Support</Link>
