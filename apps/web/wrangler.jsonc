@@ -4,6 +4,12 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-07-29",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // esbuild's keepNames (wrangler's default) injects `__name(fn, "fn")` into
+  // bundled functions. next-themes builds its anti-flash script with
+  // Function.prototype.toString(), so those calls land in an inline <script>
+  // and throw `__name is not defined` in the browser. Wrangler does not minify
+  // identifiers, so nothing here needs keepNames. Inherited by env blocks.
+  "keep_names": false,
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
