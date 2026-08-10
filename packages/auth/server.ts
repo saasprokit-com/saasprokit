@@ -65,6 +65,7 @@ import {
   handleSubscriptionDeleted,
   handleSubscriptionUpdate,
 } from "./stripe-hooks";
+import { twoFactorAfterHook } from "./two-factor-hooks";
 import { cleanUpUserBeforeDelete } from "./user-deletion";
 
 const env = keys();
@@ -113,6 +114,7 @@ export const auth = betterAuth({
         });
       }
     }),
+    after: twoFactorAfterHook,
   },
 
   databaseHooks: {
