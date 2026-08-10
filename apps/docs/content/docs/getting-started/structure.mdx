@@ -6,7 +6,7 @@ description: Overview of the monorepo directory layout and organization
 ## Directory Structure
 
 ```
-next-nest-monorepo/
+saasprokit/
 ├── apps/                          # Independent applications
 │   ├── web/                       # Main SaaS application (port 3000)
 │   │   ├── app/                   # Next.js app directory
@@ -23,7 +23,7 @@ next-nest-monorepo/
 │   │   ├── components/            # Shared app components
 │   │   ├── lib/                   # Utilities and helpers
 │   │   ├── public/                # Static assets
-│   │   ├── proxy.ts               # Edge proxy (Next.js 16 route protection)
+│   │   ├── middleware.ts          # Edge middleware (cookie-presence route gate)
 │   │   └── package.json
 │   │
 │   ├── docs/                      # Documentation site (port 3004)
@@ -126,7 +126,7 @@ next-nest-monorepo/
 A few notes beyond what the tree above already shows:
 
 - **`apps/email`** is a thin React Email **preview runner** (`email dev`) — it has no local `app/` or `emails/` dir; the templates live in `@repo/email` (`packages/email/templates/`), which this app points at.
-- **`apps/web/proxy.ts`** is the Next.js 16 replacement for `middleware.ts` — it handles edge route protection.
+- **`apps/web/middleware.ts`** stays `middleware.ts` rather than Next.js 16's `proxy.ts` convention, because `proxy.ts` is Node-runtime-only and can't run on the Cloudflare/OpenNext deploy target. It does an optimistic, cookie-presence-only route gate — see [Sessions & Route Protection](/docs/authentication/sessions-and-routing).
 - **`@repo/auth`** implements dual RBAC: platform-level admin roles plus separate organization-scoped roles.
 
 ## Route Structure in Web App

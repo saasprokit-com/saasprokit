@@ -46,7 +46,7 @@ async function handleSocialLogin(provider: SocialProvider) {
 - Social sign-in returns a provider URL that the handler assigns to `window.location.href`; control never returns to the form.
 
 <Callout>
-`proxy.ts` appends `?callbackUrl=<original path>` when it bounces an unauthenticated user here. `page.tsx` resolves it through `resolveCallbackUrl` and passes the result to all three tabs, so a bounced user lands back where they were headed. The resolver rejects protocol-relative (`//evil.com`) and cross-origin targets, falling back to `/org` — so a crafted `?callbackUrl` cannot turn this page into an open redirect. See [Sessions & Route Protection](./sessions-and-routing).
+`middleware.ts` appends `?callbackUrl=<original path>` when it bounces an unauthenticated user here. `page.tsx` resolves it through `resolveCallbackUrl` and passes the result to all three tabs, so a bounced user lands back where they were headed. The resolver rejects protocol-relative (`//evil.com`) and cross-origin targets, falling back to `/org` — so a crafted `?callbackUrl` cannot turn this page into an open redirect. See [Sessions & Route Protection](./sessions-and-routing).
 </Callout>
 
 ## Magic link
@@ -113,7 +113,7 @@ flowchart LR
 
 - **The email-based methods normalize identically** — password, magic link, and email OTP all apply `toLowerCase().trim()` before the call, so casing or whitespace can't fork an account across methods. Social sign-in delegates identity to the provider, so there's no email field to normalize.
 - **Tab deep-links work** — `page.tsx` reads the `?tab=` searchParam through `resolveTab()` and passes it to `<Tabs defaultValue>`, so links to `/auth/sign-in?tab=magic-link` / `?tab=otp` open directly on that tab (an unknown value falls back to `password`). The verify-email page's alternative-method buttons rely on this.
-- The `proxy.ts` gate redirects already-signed-in users away from `/auth/sign-in` to `/org`, so a logged-in user can't see this page.
+- `apps/web/app/[locale]/auth/layout.tsx` redirects already-signed-in users away from `/auth/sign-in` to `/org`, so a logged-in user can't see this page. This check is DB-verified (via `getServerSession()`), not part of the edge `middleware.ts` gate — see [Sessions & Route Protection](./sessions-and-routing).
 
 ## Source files
 

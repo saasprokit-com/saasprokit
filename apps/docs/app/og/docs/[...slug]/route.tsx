@@ -19,7 +19,7 @@ export async function GET(
   return new ImageResponse(
     <DefaultImage
       description={page.data.description}
-      site="next-nest-monorepo"
+      site="SaaSProKit"
       title={page.data.title}
     />,
     {
