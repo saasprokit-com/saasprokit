@@ -1,5 +1,11 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { parse } from "comment-json";
 import { describe, expect, it } from "vitest";
 import { customizeWrangler } from "./wrangler";
+
+const ROOT = join(import.meta.dirname, "..", "..");
+const WRANGLER_PATH = join(ROOT, "apps/web/wrangler.jsonc");
 
 const WRANGLER = `{
   // Worker name
@@ -42,5 +48,32 @@ describe("customizeWrangler", () => {
 
   it("keeps comments", () => {
     expect(customizeWrangler(WRANGLER, "acme")).toContain("// Worker name");
+  });
+});
+
+describe("apps/web/wrangler.jsonc", () => {
+  const raw = readFileSync(WRANGLER_PATH, "utf8");
+  const config = parse(raw) as {
+    keep_names?: boolean;
+    env?: Record<string, { keep_names?: boolean }>;
+  };
+
+  it("disables keep_names", () => {
+    expect(
+      config.keep_names,
+      "wrangler defaults keepNames on, which injects __name(fn) into the inline next-themes script and throws ReferenceError in the browser"
+    ).toBe(false);
+  });
+
+  it("lets every env inherit keep_names", () => {
+    for (const [name, block] of Object.entries(config.env ?? {})) {
+      expect(block.keep_names, `env.${name} must not re-enable it`).not.toBe(
+        true
+      );
+    }
+  });
+
+  it("keeps keep_names through the setup CLI", () => {
+    expect(customizeWrangler(raw, "acme")).toContain('"keep_names": false');
   });
 });
