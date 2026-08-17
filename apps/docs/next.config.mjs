@@ -4,8 +4,11 @@ const withMDX = createMDX();
 
 /** @type {import('next').NextConfig} */
 const config = {
-  output: "standalone",
+  // Docker/VPS needs the standalone server; the OpenNext/Cloudflare build
+  // (CF_BUILD=1) and Vercel both do their own bundling and must not use it.
+  output: process.env.CF_BUILD || process.env.VERCEL ? undefined : "standalone",
   reactStrictMode: true,
+  turbopack: { root: "../../" },
 };
 
 export default withMDX(config);

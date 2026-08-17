@@ -1,0 +1,69 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "saasprokit-docs",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-07-29",
+  // nodejs_compat is required: fumadocs-mdx's runtime statically imports
+  // node:path even though this app never touches the filesystem.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // No routes at top level: a fresh clone deploys to
+  // <name>.<account>.workers.dev, which succeeds in any Cloudflare account.
+  // Attach a custom domain via an environment block (see env.site) — wrangler
+  // creates the DNS record + certificate on deploy when the zone is in your
+  // account.
+  "observability": {
+    "enabled": true
+  },
+  // Self-reference lets ISR revalidation call back into the Worker. The
+  // service name MUST equal the deployed worker name.
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "saasprokit-docs"
+    }
+  ],
+  // Incremental page cache (open-next.config.ts r2IncrementalCache). R2 bucket
+  // names are account-scoped: create this one in your own account with
+  // `wrangler r2 bucket create saasprokit-docs-cache`.
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "saasprokit-docs-cache"
+    }
+  ],
+  // No "vars": the docs app reads zero environment variables.
+  //
+  // Named environments do NOT inherit routes/services/r2_buckets — each block
+  // must restate them in full.
+  "env": {
+    // The maintainers' published docs site: `pnpm --filter=docs run deploy:site`.
+    "site": {
+      // Keep the original worker name: without this the env would deploy a
+      // second worker named "saasprokit-docs-site", orphaning the existing one
+      // and breaking WORKER_SELF_REFERENCE below.
+      "name": "saasprokit-docs",
+      "routes": [
+        {
+          "pattern": "docs.saasprokit.com",
+          "custom_domain": true
+        }
+      ],
+      "services": [
+        {
+          "binding": "WORKER_SELF_REFERENCE",
+          "service": "saasprokit-docs"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "NEXT_INC_CACHE_R2_BUCKET",
+          "bucket_name": "saasprokit-docs-cache"
+        }
+      ]
+    }
+  }
+}

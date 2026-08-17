@@ -4,6 +4,10 @@ import { ImageResponse } from "next/og";
 import { getPageImage, source } from "@/lib/source";
 
 export const revalidate = false;
+// Every real image is prerendered by generateStaticParams below. Pinning
+// dynamicParams keeps satori/resvg-wasm off the runtime path — workerd forbids
+// runtime WASM compilation, so an unknown slug must 404 rather than render.
+export const dynamicParams = false;
 
 export async function GET(
   _req: Request,
