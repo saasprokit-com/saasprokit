@@ -3,7 +3,7 @@ title: Unit Tests
 description: Catalog of Vitest unit tests and coverage gaps
 ---
 
-**Total: 138 test cases** across 12 files in 2 packages/apps (`@repo/auth`: 87 across 6 files, `apps/web`: 51 across 6 files).
+**Total: 134 test cases** across 13 files in 2 packages/apps (`@repo/auth`: 83 across 7 files, `apps/web`: 51 across 6 files).
 
 <Callout type="warn">
 If `apps/web` has stale build output on disk (`.next/standalone/`, `.open-next/server-functions/default/` — left behind by a prior `pnpm build` or `cf:build`), `pnpm --filter app test` overcounts: `apps/web/vitest.config.mts`'s `include: ["**/*.test.{ts,tsx}"]` has no exclude for those directories, so it also runs the build's bundled copy of `hooks/use-action-result.test.ts`, once per copy. The 51/6 figure above is the real source count — verified by filtering `vitest run --reporter=verbose` output down to non-build paths, and cross-checked against `find apps/web -name "*.test.ts" -not -path "*/.next/*" -not -path "*/.open-next/*"`.
@@ -17,7 +17,8 @@ If `apps/web` has stale build output on disk (`.next/standalone/`, `.open-next/s
 | `packages/auth/helpers.test.ts` | 21 | `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `isSubscriptionActive` across all 8 Stripe subscription statuses, `getCurrentPlan`, and `getStatusDisplayText` |
 | `packages/auth/admin-bootstrap.test.ts` | 7 | `isBootstrapAdminEmail` — the `ADMIN_EMAILS` bootstrap allowlist (case-insensitivity, CSV parsing with spaces, partial-match rejection, empty/undefined list) |
 | `packages/auth/ba-i18n.test.ts` | 9 | `baErrorTranslations`, `localeFromPathname`, `localeFromReferer` — Better Auth error-code localization and locale-detection helpers |
-| `packages/auth/two-factor-hooks.test.ts` | 7 | The two-factor gate on sign-in paths Better Auth's own hook doesn't cover (email OTP, magic link), plus TOTP secret-rotation activation timing |
+| `packages/auth/two-factor-hooks.test.ts` | 2 | TOTP secret rotation — a re-issued secret stays unusable for sign-in until verified, then activates once the user proves possession in session |
+| `packages/auth/server-wiring.test.ts` | 1 | The shipped `auth` instance registers `twoFactorAfterHook` — the rotation fix is one deletable line in `server.ts`, and no other test builds the shipped instance |
 | `apps/web/lib/routes.test.ts` | 13 | `orgRoutes`, `accountRoutes`, `resolveCallbackUrl`, and the `AUTH_ROUTE_PREFIXES`/`PUBLIC_ROUTE_EXACT`/`PUBLIC_ROUTE_PREFIXES` middleware allowlists |
 | `apps/web/lib/parsers.test.ts` | 5 | `sortingStateParser` (table sort-state URL serialization) |
 | `apps/web/app/[locale]/(app)/admin/users/guards.test.ts` | 3 | `guardUserMutation` — blocks self-targeting admin mutations, allows the same mutation against another user, always allows revoke-sessions |

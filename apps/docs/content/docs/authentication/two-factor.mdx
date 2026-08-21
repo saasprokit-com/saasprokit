@@ -67,7 +67,7 @@ await auth.api.verifyTOTP({ headers: await headers(), body: { code } });
 ```
 
 <Callout type="warn">
-The page only wires **TOTP**. The server *also* configures an email-OTP second factor (`otpOptions.sendOTP`), but there is no UI here to request or verify an emailed 2FA code. Email 2FA is configured-but-unused by the current `/auth/2fa` page; add a `verifyOTP` action and a "send code by email" control if you want it reachable.
+The page wires **TOTP** and a **backup-code** fallback (`verifyBackupCodeAction`, reachable via "Use a backup code instead"). The server *also* configures an email-OTP second factor (`otpOptions.sendOTP`), but there is no UI here to request or verify an emailed 2FA code. Email 2FA is configured-but-unused by the current `/auth/2fa` page; add a `verifyOTP` action and a "send code by email" control if you want it reachable.
 </Callout>
 
 <Callout type="info">

@@ -10,10 +10,10 @@ This project uses two levels of testing:
 | Type | Tool | Location | Test Cases | Status |
 |------|------|----------|------------|--------|
 | **E2E Tests** | Playwright | `apps/web/e2e/` | **56** | Comprehensive |
-| **Unit Tests** | Vitest | `packages/auth/`, `apps/web/` | **138** | Growing |
+| **Unit Tests** | Vitest | `packages/auth/`, `apps/web/` | **134** | Growing |
 | **Integration Tests** | — | — | **0** | Not started |
 
-**Total test cases: 194**
+**Total test cases: 190**
 
 ## Coverage Summary
 
@@ -40,7 +40,7 @@ See [Unit Tests](/docs/testing/unit-tests) for details. `@repo/storage` and `@re
 
 | Package/App | Files | Test Cases |
 |---------|------|------------|
-| `@repo/auth` | 6 | 87 |
+| `@repo/auth` | 7 | 83 |
 | `apps/web` | 6 | 51 |
 
 ### Uncovered Areas
@@ -102,6 +102,7 @@ packages/auth/helpers.test.ts
 packages/auth/admin-bootstrap.test.ts
 packages/auth/ba-i18n.test.ts
 packages/auth/two-factor-hooks.test.ts
+packages/auth/server-wiring.test.ts
 apps/web/lib/routes.test.ts
 apps/web/lib/parsers.test.ts
 apps/web/app/[locale]/(app)/admin/users/guards.test.ts

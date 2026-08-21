@@ -1,42 +1,51 @@
+import { logger } from "@repo/logger/server";
+
 import { Prisma } from "./generated/client/client";
+import { argShape } from "./redact";
 
-const SLOW_QUERY_THRESHOLD_MS = 100;
-const ARGS_PREVIEW_LENGTH = 200;
+interface QueryLoggingOptions {
+  thresholdMs: number;
+}
 
-export const queryLoggingExtension = Prisma.defineExtension({
-  query: {
-    $allModels: {
-      async $allOperations({ model, operation, args, query }) {
-        const start = Date.now();
+export const queryLoggingExtension = ({ thresholdMs }: QueryLoggingOptions) =>
+  Prisma.defineExtension({
+    query: {
+      $allModels: {
+        async $allOperations({ model, operation, args, query }) {
+          const start = Date.now();
 
-        try {
-          const result = await query(args);
-          const duration = Date.now() - start;
+          try {
+            const result = await query(args);
+            const duration = Date.now() - start;
 
-          if (duration > SLOW_QUERY_THRESHOLD_MS) {
-            const argsPreview = JSON.stringify(args).slice(
-              0,
-              ARGS_PREVIEW_LENGTH
+            if (duration > thresholdMs) {
+              logger.warn(
+                {
+                  model: model ?? "raw",
+                  operation,
+                  durationMs: duration,
+                  argShape: argShape(args),
+                },
+                "slow query"
+              );
+            }
+
+            return result;
+          } catch (error) {
+            logger.error(
+              {
+                model: model ?? "raw",
+                operation,
+                durationMs: Date.now() - start,
+                argShape: argShape(args),
+                error: error instanceof Error ? error.message : String(error),
+              },
+              "query failed"
             );
 
-            console.warn(
-              `[SLOW_QUERY] ${model}.${operation} took ${duration}ms | Args: ${argsPreview}...`
-            );
+            throw error;
           }
-
-          return result;
-        } catch (error) {
-          const duration = Date.now() - start;
-          const errorMsg =
-            error instanceof Error ? error.message : String(error);
-
-          console.error(
-            `[QUERY_ERROR] ${model}.${operation} failed after ${duration}ms | Error: ${errorMsg}`
-          );
-
-          throw error;
-        }
+        },
       },
     },
-  },
-});
+  });
