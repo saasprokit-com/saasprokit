@@ -22,11 +22,12 @@ import { Input } from "@repo/design-system/components/ui/input";
 import { Textarea } from "@repo/design-system/components/ui/textarea";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
-import { startTransition, useActionState, useEffect } from "react";
+import { startTransition, useActionState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
 import { initialFormState } from "@/lib/forms";
 import { banUserAction } from "../actions";
 import type { AdminUserRow } from "../queries";
@@ -57,17 +58,16 @@ export function BanUserDialog({
 
   useActionFieldErrors(form, state);
 
-  useEffect(() => {
-    if (state.status === "success") {
+  useActionResult(state, {
+    onError: (error) => toast.error(error ?? errors.banUser),
+    onSuccess: () => {
       toast.success("User banned", {
         description: `${user.name || user.email} has been banned and their sessions revoked.`,
       });
       onOpenChange(false);
       form.reset();
-    } else if (state.status === "error" && state.error) {
-      toast.error(state.error || errors.banUser);
-    }
-  }, [state, form, errors.banUser, onOpenChange, user.name, user.email]);
+    },
+  });
 
   const onSubmit = (values: BanUserInput) => {
     startTransition(() => formAction({ ...values, userId: user.id }));

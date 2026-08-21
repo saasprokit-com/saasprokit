@@ -50,6 +50,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { initialFormState } from "@/lib/forms";
 import { SEARCH_DEBOUNCE_MS } from "../../utils";
@@ -125,14 +126,16 @@ export function InviteLinksToolbar({
 
   useActionFieldErrors(form, state);
 
-  useEffect(() => {
-    if (state.status === "success" && state.data) {
-      setNewLinkUrl(state.data.url);
+  useActionResult(state, {
+    onError: (error) => toast.error(error ?? errors.createInviteLink),
+    onSuccess: (data) => {
+      if (!data) {
+        return;
+      }
+      setNewLinkUrl(data.url);
       toast.success("Invite link created");
-    } else if (state.status === "error" && state.error) {
-      toast.error(state.error || errors.createInviteLink);
-    }
-  }, [state, errors.createInviteLink]);
+    },
+  });
 
   const resetForm = () => {
     form.reset();

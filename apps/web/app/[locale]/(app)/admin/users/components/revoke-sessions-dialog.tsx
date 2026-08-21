@@ -12,9 +12,10 @@ import {
 import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
-import { useActionState, useEffect } from "react";
+import { useActionState } from "react";
 import { toast } from "sonner";
 
+import { useActionResult } from "@/hooks/use-action-result";
 import type { ActionResult } from "@/lib/auth/auth";
 import { revokeUserSessionsAction } from "../actions";
 
@@ -37,19 +38,15 @@ export function RevokeSessionsDialog({
     FormData
   >(boundAction, null);
 
-  useEffect(() => {
-    if (!state) {
-      return;
-    }
-    if (state.success) {
+  useActionResult(state, {
+    onError: (error) => toast.error(error ?? errors.revokeUserSessions),
+    onSuccess: () => {
       toast.success("Sessions revoked", {
         description: `${user.name || user.email} has been signed out of all sessions.`,
       });
       onOpenChange(false);
-    } else if (state.error) {
-      toast.error(state.error || errors.revokeUserSessions);
-    }
-  }, [state, errors.revokeUserSessions, onOpenChange, user.name, user.email]);
+    },
+  });
 
   return (
     <AlertDialog onOpenChange={onOpenChange} open={open}>
