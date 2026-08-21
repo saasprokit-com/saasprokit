@@ -47,6 +47,12 @@ export const twoFactorSchema = z.object({
     .regex(/^\d+$/, "Code must only contain numbers"),
 });
 
+// Better Auth mints backup codes as two dash-joined groups and is the only
+// authority on whether one is valid, so this only rejects an empty field.
+export const backupCodeSchema = z.object({
+  code: z.string().trim().min(1, "Backup code is required"),
+});
+
 export const magicLinkSchema = z.object({
   email: emailSchema,
 });
@@ -67,6 +73,7 @@ export type SignUpFormValues = z.infer<typeof signUpSchema>;
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 export type TwoFactorFormValues = z.infer<typeof twoFactorSchema>;
+export type BackupCodeFormValues = z.infer<typeof backupCodeSchema>;
 export type MagicLinkFormValues = z.infer<typeof magicLinkSchema>;
 export type SendOtpFormValues = z.infer<typeof sendOtpSchema>;
 export type VerifyOtpFormValues = z.infer<typeof verifyOtpSchema>;

@@ -17,6 +17,7 @@
     "db:pull": "prisma db pull",
     "db:seed": "tsx prisma/seed.ts",
     "studio": "prisma studio",
+    "test": "vitest run",
     "clean": "git clean -xdf .cache .turbo dist node_modules generated",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
@@ -28,6 +29,7 @@
     "@prisma/adapter-neon": "^7.9.1",
     "@prisma/adapter-pg": "^7.9.0",
     "@prisma/client": "^7.9.0",
+    "@repo/logger": "workspace:*",
     "@repo/utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.11",
     "server-only": "^0.0.1",

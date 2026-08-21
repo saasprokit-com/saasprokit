@@ -154,7 +154,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 | Idempotent Webhook Processing | Implemented | WebhookEvent deduplication model |
 | SQL Injection Prevention | Implemented | All queries via Prisma ORM (parameterized); one static `$queryRaw` health check with no user input |
 | Audit Logging | Implemented | AuditLog model for user actions with IP tracking |
-| Edge Route Protection | Implemented | `proxy.ts` for auth checks |
+| Edge Route Protection | Implemented | `middleware.ts` — optimistic cookie-presence gate; real auth checks happen server-side |
 | Rate Limiting | Implemented | Per-route limits (sign-in, sign-up, password reset, 2FA) via Better Auth, backed by a database-stored `RateLimit` model |
 
 ## Monitoring & Logging

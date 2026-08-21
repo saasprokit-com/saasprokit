@@ -83,7 +83,7 @@ flowchart TD
     end
 
     subgraph Server["Next.js server"]
-      PROXY["proxy.ts<br/>route gating + CSP nonce"]
+      MIDDLEWARE["middleware.ts<br/>cookie-presence route gate + CSP nonce"]
       ACTIONS["Colocated server actions<br/>auth/*/actions.ts"]
       ROUTE["/api/auth/[...all]<br/>toNextJsHandler(auth)"]
       BA["Better Auth instance<br/>packages/auth/server.ts"]
@@ -103,11 +103,11 @@ flowchart TD
     BA -->|"verification / reset / OTP / magic link"| EMAIL
     BA -->|"OAuth redirect"| OAUTH
 
-    PROXY -->|"getSession()"| BA
+    MIDDLEWARE -->|"getSessionCookie() — cookie read only, no BA call"| Pages
     HELP -->|"getSession()"| BA
 ```
 
-Outbound: an auth page dispatches its colocated server action, which calls `auth.api.*` in-process — no browser `fetch` to `/api/auth/*` is involved. That route still matters for traffic the server can't originate: the links in verification, reset and magic-link emails, and OAuth provider callbacks. The Better Auth instance runs the flow, persists via Prisma, and sends transactional email through `@repo/email`. Server Components read the resulting session through the cached helpers in `lib/auth/auth.ts`, and the edge `proxy.ts` gates every page on it.
+Outbound: an auth page dispatches its colocated server action, which calls `auth.api.*` in-process — no browser `fetch` to `/api/auth/*` is involved. That route still matters for traffic the server can't originate: the links in verification, reset and magic-link emails, and OAuth provider callbacks. The Better Auth instance runs the flow, persists via Prisma, and sends transactional email through `@repo/email`. Server Components read the resulting session through the cached helpers in `lib/auth/auth.ts` (a real DB-backed `auth.api.getSession` call); the edge `middleware.ts` only gates on cookie presence before that — see [Sessions & Route Protection](./sessions-and-routing).
 
 Because `auth.api.*` bypasses Better Auth's HTTP-path rate limiter (which only runs on `/api/auth/*`), brute-forceable actions re-apply `enforceRateLimit` server-side — see `apps/web/lib/auth/rate-limit.ts`.
 
@@ -133,7 +133,7 @@ Better Auth's Prisma adapter reads and writes a small set of tables (`packages/d
 | [Sign In](./sign-in) | The tabbed sign-in page: password, social, magic link, and email OTP — plus the 2FA hand-off. |
 | [Two-Factor Authentication](./two-factor) | The TOTP/email-OTP second factor, the `onTwoFactorRedirect` hook, and the `/auth/2fa` step. |
 | [Password Reset](./password-reset) | Forgot-password → reset-password, token handling, and session revocation. |
-| [Sessions & Route Protection](./sessions-and-routing) | Session lifetime, the cookie cache, the `proxy.ts` gate, and the cached server helpers. |
+| [Sessions & Route Protection](./sessions-and-routing) | Session lifetime, the cookie cache, the `middleware.ts` gate, and the cached server helpers. |
 
 ## Source files
 
@@ -145,4 +145,4 @@ Better Auth's Prisma adapter reads and writes a small set of tables (`packages/d
 - `apps/web/app/api/auth/[...all]/route.ts` — the Better Auth Next.js handler
 - `apps/web/app/[locale]/auth/*` — the auth pages and their clients
 - `apps/web/lib/auth/auth.ts` — `getServerSession`, `requireAuth`, `hasOrgPermission`
-- `apps/web/proxy.ts` — edge route gating and CSP nonce
+- `apps/web/middleware.ts` — edge route gating (cookie-presence check only) and CSP nonce

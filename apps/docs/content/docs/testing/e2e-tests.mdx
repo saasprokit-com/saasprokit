@@ -5,67 +5,71 @@ description: Playwright end-to-end test suite organized by feature area
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-**341 tests** across 26 spec files, organized into domain folders under `apps/web/e2e/` (plus `fixtures/`, `helpers/`, and `setup/` for shared test infrastructure — see [Maildev helper](/docs/email/local-development)).
+**56 tests** across 27 files — 25 `*.spec.ts` files plus 2 `setup/` files (`auth.setup.ts`, `org.setup.ts`) that seed the authenticated/org-scoped Playwright projects rather than assert anything themselves. Specs are organized into domain folders under `apps/web/e2e/` (plus `fixtures/` and `helpers/` for shared test infrastructure — see [Maildev helper](/docs/email/local-development)). Counted with `npx playwright test --list` in `apps/web`.
 
 <Callout type="info">
-A handful of files still carry an old numbered title in their `test.describe()` block (e.g. `"12 - Account Danger Zone"`) left over from a prior flat `01-*.spec.ts`-style layout — the files themselves have since been reorganized into the domain folders below. There's no duplication between an old and new copy; each test exists exactly once.
+One file still carries an old numbered title in its `test.describe()` block (`admin-access.spec.ts`: `"31 - Admin area access control"`, with test names like `TC-31-01`) left over from a prior flat `01-*.spec.ts`-style layout — the file itself already lives in the `admin/` domain folder below.
 </Callout>
 
-## `account/` — 59 tests
+## `account/` — 9 tests
 
 | File | Tests | Covers |
 |------|-------|--------|
-| `danger.spec.ts` | 11 | Danger zone: delete-account confirmation flow |
-| `home.spec.ts` | 7 | `/account` redirect + sidebar navigation |
-| `new-org.spec.ts` | 13 | Create-organization form, slug generation, eligibility |
-| `profile.spec.ts` | 11 | Profile editing (name, read-only email) |
-| `security.spec.ts` | 17 | Password change, session list, 2FA enrollment |
+| `delete-account.spec.ts` | 1 | Account deletion confirmation, and being unable to sign in again afterward |
+| `home.spec.ts` | 2 | `/account` redirect to profile + unauthenticated guard on protected routes |
+| `new-org.spec.ts` | 2 | Create-organization form — slug auto-generation, name validation |
+| `profile.spec.ts` | 3 | Profile editing — populated name/read-only email, validation, persistence |
+| `security.spec.ts` | 1 | Security page render — change-password form, 2FA section, sessions list |
 
-## `auth/` — 63 tests
-
-| File | Tests | Covers |
-|------|-------|--------|
-| `magic-link.spec.ts` | 10 | Magic-link landing/error states + full sign-in-via-email round trip |
-| `password-reset.spec.ts` | 12 | Forgot-password request + reset-password token flow |
-| `sign-in.spec.ts` | 9 | Sign-in page — password, social, magic link, OTP tabs |
-| `sign-up.spec.ts` | 9 | Registration form and validation |
-| `two-factor.spec.ts` | 14 | `/auth/2fa` challenge page |
-| `verify-email.spec.ts` | 9 | Email verification screen + resend cooldown |
-
-## `dashboard/` — 39 tests
+## `admin/` — 4 tests
 
 | File | Tests | Covers |
 |------|-------|--------|
-| `overview.spec.ts` | 14 | Org dashboard stat cards and navigation |
-| `selection.spec.ts` | 9 | `/org` redirect/selection behavior |
-| `settings.spec.ts` | 16 | Org settings form, branding, danger zone |
+| `admin-access.spec.ts` | 4 | Admin area access control across regular, moderator, and staff/admin roles |
 
-## `members/` — 90 tests
+## `auth/` — 13 tests
 
 | File | Tests | Covers |
 |------|-------|--------|
-| `invitations.spec.ts` | 21 | Pending invitations tab — search, filters |
-| `invite-accept.spec.ts` | 15 | Accepting an email invitation |
-| `invite-links.spec.ts` | 16 | Shareable invite links — create, revoke |
-| `invite-preview.spec.ts` | 12 | Invite-link preview and error states |
-| `list.spec.ts` | 26 | Member list — table, search, filters, invite dialog |
+| `magic-link.spec.ts` | 1 | Full magic-link sign-in round trip — request, email, click |
+| `password-reset.spec.ts` | 3 | Forgot-password form, reset-confirmation email, full reset-and-restore flow |
+| `sign-in.spec.ts` | 3 | Sign-in form render, redirect on success, sign-out |
+| `sign-up.spec.ts` | 3 | Sign-up form render, password-mismatch validation, verification-email flow |
+| `two-factor.spec.ts` | 1 | `/auth/2fa` challenge page render with no pending session |
+| `verify-email.spec.ts` | 2 | Resend button visibility + resend-verification-email flow |
 
-## `payment/` — 70 tests
-
-| File | Tests | Covers |
-|------|-------|--------|
-| `billing-page.spec.ts` | 12 | Billing page rendering, plan cards, usage stats |
-| `checkout-canceled.spec.ts` | 11 | Checkout-canceled page |
-| `checkout-success.spec.ts` | 16 | Checkout-success page, session verification |
-| `checkout.spec.ts` | 15 | Upgrade/checkout flow end-to-end |
-| `guards.spec.ts` | 6 | Access control — non-owner restrictions, downgrade guards |
-| `plan-changes.spec.ts` | 10 | Downgrade, cancel, and manage-billing UI |
-
-## `public/` — 20 tests
+## `dashboard/` — 5 tests
 
 | File | Tests | Covers |
 |------|-------|--------|
-| `home.spec.ts` | 20 | Landing page sections, CTAs, pricing toggle, responsive layout |
+| `overview.spec.ts` | 2 | Org dashboard heading + sidebar navigation to Members |
+| `selection.spec.ts` | 1 | `/org` resolves to the test organization |
+| `settings.spec.ts` | 2 | Org settings form — populated name/read-only slug, persistence |
+
+## `members/` — 13 tests
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `invitations.spec.ts` | 2 | Pending-invitations table + empty search results |
+| `invite-accept.spec.ts` | 4 | Invite-accept error states, email-mismatch guard, Free-plan member-limit guard |
+| `invite-links.spec.ts` | 2 | Invite-link create dialog + generated URL appearing in the table |
+| `invite-preview.spec.ts` | 1 | Invalid invite-token error card |
+| `list.spec.ts` | 4 | Member list — current-user row, sidebar navigation, invite validation, Free-plan member-limit guard |
+
+## `payment/` — 8 tests
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `billing-page.spec.ts` | 4 | Current Plan/Change Plan sections, Free/Pro/Enterprise tiers, monthly/annual toggle, disabled Current-Plan button |
+| `checkout-canceled.spec.ts` | 2 | Checkout-canceled page render + Try Again navigation |
+| `checkout-success.spec.ts` | 1 | Checkout-error card when the session can't be verified |
+| `checkout.spec.ts` | 1 | Upgrade-to-Pro checkout server action |
+
+## `public/` — 2 tests
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `home.spec.ts` | 2 | Hero/CTA/pricing/footer sections + monthly/annual pricing toggle |
 
 ## Running these tests
 

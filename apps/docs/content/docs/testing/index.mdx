@@ -9,11 +9,11 @@ This project uses two levels of testing:
 
 | Type | Tool | Location | Test Cases | Status |
 |------|------|----------|------------|--------|
-| **E2E Tests** | Playwright | `apps/web/e2e/` | **341** | Comprehensive |
-| **Unit Tests** | Vitest | `packages/auth/`, `apps/web/` | **70** | Growing |
+| **E2E Tests** | Playwright | `apps/web/e2e/` | **56** | Comprehensive |
+| **Unit Tests** | Vitest | `packages/auth/`, `apps/web/` | **134** | Growing |
 | **Integration Tests** | — | — | **0** | Not started |
 
-**Total test cases: 411**
+**Total test cases: 190**
 
 ## Coverage Summary
 
@@ -23,13 +23,16 @@ See [E2E Tests](/docs/testing/e2e-tests) for the file-by-file breakdown.
 
 | Feature Area | Folder | Files | Test Cases |
 |-------------|--------|-------|------------|
-| Home / Landing Page | `public/` | 1 | 20 |
-| Authentication | `auth/` | 6 | 63 |
-| Account Management | `account/` | 5 | 59 |
-| Organization Dashboard | `dashboard/` | 3 | 39 |
-| Members & Invitations | `members/` | 5 | 90 |
-| Billing & Payment | `payment/` | 6 | 70 |
-| **Total** | | **26** | **341** |
+| Home / Landing Page | `public/` | 1 | 2 |
+| Authentication | `auth/` | 6 | 13 |
+| Account Management | `account/` | 5 | 9 |
+| Admin | `admin/` | 1 | 4 |
+| Organization Dashboard | `dashboard/` | 3 | 5 |
+| Members & Invitations | `members/` | 5 | 13 |
+| Billing & Payment | `payment/` | 4 | 8 |
+| **Total** | | **25** | **54** |
+
+The 54 spec-file tests above plus 2 `setup/` files (`auth.setup.ts`, `org.setup.ts`, which seed fixtures rather than assert anything) bring the full Playwright count to 56 tests in 27 files.
 
 ### Unit Test Coverage
 
@@ -37,8 +40,8 @@ See [Unit Tests](/docs/testing/unit-tests) for details. `@repo/storage` and `@re
 
 | Package/App | Files | Test Cases |
 |---------|------|------------|
-| `@repo/auth` | 3 | 50 |
-| `apps/web` | 3 | 20 |
+| `@repo/auth` | 7 | 83 |
+| `apps/web` | 6 | 51 |
 
 ### Uncovered Areas
 
@@ -49,7 +52,7 @@ See [Unit Tests](/docs/testing/unit-tests) for details. `@repo/storage` and `@re
 | Slug generation & validation | Unit | Low |
 | Date utilities | Unit | Low |
 | Stripe webhook idempotency (`claimWebhookEvent`) | Integration | High |
-| Auth middleware / session validation (`proxy.ts`) | Integration | Medium |
+| Auth middleware / session validation (`middleware.ts`) | Integration | Medium |
 
 ## Running Tests
 
@@ -87,7 +90,7 @@ pnpm --filter auth test -- --watch
 
 ### E2E Tests
 
-E2E specs live in domain folders under `apps/web/e2e/`: `account/`, `auth/`, `dashboard/`, `members/`, `payment/`, `public/`, plus `fixtures/`, `helpers/`, and `setup/` for shared test infrastructure (e.g. the Maildev REST helper — see [Local Development](/docs/email/local-development)). See [E2E Tests](/docs/testing/e2e-tests) for the full file list.
+E2E specs live in domain folders under `apps/web/e2e/`: `account/`, `admin/`, `auth/`, `dashboard/`, `members/`, `payment/`, `public/`, plus `fixtures/`, `helpers/`, and `setup/` for shared test infrastructure (e.g. the Maildev REST helper — see [Local Development](/docs/email/local-development)). See [E2E Tests](/docs/testing/e2e-tests) for the full file list.
 
 ### Unit Tests
 
@@ -96,7 +99,16 @@ Unit tests are co-located with their source files:
 packages/auth/permissions.test.ts
 packages/auth/billing-authorize.test.ts
 packages/auth/helpers.test.ts
+packages/auth/admin-bootstrap.test.ts
+packages/auth/ba-i18n.test.ts
+packages/auth/two-factor-hooks.test.ts
+packages/auth/server-wiring.test.ts
 apps/web/lib/routes.test.ts
 apps/web/lib/parsers.test.ts
-apps/web/app/[locale]/(app)/[orgSlug]/checkout/success/verify-session.test.ts
+apps/web/app/[locale]/(app)/admin/users/guards.test.ts
+apps/web/hooks/use-action-result.test.ts
+apps/web/lib/auth/action-error.test.ts
+apps/web/lib/billing/checkout-queries.test.ts
 ```
+
+See [Unit Tests](/docs/testing/unit-tests) for what each file covers.

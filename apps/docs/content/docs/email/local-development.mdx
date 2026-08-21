@@ -134,11 +134,11 @@ maildev:
 ### Commands
 
 ```bash
-# Start Postgres + Maildev (this is what `pnpm dev` runs first, and waits for healthchecks)
-pnpm dev:infra
+# Start Postgres + Maildev
+docker compose up postgres maildev
 
 # Stop them
-pnpm dev:infra:stop
+docker compose down
 
 # View Maildev logs
 docker compose logs maildev
@@ -147,8 +147,8 @@ docker compose logs maildev
 ## Related Scripts
 
 ```bash
-pnpm dev:infra         # Start Postgres + Maildev, wait for healthchecks (root package.json)
-pnpm --filter email dev  # Preview email templates directly (port 3003), independent of Maildev
+docker compose up postgres maildev   # Start Postgres + Maildev (CLAUDE.md's recommended flow for app dev)
+pnpm --filter email dev              # Preview email templates directly (port 3003), independent of Maildev
 ```
 
 ## Testing with Maildev REST API

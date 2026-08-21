@@ -42,7 +42,9 @@ function createDatabaseClient() {
         : ["error"],
   });
 
-  return client.$extends(queryLoggingExtension);
+  return client.$extends(
+    queryLoggingExtension({ thresholdMs: env.DB_SLOW_QUERY_MS })
+  );
 }
 
 const globalForPrisma = global as unknown as {

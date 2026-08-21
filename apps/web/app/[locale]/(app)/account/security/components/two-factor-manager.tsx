@@ -54,6 +54,21 @@ interface TwoFactorManagerProps {
   errors: ActionErrorMessages;
 }
 
+function BackupCodeList({ codes }: { codes: string[] }) {
+  return (
+    <div className="rounded-lg border bg-gray-50 p-4">
+      <p className="mb-2 font-semibold text-gray-700 text-xs">BACKUP CODES</p>
+      <div className="space-y-1">
+        {codes.map((backupCode) => (
+          <p className="font-mono text-gray-600 text-xs" key={backupCode}>
+            {backupCode}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 type SetupStep = "password" | "verify" | "success";
 
 export function TwoFactorManager({ enabled, errors }: TwoFactorManagerProps) {
@@ -329,6 +344,26 @@ export function TwoFactorManager({ enabled, errors }: TwoFactorManagerProps) {
                     </p>
                   </div>
 
+                  {/* Shown before verification, not after: enabling replaces
+                      any previous secret and backup codes, so leaving now
+                      without these is what locks people out. */}
+                  {backupCodes.length > 0 && (
+                    <>
+                      <Alert className="border-amber-200 bg-amber-50">
+                        <AlertTriangle className="h-4 w-4 text-amber-600" />
+                        <AlertTitle className="text-amber-900">
+                          Save your backup codes now
+                        </AlertTitle>
+                        <AlertDescription className="text-amber-800">
+                          {enabled
+                            ? "Your previous authenticator and backup codes no longer work. These replace them."
+                            : "Store these somewhere safe — they are your way back in if you lose your phone."}
+                        </AlertDescription>
+                      </Alert>
+                      <BackupCodeList codes={backupCodes} />
+                    </>
+                  )}
+
                   <FormField
                     control={verifyForm.control}
                     name="code"
@@ -405,21 +440,7 @@ export function TwoFactorManager({ enabled, errors }: TwoFactorManagerProps) {
                   </AlertDescription>
                 </Alert>
 
-                <div className="rounded-lg border bg-gray-50 p-4">
-                  <p className="mb-2 font-semibold text-gray-700 text-xs">
-                    BACKUP CODES
-                  </p>
-                  <div className="space-y-1">
-                    {backupCodes.map((backupCode) => (
-                      <p
-                        className="font-mono text-gray-600 text-xs"
-                        key={backupCode}
-                      >
-                        {backupCode}
-                      </p>
-                    ))}
-                  </div>
-                </div>
+                <BackupCodeList codes={backupCodes} />
 
                 <p className="text-muted-foreground text-xs">
                   Keep these codes safe. Never share them with anyone. Each code

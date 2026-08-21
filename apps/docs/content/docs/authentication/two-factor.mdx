@@ -67,11 +67,11 @@ await auth.api.verifyTOTP({ headers: await headers(), body: { code } });
 ```
 
 <Callout type="warn">
-The page only wires **TOTP**. The server *also* configures an email-OTP second factor (`otpOptions.sendOTP`), but there is no UI here to request or verify an emailed 2FA code. Email 2FA is configured-but-unused by the current `/auth/2fa` page; add a `verifyOTP` action and a "send code by email" control if you want it reachable.
+The page wires **TOTP** and a **backup-code** fallback (`verifyBackupCodeAction`, reachable via "Use a backup code instead"). The server *also* configures an email-OTP second factor (`otpOptions.sendOTP`), but there is no UI here to request or verify an emailed 2FA code. Email 2FA is configured-but-unused by the current `/auth/2fa` page; add a `verifyOTP` action and a "send code by email" control if you want it reachable.
 </Callout>
 
 <Callout type="info">
-`/auth/2fa` (`PAGE_ROUTES.TWO_FACTOR`) is included in `AUTH_ROUTE_PREFIXES` (`apps/web/lib/routes.ts`), so the `proxy.ts` gate treats it like the other auth pages: reachable without a full session, and a fully-authenticated user visiting it directly is redirected to `/org`. Completing the 2FA step relies on Better Auth's intermediate two-factor cookie being recognized by `auth.api.getSession()` in the proxy.
+`/auth/2fa` (`PAGE_ROUTES.TWO_FACTOR`) is included in `AUTH_ROUTE_PREFIXES` (`apps/web/lib/routes.ts`), so the edge `middleware.ts` gate treats it like the other auth pages: reachable without a session cookie. The redirect for a fully-authenticated user visiting it directly happens separately, in `apps/web/app/[locale]/auth/layout.tsx`, which calls the DB-verified `getServerSession()` (i.e. `auth.api.getSession()`) and sends them to `/org` — the edge middleware itself never calls `getSession()`, it only checks cookie presence.
 </Callout>
 
 ## End-to-end sequence

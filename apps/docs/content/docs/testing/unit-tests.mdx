@@ -3,94 +3,75 @@ title: Unit Tests
 description: Catalog of Vitest unit tests and coverage gaps
 ---
 
-**Total: 70 test cases** across 6 files in 2 packages/apps (`@repo/auth`: 50, `apps/web`: 20).
+**Total: 134 test cases** across 13 files in 2 packages/apps (`@repo/auth`: 83 across 7 files, `apps/web`: 51 across 6 files).
+
+<Callout type="warn">
+If `apps/web` has stale build output on disk (`.next/standalone/`, `.open-next/server-functions/default/` — left behind by a prior `pnpm build` or `cf:build`), `pnpm --filter app test` overcounts: `apps/web/vitest.config.mts`'s `include: ["**/*.test.{ts,tsx}"]` has no exclude for those directories, so it also runs the build's bundled copy of `hooks/use-action-result.test.ts`, once per copy. The 51/6 figure above is the real source count — verified by filtering `vitest run --reporter=verbose` output down to non-build paths, and cross-checked against `find apps/web -name "*.test.ts" -not -path "*/.next/*" -not -path "*/.open-next/*"`.
+</Callout>
 
 ## Other test files
 
 | File | Tests | Covers |
 |------|-------|--------|
-| `packages/auth/billing-authorize.test.ts` | 11 | `isOrgMember`, `canManageBilling`, `authorizeBillingAction` — the allow/deny matrix from [Billing Authorization](/docs/payment/billing-authorization), including the suspended-member and unknown-action cases |
-| `packages/auth/helpers.test.ts` | 13 | `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, and `isSubscriptionActive` across all 8 Stripe subscription statuses |
-| `apps/web/lib/routes.test.ts` | 6 | `orgRoutes`, `accountRoutes`, and the `AUTH_ROUTE_PREFIXES`/`PUBLIC_ROUTE_PREFIXES` middleware prefixes |
+| `packages/auth/billing-authorize.test.ts` | 22 | `isOrgMember`, `canManageBilling`, `authorizeBillingAction` — the allow/deny matrix from [Billing Authorization](/docs/payment/billing-authorization) across member/admin/owner roles, plus the unknown-action fallback |
+| `packages/auth/helpers.test.ts` | 21 | `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `isSubscriptionActive` across all 8 Stripe subscription statuses, `getCurrentPlan`, and `getStatusDisplayText` |
+| `packages/auth/admin-bootstrap.test.ts` | 7 | `isBootstrapAdminEmail` — the `ADMIN_EMAILS` bootstrap allowlist (case-insensitivity, CSV parsing with spaces, partial-match rejection, empty/undefined list) |
+| `packages/auth/ba-i18n.test.ts` | 9 | `baErrorTranslations`, `localeFromPathname`, `localeFromReferer` — Better Auth error-code localization and locale-detection helpers |
+| `packages/auth/two-factor-hooks.test.ts` | 2 | TOTP secret rotation — a re-issued secret stays unusable for sign-in until verified, then activates once the user proves possession in session |
+| `packages/auth/server-wiring.test.ts` | 1 | The shipped `auth` instance registers `twoFactorAfterHook` — the rotation fix is one deletable line in `server.ts`, and no other test builds the shipped instance |
+| `apps/web/lib/routes.test.ts` | 13 | `orgRoutes`, `accountRoutes`, `resolveCallbackUrl`, and the `AUTH_ROUTE_PREFIXES`/`PUBLIC_ROUTE_EXACT`/`PUBLIC_ROUTE_PREFIXES` middleware allowlists |
 | `apps/web/lib/parsers.test.ts` | 5 | `sortingStateParser` (table sort-state URL serialization) |
-| `apps/web/app/.../checkout/success/verify-session.test.ts` | 9 | `verifyCheckoutSession` — the independent post-checkout verification described in [Subscribe & Checkout](/docs/payment/subscribe-and-checkout) |
+| `apps/web/app/[locale]/(app)/admin/users/guards.test.ts` | 3 | `guardUserMutation` — blocks self-targeting admin mutations, allows the same mutation against another user, always allows revoke-sessions |
+| `apps/web/hooks/use-action-result.test.ts` | 15 | `useActionResult` — idle-state skip, success/error dispatch, silence on `fieldErrors`-only failures, and the replay guard under StrictMode |
+| `apps/web/lib/auth/action-error.test.ts` | 6 | `toActionError`, `actionError` — server-action error normalization and i18n fallback |
+| `apps/web/lib/billing/checkout-queries.test.ts` | 9 | `verifyCheckoutSession` — the independent post-checkout verification described in [Subscribe & Checkout](/docs/payment/subscribe-and-checkout) |
 
-## Auth Permissions — 26 tests
+## Auth Permissions — 21 tests
 
 ### `packages/auth/permissions.test.ts`
 
-Tests the dual RBAC system (platform-level admin roles + organization-scoped roles).
+Tests the dual RBAC system (platform-level admin roles + organization-scoped roles) via `canOrg`, `canAdmin`, and `isAdminAreaRole`.
 
-#### ADMIN_ROLES constant — 2 tests
-
-| # | Test Case |
-|---|-----------|
-| 1 | Should define all expected admin roles (admin, moderator, user) |
-| 2 | Should have exactly 3 keys |
-
-#### ORG_ROLES constant — 2 tests
+#### Organization team permissions — 3 tests
 
 | # | Test Case |
 |---|-----------|
-| 3 | Should define all expected organization roles (owner, admin, member) |
-| 4 | Should have exactly 3 keys |
+| 1 | Owner should be able to create, update, and delete teams |
+| 2 | Admin should be able to create, update, and delete teams |
+| 3 | Member should not be able to manage teams |
 
-#### PERMISSIONS constant — 3 tests
-
-| # | Test Case |
-|---|-----------|
-| 5 | Should define CRUD actions (create, read, update, delete) |
-| 6 | Should define content-specific actions (publish) |
-| 7 | Should define member-specific actions (invite, remove, update-role) |
-
-#### RESOURCES constant — 1 test
+#### canOrg — 7 tests
 
 | # | Test Case |
 |---|-----------|
-| 8 | Should define all resource types (organization, member, billing, content, user, session) |
+| 4 | Should gate `organization:update` to owner and admin only |
+| 5 | Should allow only the owner to delete the organization |
+| 6 | Should require every action listed for a resource |
+| 7 | Should require every resource listed |
+| 8 | Should deny an unknown resource rather than throwing |
+| 9 | Should deny an unknown role rather than throwing |
+| 10 | Should grant when any role in a comma-separated list allows it |
 
-#### Statement definitions — 4 tests
-
-| # | Test Case |
-|---|-----------|
-| 9 | Should define organization permissions (create, read, update, delete) |
-| 10 | Should define member permissions (invite, remove, update-role) |
-| 11 | Should define billing permissions (manage, view) |
-| 12 | Should define content permissions (create, read, update, delete, publish) |
-
-#### Admin access control — 1 test
+#### canAdmin — 8 tests
 
 | # | Test Case |
 |---|-----------|
-| 13 | Should be created successfully |
+| 11 | Should grant every user/session mutation to admin |
+| 12 | Should deny every user/session mutation to moderator |
+| 13 | Should deny every user/session mutation to user |
+| 14 | Should deny `impersonate-admins` even to admin |
+| 15 | Should let admin read organizations and moderator read but not delete |
+| 16 | Should treat null/undefined/empty role as the default user role |
+| 17 | Should OR across a comma-separated role list |
+| 18 | Should deny an unknown role or resource rather than throwing |
 
-#### Admin role definitions — 2 tests
-
-| # | Test Case |
-|---|-----------|
-| 14 | Should have admin, moderator, and user roles |
-| 15 | Should map to the correct role objects |
-
-#### Organization access control — 2 tests
-
-| # | Test Case |
-|---|-----------|
-| 16 | Should be created successfully |
-| 17 | Should have a newRole method |
-
-#### Organization role definitions — 7 tests
+#### isAdminAreaRole — 3 tests
 
 | # | Test Case |
 |---|-----------|
-| 18 | Should have owner, admin, and member roles |
-| 19 | Should map to the correct role objects |
-| 20 | Owner should have organization update and delete permissions |
-| 21 | Org admin should have organization update but not delete |
-| 22 | Org member should not have organization management permissions |
-| 23 | Owner should be able to create, update, and delete teams |
-| 24 | Admin should be able to create, update, and delete teams |
-| 25 | Member should not be able to manage teams |
-| 26 | Billing permissions (manage, view) verified per test 11 |
+| 19 | Should admit admin and moderator, reject user |
+| 20 | Should reject null, undefined, and empty as non-staff |
+| 21 | Should admit a comma-separated list containing a staff role |
 
 ## Coverage Gaps
 
@@ -127,5 +108,5 @@ pnpm --filter auth test
 pnpm --filter auth test -- --watch
 
 # Run a specific test by name
-pnpm --filter auth test -- --grep "ORG_ROLES"
+pnpm --filter auth test -- --grep "canOrg"
 ```
