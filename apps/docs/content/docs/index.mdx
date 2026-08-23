@@ -1,54 +1,45 @@
 ---
-title: Welcome
-description: Complete SaaS platform template documentation
+title: Documentation
+description: Start writing your product documentation here.
 ---
 
-Welcome to **SaaSProKit** — a production-grade, enterprise-ready SaaS platform template built with modern technologies.
+This is the starting point for your product's documentation.
 
-## What is SaaSProKit?
+## Add a page
 
-A comprehensive, fully-featured SaaS foundation that includes:
+Create an `.mdx` file under `content/docs/`. The frontmatter needs a `title`; `description` is
+optional and feeds the page metadata and OG image.
 
-✅ **Multi-organization support** with RBAC
-✅ **Built-in authentication** (email, OAuth, magic links, 2FA)
-✅ **Stripe billing integration** (subscriptions, invoices, webhooks)
-✅ **Global multi-language support** with i18n
-✅ **Modern tech stack** (Next.js 16, React 19, TypeScript, Tailwind CSS)
-✅ **Production-ready** security, performance, and scalability
-
-## Quick Navigation
-
-### New? Start Here
-
-1. **[Getting Started](/docs/getting-started)** — Installation and setup in 5 minutes
-2. **[Project Structure](/docs/getting-started/structure)** — Understanding the codebase
-
-### Building Your Product
-
-- **[Features](/docs/getting-started/features)** — Complete feature checklist
-
-### Deployment & Infrastructure
-
-- **[Deployment Guide](/docs/deployment)** — Deploy to production (Vercel, Cloudflare Workers)
-- **[Database Design](/docs/database/database-design)** — Schema and data models
-
-### Learn More
-
-- **[Authentication](/docs/authentication)** — Better Auth setup and flows
-- **[Database](/docs/database)** — Prisma schema overview
-- **[Payment](/docs/payment)** — Stripe billing integration
-- **[Testing](/docs/testing)** — E2E and unit test catalog
-- **[Email](/docs/email)** — Email templates and setup
-- **[SEO](/docs/seo)** — SEO checklist and optimization
-
-## Who Should Use This?
-
-✅ **SaaS Founders** — Quick MVP launch
-✅ **Development Teams** — Standard SaaS architecture
-✅ **Digital Agencies** — Reusable client template
-✅ **Enterprise** — Internal tools foundation
-✅ **Educators** — Teaching SaaS development
-
+```mdx title="content/docs/quickstart.mdx"
+---
+title: Quickstart
+description: Get up and running in five minutes.
 ---
 
-**Ready to build something amazing?** Start with [Getting Started](/docs/getting-started)! 🚀
+Your content here.
+```
+
+## Order the sidebar
+
+Add a `meta.json` next to your pages to control the title, icon, and ordering of a folder. Icons are
+[Lucide](https://lucide.dev) names.
+
+```json title="content/docs/meta.json"
+{
+  "title": "Guides",
+  "icon": "BookOpen",
+  "pages": ["index", "quickstart"]
+}
+```
+
+## Diagrams
+
+Fenced `mermaid` code blocks render to SVG at build time.
+
+```mermaid
+graph LR
+  A[Write MDX] --> B[pnpm --filter docs dev]
+  B --> C[localhost:3004/docs]
+```
+
+See the [Fumadocs documentation](https://fumadocs.dev) for the full authoring reference.

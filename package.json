@@ -8,8 +8,11 @@
     "dist/index.js"
   ],
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
+    "build": "turbo build --filter=!kit-docs",
+    "dev": "turbo dev --filter=!kit-docs",
+    "kit-docs:dev": "pnpm --filter kit-docs dev",
+    "kit-docs:build": "pnpm --filter kit-docs build",
+    "kit-docs:deploy": "pnpm --filter kit-docs run deploy:site",
     "check": "ultracite check && turbo check",
     "fix": "ultracite fix && turbo fix",
     "test": "turbo test",

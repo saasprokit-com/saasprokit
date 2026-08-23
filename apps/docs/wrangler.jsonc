@@ -10,11 +10,10 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
-  // No routes at top level: a fresh clone deploys to
-  // <name>.<account>.workers.dev, which succeeds in any Cloudflare account.
-  // Attach a custom domain via an environment block (see env.site) — wrangler
-  // creates the DNS record + certificate on deploy when the zone is in your
-  // account.
+  // No routes: a fresh clone deploys to <name>.<account>.workers.dev, which
+  // succeeds in any Cloudflare account. To attach a custom domain, add a
+  // "routes" entry with "custom_domain": true — wrangler creates the DNS record
+  // and certificate on deploy when the zone is in your account.
   "observability": {
     "enabled": true
   },
@@ -34,36 +33,7 @@
       "binding": "NEXT_INC_CACHE_R2_BUCKET",
       "bucket_name": "saasprokit-docs-cache"
     }
-  ],
-  // No "vars": the docs app reads zero environment variables.
-  //
-  // Named environments do NOT inherit routes/services/r2_buckets — each block
-  // must restate them in full.
-  "env": {
-    // The maintainers' published docs site: `pnpm --filter=docs run deploy:site`.
-    "site": {
-      // Keep the original worker name: without this the env would deploy a
-      // second worker named "saasprokit-docs-site", orphaning the existing one
-      // and breaking WORKER_SELF_REFERENCE below.
-      "name": "saasprokit-docs",
-      "routes": [
-        {
-          "pattern": "docs.saasprokit.com",
-          "custom_domain": true
-        }
-      ],
-      "services": [
-        {
-          "binding": "WORKER_SELF_REFERENCE",
-          "service": "saasprokit-docs"
-        }
-      ],
-      "r2_buckets": [
-        {
-          "binding": "NEXT_INC_CACHE_R2_BUCKET",
-          "bucket_name": "saasprokit-docs-cache"
-        }
-      ]
-    }
-  }
+  ]
+  // No "vars": the only variable this app reads is NEXT_PUBLIC_APP_NAME, which
+  // Next inlines at build time and which falls back to "Docs" when unset.
 }

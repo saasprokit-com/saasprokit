@@ -326,6 +326,8 @@ export async function runInit(
     "package.json",
     "apps/web/package.json",
     "apps/web/wrangler.jsonc",
+    "apps/docs/package.json",
+    "apps/docs/wrangler.jsonc",
   ]);
 
   maybeInstall(flags, rootDir);

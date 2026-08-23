@@ -29,6 +29,13 @@ export const ENV_TARGETS = [
   "packages/database/.env",
 ] as const;
 
+const APP_PACKAGES = ["apps/web/package.json", "apps/docs/package.json"];
+
+const WRANGLER_TARGETS = [
+  "apps/web/wrangler.jsonc",
+  "apps/docs/wrangler.jsonc",
+];
+
 export function existingEnvFiles(rootDir: string): string[] {
   return ENV_TARGETS.filter((file) => existsSync(join(rootDir, file)));
 }
@@ -64,10 +71,13 @@ export function applyInit(rootDir: string, config: ApplyConfig): string[] {
         log.push(`removed ${file}`);
       }
     }
-    editJson(join(rootDir, "apps/web/package.json"), (pkg) =>
-      pruneAppPackage(pkg, target)
-    );
-    log.push(`pruned apps/web/package.json for ${target.id}`);
+    for (const file of APP_PACKAGES) {
+      const path = join(rootDir, file);
+      if (existsSync(path)) {
+        editJson(path, (pkg) => pruneAppPackage(pkg, target));
+        log.push(`pruned ${file} for ${target.id}`);
+      }
+    }
 
     const schemaPath = join(rootDir, "packages/database/prisma/schema.prisma");
     writeFileSync(
@@ -77,13 +87,15 @@ export function applyInit(rootDir: string, config: ApplyConfig): string[] {
     log.push(`prisma runtime: ${target.prismaRuntime ?? "node (default)"}`);
   }
 
-  const wranglerPath = join(rootDir, "apps/web/wrangler.jsonc");
-  if (existsSync(wranglerPath)) {
-    writeFileSync(
-      wranglerPath,
-      customizeWrangler(readFileSync(wranglerPath, "utf8"), config.slug)
-    );
-    log.push("customized wrangler.jsonc (demo env removed, rebranded)");
+  for (const file of WRANGLER_TARGETS) {
+    const wranglerPath = join(rootDir, file);
+    if (existsSync(wranglerPath)) {
+      writeFileSync(
+        wranglerPath,
+        customizeWrangler(readFileSync(wranglerPath, "utf8"), config.slug)
+      );
+      log.push(`customized ${file} (named envs removed, rebranded)`);
+    }
   }
 
   const dockerComposePath = join(rootDir, "docker-compose.yml");

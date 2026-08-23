@@ -19,6 +19,7 @@ WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/web/package.json ./apps/web/package.json
 COPY apps/docs/package.json apps/docs/source.config.ts ./apps/docs/
+COPY docs/package.json docs/source.config.ts ./docs/
 COPY apps/email/package.json ./apps/email/package.json
 COPY apps/storybook/package.json ./apps/storybook/package.json
 COPY apps/studio/package.json ./apps/studio/package.json
@@ -28,7 +29,6 @@ COPY packages/design-system/package.json ./packages/design-system/package.json
 COPY packages/email/package.json ./packages/email/package.json
 COPY packages/internationalization/package.json ./packages/internationalization/package.json
 COPY packages/logger/package.json ./packages/logger/package.json
-COPY packages/payment/package.json ./packages/payment/package.json
 COPY packages/utils/package.json ./packages/utils/package.json
 COPY packages/seo/package.json ./packages/seo/package.json
 COPY packages/storage/package.json ./packages/storage/package.json

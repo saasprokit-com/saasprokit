@@ -31,8 +31,8 @@ Thumbs.db
 !**/.env.example
 
 # Non-essential documentation and tracking
-# Note: NOT excluding apps/docs/ — only top-level docs/ directory contents
-docs/docker-plan.md
+# Note: neither apps/docs/ nor docs/ is excluded — both are workspace packages
+# that turbo prune needs in the build context.
 tracking/
 claudedocs/
 LICENSE

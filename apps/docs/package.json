@@ -8,7 +8,6 @@
     "start": "next start",
     "preview": "pnpm cf:build && opennextjs-cloudflare preview",
     "deploy": "pnpm cf:build && opennextjs-cloudflare deploy",
-    "deploy:site": "pnpm cf:build && opennextjs-cloudflare deploy --env=site",
     "upload": "pnpm cf:build && opennextjs-cloudflare upload",
     "cf:build": "fumadocs-mdx && CF_BUILD=1 opennextjs-cloudflare build",
     "types:check": "fumadocs-mdx && tsc --noEmit",
@@ -17,7 +16,6 @@
     "format": "biome format --write"
   },
   "dependencies": {
-    "@repo/design-system": "workspace:*",
     "beautiful-mermaid": "^1.1.3",
     "fumadocs-core": "16.12.1",
     "fumadocs-mdx": "15.2.0",

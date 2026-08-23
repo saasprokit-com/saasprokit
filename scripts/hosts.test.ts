@@ -23,17 +23,29 @@ describe("host manifest", () => {
   });
 
   it("keeps wrangler config only for cloudflare", () => {
-    expect(HOST_TARGETS.cloudflare.deleteFiles).not.toContain(
-      "apps/web/wrangler.jsonc"
-    );
-    expect(HOST_TARGETS.vercel.deleteFiles).toContain("apps/web/wrangler.jsonc");
-    expect(HOST_TARGETS.docker.deleteFiles).toContain("apps/web/wrangler.jsonc");
+    for (const app of ["apps/web", "apps/docs"]) {
+      expect(HOST_TARGETS.cloudflare.deleteFiles).not.toContain(
+        `${app}/wrangler.jsonc`
+      );
+      expect(HOST_TARGETS.vercel.deleteFiles).toContain(`${app}/wrangler.jsonc`);
+      expect(HOST_TARGETS.docker.deleteFiles).toContain(`${app}/wrangler.jsonc`);
+    }
   });
 
   it("keeps the Dockerfile only for docker", () => {
-    expect(HOST_TARGETS.docker.deleteFiles).not.toContain("apps/web/Dockerfile");
-    expect(HOST_TARGETS.cloudflare.deleteFiles).toContain("apps/web/Dockerfile");
-    expect(HOST_TARGETS.vercel.deleteFiles).toContain("apps/web/Dockerfile");
+    for (const app of ["apps/web", "apps/docs"]) {
+      expect(HOST_TARGETS.docker.deleteFiles).not.toContain(`${app}/Dockerfile`);
+      expect(HOST_TARGETS.cloudflare.deleteFiles).toContain(`${app}/Dockerfile`);
+      expect(HOST_TARGETS.vercel.deleteFiles).toContain(`${app}/Dockerfile`);
+    }
+  });
+
+  it("never prunes the root docs/ kit documentation", () => {
+    for (const target of Object.values(HOST_TARGETS)) {
+      for (const file of target.deleteFiles) {
+        expect(file.startsWith("docs/"), `${target.id}: ${file}`).toBe(false);
+      }
+    }
   });
 
   it("pins the prisma runtime per host", () => {
