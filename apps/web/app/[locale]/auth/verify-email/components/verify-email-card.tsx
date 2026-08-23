@@ -5,6 +5,7 @@ import type { ActionErrorMessages } from "@repo/internationalization";
 import { KeyRound, Mail, RefreshCw, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
+import { useActionResult } from "@/hooks/use-action-result";
 import type { ActionResult } from "@/lib/auth/auth";
 import { PAGE_ROUTES } from "@/lib/routes";
 import { resendVerificationEmailFormAction } from "../actions";
@@ -39,11 +40,9 @@ export function VerifyEmailCard({ email, errors }: VerifyEmailCardProps) {
   }, [cooldown]);
 
   // Start the cooldown only after a successful resend.
-  useEffect(() => {
-    if (state.success) {
-      setCooldown(RESEND_COOLDOWN_SECONDS);
-    }
-  }, [state]);
+  useActionResult(state, {
+    onSuccess: () => setCooldown(RESEND_COOLDOWN_SECONDS),
+  });
 
   const resendError =
     state !== initialState && !state.success

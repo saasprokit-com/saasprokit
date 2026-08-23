@@ -15,10 +15,11 @@ import { Input } from "@repo/design-system/components/ui/input";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { startTransition, useActionState, useEffect } from "react";
+import { startTransition, useActionState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
 import { initialFormState } from "@/lib/forms";
 import { PAGE_ROUTES } from "@/lib/routes";
 import { signInSocialAction } from "../../actions";
@@ -51,17 +52,16 @@ export function SignInForm({ callbackUrl, errors }: SignInFormProps) {
 
   useActionFieldErrors(form, state);
 
-  useEffect(() => {
-    if (state.status !== "success") {
-      return;
-    }
-    if (state.data?.twoFactorRequired) {
-      router.push(PAGE_ROUTES.TWO_FACTOR);
-      return;
-    }
-    router.push(callbackUrl);
-    router.refresh();
-  }, [state, router, callbackUrl]);
+  useActionResult(state, {
+    onSuccess: (data) => {
+      if (data?.twoFactorRequired) {
+        router.push(PAGE_ROUTES.TWO_FACTOR);
+        return;
+      }
+      router.push(callbackUrl);
+      router.refresh();
+    },
+  });
 
   async function handleSocialLogin(provider: SocialProvider) {
     const result = await signInSocialAction(provider, callbackUrl);

@@ -14,9 +14,10 @@ import { Input } from "@repo/design-system/components/ui/input";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { startTransition, useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
 import { initialFormState } from "@/lib/forms";
 import { PAGE_ROUTES } from "@/lib/routes";
 import { AuthCard } from "../../components/auth-card";
@@ -80,11 +81,9 @@ function EmailOtpRequest({
 
   useActionFieldErrors(form, state);
 
-  useEffect(() => {
-    if (state.status === "success") {
-      onSent(form.getValues("email").toLowerCase().trim());
-    }
-  }, [state, form, onSent]);
+  useActionResult(state, {
+    onSuccess: () => onSent(form.getValues("email").toLowerCase().trim()),
+  });
 
   const rootError =
     state.status === "error" ? state.error || errors.sendOtp : undefined;
@@ -161,12 +160,12 @@ function EmailOtpVerify({
 
   useActionFieldErrors(form, state);
 
-  useEffect(() => {
-    if (state.status === "success") {
+  useActionResult(state, {
+    onSuccess: () => {
       router.push(callbackUrl);
       router.refresh();
-    }
-  }, [state, router, callbackUrl]);
+    },
+  });
 
   const rootError =
     state.status === "error" ? state.error || errors.invalidOtp : undefined;

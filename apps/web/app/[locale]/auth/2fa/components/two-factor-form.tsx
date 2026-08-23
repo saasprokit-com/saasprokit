@@ -14,9 +14,10 @@ import { Input } from "@repo/design-system/components/ui/input";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { startTransition, useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
 import { initialFormState } from "@/lib/forms";
 import { PAGE_ROUTES } from "@/lib/routes";
 import { AuthCard } from "../../components/auth-card";
@@ -98,12 +99,12 @@ function TotpChallenge({
 
   useActionFieldErrors(form, state);
 
-  useEffect(() => {
-    if (state.status === "success") {
+  useActionResult(state, {
+    onSuccess: () => {
       router.push(PAGE_ROUTES.ORG);
       router.refresh();
-    }
-  }, [state, router]);
+    },
+  });
 
   const rootError =
     state.status === "error"
@@ -187,12 +188,12 @@ function BackupCodeChallenge({
 
   useActionFieldErrors(form, state);
 
-  useEffect(() => {
-    if (state.status === "success") {
+  useActionResult(state, {
+    onSuccess: () => {
       router.push(PAGE_ROUTES.ORG);
       router.refresh();
-    }
-  }, [state, router]);
+    },
+  });
 
   const rootError =
     state.status === "error" ? state.error || errors.verify2fa : undefined;

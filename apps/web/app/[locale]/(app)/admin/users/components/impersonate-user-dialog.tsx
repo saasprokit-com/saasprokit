@@ -13,9 +13,10 @@ import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState } from "react";
 import { toast } from "sonner";
 
+import { useActionResult } from "@/hooks/use-action-result";
 import type { ActionResult } from "@/lib/auth/auth";
 import { PAGE_ROUTES } from "@/lib/routes";
 import { impersonateUserAction } from "../actions";
@@ -42,17 +43,13 @@ export function ImpersonateUserDialog({
     FormData
   >(boundAction, null);
 
-  useEffect(() => {
-    if (!state) {
-      return;
-    }
-    if (state.success) {
+  useActionResult(state, {
+    onError: (error) => toast.error(error ?? errors.impersonateUser),
+    onSuccess: () => {
       // Full navigation — the Next.js router cache still holds the old identity.
       window.location.assign(`/${locale}${PAGE_ROUTES.ORG}`);
-    } else if (state.error) {
-      toast.error(state.error || errors.impersonateUser);
-    }
-  }, [state, locale, errors.impersonateUser]);
+    },
+  });
 
   return (
     <AlertDialog onOpenChange={onOpenChange} open={open}>

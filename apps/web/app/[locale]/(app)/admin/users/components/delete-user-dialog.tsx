@@ -13,9 +13,10 @@ import { Input } from "@repo/design-system/components/ui/input";
 import { Label } from "@repo/design-system/components/ui/label";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2 } from "lucide-react";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { toast } from "sonner";
 
+import { useActionResult } from "@/hooks/use-action-result";
 import type { ActionResult } from "@/lib/auth/auth";
 import { removeUserAction } from "../actions";
 import type { AdminUserRow } from "../queries";
@@ -50,18 +51,14 @@ export function DeleteUserDialog({
     }
   };
 
-  useEffect(() => {
-    if (!state) {
-      return;
-    }
-    if (state.success) {
+  useActionResult(state, {
+    onError: (error) => toast.error(error ?? errors.deleteUser),
+    onSuccess: () => {
       toast.success("User deleted");
       onOpenChange(false);
       setConfirmEmail("");
-    } else if (state.error) {
-      toast.error(state.error || errors.deleteUser);
-    }
-  }, [state, errors.deleteUser, onOpenChange]);
+    },
+  });
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>

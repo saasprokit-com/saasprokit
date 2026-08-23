@@ -28,11 +28,12 @@ import {
 } from "@repo/design-system/components/ui/select";
 import type { ActionErrorMessages } from "@repo/internationalization";
 import { Loader2, Shield, ShieldCheck, User } from "lucide-react";
-import { startTransition, useActionState, useEffect } from "react";
+import { startTransition, useActionState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
+import { useActionResult } from "@/hooks/use-action-result";
 import { initialFormState } from "@/lib/forms";
 import { setUserRoleAction } from "../actions";
 import type { AdminUserRow } from "../queries";
@@ -79,16 +80,15 @@ export function SetRoleDialog({
 
   useActionFieldErrors(form, state);
 
-  useEffect(() => {
-    if (state.status === "success") {
+  useActionResult(state, {
+    onError: (error) => toast.error(error ?? errors.updateRole),
+    onSuccess: () => {
       toast.success("Role updated", {
         description: `${user.name || user.email} is now ${form.getValues("role")}`,
       });
       onOpenChange(false);
-    } else if (state.status === "error" && state.error) {
-      toast.error(state.error || errors.updateRole);
-    }
-  }, [state, form, errors.updateRole, onOpenChange, user.name, user.email]);
+    },
+  });
 
   const onSubmit = (values: SetUserRoleInput) => {
     startTransition(() => formAction({ ...values, userId: user.id }));
