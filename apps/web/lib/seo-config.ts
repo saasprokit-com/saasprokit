@@ -9,7 +9,7 @@ export const siteConfig: SiteConfig = {
   url: env.NEXT_PUBLIC_APP_URL,
   ogImage: "/og-image.png",
   locale: "en_US",
-  twitterHandle: "@saasprokit",
+  twitterHandle: "@luannguyenbkit",
   author: {
     name: "SaaSProKit",
     url: "https://github.com/saasprokit-com/saasprokit",
