@@ -1,0 +1,12 @@
+{
+  "pages": [
+    "getting-started",
+    "deployment",
+    "database",
+    "authentication",
+    "payment",
+    "testing",
+    "email",
+    "seo"
+  ]
+}

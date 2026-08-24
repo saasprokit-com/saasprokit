@@ -14,13 +14,14 @@ The app uses grouped routes with `(app)` and `(frontier)` route groups under `/[
 # Development
 pnpm dev                      # Run all apps in dev mode
 pnpm --filter app dev         # Main app only (port 3000)
-pnpm --filter docs dev        # Documentation (port 3004)
+pnpm --filter docs dev        # Your product's docs, empty starter (port 3004)
 pnpm --filter storybook dev   # Component library (port 6006)
 pnpm --filter email dev       # Email preview (port 3003)
 pnpm --filter studio dev      # Prisma Studio (port 3005)
+pnpm kit-docs:dev             # SaaSProKit's own documentation (port 3006)
 
 # Build & Quality
-pnpm build                    # Build all apps and packages
+pnpm build                    # Build all apps and packages (excludes kit-docs)
 pnpm check                    # Lint check via ultracite + Biome
 pnpm fix                      # Auto-fix lint issues
 pnpm --filter app typecheck   # Type check web app
@@ -39,6 +40,8 @@ docker compose up postgres maildev   # DB + mail catcher (recommended for app de
 ## Monorepo Structure
 
 **Apps** (independently deployable): `web` (main SaaS app, port 3000), `docs` (Fumadocs, 3004), `email` (React Email previews, 3003), `storybook` (design system, 6006), `studio` (Prisma Studio, 3005).
+
+`apps/docs` ships as an **empty** Fumadocs starter — it is the customer's product documentation, not ours. SaaSProKit's own documentation is the root **`docs/`** folder (workspace package `kit-docs`, port 3006), which publishes docs.saasprokit.com and is excluded from the default `pnpm dev` / `pnpm build` fan-out. `pnpm setup` initializes `apps/docs` alongside `apps/web` and leaves `docs/` untouched.
 
 **Core packages**: `@repo/auth` (Better Auth, dual RBAC, Stripe billing + plans), `@repo/database` (Prisma), `@repo/design-system` (shadcn/ui + Radix), `@repo/email` (React Email + Resend).
 

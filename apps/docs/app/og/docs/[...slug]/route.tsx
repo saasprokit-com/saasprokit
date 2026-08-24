@@ -1,6 +1,7 @@
 import { generate as DefaultImage } from "fumadocs-ui/og";
 import { notFound } from "next/navigation";
 import { ImageResponse } from "next/og";
+import { siteName } from "@/lib/layout.shared";
 import { getPageImage, source } from "@/lib/source";
 
 export const revalidate = false;
@@ -23,7 +24,7 @@ export async function GET(
   return new ImageResponse(
     <DefaultImage
       description={page.data.description}
-      site="SaaSProKit"
+      site={siteName}
       title={page.data.title}
     />,
     {

@@ -32,6 +32,27 @@ const FIXTURE_FILES: Record<string, string> = {
   "apps/web/vercel.json": "{}",
   "apps/web/scripts/skip-ci.js": "// x\n",
   "apps/web/.env.example": 'NEXT_PUBLIC_APP_NAME="MyApp"\nDATABASE_URL="postgresql://dev"\nBETTER_AUTH_SECRET=\n',
+  "apps/docs/package.json": JSON.stringify({
+    name: "docs",
+    scripts: {
+      build: "next build",
+      deploy: "pnpm cf:build && opennextjs-cloudflare deploy",
+      preview: "x", upload: "x", "cf:build": "x",
+    },
+    devDependencies: { "@opennextjs/cloudflare": "^1", wrangler: "^4", typescript: "^5" },
+  }),
+  "apps/docs/wrangler.jsonc": `{
+  "name": "saasprokit-docs",
+  "r2_buckets": [{ "bucket_name": "saasprokit-docs-cache" }]
+}`,
+  "apps/docs/open-next.config.ts": "export default {};",
+  "apps/docs/public/_headers": "/x\n",
+  "apps/docs/Dockerfile": "FROM node:22\n",
+  "docs/package.json": JSON.stringify({ name: "kit-docs" }),
+  "docs/wrangler.jsonc": `{
+  "name": "saasprokit-docs",
+  "env": { "site": { "routes": [{ "pattern": "docs.saasprokit.com" }] } }
+}`,
   "packages/database/prisma/schema.prisma": `generator client {\n  provider = "prisma-client"\n  runtime       = "workerd"\n}\n`,
   "docker-compose.yml": `services:\n  postgres:\n    environment:\n      POSTGRES_DB: saasprokit_dev\n  web:\n    environment:\n      - DATABASE_URL=postgresql://dev:dev@postgres:5432/saasprokit_dev\n`,
   "tsup.config.ts": "export default {};",
@@ -115,6 +136,56 @@ describe("applyInit", () => {
     expect(existsSync(join(root, "apps/web/Dockerfile"))).toBe(true);
     expect(existsSync(join(root, "apps/web/wrangler.jsonc"))).toBe(false);
     expect(existsSync(join(root, "apps/web/vercel.json"))).toBe(false);
+  });
+
+  it("initializes apps/docs the same way as apps/web", () => {
+    root = makeFixture();
+    applyInit(root, CONFIG("cloudflare"));
+    const wrangler = readFileSync(join(root, "apps/docs/wrangler.jsonc"), "utf8");
+    expect(wrangler).toContain("acme-docs");
+    expect(wrangler).toContain("acme-docs-cache");
+    expect(wrangler).not.toContain("saasprokit");
+    expect(existsSync(join(root, "apps/docs/Dockerfile"))).toBe(false);
+  });
+
+  it("vercel: prunes the cloudflare surface from apps/docs too", () => {
+    root = makeFixture();
+    applyInit(root, CONFIG("vercel"));
+    expect(existsSync(join(root, "apps/docs/wrangler.jsonc"))).toBe(false);
+    expect(existsSync(join(root, "apps/docs/open-next.config.ts"))).toBe(false);
+    expect(existsSync(join(root, "apps/docs/Dockerfile"))).toBe(false);
+    const docsPkg = JSON.parse(readFileSync(join(root, "apps/docs/package.json"), "utf8"));
+    expect(docsPkg.scripts["cf:build"]).toBeUndefined();
+    expect(docsPkg.scripts.build).toBe("next build");
+    expect(docsPkg.devDependencies.wrangler).toBeUndefined();
+    expect(docsPkg.devDependencies.typescript).toBeDefined();
+  });
+
+  it("docker: keeps the apps/docs Dockerfile, drops its cloudflare config", () => {
+    root = makeFixture();
+    applyInit(root, CONFIG("docker"));
+    expect(existsSync(join(root, "apps/docs/Dockerfile"))).toBe(true);
+    expect(existsSync(join(root, "apps/docs/wrangler.jsonc"))).toBe(false);
+  });
+
+  it("leaves the root docs/ kit documentation untouched", () => {
+    for (const host of ["cloudflare", "vercel", "docker"] as const) {
+      root = makeFixture();
+      applyInit(root, CONFIG(host));
+      expect(JSON.parse(readFileSync(join(root, "docs/package.json"), "utf8")).name).toBe("kit-docs");
+      const wrangler = readFileSync(join(root, "docs/wrangler.jsonc"), "utf8");
+      expect(wrangler).toContain("saasprokit-docs");
+      expect(wrangler).toContain("docs.saasprokit.com");
+      rmSync(root, { recursive: true, force: true });
+    }
+    root = makeFixture();
+  });
+
+  it("tolerates a clone with apps/docs deleted", () => {
+    root = makeFixture();
+    rmSync(join(root, "apps/docs"), { recursive: true, force: true });
+    expect(() => applyInit(root, CONFIG("cloudflare"))).not.toThrow();
+    expect(existsSync(join(root, "apps/web/wrangler.jsonc"))).toBe(true);
   });
 
   it("writes env files and renames the root package", () => {

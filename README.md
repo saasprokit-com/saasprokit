@@ -23,10 +23,11 @@ A multi-organization SaaS dashboard built with Next.js 16, pnpm workspaces, and 
 saasprokit/
 ├── apps/
 │   ├── web/        # Main SaaS application (port 3000)
-│   ├── docs/       # Documentation site (port 3004)
+│   ├── docs/       # Your product's docs — empty Fumadocs starter (port 3004)
 │   ├── email/      # Email template previews (port 3003)
 │   ├── storybook/  # Component library (port 6006)
 │   └── studio/     # Prisma Studio (port 3005)
+├── docs/           # SaaSProKit's own documentation (port 3006)
 └── packages/
     ├── auth/              # Better Auth config + dual RBAC + Stripe billing
     ├── database/          # Prisma schema + client

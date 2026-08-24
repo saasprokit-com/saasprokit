@@ -32,7 +32,7 @@
       "url": "http://localhost:3003"
     },
     {
-      "name": "Next.js: debug client-side (app)",
+      "name": "Next.js: debug client-side (docs)",
       "type": "chrome",
       "request": "launch",
       "url": "http://localhost:3004"
@@ -42,6 +42,12 @@
       "type": "chrome",
       "request": "launch",
       "url": "http://localhost:3005"
+    },
+    {
+      "name": "Next.js: debug client-side (kit-docs)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3006"
     },
     {
       "name": "Next.js: debug full stack",

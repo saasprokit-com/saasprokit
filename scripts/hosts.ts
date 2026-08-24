@@ -15,12 +15,17 @@ export const CLOUDFLARE_FILES = [
   "apps/web/open-next.config.ts",
   "apps/web/public/_headers",
   "apps/web/lib/stubs/prisma-adapter-pg.ts",
+  "apps/docs/wrangler.jsonc",
+  "apps/docs/open-next.config.ts",
+  "apps/docs/public/_headers",
 ];
 
 export const VERCEL_FILES = [
   "apps/web/vercel.json",
   "apps/web/scripts/skip-ci.js",
 ];
+
+export const DOCKER_FILES = ["apps/web/Dockerfile", "apps/docs/Dockerfile"];
 
 const CLOUDFLARE_SCRIPTS = [
   "preview",
@@ -35,7 +40,7 @@ export const HOST_TARGETS: Record<HostId, HostTarget> = {
   cloudflare: {
     id: "cloudflare",
     label: "Cloudflare Workers",
-    deleteFiles: ["apps/web/Dockerfile", ...VERCEL_FILES],
+    deleteFiles: [...DOCKER_FILES, ...VERCEL_FILES],
     stripScripts: ["deploy:demo"],
     stripDevDeps: [],
     prismaRuntime: "workerd",
@@ -54,7 +59,7 @@ export const HOST_TARGETS: Record<HostId, HostTarget> = {
   vercel: {
     id: "vercel",
     label: "Vercel",
-    deleteFiles: [...CLOUDFLARE_FILES, "apps/web/Dockerfile"],
+    deleteFiles: [...CLOUDFLARE_FILES, ...DOCKER_FILES],
     stripScripts: CLOUDFLARE_SCRIPTS,
     stripDevDeps: CLOUDFLARE_DEV_DEPS,
     prismaRuntime: null,

@@ -11,6 +11,7 @@ A production-grade Next.js 16 monorepo using pnpm workspaces and Turborepo. Mult
 ```bash
 pnpm dev                      # Run all apps in dev mode (main app: port 3000)
 pnpm build                    # Build all apps and packages
+pnpm kit-docs:dev             # SaaSProKit's own docs (port 3006); apps/docs is the customer's, empty
 pnpm check                    # Lint check via ultracite + Biome
 pnpm fix                      # Auto-fix lint issues
 pnpm --filter app typecheck   # Type check web app
