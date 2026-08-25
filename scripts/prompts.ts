@@ -286,6 +286,16 @@ async function maybeCommit(
   run(`git commit -m "chore: initialize ${slug} from saasprokit"`, rootDir);
 }
 
+export function localNextSteps(flags: Pick<InitFlags, "install">): string[] {
+  const steps = [
+    "docker compose up postgres maildev",
+    "pnpm migrate",
+    "pnpm --filter @repo/database db:seed   # wipes existing rows",
+    "pnpm dev",
+  ];
+  return flags.install ? steps : ["pnpm install", ...steps];
+}
+
 export async function runInit(
   rootDir: string,
   flags: InitFlags
@@ -334,6 +344,10 @@ export async function runInit(
 
   await maybeCommit(flags, rootDir, slug, gitStatus);
 
-  note(HOST_TARGETS[host].nextSteps.join("\n"), "Next steps");
-  outro("Done. Start hacking: pnpm dev");
+  note(localNextSteps(flags).join("\n"), "Next: run it locally");
+  note(
+    HOST_TARGETS[host].nextSteps.join("\n"),
+    `Later: deploy to ${HOST_TARGETS[host].label}`
+  );
+  outro("Done.");
 }
