@@ -73,7 +73,11 @@ export function SessionsManager({
 
       if (result.success) {
         toast.success("All other sessions logged out");
-        setShowLogoutAllDialog(false);
+        // Same nested wrap as handleLogoutSession — dialog close must
+        // stay in this transition so isLoggingOutAll covers revalidation.
+        startLogoutAllTransition(() => {
+          setShowLogoutAllDialog(false);
+        });
       } else {
         toast.error(result.error || errors.logoutAllSessions);
       }

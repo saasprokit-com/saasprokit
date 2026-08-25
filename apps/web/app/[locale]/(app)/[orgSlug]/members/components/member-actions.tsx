@@ -81,7 +81,11 @@ export function MemberActions({
         });
         if (result.success) {
           toast.success("Member removed");
-          setRemoveOpen(false);
+          // Close inside the transition so isPending spans the action's
+          // revalidation re-render, not just the await.
+          startTransition(() => {
+            setRemoveOpen(false);
+          });
         } else {
           toast.error(result.error || errors.removeMember);
         }
@@ -105,8 +109,10 @@ export function MemberActions({
         });
         if (result.success) {
           toast.success("Ownership transferred successfully");
-          setTransferOpen(false);
-          setConfirmName("");
+          startTransition(() => {
+            setTransferOpen(false);
+            setConfirmName("");
+          });
         } else {
           toast.error(result.error || errors.transferOwnership);
         }
@@ -165,7 +171,10 @@ export function MemberActions({
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isPending}
-              onClick={handleRemove}
+              onClick={(e) => {
+                e.preventDefault();
+                handleRemove();
+              }}
             >
               {isPending ? "Removing..." : "Remove"}
             </AlertDialogAction>
