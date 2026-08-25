@@ -5,8 +5,8 @@ generator client {
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
-// The app client above targets workerd for Cloudflare; tsx can't load its
-// WASM engine, so CLI-context scripts (seed) get a plain Node client.
+// The app client above may target workerd (Cloudflare), whose WASM engine
+// tsx can't load, so CLI-context scripts (seed) get a plain Node client.
 generator clientNode {
   provider = "prisma-client"
   output   = "../generated/client-node"

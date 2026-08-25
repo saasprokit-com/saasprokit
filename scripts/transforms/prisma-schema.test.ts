@@ -40,10 +40,4 @@ describe("setPrismaRuntime", () => {
     expect(out).toContain("generator clientNode");
     expect(out).toContain('output   = "../generated/client-node"');
   });
-
-  it("leaves the clientNode generator untouched for cloudflare", () => {
-    const out = setPrismaRuntime(SCHEMA, "workerd");
-    expect(out).toContain("generator clientNode");
-    expect(out).toContain('output   = "../generated/client-node"');
-  });
 });

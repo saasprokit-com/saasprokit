@@ -1,6 +1,6 @@
 import path from "node:path";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react()],
@@ -8,8 +8,12 @@ export default defineConfig({
     environment: "jsdom",
     // Unit tests only — e2e/**/*.spec.ts files are Playwright specs
     include: ["**/*.test.{ts,tsx}"],
-    // Build output re-copies source tests; without this they run 2-3x
-    exclude: ["**/node_modules/**", "**/.next/**", "**/.open-next/**"],
+    exclude: [
+      ...configDefaults.exclude,
+      // Build output re-copies source tests; without this they run 2-3x
+      "**/.next/**",
+      "**/.open-next/**",
+    ],
   },
   resolve: {
     alias: {

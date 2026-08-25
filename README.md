@@ -54,10 +54,10 @@ saasprokit/
 
 1. Clone the repository
 2. Install dependencies: `pnpm install`
-3. Initialize the project: `pnpm run setup` — interactive CLI that names the app, prunes to your deploy target, and generates `apps/web/.env.local` + `packages/database/.env` (manual alternative: copy the two `.env.example` files yourself)
+3. Initialize the project: `pnpm run setup` — interactive CLI that names the app, prunes to your deploy target, and generates `apps/web/.env.local` + `packages/database/.env` (manual alternative: copy the two `.env.example` files yourself, then fill in `DATABASE_URL` in both and generate `BETTER_AUTH_SECRET` with `openssl rand -base64 48`)
 4. Start local infra: `docker compose up postgres maildev`
 5. Push the schema: `pnpm migrate`
-6. Seed dev data: `pnpm --filter @repo/database db:seed` — creates `admin@example.com` / `Password@saaspro`
+6. Seed dev data: `pnpm --filter @repo/database db:seed` — wipes existing rows in every table, then creates `admin@example.com` / `Password@saaspro`
 7. Start development: `pnpm dev`
 8. (Optional) Install AI coding-assistant skills: `pnpm skills:install` — requires `git`; not run automatically on `pnpm install`
 

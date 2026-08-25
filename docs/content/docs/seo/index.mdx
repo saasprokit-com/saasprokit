@@ -27,20 +27,20 @@ The web app configures it once in `apps/web/lib/seo-config.ts`:
 
 ```ts
 import { configureSeo, type SiteConfig } from "@repo/seo";
+import { env } from "@/lib/env";
 
 export const siteConfig: SiteConfig = {
-  name: "SaaSProKit",
-  description: "Production-ready SaaS boilerplate with auth, billing, organizations...",
+  name: env.NEXT_PUBLIC_APP_NAME,
+  description: `${env.NEXT_PUBLIC_APP_NAME} — multi-organization SaaS platform.`,
   url: env.NEXT_PUBLIC_APP_URL,
   ogImage: "/og-image.png",
   locale: "en_US",
-  twitterHandle: "@saasprokit",
-  author: { name: "SaaSProKit", url: "https://github.com/saasprokit-com/saasprokit" },
-  links: { twitter: "...", github: "..." },
 };
 
 configureSeo(siteConfig);
 ```
+
+Identity comes entirely from `NEXT_PUBLIC_APP_NAME` and `NEXT_PUBLIC_APP_URL` — the optional `twitterHandle`, `author`, and `links` fields on `SiteConfig` are left unset, since the app has no per-customer values to put there.
 
 `apps/web/app/[locale]/layout.tsx` imports this module (for its side effect) before calling anything else in `@repo/seo`.
 
@@ -66,7 +66,7 @@ import { generateOrganizationSchema, generateWebSiteSchema, JsonLd } from "@repo
 <JsonLd code={generateWebSiteSchema()} />
 ```
 
-- **`generateOrganizationSchema()`** — `Organization` schema from `SiteConfig` (name, url, logo, `sameAs` from `links.twitter`/`links.github`, a generic `ContactPoint`).
+- **`generateOrganizationSchema()`** — `Organization` schema from `SiteConfig` (name, url, logo, a generic `ContactPoint`). `sameAs` reads `links.twitter`/`links.github`, but the app's `siteConfig` sets no `links`, so it's always an empty array.
 - **`generateWebSiteSchema()`** — `WebSite` schema with a `SearchAction` pointing at `/search?q={search_term_string}`.
 
 To add another schema type (Article, FAQPage, etc.), add a generator function to `packages/seo/schemas.tsx` following the same pattern — typed against `schema-dts`, reading from `getSiteConfig()` — and render it with the same `JsonLd` component. None of these exist yet; add them when you actually have the page type to back them (e.g. don't add `Product` schema without product pages).
