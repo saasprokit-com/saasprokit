@@ -5,9 +5,11 @@ description: Use when setting up this repo locally, adding or debugging an env v
 
 # Environment Setup
 
-`pnpm run setup` generates `apps/web/.env.local` and `packages/database/.env`
-interactively (project name, deploy target, dev env prompts) — the manual steps
-below remain for reference and for adjusting values later.
+After `pnpm install` (the CLI is built by devDependencies, so a cold clone
+must install first), `pnpm run setup` generates `apps/web/.env.local` and
+`packages/database/.env` interactively (project name, deploy target, dev env
+prompts) — the manual steps below remain for reference and for adjusting
+values later.
 
 Two `.env` files are **both** required — the Prisma CLI loads its own env in a
 separate process from the Next app, so `DATABASE_URL` must exist in both places.
@@ -55,6 +57,10 @@ Optional vars ship **commented out** — uncomment rather than adding new lines.
 && npx prisma db push`. It reads `packages/database/.env`, **not**
 `apps/web/.env.local`. There is **no** `predev`/bootstrap step — `pnpm dev` is
 exactly `turbo dev` and does **not** start Postgres or MailDev.
+
+`pnpm migrate` leaves the database empty. Seed dev data (users incl.
+`admin@example.com` / `Password@saaspro`, orgs, subscriptions) with
+`pnpm --filter @repo/database db:seed`.
 
 ## Local infrastructure (Docker Compose)
 
