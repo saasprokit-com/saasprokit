@@ -8,6 +8,8 @@ export default defineConfig({
     environment: "jsdom",
     // Unit tests only — e2e/**/*.spec.ts files are Playwright specs
     include: ["**/*.test.{ts,tsx}"],
+    // Build output re-copies source tests; without this they run 2-3x
+    exclude: ["**/node_modules/**", "**/.next/**", "**/.open-next/**"],
   },
   resolve: {
     alias: {
