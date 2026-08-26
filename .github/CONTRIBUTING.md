@@ -20,7 +20,7 @@ Thank you for your interest in contributing! This document outlines the process 
 - Follow existing code style and conventions
 - Include tests if applicable
 - Update documentation as needed
-- Ensure your PR follows the [project's philosophy](/docs/overview.mdx)
+- Ensure your PR follows the [project README](../README.md)
 
 ## Code Style
 

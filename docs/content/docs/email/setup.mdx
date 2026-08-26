@@ -124,10 +124,10 @@ Check if your email configuration is working:
 ```typescript
 import { getEmailProvider } from '@repo/email/providers';
 
-// This will log which provider is being used
 const provider = getEmailProvider();
-console.log(`Using email provider: ${provider.name}`);
 ```
+
+`getEmailProvider()` reads `keys()` and returns the cached singleton. It does not log which provider is selected.
 
 ## Troubleshooting
 
@@ -139,11 +139,3 @@ console.log(`Using email provider: ${provider.name}`);
 | Connection refused on port 1025 | Start Maildev: `docker compose up maildev` |
 | Emails not appearing | Check Maildev UI at http://localhost:1080 |
 | Invalid sender address | Verify domain in Resend dashboard for production |
-
-### Debug Mode
-
-Enable debug logging by setting:
-
-```bash
-DEBUG=email:*
-```

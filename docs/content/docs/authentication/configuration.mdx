@@ -25,7 +25,7 @@ const env = keys(); // throws if BETTER_AUTH_SECRET is missing / < 32 chars, etc
 | `MAX_ORGS_PER_USER` | `coerce.number().int().positive()` | Defaults to the `@repo/utils` constant. |
 | `NEXT_PUBLIC_APP_URL` / `NEXT_PUBLIC_APP_NAME` | optional | Client-visible app identity. |
 
-Note that OAuth and Stripe keys are **optional** — the app boots without them, and providers simply stay inert (social buttons fail gracefully, the Stripe plugin is omitted entirely; see below).
+Note that OAuth and Stripe keys are **optional** — the app boots without them. Social buttons **always render**; a click runs `signInSocialAction` and surfaces an error toast if the keys are empty (the buttons are not inert UI). The Stripe plugin is omitted entirely when keys are missing; see below.
 
 ## Core instance options
 
@@ -114,7 +114,8 @@ plugins: [
   multiSession(),
   organization({ ac: orgAc, roles, creatorRole, memberRole, organizationLimit, allowUserToCreateOrganization, ... }),
   ...(stripeClient && env.STRIPE_WEBHOOK_SECRET ? [stripe({ ... })] : []),
-  nextCookies(),
+  i18n({ translations: baErrorTranslations, defaultLocale, detection, localeCookie, getLocale }),
+  nextCookies(), // must stay last
 ],
 ```
 
@@ -127,7 +128,8 @@ plugins: [
 | `multiSession` | Multiple concurrent device sessions | — |
 | `organization` | Orgs, members, teams, invitations | `INVITATION_EXPIRES_IN_DAYS` (7) |
 | `stripe` | Billing (conditional) | — |
-| `nextCookies` | Wires Better Auth cookie handling into Next.js | — |
+| `@better-auth/i18n` (`i18n({...})`) | Localizes Better Auth API errors | — |
+| `nextCookies` | Wires Better Auth cookie handling into Next.js. **Must stay last** in the `plugins` array — it wraps the response to set cookies, so any plugin appended after it is not covered. | — |
 
 ### First-admin bootstrap (`ADMIN_EMAILS`)
 
@@ -166,7 +168,7 @@ The billing plugin is only added when **both** a Stripe client and a webhook sec
 
 ### `organization` and self-serve org creation
 
-The organization plugin gates new-org creation behind `allowUserToCreateOrganization: (user) => canUserCreateOrg(user.id)`. That helper counts the user's owned orgs and their active free-plan subscriptions, then defers to `checkOrgCreationEligibility(...)` against `MAX_ORGS_PER_USER`. Role assignment (`creatorRole: "owner"`, `memberRole: "member"`) and the access-control matrix are defined in `packages/auth/permissions.ts`.
+The organization plugin gates new-org creation behind `allowUserToCreateOrganization: (user) => canUserCreateOrg(user.id, MAX_ORGS_PER_USER)` (`packages/auth/org-eligibility.ts`). That helper counts the user's owned orgs and their active free-plan subscriptions, then defers to `checkOrgCreationEligibility(...)` against `MAX_ORGS_PER_USER`. Role assignment (`creatorRole: "owner"`, `memberRole: "member"`) and the access-control matrix are defined in `packages/auth/permissions.ts`.
 
 ## Client instance
 
@@ -177,7 +179,7 @@ export const { signIn, signUp, signOut, useSession, getSession, changePassword,
   twoFactor, organization, useActiveOrganization, subscription, emailOtp, admin } = authClient;
 ```
 
-The `twoFactorClient` is configured with an `onTwoFactorRedirect` hook that sends the browser to `/auth/2fa` whenever a sign-in needs a second factor — covered in [Two-Factor Authentication](./two-factor).
+The client registers a matching `i18nClient()` and a bare `twoFactorClient()` (no `onTwoFactorRedirect`). Password 2FA is a server-action path — covered in [Two-Factor Authentication](./two-factor).
 
 ## The Next.js handler
 
@@ -199,5 +201,6 @@ export { GET, POST };
 - `packages/auth/server.ts` — the `betterAuth({...})` instance
 - `packages/auth/client.ts` — `createAuthClient({...})` and method exports
 - `packages/auth/keys.ts` — Zod env schema
+- `packages/auth/org-eligibility.ts` — `canUserCreateOrg(userId, maxOrgsPerUser)`
 - `packages/utils/auth.ts` — timing constants
 - `apps/web/app/api/auth/[...all]/route.ts` — the mounted handler

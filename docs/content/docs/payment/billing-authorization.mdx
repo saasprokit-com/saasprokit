@@ -3,9 +3,11 @@ title: Billing Authorization
 description: Which roles can view and manage billing, enforced via Better Auth org permissions and the Stripe plugin's authorizeReference hook
 ---
 
-Billing in this monorepo is mounted by the `@better-auth/stripe` plugin (not hand-rolled API routes). Every subscription action the plugin exposes — listing, upgrading, cancelling, restoring, and opening the billing portal — is gated by a single authorization function, `authorizeBillingAction`, defined in `packages/auth/billing-authorize.ts`. The same gate is enforced a second time in web Server Actions via `hasOrgPermission`.
+Billing in this monorepo is mounted by the `@better-auth/stripe` plugin (not hand-rolled API routes). Every subscription action the plugin exposes — listing, upgrading, cancelling, restoring, and opening the billing portal — is gated by a single authorization function, `authorizeBillingAction`, defined in `packages/auth/billing-authorize.ts`.
 
-The core rule: **billing is organization-scoped, and only active org owners and admins can mutate it.** Plain members get read-only visibility into the subscription; suspended members get nothing.
+The core rule: **billing is organization-scoped, and only org owners and admins can mutate it.** Plain members get read-only visibility into the subscription.
+
+The org billing page loads membership with `getActiveOrganization(orgSlug)` and wraps the UI in `OrgPermissionGate` (`organization: ["update"]`). That gate is UX only. The three thin `auth.api.*` wrappers (`upgradeSubscriptionAction`, `openBillingPortalAction`, `cancelSubscriptionAction`) rely on the plugin's `authorizeReference` — they do **not** also call `hasOrgPermission`. **`changePlanAction` is the exception**: it gates with `hasOrgPermission` because it does authorization-sensitive pre-work (`guardDowngrade`, member/storage reads) and can return early (cancel / blocked) without ever reaching `auth.api.*`.
 
 ## Where authorization is wired
 
@@ -26,8 +28,10 @@ Here `referenceId` is the organization id (the plugin is configured with `organi
 
 `authorizeBillingAction` in `packages/auth/billing-authorize.ts` is an exhaustive `switch` over the plugin's `AuthorizeReferenceAction` union. It routes each action to one of two database-backed checks:
 
-- `isOrgMember(userId, organizationId)` — true when an active (`suspendedAt: null`) `member` row exists for the user in the org. Used only for the read action.
-- `canManageBilling(userId, organizationId)` — true only when that active member's `role` is `owner` or `admin` (`ORG_ROLES.OWNER` / `ORG_ROLES.ADMIN`). Used for every mutation and the portal.
+- `isOrgMember(userId, organizationId)` — true when a `member` row exists for that `userId` + `organizationId`. Used only for the read action.
+- `canManageBilling(userId, organizationId)` — true only when that member's `role` is `owner` or `admin` (`ORG_ROLES.OWNER` / `ORG_ROLES.ADMIN`). Used for every mutation and the portal.
+
+The `Member` model has **no** `suspendedAt` field. Both helpers filter `userId` + `organizationId` (and `canManageBilling` then reads `role`). They do not add `suspendedAt: null`.
 
 ```ts
 switch (action) {
@@ -58,11 +62,11 @@ flowchart TD
     B -->|upgrade-subscription<br/>cancel-subscription<br/>restore-subscription<br/>billing-portal| D[canManageBilling]
     B -->|unknown action| E[default branch:<br/>console.warn + deny]
 
-    C --> F{active member row?<br/>suspendedAt = null}
+    C --> F{member row?<br/>userId + organizationId}
     F -->|yes| G[ALLOW]
     F -->|no| H[DENY]
 
-    D --> I{active member?<br/>suspendedAt = null}
+    D --> I{member row?<br/>userId + organizationId}
     I -->|no member| H
     I -->|yes| J{role?}
     J -->|owner| G
@@ -72,13 +76,9 @@ flowchart TD
     E --> H
 ```
 
-## Active-member requirement
-
-Both `isOrgMember` and `canManageBilling` query `database.member.findFirst` with `suspendedAt: null` in the `where` clause. A suspended member — even one whose `role` is `owner` — never satisfies either check, because the row is filtered out before the role is read. The tests assert this scoping explicitly (`scopes by userId, organizationId, and excludes suspended members` and `filters out suspended members in the where clause`).
-
 ## Roles vs. billing capabilities
 
-Capabilities below are derived directly from the `switch` routing and the `canManageBilling` role check, and match the allow/deny matrix in `packages/auth/billing-authorize.test.ts`.
+Capabilities below are derived directly from the `switch` routing and the `canManageBilling` role check, and match the allow/deny matrix in `packages/auth/billing-authorize.test.ts` (including `scopes by userId and organizationId`).
 
 | Org role | View (`list-subscription`) | Upgrade | Cancel | Restore | Portal (`billing-portal`) |
 | --- | --- | --- | --- | --- | --- |
@@ -86,7 +86,6 @@ Capabilities below are derived directly from the `switch` routing and the `canMa
 | `admin` | Allow | Allow | Allow | Allow | Allow |
 | `member` | Allow | Deny | Deny | Deny | Deny |
 | non-member | Deny | Deny | Deny | Deny | Deny |
-| suspended (any role) | Deny | Deny | Deny | Deny | Deny |
 
 Notes:
 - "Upgrade", "Cancel", and "Restore" map to the `upgrade-subscription`, `cancel-subscription`, and `restore-subscription` actions respectively; all four management actions share the same `canManageBilling` gate.
@@ -98,9 +97,9 @@ The org roles themselves are defined in `packages/auth/permissions.ts` via `orgA
 
 The `billing: ["manage", "view"]` statements in `permissions.ts` belong to the **platform-level admin** access control (`statement`, `adminRole`, `moderatorRole`, `userRole`), a separate RBAC system from org-scoped billing and not what gates the Stripe plugin actions.
 
-## Second enforcement layer: Server Actions
+## Second enforcement layer: `changePlanAction` only
 
-Web Server Actions that mutate billing re-check authorization before calling the plugin API, so the gate holds even outside the plugin's own endpoints. In `apps/web/app/[locale]/(app)/[orgSlug]/billing/actions.ts`, `changePlanAction` calls `hasOrgPermission` before invoking `auth.api.upgradeSubscription`:
+`changePlanAction` in `apps/web/app/[locale]/(app)/[orgSlug]/billing/actions.ts` calls `hasOrgPermission` before any downgrade pre-work:
 
 ```ts
 const allowed = await hasOrgPermission(validated.organizationId, {
@@ -111,7 +110,9 @@ if (!allowed) {
 }
 ```
 
-`hasOrgPermission` (in `apps/web/lib/auth/auth.ts`) calls `auth.api.hasPermission` — which resolves the caller's session from the request headers via the org plugin's session middleware — and returns a `boolean`, requiring the `organization: ["update"]` capability, which only `owner` and `admin` org roles hold per `permissions.ts`. This aligns the Server Action gate with the `canManageBilling` gate: members are excluded from billing mutations at both layers. The subsequent `auth.api.upgradeSubscription` call then passes through `authorizeBillingAction` again inside the plugin.
+`hasOrgPermission` (in `apps/web/lib/auth/auth.ts`) calls `auth.api.hasPermission` — which resolves the caller's session from the request headers via the org plugin's session middleware — and returns a `boolean`, requiring the `organization: ["update"]` capability, which only `owner` and `admin` org roles hold per `permissions.ts`. That extra gate is needed because `changePlanAction` can return `{ action: "cancel" }` or a `blockReason` **without** calling `auth.api.*`, so `authorizeReference` would never run.
+
+The subsequent `auth.api.upgradeSubscription` call (paid→paid downgrade) then passes through `authorizeBillingAction` inside the plugin.
 
 ```mermaid
 sequenceDiagram
@@ -138,8 +139,10 @@ sequenceDiagram
 ## Source files
 
 - `packages/auth/billing-authorize.ts` — `authorizeBillingAction`, `isOrgMember`, `canManageBilling`
-- `packages/auth/billing-authorize.test.ts` — allow/deny matrix and suspended-member coverage
+- `packages/auth/billing-authorize.test.ts` — allow/deny matrix (`userId` + `organizationId` + role)
 - `packages/auth/permissions.ts` — `ORG_ROLES`, org and admin access-control role definitions
 - `packages/auth/server.ts` — `subscription.authorizeReference` wiring into the Stripe plugin
-- `apps/web/app/[locale]/(app)/[orgSlug]/billing/actions.ts` — `changePlanAction`, the Server Action billing gate
+- `apps/web/app/[locale]/(app)/[orgSlug]/billing/page.tsx` — `getActiveOrganization`, `OrgPermissionGate`
+- `apps/web/app/[locale]/(app)/[orgSlug]/billing/actions.ts` — `changePlanAction` (`hasOrgPermission`); upgrade/portal/cancel rely on `authorizeReference`
 - `apps/web/lib/auth/auth.ts` — `hasOrgPermission` helper
+- `apps/web/lib/organization/queries.ts` — `getActiveOrganization`

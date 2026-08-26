@@ -28,6 +28,12 @@ Package exports (`package.json`):
 | `@repo/auth/client` | `authClient` and the bound method exports (client-only, `"use client"`) |
 | `@repo/auth/permissions` | `ADMIN_ROLES`, `ORG_ROLES`, `ac`/`orgAc`, role definitions, `PERMISSIONS`, `RESOURCES` |
 | `@repo/auth/keys` | The env schema (`keys()`) |
+| `@repo/auth/plans` | Plan catalog / Stripe plan builders — see [Payment](../payment) |
+| `@repo/auth/stripe-client` | Stripe SDK instance — see [Payment](../payment) |
+| `@repo/auth/guards` | Billing plan-change guards — see [Payment](../payment) |
+| `@repo/auth/helpers` | Subscription/usage helpers — see [Payment](../payment) |
+| `@repo/auth/types` | Billing TypeScript types — see [Payment](../payment) |
+| `@repo/auth/ip-headers` | Trusted IP header names for rate limiting |
 
 ### The auth pages (`apps/web/app/[locale]/auth/`)
 
@@ -65,12 +71,13 @@ The `auth` instance enables a wide surface through the plugin array in `server.t
 | Social (Google, GitHub) | `socialProviders` | built-in `signIn.social` |
 | Magic link | `magicLink()` plugin | `magicLinkClient()` |
 | Email OTP | `emailOTP()` plugin | `emailOTPClient()` |
-| Two-factor | `twoFactor()` plugin (TOTP + email OTP) | `twoFactorClient({ onTwoFactorRedirect })` |
+| Two-factor | `twoFactor()` plugin (TOTP + email OTP) | `twoFactorClient()` |
 | Multi-session | `multiSession()` | `multiSessionClient()` |
 | Platform admin RBAC | `admin({ ac, roles })` | `adminClient({ ac, roles })` |
 | Organizations & teams | `organization({ ac, roles })` | `organizationClient({ ac, roles })` |
 | Stripe billing | `stripe({...})` (conditional) | `stripeClient({ subscription: true })` |
-| Next.js cookies | `nextCookies()` | — |
+| i18n | `@better-auth/i18n` `i18n({...})` | `i18nClient()` |
+| Next.js cookies | `nextCookies()` — **must stay last** in the server `plugins` array | — |
 
 See [Configuration](./configuration) for the full breakdown of each option.
 
@@ -107,7 +114,7 @@ flowchart TD
     HELP -->|"getSession()"| BA
 ```
 
-Outbound: an auth page dispatches its colocated server action, which calls `auth.api.*` in-process — no browser `fetch` to `/api/auth/*` is involved. That route still matters for traffic the server can't originate: the links in verification, reset and magic-link emails, and OAuth provider callbacks. The Better Auth instance runs the flow, persists via Prisma, and sends transactional email through `@repo/email`. Server Components read the resulting session through the cached helpers in `lib/auth/auth.ts` (a real DB-backed `auth.api.getSession` call); the edge `middleware.ts` only gates on cookie presence before that — see [Sessions & Route Protection](./sessions-and-routing).
+Outbound: an auth page dispatches its colocated server action, which calls `auth.api.*` in-process — no browser `fetch` to `/api/auth/*` is involved. That route still matters for traffic the server can't originate: the links in verification, reset and magic-link emails, and OAuth provider callbacks. The Better Auth instance runs the flow, persists via Prisma, and sends transactional email through `@repo/email`. Server Components read the resulting session through the cached helpers in `lib/auth/auth.ts` (`auth.api.getSession` — session-verified, cookie-cache eligible); the edge `middleware.ts` only gates on cookie presence before that — see [Sessions & Route Protection](./sessions-and-routing).
 
 Because `auth.api.*` bypasses Better Auth's HTTP-path rate limiter (which only runs on `/api/auth/*`), brute-forceable actions re-apply `enforceRateLimit` server-side — see `apps/web/lib/auth/rate-limit.ts`.
 
@@ -131,7 +138,7 @@ Better Auth's Prisma adapter reads and writes a small set of tables (`packages/d
 | [Configuration](./configuration) | The `betterAuth({...})` instance: providers, plugins, sessions, rate limiting, email hooks, and the env schema. |
 | [Sign Up & Email Verification](./sign-up-and-verification) | Registration via email/password or social, and the mandatory email-verification gate. |
 | [Sign In](./sign-in) | The tabbed sign-in page: password, social, magic link, and email OTP — plus the 2FA hand-off. |
-| [Two-Factor Authentication](./two-factor) | The TOTP/email-OTP second factor, the `onTwoFactorRedirect` hook, and the `/auth/2fa` step. |
+| [Two-Factor Authentication](./two-factor) | The TOTP/email-OTP second factor, the server-action handoff from password sign-in, and the `/auth/2fa` step. |
 | [Password Reset](./password-reset) | Forgot-password → reset-password, token handling, and session revocation. |
 | [Sessions & Route Protection](./sessions-and-routing) | Session lifetime, the cookie cache, the `middleware.ts` gate, and the cached server helpers. |
 

@@ -11,7 +11,8 @@ pnpm kit-docs:deploy   # Cloudflare Workers, --env=site (maintainers only)
 ```
 
 It is a workspace package named `kit-docs`, excluded from the default `pnpm dev` / `pnpm build`
-fan-out so it never slows down app work.
+fan-out so it never slows down app work. Production Docker image: `docker build -f docs/Dockerfile .`
+runs `pnpm --filter kit-docs build` (not the root `pnpm build --filter=kit-docs`, which turbo-excludes this package).
 
 ## Layout
 

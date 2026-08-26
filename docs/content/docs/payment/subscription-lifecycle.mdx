@@ -11,15 +11,18 @@ that gate features by plan.
 
 ## The Subscription record
 
-The shape consumed by the app is defined by the `Subscription` interface in
-`packages/auth/types.ts` and validated at the query boundary by `SubscriptionSchema`
-(a `zod` schema in the same file). The fields that drive the state model are:
+The row shape is Prisma's `Subscription` model — import it from `@repo/database`, not
+from `@repo/auth/types`. `packages/auth/types.ts` holds related app types
+(`SubscriptionWithPlan`, `FeatureAccess`, `UsageStats`, `UpgradeOptions`,
+`CancelOptions`, `BillingPortalSession`); there is no hand-maintained `Subscription`
+interface or Zod `SubscriptionSchema`. The fields that drive the state model are:
 
-- `plan` — one of `free`, `pro`, `enterprise` (enforced by `SubscriptionSchema` via `PLAN_NAMES`).
+- `plan` — one of `free`, `pro`, `enterprise`.
 - `status` — a nullable `SubscriptionStatus` string (see below).
 - `cancelAtPeriodEnd` — nullable boolean; legacy Stripe cancellation flag.
 - `cancelAt` — nullable `Date`; newer Stripe cancellation timestamp.
 - `periodStart` / `periodEnd` — the current billing period.
+- `trialStart` / `trialEnd` — present on the schema; see [Trials](#trials).
 - `referenceId` — the owning entity; in this app it is the organization ID (billing is org-scoped).
 - `stripeCustomerId` / `stripeSubscriptionId` — Stripe linkage used for cancel/portal calls.
 
@@ -30,27 +33,34 @@ which the comment notes "Mirrors `Stripe.Subscription.Status` from the Stripe SD
 
 - `incomplete`
 - `incomplete_expired`
+- `trialing`
 - `active`
 - `past_due`
 - `canceled`
 - `unpaid`
 - `paused`
 
-Critically, the set of statuses the app treats as "active" is **narrow**:
+The set of statuses the app treats as entitlement-granting is:
 
 ```ts
-export const ACTIVE_STATUSES = [SUBSCRIPTION_STATUS.ACTIVE] as const;
+export const ACTIVE_STATUSES = [
+  SUBSCRIPTION_STATUS.ACTIVE,
+  SUBSCRIPTION_STATUS.TRIALING,
+  SUBSCRIPTION_STATUS.PAST_DUE,
+] as const;
 ```
 
-Only `active` counts as active. `past_due`, `unpaid`, `paused`, `incomplete`, and the
-two terminal states do **not** grant plan entitlements.
+`active`, `trialing`, and `past_due` grant the paid plan. `unpaid`, `paused`,
+`incomplete`, `incomplete_expired`, and `canceled` do **not**. `paused` is a Stripe
+status string only — it is not entitlement-granting, and the app has no pause/resume UI.
 
 ## Lifecycle diagram
 
-The diagram below uses the exact `status` strings from `SUBSCRIPTION_STATUS`. Note that a
+The diagram below uses the exact `status` strings from `SUBSCRIPTION_STATUS`. A
 scheduled cancellation is **not** a separate status — a subscription remains `active`
 while `cancelAtPeriodEnd`/`cancelAt` is set, and only transitions to `canceled` when the
-period actually ends (this is what `isSubscriptionPendingCancel` detects).
+period actually ends (this is what `isSubscriptionPendingCancel` detects). `paused` is
+omitted as a product flow (Stripe may set it; this app never starts or resumes a pause).
 
 ```mermaid
 stateDiagram-v2
@@ -70,9 +80,6 @@ stateDiagram-v2
     past_due --> canceled : Stripe ends subscription
     unpaid --> canceled
 
-    active --> paused : subscription paused
-    paused --> active : resumed
-
     incomplete_expired --> [*]
     canceled --> [*]
 
@@ -84,8 +91,8 @@ stateDiagram-v2
 
     note right of none
         Entitlements = free plan.
-        Only status="active" grants
-        the paid plan (ACTIVE_STATUSES).
+        ACTIVE_STATUSES (active, trialing,
+        past_due) grant the paid plan.
     end note
 ```
 
@@ -105,26 +112,31 @@ const subscription = await database.subscription.findFirst({
 });
 ```
 
-Because `ACTIVE_STATUSES` contains only `active`, any subscription in `past_due`,
-`unpaid`, `paused`, `incomplete`, `incomplete_expired`, or `canceled` is invisible to
-this query and yields `null`.
+Because `ACTIVE_STATUSES` includes `active`, `trialing`, and `past_due`, a Pro org in
+`past_due` is still visible to this query and keeps Pro entitlements (Stripe's dunning
+grace window). A subscription in `unpaid`, `paused`, `incomplete`,
+`incomplete_expired`, or `canceled` is invisible and yields `null`.
 
 ### Plan resolution
 
-`getCurrentPlanForReference(referenceId)` builds on `getActiveSubscription`: if there is
+`getCurrentPlanForOrg(organizationId)` builds on `getActiveSubscription`: if there is
 no active subscription it returns `PLAN_NAMES.FREE`; otherwise it returns the
 subscription's `plan` (falling back to `free` if `plan` is falsy). So a `past_due` Pro
-org is effectively resolved to **free** for entitlement purposes.
+org stays on **pro** for entitlement purposes; an `unpaid` Pro org resolves to **free**.
 
 The pure-helper equivalent is `getCurrentPlan(subscription)` in
 `packages/auth/helpers.ts`, which gates on `isSubscriptionActive(subscription)`
-before reading `plan`. `isSubscriptionActive` returns `true` only when
+before reading `plan`. `isSubscriptionActive` returns `true` when
 `subscription.status` is in `ACTIVE_STATUSES`.
 
-Note `getOrgSubscription(organizationId)` is the unfiltered counterpart — it returns the
-latest row regardless of status (and throws if `SubscriptionSchema` validation fails).
-It is used where the app needs to inspect the actual record (e.g. usage stats, downgrade
-guards) rather than only the entitlement-granting one.
+There is no `getOrgSubscription` helper. Usage stats go through `getOrgUsageStats`
+in the same `subscription-queries.ts` file (which also uses `getActiveSubscription`).
+
+### Trials
+
+Trial support is **partial**: the Prisma row has `trialStart`/`trialEnd`, and
+`ACTIVE_STATUSES` includes `trialing`, but checkout and `buildStripePlans` do not
+configure trials, so this app never starts one.
 
 ## Pending cancellation (`cancelAt` / `cancelAtPeriodEnd`)
 
@@ -142,32 +154,28 @@ cancellation via the legacy `cancelAtPeriodEnd` boolean **or** the newer `cancel
 timestamp; checking only the boolean would miss subscriptions canceled via `cancelAt`.
 This matches Better Auth's own `isPendingCancel`.
 
-On the client, `useSubscription` in `packages/auth/use-subscription.ts` exposes this as
-`isCanceled`, which is intentionally `isActive && isSubscriptionPendingCancel(...)` — i.e.
-"canceled but still active until period end." It also exposes:
+The billing UI derives the same flags in `BillingActions` (`billing-actions.tsx`):
 
-- `isActive` — `status === SUBSCRIPTION_STATUS.ACTIVE`.
-- `isPaid` — `isActive && planName !== free`.
-- `planName` — `subscription.plan` or `free` when absent.
+- pending-cancel — `isSubscriptionActive(subscription) && isSubscriptionPendingCancel(subscription)`
+- paid — `getCurrentPlan(subscription) !== free`
 
-The hook fetches via Better Auth's `subscription.list({ query: { referenceId } })` and
-takes the first element. Cancellation flows through `useCancel`, which calls
-`subscription.cancel(...)`.
+The Cancel button only renders when the plan is paid and not already pending-cancel.
+Cancellation itself is the `cancelSubscriptionAction` server action (see
+[Plan Changes & Cancellation](./plan-changes-and-cancellation)).
 
 ### The "already set to cancel" no-op
 
 `isAlreadyCancelingError(message)` (in `helpers.ts`) detects Better Auth's benign error
-containing `"already set to be canceled"`. Better Auth client methods resolve with
-`{ error }` instead of throwing, so `useCancel` inspects `cancelError`: a real failure is
-thrown, but the already-canceling case falls through to `onSuccess` so the UI reloads and
-settles. This handles drift where local state lags Stripe.
+containing `"already set to be canceled"`. `cancelSubscriptionAction` catches that case
+and returns `{ success: true }` so the UI can settle instead of toasting an error. This
+handles drift where local state lags Stripe.
 
 ## Feature gating by plan
 
-Plan entitlements are defined in `PLANS` (re-exported from `@repo/auth/plans` via
-`packages/auth/plans.ts`). Limits per plan come from `getPlanLimits(planName)`, backed
-by each plan's `limits` (`maxMembers`, `maxStorageMB`, `prioritySupport`,
-`advancedAnalytics`). The unlimited sentinel is `UNLIMITED = -1`.
+Plan entitlements are defined in `PLANS` (`packages/auth/plans.ts`). Limits per plan
+come from `getPlanLimits(planName)`, backed by each plan's `limits` (`maxMembers`,
+`maxStorageMB`, `prioritySupport`, `advancedAnalytics`). The unlimited sentinel is
+`UNLIMITED = -1`.
 
 ### Plan comparison
 
@@ -187,6 +195,10 @@ by each plan's `limits` (`maxMembers`, `maxStorageMB`, `prioritySupport`,
 3. **Resource fit**: if current members or storage exceed the target plan's limits
    (skipping checks where the limit is `UNLIMITED`), the downgrade is blocked with a
    message telling the user how much to shed first.
+
+`PlanCard`'s client-side preview calls `guardDowngrade(subscription, plan.name, 0, 0)`,
+so resource over-use is **not** previewed (the zeros skip the member/storage checks).
+The real counts are applied in `changePlanAction` on submit.
 
 ### Usage and seat gating
 
@@ -210,15 +222,17 @@ free org to upgrade; hard cap at `MAX_ORGS_PER_USER`).
 
 `getStatusDisplayText(status)` and `getStatusColor(status)` (in `helpers.ts`) map status
 strings to UI text/colors. Of note for the state model: `incomplete_expired` displays as
-"Expired", and `getStatusColor` groups `canceled`, `unpaid`, and `incomplete_expired` as
-`red`, `past_due` as `yellow`, `active` as `green`, and everything else as `gray`.
+"Expired", `trialing` as "Trial". `getStatusColor` groups `canceled`, `unpaid`, and
+`incomplete_expired` as `red`, `past_due` as `yellow`, `active` and `trialing` as
+`green`, and everything else as `gray`.
 
 ## Source files
 
 - `packages/utils/payment.ts` — `SUBSCRIPTION_STATUS`, `ACTIVE_STATUSES`, `PLAN_NAMES`, `PLAN_ORDER`, `UNLIMITED`, `checkOrgCreationEligibility`.
-- `packages/auth/types.ts` — `Subscription` interface, `SubscriptionSchema`, `SubscriptionWithPlan`.
+- `packages/database/prisma/schema.prisma` — `Subscription` model (`trialStart` / `trialEnd`, `cancelAt`, `cancelAtPeriodEnd`).
+- `packages/auth/types.ts` — `SubscriptionWithPlan`, `FeatureAccess`, `UsageStats` (import `Subscription` from `@repo/database`).
 - `packages/auth/helpers.ts` — `isSubscriptionActive`, `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getCurrentPlan`, `calculateUsageStats`, `getStatusDisplayText`, `getStatusColor`.
 - `packages/auth/guards.ts` — `guardDowngrade`, `GuardResult`.
 - `packages/auth/plans.ts` — `PLANS`, `getPlanLimits`, `comparePlans`, `isPlanHigherTier`.
-- `packages/auth/use-subscription.ts` — `useSubscription`, `useCancel` (client).
-- `apps/web/lib/billing/subscription-queries.ts` — `getActiveSubscription`, `getOrgSubscription`, `getCurrentPlanForReference`, `canOrgAddMember`, `canUserCreateOrg`, `getOrgUsageStats`.
+- `apps/web/lib/billing/subscription-queries.ts` — `getActiveSubscription`, `getCurrentPlanForOrg`, `canOrgAddMember`, `canUserCreateOrg`, `getOrgUsageStats`.
+- `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/billing-actions.tsx` — pending-cancel UI and `cancelSubscriptionAction`.

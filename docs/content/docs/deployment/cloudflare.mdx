@@ -75,7 +75,7 @@ Follow the [shared post-deploy configuration](/docs/deployment#shared-post-deplo
 
 None of this needs to be written — it's in the repo already, gated on env vars or a runtime check:
 
-- **Prisma driver adapter** — `packages/database/index.ts` detects `workerd` at runtime (`navigator.userAgent === "Cloudflare-Workers"`, or the `CF_BUILD` build-time flag) and picks the Neon serverless driver automatically; the same bundle uses the Node `pg` driver on Vercel/Docker
+- **Prisma driver adapter** — `packages/database/index.ts` detects `workerd` at runtime (`navigator.userAgent === "Cloudflare-Workers"`, or the `CF_BUILD` build-time flag) and picks PrismaNeon (WebSocket pool; `poolQueryViaFetch` for one-shots) automatically; the same bundle uses the Node `pg` driver on Vercel/Docker
 - **Stripe HTTP client** — `packages/auth/stripe-client.ts` constructs the SDK with `Stripe.createFetchHttpClient()`, required because `stripe` is in `serverExternalPackages` and would otherwise fall back to a Node-only HTTP client that fails on workerd
 - **Middleware, not `proxy.ts`** — `apps/web/middleware.ts` deliberately isn't Next 16's `proxy.ts` convention, which is Node-runtime-only and can't run on Workers — see [Sessions & Route Protection](/docs/authentication/sessions-and-routing)
 - **Build output mode** — `next.config.ts` skips Next's `standalone` output under `CF_BUILD`/`VERCEL`, since OpenNext and Vercel both do their own bundling

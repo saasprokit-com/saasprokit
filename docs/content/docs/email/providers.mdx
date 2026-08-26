@@ -109,7 +109,6 @@ export class ResendProvider implements EmailProvider {
 - No external API dependencies
 - Perfect for local development with Maildev
 - Connection pooling for high-volume sending
-- OAuth2 support for Gmail/Outlook
 
 ### Configuration
 
@@ -120,6 +119,7 @@ SMTP_PORT=1025
 SMTP_SECURE=false
 SMTP_USER=           # Optional
 SMTP_PASS=           # Optional
+SMTP_POOL=false      # Optional — connection pooling
 ```
 
 ### Implementation
@@ -141,6 +141,7 @@ export class NodemailerProvider implements EmailProvider {
       port: config.port,
       secure: config.secure,
       auth: config.user ? { user: config.user, pass: config.pass } : undefined,
+      pool: config.pool,
     });
   }
 
@@ -226,34 +227,34 @@ The provider is selected and instantiated automatically:
 
 ```typescript
 // providers/index.ts
+import { keys } from '../keys';
 import { ResendProvider } from './resend';
 import { NodemailerProvider } from './nodemailer';
-import { emailConfig } from '../config';
 
+const env = keys();
 let cachedProvider: EmailProvider | null = null;
 
 export function getEmailProvider(): EmailProvider {
   if (cachedProvider) return cachedProvider;
 
-  const config = emailConfig();
-  const providerType = config.EMAIL_PROVIDER || detectProvider();
+  const providerType = env.EMAIL_PROVIDER || detectProvider();
 
   if (providerType === 'resend') {
-    if (!config.RESEND_API_KEY) {
+    if (!env.RESEND_API_KEY) {
       throw new Error('RESEND_API_KEY required for Resend provider');
     }
-    cachedProvider = new ResendProvider(config.RESEND_API_KEY);
+    cachedProvider = new ResendProvider(env.RESEND_API_KEY);
   } else {
     cachedProvider = new NodemailerProvider({
-      host: config.SMTP_HOST,
-      port: config.SMTP_PORT,
-      secure: config.SMTP_SECURE,
-      user: config.SMTP_USER,
-      pass: config.SMTP_PASS,
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
+      secure: env.SMTP_SECURE,
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASS,
+      pool: env.SMTP_POOL,
     });
   }
 
-  console.log(`[Email] Using ${cachedProvider.name} provider`);
   return cachedProvider;
 }
 ```
@@ -264,7 +265,7 @@ To add a new provider (e.g., SendGrid, Mailgun):
 
 1. Create a new file in `providers/`
 2. Implement the `EmailProvider` interface
-3. Add configuration to `config.ts`
+3. Add configuration to `keys.ts`
 4. Update the factory in `providers/index.ts`
 
 ```typescript

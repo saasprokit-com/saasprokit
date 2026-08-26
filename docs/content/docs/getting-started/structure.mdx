@@ -14,10 +14,11 @@ saasprokit/
 │   │   │   │   ├── (app)/         # Authenticated app routes
 │   │   │   │   │   ├── [orgSlug]/ # Organization-scoped routes
 │   │   │   │   │   ├── account/   # User account pages
+│   │   │   │   │   ├── admin/     # Platform admin (users, organizations)
 │   │   │   │   │   └── invite/    # Organization invitation handling
 │   │   │   │   ├── (frontier)/    # Public/marketing routes
 │   │   │   │   ├── auth/          # Authentication flows
-│   │   │   │   └── org/           # Organization selection (outside the (app) group)
+│   │   │   │   └── org/           # Post-login redirect hop (no UI; outside (app))
 │   │   │   ├── api/               # API routes
 │   │   │   └── layout.tsx         # Root layout
 │   │   ├── components/            # Shared app components
@@ -26,7 +27,7 @@ saasprokit/
 │   │   ├── middleware.ts          # Edge middleware (cookie-presence route gate)
 │   │   └── package.json
 │   │
-│   ├── docs/                      # Documentation site (port 3004)
+│   ├── docs/                      # Customer's product docs — empty Fumadocs starter (port 3004)
 │   │   ├── app/                   # Fumadocs app
 │   │   │   ├── (home)/            # Landing page
 │   │   │   ├── docs/              # Documentation pages
@@ -44,16 +45,22 @@ saasprokit/
 │   └── studio/                    # Prisma Studio wrapper (port 3005)
 │       └── package.json
 │
+├── docs/                          # SaaSProKit's own docs — kit-docs (port 3006)
+│   ├── content/docs/              # MDX pages (this site)
+│   ├── app/                       # Fumadocs app
+│   └── package.json               # workspace name `kit-docs`; excluded from `pnpm dev` / `pnpm build`
+│
 ├── packages/                      # Shared packages
 │   ├── auth/                      # Better Auth, dual RBAC & Stripe wiring
 │   │   ├── client.ts              # Client-side auth hooks
 │   │   ├── server.ts              # Server-side auth instance
 │   │   ├── permissions.ts         # RBAC definitions
-│   │   ├── plans.ts, keys.ts      # Subscription plans + constants
+│   │   ├── keys.ts                # Validated env schema
+│   │   ├── plans.ts, helpers.ts, guards.ts  # Tiers, status helpers, downgrade guard
 │   │   ├── stripe-hooks.ts        # Stripe webhook/event handlers (@better-auth/stripe)
 │   │   ├── stripe-client.ts       # Stripe client
 │   │   ├── billing-authorize.ts   # Billing permission checks
-│   │   ├── index.ts               # Main exports
+│   │   ├── index.ts               # Package `main` (prefer deep imports: `@repo/auth/server`)
 │   │   └── package.json
 │   │
 │   ├── database/                  # Prisma ORM & schema
@@ -79,12 +86,6 @@ saasprokit/
 │   │   │   └── utils.ts           # Utility functions (cn, etc)
 │   │   ├── styles/
 │   │   │   └── globals.css        # Global styles
-│   │   └── package.json
-│   │
-│   ├── payment/                   # Stripe integration
-│   │   ├── plans.ts               # Subscription tier configs
-│   │   ├── helpers.ts, guards.ts  # Subscription helpers + billing guards
-│   │   ├── types.ts               # TypeScript types
 │   │   └── package.json
 │   │
 │   ├── email/                     # React Email templates + Resend
@@ -127,7 +128,8 @@ A few notes beyond what the tree above already shows:
 
 - **`apps/email`** is a thin React Email **preview runner** (`email dev`) — it has no local `app/` or `emails/` dir; the templates live in `@repo/email` (`packages/email/templates/`), which this app points at.
 - **`apps/web/middleware.ts`** stays `middleware.ts` rather than Next.js 16's `proxy.ts` convention, because `proxy.ts` is Node-runtime-only and can't run on the Cloudflare/OpenNext deploy target. It does an optimistic, cookie-presence-only route gate — see [Sessions & Route Protection](/docs/authentication/sessions-and-routing).
-- **`@repo/auth`** implements dual RBAC: platform-level admin roles plus separate organization-scoped roles.
+- **`@repo/auth`** implements dual RBAC: platform-level admin roles plus separate organization-scoped roles. Stripe billing lives here too (there is no `packages/payment`).
+- **Root `docs/`** is this site (`kit-docs`, port 3006). `apps/docs` is the empty product-docs starter (port 3004). `pnpm setup` deletes root `docs/`.
 
 ## Route Structure in Web App
 
@@ -146,10 +148,13 @@ A few notes beyond what the tree above already shows:
 │   ├── security/       # Security settings (sessions, 2FA)
 │   ├── danger/         # Account deletion
 │   └── new-org/        # Create organization
+├── admin/              # Platform admin (requireAdminArea)
+│   ├── users/
+│   └── organizations/
 └── invite/             # Organization invitation handling
 ```
 
-> `/[locale]/org/` (organization selection) is a sibling of `(app)/`, not nested inside it — it sits outside the `(app)` route group at the `[locale]/` level, alongside `(frontier)/` and `auth/`.
+> `/[locale]/org/` is a sibling of `(app)/`, not nested inside it — it sits outside the `(app)` route group at the `[locale]/` level, alongside `(frontier)/` and `auth/`. It is a **post-login redirect hop with no UI**: it `redirect`s to the default org or `/account/new-org`.
 
 ### Public Routes (`/[locale]/(frontier)/`)
 

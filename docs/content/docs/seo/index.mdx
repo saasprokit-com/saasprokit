@@ -3,6 +3,8 @@ title: SEO
 description: Site metadata, JSON-LD structured data, sitemap, and robots.txt — as actually implemented in @repo/seo
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 `@repo/seo` provides site-wide metadata, JSON-LD structured data, and is wired into `apps/web`'s root layout, `sitemap.ts`, and `robots.ts`.
 
 ## Site config
@@ -69,11 +71,19 @@ import { generateOrganizationSchema, generateWebSiteSchema, JsonLd } from "@repo
 - **`generateOrganizationSchema()`** — `Organization` schema from `SiteConfig` (name, url, logo, a generic `ContactPoint`). `sameAs` reads `links.twitter`/`links.github`, but the app's `siteConfig` sets no `links`, so it's always an empty array.
 - **`generateWebSiteSchema()`** — `WebSite` schema with a `SearchAction` pointing at `/search?q={search_term_string}`.
 
+<Callout type="warn">
+The JSON-LD `SearchAction` targets `/search`, but the app has no `/search` route. Remove or replace that `potentialAction` before relying on sitelinks search box rich results.
+</Callout>
+
 To add another schema type (Article, FAQPage, etc.), add a generator function to `packages/seo/schemas.tsx` following the same pattern — typed against `schema-dts`, reading from `getSiteConfig()` — and render it with the same `JsonLd` component. None of these exist yet; add them when you actually have the page type to back them (e.g. don't add `Product` schema without product pages).
 
 ## Sitemap and robots
 
 `apps/web/app/sitemap.ts` currently returns a single static entry for the homepage — there's no dynamic route enumeration (no blog/CMS in this app to enumerate). `apps/web/app/robots.ts` disallows `/api/`, `/auth/`, `/user/`, `/_next/`, `/private/` for all crawlers plus a Googlebot-specific rule, and points `sitemap`/`host` at `siteConfig.url`.
+
+<Callout type="info">
+`/private/` is listed in `robots.ts` but unused — the app has no `/private` route.
+</Callout>
 
 ## Validating
 

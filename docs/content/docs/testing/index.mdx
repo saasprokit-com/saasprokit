@@ -7,13 +7,13 @@ description: Test strategy, coverage summary, and how to run tests in this SaaS 
 
 This project uses two levels of testing:
 
-| Type | Tool | Location | Test Cases | Status |
-|------|------|----------|------------|--------|
-| **E2E Tests** | Playwright | `apps/web/e2e/` | **56** | Comprehensive |
-| **Unit Tests** | Vitest | `packages/auth/`, `apps/web/` | **134** | Growing |
-| **Integration Tests** | — | — | **0** | Not started |
+| Type | Tool | Location | Status |
+|------|------|----------|--------|
+| **E2E Tests** | Playwright | `apps/web/e2e/` | **56** cases across 27 files — see [E2E Tests](/docs/testing/e2e-tests) |
+| **Unit Tests** | Vitest | `@repo/auth`, `apps/web`, `@repo/database` | See the file list on [Unit Tests](/docs/testing/unit-tests) — do not treat a single total as the source of truth |
+| **Integration Tests** | — | — | Not started |
 
-**Total test cases: 190**
+`pnpm test` (`turbo test`) runs all three unit packages because `@repo/database` has a `test` script.
 
 ## Coverage Summary
 
@@ -36,12 +36,13 @@ The 54 spec-file tests above plus 2 `setup/` files (`auth.setup.ts`, `org.setup.
 
 ### Unit Test Coverage
 
-See [Unit Tests](/docs/testing/unit-tests) for details. `@repo/storage` and `@repo/utils` have no test files (and no Vitest config at all).
+See [Unit Tests](/docs/testing/unit-tests) for the file-by-file list. `@repo/storage` and `@repo/utils` have no test files (and no Vitest config at all).
 
-| Package/App | Files | Test Cases |
-|---------|------|------------|
-| `@repo/auth` | 7 | 83 |
-| `apps/web` | 6 | 51 |
+| Package/App | Files |
+|---------|------|
+| `@repo/auth` | 7 |
+| `apps/web` | 7 (including `lib/seo-config.test.ts`) |
+| `@repo/database` | 1 (`redact.test.ts`, 10 tests) |
 
 ### Uncovered Areas
 
@@ -79,11 +80,15 @@ pnpm --filter app test:e2e -- e2e/payment
 pnpm test
 
 # Run tests for a specific package
-pnpm --filter auth test
+pnpm --filter @repo/auth test
 pnpm --filter app test
+pnpm --filter @repo/database test
 
 # Run in watch mode
-pnpm --filter auth test -- --watch
+pnpm --filter @repo/auth test -- --watch
+
+# Run a specific test by name (Vitest: --testNamePattern / -t, not --grep)
+pnpm --filter @repo/auth test -- --testNamePattern "canOrg"
 ```
 
 ## Test File Organization
@@ -109,6 +114,21 @@ apps/web/app/[locale]/(app)/admin/users/guards.test.ts
 apps/web/hooks/use-action-result.test.ts
 apps/web/lib/auth/action-error.test.ts
 apps/web/lib/billing/checkout-queries.test.ts
+apps/web/lib/seo-config.test.ts
+packages/database/redact.test.ts
 ```
 
 See [Unit Tests](/docs/testing/unit-tests) for what each file covers.
+
+## How E2E is wired
+
+Four Playwright projects in `apps/web/playwright.config.ts`:
+
+| Project | Matches | Depends on |
+| --- | --- | --- |
+| `auth-setup` | `setup/auth.setup.ts` — signs in, writes `e2e/.auth/user.json` | — |
+| `org-setup` | `setup/org.setup.ts` | `auth-setup` |
+| `no-auth` | `(public\|auth)/*.spec.ts` — no login | — |
+| `authenticated` | `(account\|admin\|dashboard\|members\|payment)/*.spec.ts` | `auth-setup`, `org-setup` |
+
+Local infra: `docker compose -f docker-compose.e2e.yml up` (Postgres on **5433**, Maildev). CI (`.github/workflows/e2e.yml`) is gated on the `e2e` PR label. Details: [E2E Tests](/docs/testing/e2e-tests).

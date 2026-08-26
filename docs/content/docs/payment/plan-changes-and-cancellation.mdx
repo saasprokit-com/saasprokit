@@ -3,7 +3,7 @@ title: Plan Changes & Cancellation
 description: Upgrading, downgrading, and canceling a subscription, including cancelAt period-end handling
 ---
 
-This page documents how an organization changes its subscription tier and how cancellation is modeled, surfaced, and reconciled with Stripe. All billing operations go through the `@better-auth/stripe` plugin — there are no hand-rolled `/api/organizations/*` billing routes. The client calls `subscription.upgrade()` / `subscription.cancel()` (exported from `packages/auth/client.ts`), which hit the plugin's handlers mounted under `/api/auth/*`.
+This page documents how an organization changes its subscription tier and how cancellation is modeled, surfaced, and reconciled with Stripe. All billing operations go through the `@better-auth/stripe` plugin — there are no hand-rolled `/api/organizations/*` billing routes. The org billing UI uses four **server actions** in `apps/web/app/[locale]/(app)/[orgSlug]/billing/actions.ts`. There is no `upgrade-form.tsx`, no `packages/auth/use-subscription.ts`, and no client `subscription.upgrade()` / `subscription.cancel()` in this UI.
 
 ## The four decisions
 
@@ -11,10 +11,12 @@ The billing UI reduces every tier transition to one of four outcomes, decided by
 
 | Decision | Trigger | Mechanism |
 | --- | --- | --- |
-| **Upgrade** | target is a higher tier | `upgradeSubscriptionAction` → Stripe Checkout (first subscription) or portal `subscription_update_confirm` (existing subscription) |
+| **Upgrade** | target is a higher tier | `upgradeSubscriptionAction` → `auth.api.upgradeSubscription` → Stripe Checkout (first subscription) or portal `subscription_update_confirm` (existing subscription) |
 | **Downgrade** (to paid) | target is lower but not `free` | `changePlanAction` → `auth.api.upgradeSubscription({ scheduleAtPeriodEnd: true })` |
-| **Downgrade to free** | target is `free` | server returns `{ action: "cancel" }`; client routes the user to the Cancel flow |
-| **Cancel** | user clicks "Cancel Subscription" | `subscription.cancel()` → Stripe schedules cancellation at period end |
+| **Downgrade to free** | target is `free` | `changePlanAction` returns `{ action: "cancel" }`; client routes the user to the Cancel flow |
+| **Cancel** | user clicks "Cancel Subscription" | `cancelSubscriptionAction` → `auth.api.cancelSubscription` → Stripe schedules cancellation at period end |
+
+`changePlanAction` drives cancel-vs-change **UI** (`{ action: "cancel" | "changed"; blockReason? }`). It does not redirect.
 
 ```mermaid
 flowchart TD
@@ -43,12 +45,12 @@ Whether the prorated true-up is **charged at confirm time** is governed by the S
 
 ## Downgrades
 
-Downgrades are a **server action**, not a client plugin call, because they must be guarded against resource over-use. `DowngradeButton` binds `changePlanAction` (in `actions.ts`) via `useActionState`. The action:
+Downgrades are a **server action**, not a client plugin call, because they must be guarded against resource over-use. `DowngradeButton` calls `changePlanAction` (in `actions.ts`) via `useTransition` — not `useActionState`. The action:
 
 1. Validates input with `changePlanRequestSchema` (`schemas.ts`) — `organizationId`, `targetPlan` enum, optional `billingInterval` defaulting to monthly.
-2. Authorizes with `hasOrgPermission(organizationId, { organization: ["update"] })`.
+2. Authorizes with `hasOrgPermission(organizationId, { organization: ["update"] })`. This is the only billing action that also calls `hasOrgPermission` (it does authorization-sensitive pre-work and can return early without reaching `auth.api.*`).
 3. Loads the active subscription via `getActiveSubscription` and re-runs `comparePlans`; if the direction is **not** `"downgrade"` it rejects with `actionError("changePlan")` (defense in depth — the UI already filtered).
-4. Runs `guardDowngrade(subscription, targetPlan, memberCount, storageMB)` from `packages/auth/guards.ts`.
+4. Runs `guardDowngrade(subscription, targetPlan, memberCount, storageMB)` from `packages/auth/guards.ts` with **real** member and storage counts.
 5. If `targetPlan === free`, returns `{ action: "cancel" }` — downgrade to free is expressed as a **cancellation**, not a plan swap.
 6. Otherwise calls `auth.api.upgradeSubscription({ plan, annual, referenceId, scheduleAtPeriodEnd: true })`. The `scheduleAtPeriodEnd: true` flag is what makes a paid→paid downgrade take effect at the end of the current period rather than immediately.
 
@@ -56,96 +58,86 @@ Downgrades are a **server action**, not a client plugin call, because they must 
 
 `guardDowngrade` returns `{ allowed, reason, requiredPlan }`. See [Subscription Lifecycle § Downgrade guard](./subscription-lifecycle#downgrade-guard) for the three rules it enforces (must actually be a downgrade, billing-health gate, resource fit).
 
-When blocked, the action returns `{ success: true, data: { action: "changed", blockReason } }`. `DowngradeButton` keeps the dialog open, renders the reason in a destructive `Alert`, and disables the submit button (`disabled={isPending || !!serverBlockReason}`). `PlanCard` also pre-computes `downgradeBlockReason` so the disabled state shows before the user even opens the dialog.
+When blocked, the action returns `{ success: true, data: { action: "changed", blockReason } }`. `DowngradeButton` keeps the dialog open, renders the reason in a destructive `Alert`, and disables the submit button (`disabled={isPending || !!serverBlockReason}`).
 
-On a successful downgrade, `ChangePlan.handleDowngradeSuccess` shows `"Plan changed successfully"` and calls `refetch()`. When `action === "cancel"` it instead shows `"To downgrade to Free, cancel your subscription below."` and steers the user to `BillingActions`.
+`PlanCard` also pre-computes `downgradeBlockReason` via `guardDowngrade(subscription, plan.name, 0, 0)`. Those zeros mean **resource over-use is not previewed** on the card — only the billing-health / not-a-downgrade rules can fire before submit. Member and storage limits are enforced when `changePlanAction` runs with real counts.
+
+On a successful downgrade, `ChangePlanView.handleDowngradeSuccess` shows `"Plan changed successfully"`. When `action === "cancel"` it instead shows `"To downgrade to Free, cancel your subscription below."` and steers the user to `BillingActions`.
 
 ## Cancellation
 
-Cancellation lives in `BillingActions` (`billing-actions.tsx`) and the `useCancel` hook (`packages/auth/use-subscription.ts`). The Cancel button only renders when `isPaid && !isCanceled`. Clicking it opens an `AlertDialog`; confirming calls `cancel()`, which invokes `subscription.cancel()` with the org `referenceId`, the `stripeSubscriptionId`, and a `returnUrl` back to the billing page.
+Cancellation lives in `BillingActions` (`billing-actions.tsx`). There is no `current-plan.tsx`. The Cancel button only renders when the org is on a paid plan and the subscription is not already pending-cancel (`isSubscriptionActive && isSubscriptionPendingCancel`). Clicking it opens an `AlertDialog`; confirming calls `cancelSubscriptionAction` with the org `referenceId`, optional `stripeSubscriptionId`, locale, and slug.
 
 Stripe does **not** delete the subscription immediately — it schedules cancellation at period end, so the row stays `active` with a pending-cancel marker until the period boundary passes, at which point a webhook flips the status to `canceled`.
+
+If the action returns a URL, `BillingActions` redirects there (Stripe-hosted confirmation). If it returns success without a URL (immediate cancel, or the benign already-canceling case), the dialog closes, a toast is shown, and `router.refresh()` runs. `isAlreadyCancelingError` is handled **inside** `cancelSubscriptionAction`, which returns `{ success: true }` instead of an error.
 
 ```mermaid
 sequenceDiagram
   participant U as User
   participant UI as BillingActions
-  participant H as useCancel hook
+  participant SA as cancelSubscriptionAction
   participant BA as Better Auth /api/auth/*
   participant S as Stripe
   participant DB as Subscription row
 
   U->>UI: Click "Yes, Cancel"
-  UI->>H: cancel()
-  H->>BA: subscription.cancel({ referenceId, subscriptionId, returnUrl })
+  UI->>SA: cancelSubscriptionAction({ organizationId, subscriptionId, ... })
+  SA->>BA: auth.api.cancelSubscription({ referenceId, subscriptionId, returnUrl })
   BA->>S: Schedule cancel at period end
-  S-->>BA: { error } or ok (resolves, does not throw)
-  BA-->>H: { error: cancelError | null }
-  alt cancelError && not "already set to be canceled"
-    H->>UI: onError → toast(errors.cancelSubscription)
-  else ok OR benign "already canceling" 400
-    H->>UI: onSuccess → toast + refetch()
+  alt action returns url
+    SA-->>UI: { success, data: { url } }
+    UI->>S: window.location.href = url
+  else success with no url (or already-canceling)
+    SA-->>UI: { success: true }
+    UI->>UI: toast + router.refresh()
   end
   Note over S,DB: Later, at period end
   S->>BA: Stripe webhook (customer.subscription.updated/deleted)
-  BA->>DB: set cancelAt / cancelAtPeriodEnd, then status = canceled
+  BA->>DB: plugin upserts cancelAt / cancelAtPeriodEnd, then status = canceled
 ```
 
 ### How cancellation is surfaced in the UI
 
-State is derived in `useSubscription`:
+State is derived in `BillingActions` from the Prisma `Subscription` passed in as a prop:
 
-- `isActive` — `status === active`.
-- `isCanceled` — `isActive && isSubscriptionPendingCancel(subscription)`. A canceled-but-still-active subscription is one that is scheduled to end but has not yet lapsed.
+- pending-cancel — `isSubscriptionActive(subscription) && isSubscriptionPendingCancel(subscription)`. A canceled-but-still-active subscription is one that is scheduled to end but has not yet lapsed.
+- access cutoff — `subscription.cancelAt ?? subscription.periodEnd` (Stripe may end a pending-cancel sub at `cancelAt` rather than `periodEnd`).
 
-`CurrentPlan` (`current-plan.tsx`) renders a yellow warning when `isCanceled && subscription?.periodEnd`:
-
-> "Your subscription has been canceled — You'll retain access until `{formatDate(subscription.periodEnd)}`"
-
-The "Next billing date" row is hidden in this state (`isActive && !isCanceled`), so a canceled subscription never advertises a future charge. `BillingActions` hides the Cancel button and shows: "Your subscription has been canceled and will end at the current billing period. You can reactivate it from the billing portal."
+When pending-cancel, `BillingActions` hides the Cancel button and the "Next billing date" row, and shows: "Your subscription has been canceled and will end on `{formatDate(endsAt)}`. You can reactivate it from the billing portal."
 
 ### Reactivation
 
-There is no dedicated "restore" action in the app. Reactivation is delegated to the Stripe customer portal, reached through `ManageBillingForm`. The cancel-state copy explicitly points users there ("reactivate it from the billing portal").
-
-## The `cancelAt` fix (branch `fix/subscription-cancel-state`)
-
-Commit `4875cbb` (`fix(billing): surface cancel errors and recognize cancelAt cancellation`) fixed two distinct bugs. Both are reflected in the code above.
-
-**Bug 1 — cancel silently no-op'd.** Better Auth client methods resolve with an `{ error }` object instead of throwing. The old `useCancel` ignored it, so every click showed a success toast even when nothing happened. The fix destructures `{ error: cancelError }` from `subscription.cancel()` and throws on real failures, routing them to `onError` → `toast.error(errors.cancelSubscription, { description: error.message })`.
-
-**Bug 2 — `cancelAt` cancellations looked active.** `isCanceled` previously checked only `cancelAtPeriodEnd`, missing subscriptions Stripe scheduled to cancel via the newer `cancelAt` timestamp instead — see [Subscription Lifecycle](./subscription-lifecycle) (Pending cancellation section) for how `isSubscriptionPendingCancel` checks both signals today. The fix also added `isAlreadyCancelingError(message)`, which detects Better Auth's benign `"already set to be canceled"` 400 (when local state has drifted from Stripe) and treats it as a no-op success rather than an error.
+There is no dedicated "restore" action in the app. Reactivation is delegated to the Stripe customer portal, reached through `ManageBillingForm` (`openBillingPortalAction`). The cancel-state copy explicitly points users there ("reactivate it from the billing portal").
 
 ```mermaid
 stateDiagram-v2
   [*] --> Active: upgrade / checkout completes
   Active --> Active: paid→paid downgrade (scheduleAtPeriodEnd)
-  Active --> PendingCancel: subscription.cancel()
+  Active --> PendingCancel: cancelSubscriptionAction
   PendingCancel --> Active: reactivate via Stripe portal
   PendingCancel --> Canceled: period end (Stripe webhook)
   note right of PendingCancel
-    isActive == true
+    isSubscriptionActive == true
     isSubscriptionPendingCancel == true
     (cancelAtPeriodEnd || cancelAt)
-    UI: "cancels on {periodEnd}"
+    UI: "cancels on {cancelAt ?? periodEnd}"
   end note
   Canceled --> [*]
 ```
 
 ## Source files
 
-- `apps/web/app/[locale]/(app)/[orgSlug]/billing/actions.ts` — `changePlanAction`, downgrade guard + `scheduleAtPeriodEnd`
+- `apps/web/app/[locale]/(app)/[orgSlug]/billing/actions.ts` — `upgradeSubscriptionAction`, `openBillingPortalAction`, `cancelSubscriptionAction`, `changePlanAction`
 - `apps/web/app/[locale]/(app)/[orgSlug]/billing/schemas.ts` — `changePlanRequestSchema`
-- `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/change-plan.tsx` — billing-interval toggle, plan grid, downgrade success routing
-- `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/plan-card.tsx` — per-plan `comparePlans` direction + guard preview
-- `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/upgrade-form.tsx` — `subscription.upgrade()` → Checkout
-- `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/downgrade-button.tsx` — `useActionState`, blockReason handling
-- `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/billing-actions.tsx` — Cancel dialog, `useCancel`, canceled-state copy
-- `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/current-plan.tsx` — cancel banner, `periodEnd` messaging
+- `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/change-plan.tsx` — server wrapper; loads subscription + plans
+- `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/change-plan-view.tsx` — billing-interval toggle, plan grid, downgrade success toasts
+- `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/plan-card.tsx` — per-plan `comparePlans` direction + `guardDowngrade(..., 0, 0)` preview
+- `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/upgrade-button.tsx` — `useTransition` + `upgradeSubscriptionAction`
+- `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/downgrade-button.tsx` — `useTransition` + `changePlanAction`, blockReason handling
+- `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/billing-actions.tsx` — Cancel dialog, pending-cancel copy, `cancelSubscriptionAction`
 - `apps/web/lib/billing/subscription-queries.ts` — `getActiveSubscription`, `getOrgMemberCount`, `getOrgStorageUsage`
-- `packages/auth/use-subscription.ts` — `useSubscription` (`isCanceled`), `useCancel` (error surfacing)
 - `packages/auth/helpers.ts` — `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getStatusColor`
 - `packages/auth/guards.ts` — `guardDowngrade`
 - `packages/auth/plans.ts` — `comparePlans`, `isPlanHigherTier`
-- `packages/auth/types.ts` — `Subscription` (`cancelAt`, `cancelAtPeriodEnd`), `SubscriptionSchema`
-- `packages/auth/client.ts` — `subscription` client export (`upgrade` / `cancel`)
+- `packages/database/prisma/schema.prisma` — `Subscription` (`cancelAt`, `cancelAtPeriodEnd`)

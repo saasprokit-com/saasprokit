@@ -37,10 +37,12 @@ Ensure you have the following installed:
    ```
 
    <Callout type="warn">
-     **Setup rewrites this clone in place and cannot be re-run.** Two deletions
-     happen without a prompt: the deploy configs for the hosts you did not pick,
-     and the CLI's own tooling — `scripts/`, `dist/`, `tsup.config.ts` and
-     `vitest.config.mts`. Run it on a clean checkout, and pass flags if you
+     **Setup rewrites this clone in place and cannot be re-run.** Three deletions
+     happen without a prompt: the deploy configs for the hosts you did not pick;
+     this documentation tree (`docs/`, workspace package `kit-docs`, and the
+     `kit-docs:*` scripts / `--filter=!kit-docs` guards); and — unless you pass
+     `--keep-setup` — the CLI's own tooling (`scripts/`, `dist/`, `tsup.config.ts`,
+     `vitest.config.mts`). Run it on a clean checkout, and pass flags if you
      want to keep any of it:
 
      | Flag | Effect |
@@ -53,98 +55,102 @@ Ensure you have the following installed:
 
      The interactive run asks before committing. `--yes` does not — it commits
      straight away on a clean tree, and on a dirty tree it skips the commit
-     rather than sweeping your uncommitted work into it.
+     rather than sweeping your uncommitted work into it. `docs/` is always
+     removed; there is no flag to keep kit-docs.
    </Callout>
 
    The manual steps below remain for reference and for adjusting values later.
+   Copy `apps/web/.env.example` → `apps/web/.env.local` and
+   `packages/database/.env.example` → `packages/database/.env`. Both
+   `DATABASE_URL`s must match — Prisma CLI commands (`migrate`, `studio`,
+   `db:seed`) load `packages/database/.env`, not the Next.js app env. Generate
+   `BETTER_AUTH_SECRET` with `openssl rand -base64 48`.
 
-   Create `.env.local` in `apps/web/` (see `.env.example` for the full list):
+   Families in `apps/web/.env.example` (optional vars ship commented out):
+
+   | Family | Vars |
+   | --- | --- |
+   | App (required) | `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_DOCS_URL` |
+   | Database | `DATABASE_URL` (default matches Docker postgres). Optional `DIRECT_URL` when using a pooled Neon URL |
+   | Better Auth | `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `BETTER_AUTH_TRUSTED_ORIGINS`. Optional `ADMIN_EMAILS` for first-admin bootstrap |
+   | OAuth (optional) | `GOOGLE_CLIENT_ID` / `_SECRET`, `GITHUB_CLIENT_ID` / `_SECRET` |
+   | Stripe (optional in dev) | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_{PRO,ENTERPRISE}_PRICE_ID_{MONTHLY,ANNUAL}` |
+   | Email | `EMAIL_FROM`, `RESEND_API_KEY` (prod), `SMTP_*` (dev defaults to MailDev on `localhost:1025`) |
+   | Storage | `STORAGE_PROVIDER` (`local` / `s3`) plus local path / S3 (`AWS_*`) vars |
+
+4. **Start local infrastructure**
+
+   `pnpm dev` does **not** start Postgres or MailDev.
+
    ```bash
-   # App Configuration (required)
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
-   NEXT_PUBLIC_APP_NAME=MyApp
-   NEXT_PUBLIC_DOCS_URL=http://localhost:3004
-
-   # Database (required)
-   DATABASE_URL=postgresql://user:password@host/database
-
-   # Better Auth (required)
-   BETTER_AUTH_SECRET=your-secret-key
-   # Generate with: openssl rand -base64 48
-   BETTER_AUTH_URL=http://localhost:3000
-   BETTER_AUTH_TRUSTED_ORIGINS=
-
-   # OAuth Providers (optional)
-   GOOGLE_CLIENT_ID=
-   GOOGLE_CLIENT_SECRET=
-   GITHUB_CLIENT_ID=
-   GITHUB_CLIENT_SECRET=
-
-   # Stripe (optional, for billing features)
-   STRIPE_SECRET_KEY=sk_test_...
-   STRIPE_WEBHOOK_SECRET=whsec_test_...
-
-   # Email (optional — defaults to MailDev locally)
-   EMAIL_FROM=noreply@yourdomain.com
-   RESEND_API_KEY=
-
-   # Storage
-   STORAGE_PROVIDER=local
+   docker compose up postgres maildev
    ```
 
-   Also create `.env` in `packages/database/` with the same connection string:
-   ```bash
-   DATABASE_URL=postgresql://user:password@host/database
-   ```
+   Postgres is on `5432`. MailDev SMTP is `1025`; caught mail is at http://localhost:1080.
 
-   This is required separately from `apps/web/.env.local` — Prisma CLI commands (`migrate`, `studio`, `db:seed`) run as their own process and load env vars from `packages/database/`, not from the Next.js app.
-
-4. **Set up the database**
+5. **Set up the database**
    ```bash
    pnpm migrate
    ```
 
-5. **Seed the database (optional)**
+6. **Seed the database (optional, destructive)**
    ```bash
    pnpm --filter @repo/database db:seed
    ```
 
-   This creates sample users, organizations, memberships, and subscriptions for development. See [Database Design](/docs/database/database-design) for details on seeded data.
+   <Callout type="warn">
+     This **wipes every table first**, then creates sample users (including
+     `admin@example.com` / `Password@saaspro`), organizations, memberships, and
+     subscriptions. It exits without running if `NODE_ENV=production`. See
+     [Database Design](/docs/database/database-design) for what is seeded.
+   </Callout>
 
-6. **Run the development server**
+7. **Run the development server**
    ```bash
    pnpm dev
    ```
 
-   This starts all apps and services:
+   This is `turbo dev --filter=!kit-docs`. It starts the customer apps, **not**
+   this documentation site:
+
    - **Main app**: http://localhost:3000
-   - **Documentation**: http://localhost:3004
+   - **Customer docs** (`apps/docs`, empty Fumadocs starter): http://localhost:3004
    - **Email preview**: http://localhost:3003
    - **Storybook**: http://localhost:6006
    - **Prisma Studio**: http://localhost:3005
 
+   SaaSProKit's own docs (this site, workspace package `kit-docs`) run separately:
+
+   ```bash
+   pnpm kit-docs:dev    # http://localhost:3006
+   ```
+
+   After `pnpm run setup`, root `docs/` is deleted and `kit-docs:dev` is gone.
+   Product docs stay at `pnpm --filter docs dev` (port 3004).
+
 ### First Time Setup
 
-After starting the dev server:
+After starting the app:
 
 1. Navigate to http://localhost:3000
-2. Sign up for a new account (or use seeded credentials: `admin@example.com` / `Password@saaspro`)
-3. Create your first organization
-4. Explore the dashboard features
+2. Sign up, or use seeded credentials `admin@example.com` / `Password@saaspro` (seed already creates organizations — skip "create your first org" unless you want another)
+3. Explore the dashboard
 
 ### Common Development Commands
 
 ```bash
-# Run all apps in development mode
+# Customer apps (excludes kit-docs)
 pnpm dev
 
-# Run specific app
-pnpm --filter app dev        # Main SaaS app
-pnpm --filter docs dev       # Documentation site
-pnpm --filter storybook dev  # Component library
+# Run a specific app
+pnpm --filter app dev        # Main SaaS app (port 3000)
+pnpm --filter docs dev       # Customer product docs (port 3004)
+pnpm kit-docs:dev            # This site — kit-docs (port 3006)
+pnpm --filter storybook dev  # Component library (port 6006)
 
-# Build the entire project
+# Build the customer apps (excludes kit-docs)
 pnpm build
+pnpm kit-docs:build          # This site only
 
 # Run linting checks
 pnpm check
@@ -153,14 +159,14 @@ pnpm check
 pnpm fix
 
 # Run tests
-pnpm test
+pnpm test                    # Unit tests via turbo (app, @repo/auth, @repo/database)
 
 # Type check the web app
 pnpm --filter app typecheck
 
 # Database commands
 pnpm migrate                              # Format, generate, push schema
-pnpm --filter @repo/database db:seed      # Seed development data
+pnpm --filter @repo/database db:seed      # Wipe every table, then seed
 ```
 
 ### Troubleshooting
@@ -170,8 +176,11 @@ pnpm --filter @repo/database db:seed      # Seed development data
 
 **Database connection issues**
 - Verify `DATABASE_URL` in `apps/web/.env.local` **and** `packages/database/.env` (both are required, and must match)
-- Ensure PostgreSQL is running
-- Check Neon credentials if using Neon database
+- Ensure Postgres is running (`docker compose up postgres maildev`)
+- Check Neon credentials if using Neon
+
+**Caught email (password reset, magic link, verify)**
+- MailDev UI: http://localhost:1080 (SMTP `localhost:1025`)
 
 **Dependencies not installing**
 - Clear pnpm cache: `pnpm store prune`

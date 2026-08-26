@@ -60,6 +60,18 @@ const FIXTURE_FILES: Record<string, string> = {
   "apps/docs/public/_headers": "/x\n",
   "apps/docs/Dockerfile": "FROM node:22\n",
   "docs/package.json": JSON.stringify({ name: "kit-docs" }),
+  "README.md": "saasprokit/\n├── apps/\n├── docs/           # SaaSProKit's own documentation (port 3006)\n└── packages/\n",
+  "CLAUDE.md": "pnpm dev                      # All apps except kit-docs\npnpm kit-docs:dev             # SaaSProKit's own documentation (port 3006)\npnpm build                    # All apps and packages (excludes kit-docs)\n`apps/docs` ships as an **empty** Fumadocs starter — it is the customer's product documentation, not ours. SaaSProKit's own documentation is the root **`docs/`** folder (workspace package `kit-docs`, port 3006), excluded from the default `pnpm dev` / `pnpm build` fan-out. `pnpm setup` initializes `apps/docs` alongside `apps/web`, then deletes `docs/` and every reference to it (workspace entry, `kit-docs:*` scripts, the `--filter=!kit-docs` guards, the dev Dockerfile COPY, the Biome exclude, the README tree line, the VS Code launch config, the CI typecheck step, and kit-docs mentions in CLAUDE.md / AGENTS.md / CONTRIBUTING / env-setup) — the customer's clone keeps none of our documentation.\nScratch plans, reviews, and specs go in **`.docs/`** (gitignored). Do not put them in `docs/` — that is kit-docs, the product we ship.\n",
+  "AGENTS.md": "`apps/docs` is an empty Fumadocs starter for the **customer's** product docs (port 3004). Root `docs/` is kit-docs (port 3006), excluded from default `pnpm dev` / `pnpm build`. `pnpm setup` keeps `apps/docs` and deletes `docs/` plus every kit-docs reference. Scratch plans/reviews go in **`.docs/`** (gitignored), never `docs/`.\npnpm dev                                # All apps except kit-docs (main app: 3000)\npnpm kit-docs:dev                       # SaaSProKit's own docs (port 3006)\npnpm build                              # All apps and packages (excludes kit-docs)\n",
+  ".vscode/launch.json": JSON.stringify({
+    version: "0.2.0",
+    configurations: [
+      { name: "Next.js: debug client-side (docs)", url: "http://localhost:3004" },
+      { name: "Next.js: debug client-side (kit-docs)", url: "http://localhost:3006" },
+    ],
+  }),
+  ".github/CONTRIBUTING.md": "- Ensure your PR follows the [project's philosophy](/docs/overview.mdx)\n",
+  "saasprokit-skills/skills/env-setup/SKILL.md": "The `docs` service is `apps/docs` — the customer's own,\nempty-by-default docs site. SaaSProKit's own documentation is the root `docs/`\nfolder (`kit-docs`, port 3006); it has no compose service, run `pnpm kit-docs:dev`.\n",
   "docs/wrangler.jsonc": `{
   "name": "saasprokit-docs",
   "env": { "site": { "routes": [{ "pattern": "docs.saasprokit.com" }] } }
@@ -78,6 +90,9 @@ const FIXTURE_FILES: Record<string, string> = {
 
       - name: Run setup CLI tests
         run: pnpm test:cli
+
+      - name: Typecheck kit-docs
+        run: pnpm --filter kit-docs typecheck
 
   setup-cli:
     strategy:
@@ -292,6 +307,42 @@ describe("removeKitDocs", () => {
     const biome = readFileSync(join(root, "biome.jsonc"), "utf8");
     expect(biome).not.toContain('"!docs/**/*.json"');
     expect(biome).toContain('"!apps/docs/**/*.json"');
+
+    const readme = readFileSync(join(root, "README.md"), "utf8");
+    expect(readme).not.toContain("SaaSProKit's own documentation");
+    expect(readme).toContain("apps/");
+
+    const claude = readFileSync(join(root, "CLAUDE.md"), "utf8");
+    expect(claude).not.toContain("kit-docs");
+    expect(claude).toContain("product documentation site (port 3004)");
+
+    const agents = readFileSync(join(root, "AGENTS.md"), "utf8");
+    expect(agents).not.toContain("kit-docs");
+    expect(agents).toContain("empty Fumadocs starter for product docs");
+
+    const launch = JSON.parse(
+      readFileSync(join(root, ".vscode/launch.json"), "utf8")
+    );
+    expect(launch.configurations).toHaveLength(1);
+    expect(launch.configurations[0].name).toContain("(docs)");
+
+    const ci = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
+    expect(ci).not.toContain("kit-docs");
+    expect(ci).toContain("pnpm test:cli");
+
+    const contributing = readFileSync(
+      join(root, ".github/CONTRIBUTING.md"),
+      "utf8"
+    );
+    expect(contributing).not.toContain("/docs/overview.mdx");
+    expect(contributing).toContain("../README.md");
+
+    const envSetup = readFileSync(
+      join(root, "saasprokit-skills/skills/env-setup/SKILL.md"),
+      "utf8"
+    );
+    expect(envSetup).not.toContain("kit-docs");
+    expect(envSetup).toContain("port 3004");
   });
 
   it("is safe on a clone that already lacks those files", () => {

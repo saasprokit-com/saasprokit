@@ -40,7 +40,9 @@
   // Named environments do NOT inherit routes/services/r2_buckets — each block
   // must restate them in full.
   "env": {
-    // The maintainers' published docs site: `pnpm --filter=docs run deploy:site`.
+    // The maintainers' published docs site: `pnpm kit-docs:deploy`
+    // (or `pnpm --filter kit-docs run deploy:site`). `--filter=docs` is the
+    // customer's app.
     "site": {
       // Keep the original worker name: without this the env would deploy a
       // second worker named "saasprokit-docs-site", orphaning the existing one

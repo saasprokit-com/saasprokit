@@ -70,6 +70,9 @@ model Account {
   password              String?       // Hashed password (credential provider only)
   accessToken           String?
   refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
   scope                 String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
@@ -101,7 +104,6 @@ model Session {
   updatedAt            DateTime    @updatedAt
 
   user                 User        @relation(...)
-  csrfTokens           CSRFToken[]
 
   @@map("session")
 }
@@ -138,6 +140,7 @@ model TwoFactor {
   secret      String     // TOTP secret
   backupCodes String     // JSON array of backup codes
   userId      String
+  verified    Boolean? @default(true)
 
   user        User   @relation(...)
 
@@ -153,12 +156,13 @@ Represents a team, company, or workspace.
 
 ```prisma
 model Organization {
-  id          String       @id @default(cuid())
-  name        String
-  slug        String       @unique
-  logo        String?
-  metadata    String?          // JSON (industry, size, website, etc.)
-  createdAt   DateTime     @default(now())
+  id               String       @id @default(cuid())
+  name             String
+  slug             String       @unique
+  logo             String?
+  metadata         String?          // JSON (industry, size, website, etc.)
+  stripeCustomerId String?
+  createdAt        DateTime     @default(now())
 
   members     Member[]
   invitations Invitation[]
@@ -172,6 +176,7 @@ model Organization {
 **Key fields:**
 - `slug` — URL-friendly identifier (globally unique)
 - `metadata` — JSON string for extensible org data
+- `stripeCustomerId` — Stripe customer ID (org-level billing)
 
 ### Member
 
@@ -184,9 +189,6 @@ model Member {
   userId         String
   role           String       @default("member")    // "owner" | "admin" | "member"
   createdAt      DateTime     @default(now())
-  suspendedAt    DateTime?
-  suspendedBy    String?
-  suspendReason  String?
 
   organization   Organization @relation(...)
   user           User         @relation(...)
@@ -203,7 +205,7 @@ model Member {
 - `admin` — Manage members, settings, content
 - `member` — Limited access, view-only on settings
 
-**Suspension:** Members can be suspended with reason tracking.
+`Member` has only `id`, `organizationId`, `userId`, `role`, and `createdAt` — there is no suspend field.
 
 ### Invitation
 
@@ -273,6 +275,11 @@ model Subscription {
   trialStart           DateTime?
   trialEnd             DateTime?
   cancelAtPeriodEnd    Boolean?  @default(false)
+  cancelAt             DateTime?
+  canceledAt           DateTime?
+  endedAt              DateTime?
+  billingInterval      String?
+  stripeScheduleId     String?
   seats                Int?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
@@ -348,7 +355,7 @@ model File {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  uploadedBy     User?     @relation(...)
+  uploadedBy     User?     @relation(..., onDelete: SetNull)
 
   @@map("file")
 }
@@ -373,25 +380,6 @@ model AuditLog {
   user      User     @relation(...)
 
   @@map("audit_log")
-}
-```
-
-### CSRFToken
-
-Cross-site request forgery protection tokens.
-
-```prisma
-model CSRFToken {
-  id        String    @id @default(cuid())
-  token     String    @unique
-  sessionId String
-  expiresAt DateTime
-  usedAt    DateTime?     // Grace period: retry within 5s of first use
-  createdAt DateTime  @default(now())
-
-  session   Session   @relation(...)
-
-  @@map("csrf_token")
 }
 ```
 
@@ -428,7 +416,7 @@ Backs Better Auth's database-stored rate limiter (see `packages/auth/server.ts`'
 ```prisma
 model RateLimit {
   id          String @id @default(cuid())
-  key         String        // Rate-limit bucket key (route + identifier)
+  key         String      @unique  // Rate-limit bucket key (route + identifier)
   count       Int
   lastRequest BigInt        // Unix ms of the last request in this window
 
@@ -443,8 +431,8 @@ User (1) ──→ (N) Member ←── (1) Organization
   │                              │
   ├─→ (N) Account                ├─→ (N) Invitation
   ├─→ (N) Session                ├─→ (N) InviteLink
-  │     └─→ (N) CSRFToken       └─→ (N) Team
-  ├─→ (N) TwoFactor                   └─→ (N) TeamMember
+  │                              └─→ (N) Team
+  ├─→ (N) TwoFactor                    └─→ (N) TeamMember
   ├─→ (N) File
   ├─→ (N) AuditLog              Subscription (standalone, linked via referenceId)
   └─→ (N) TeamMember
@@ -453,9 +441,8 @@ User (1) ──→ (N) Member ←── (1) Organization
 
 ### Cascade Deletes
 
-- **Delete User** → Removes accounts, sessions, members, audit logs, team memberships
+- **Delete User** → Removes accounts, sessions, members, audit logs, team memberships. `File.uploadedBy` is `onDelete: SetNull` — files are not deleted with the user.
 - **Delete Organization** → Removes members, invitations, invite links, teams
-- **Delete Session** → Removes CSRF tokens
 - **Delete Team** → Removes team members
 
 ## Migrations
@@ -468,10 +455,8 @@ User (1) ──→ (N) Member ←── (1) Organization
 
 ### Seeding
 
-The project includes a comprehensive seed script at `packages/database/prisma/seed.ts`:
+`packages/database/prisma/seed.ts` wipes every table first (`deleteMany` in FK-safe order) and is blocked in production (`NODE_ENV === "production"` exits). Then it creates sample users (admin, moderator, regular, banned, 2FA-enabled), organizations, memberships, invitations, subscriptions across all tiers, and sessions.
 
 ```bash
 pnpm --filter @repo/database db:seed
 ```
-
-This creates sample users (admin, moderator, regular, banned, 2FA-enabled), organizations, memberships, invitations, subscriptions across all tiers, and sessions.

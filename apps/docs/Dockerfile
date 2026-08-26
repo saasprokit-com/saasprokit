@@ -3,10 +3,10 @@
 # Uses multi-stage builds with turbo prune for minimal Docker context
 #
 # Build:
-#   docker build -f apps/docs/Dockerfile -t saasprokit-docs:latest .
+#   docker build -f apps/docs/Dockerfile -t docs:latest .
 #
 # Run:
-#   docker run -p 3004:3004 saasprokit-docs:latest
+#   docker run -p 3004:3004 docs:latest
 # =============================================================================
 
 # ---------------------------------------------------------------------------
