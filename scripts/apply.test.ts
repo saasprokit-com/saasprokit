@@ -52,8 +52,9 @@ const FIXTURE_FILES: Record<string, string> = {
     devDependencies: { "@opennextjs/cloudflare": "^1", wrangler: "^4", typescript: "^5" },
   }),
   "apps/docs/wrangler.jsonc": `{
-  "name": "saasprokit-docs",
-  "r2_buckets": [{ "bucket_name": "saasprokit-docs-cache" }]
+  "name": "docs",
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "docs" }],
+  "r2_buckets": [{ "bucket_name": "docs-cache" }]
 }`,
   "apps/docs/open-next.config.ts": "export default {};",
   "apps/docs/public/_headers": "/x\n",
@@ -152,8 +153,9 @@ describe("applyInit", () => {
     root = makeFixture();
     applyInit(root, CONFIG("cloudflare"));
     const wrangler = readFileSync(join(root, "apps/docs/wrangler.jsonc"), "utf8");
-    expect(wrangler).toContain("acme-docs");
-    expect(wrangler).toContain("acme-docs-cache");
+    expect(wrangler).toContain('"name": "acme-docs"');
+    expect(wrangler).toContain('"service": "acme-docs"');
+    expect(wrangler).toContain('"bucket_name": "acme-docs-cache"');
     expect(wrangler).not.toContain("saasprokit");
     expect(existsSync(join(root, "apps/docs/Dockerfile"))).toBe(false);
   });

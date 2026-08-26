@@ -51,6 +51,57 @@ describe("customizeWrangler", () => {
   });
 });
 
+const GENERIC = `{
+  // Worker name
+  "name": "docs",
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "docs" }],
+  "r2_buckets": [
+    { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "docs-cache" }
+  ]
+}`;
+
+describe("customizeWrangler on an unbranded config", () => {
+  it("prefixes the worker, self-reference and bucket with the slug", () => {
+    const out = customizeWrangler(GENERIC, "acme");
+    expect(out).toContain('"name": "acme-docs"');
+    expect(out).toContain('"service": "acme-docs"');
+    expect(out).toContain('"bucket_name": "acme-docs-cache"');
+    expect(out).toContain("// Worker name");
+  });
+
+  it("is idempotent — a second run does not stack prefixes", () => {
+    const once = customizeWrangler(GENERIC, "acme");
+    expect(customizeWrangler(once, "acme")).toContain('"name": "acme-docs"');
+  });
+});
+
+describe("slugs containing the brand", () => {
+  it("rebrands apps/web exactly once", () => {
+    const out = customizeWrangler(WRANGLER, "my-saasprokit");
+    expect(out).toContain('"name": "my-saasprokit-web"');
+    expect(out).not.toContain("my-my-saasprokit");
+  });
+});
+
+describe("apps/docs/wrangler.jsonc", () => {
+  const raw = readFileSync(join(ROOT, "apps/docs/wrangler.jsonc"), "utf8");
+
+  it("ships generic — no kit branding for the customer", () => {
+    expect(raw).not.toContain("saasprokit");
+  });
+
+  it("declares no named environments", () => {
+    expect(parse(raw)).not.toHaveProperty("env");
+  });
+
+  it("cannot collide with the kit docs worker after init", () => {
+    const kit = parse(readFileSync(join(ROOT, "docs/wrangler.jsonc"), "utf8")) as {
+      name?: string;
+    };
+    expect(customizeWrangler(raw, "acme")).not.toContain(`"${kit.name}"`);
+  });
+});
+
 describe("apps/web/wrangler.jsonc", () => {
   const raw = readFileSync(WRANGLER_PATH, "utf8");
   const config = parse(raw) as {
