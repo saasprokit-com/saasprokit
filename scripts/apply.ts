@@ -7,11 +7,13 @@ import {
   renderDatabaseEnv,
   renderEnvLocal,
 } from "./transforms/env-file";
+import { dropLines, KIT_DOCS_REFERENCES } from "./transforms/kit-docs";
 import {
   type PackageJsonShape,
   pruneAppPackage,
   renameRootPackage,
   stripCliFromRootPackage,
+  stripKitDocsFromRootPackage,
 } from "./transforms/package-json";
 import { setPrismaRuntime } from "./transforms/prisma-schema";
 import { customizeWrangler } from "./transforms/wrangler";
@@ -130,6 +132,18 @@ export function applyInit(rootDir: string, config: ApplyConfig): string[] {
   }
 
   return log;
+}
+
+export function removeKitDocs(rootDir: string): void {
+  rmSync(join(rootDir, "docs"), { recursive: true, force: true });
+  editJson(join(rootDir, "package.json"), stripKitDocsFromRootPackage);
+
+  for (const { file, lines } of KIT_DOCS_REFERENCES) {
+    const path = join(rootDir, file);
+    if (existsSync(path)) {
+      writeFileSync(path, dropLines(readFileSync(path, "utf8"), lines));
+    }
+  }
 }
 
 export function stripCliTooling(rootDir: string): void {

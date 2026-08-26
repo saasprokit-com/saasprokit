@@ -16,6 +16,7 @@ import {
   applyInit,
   devDbName,
   existingEnvFiles,
+  removeKitDocs,
   slugify,
   stripCliTooling,
 } from "./apply";
@@ -326,6 +327,9 @@ export async function runInit(
   for (const line of applyLog) {
     log.step(line);
   }
+
+  removeKitDocs(rootDir);
+  log.step("removed the SaaSProKit documentation (docs/)");
 
   if (!flags.keepSetup) {
     stripCliTooling(rootDir);
