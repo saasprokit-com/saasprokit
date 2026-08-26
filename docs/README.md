@@ -4,8 +4,6 @@ The documentation for the SaaSProKit boilerplate itself — how the monorepo is 
 billing, email, and deployment work. This is **not** your product's documentation: that lives in
 [`apps/docs`](../apps/docs), which ships as an empty Fumadocs starter.
 
-Published at [docs.saasprokit.com](https://docs.saasprokit.com).
-
 ```bash
 pnpm kit-docs:dev      # http://localhost:3006
 pnpm kit-docs:build
