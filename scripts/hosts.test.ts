@@ -40,10 +40,10 @@ describe("host manifest", () => {
     }
   });
 
-  it("never prunes the root docs/ kit documentation", () => {
+  it("scopes host pruning to apps/ — docs/ is removed by removeKitDocs, not here", () => {
     for (const target of Object.values(HOST_TARGETS)) {
       for (const file of target.deleteFiles) {
-        expect(file.startsWith("docs/"), `${target.id}: ${file}`).toBe(false);
+        expect(file.startsWith("apps/"), `${target.id}: ${file}`).toBe(true);
       }
     }
   });

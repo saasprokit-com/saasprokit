@@ -2,7 +2,12 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { type GitStatus, planCommit, runInit } from "./prompts";
+import {
+  type GitStatus,
+  localNextSteps,
+  planCommit,
+  runInit,
+} from "./prompts";
 
 const hoisted = vi.hoisted(() => ({ onExec: (_command: string) => undefined }));
 
@@ -80,6 +85,30 @@ const FIXTURE: Record<string, string> = {
   "scripts/index.ts": "// cli\n",
   "dist/index.js": "// bundle\n",
 };
+
+describe("localNextSteps", () => {
+  it("leads with the database steps the app cannot start without", () => {
+    expect(localNextSteps({ install: true })).toEqual([
+      "docker compose up postgres maildev",
+      "pnpm migrate",
+      "pnpm --filter @repo/database db:seed   # wipes existing rows",
+      "pnpm dev",
+    ]);
+  });
+
+  it("warns that seeding is destructive", () => {
+    const seed = localNextSteps({ install: true }).find((step) =>
+      step.includes("db:seed")
+    );
+    expect(seed).toContain("wipes");
+  });
+
+  it("prepends install when the CLI skipped it", () => {
+    const steps = localNextSteps({ install: false });
+    expect(steps[0]).toBe("pnpm install");
+    expect(steps).toHaveLength(5);
+  });
+});
 
 describe("runInit", () => {
   let root: string;

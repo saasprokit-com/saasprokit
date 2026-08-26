@@ -2,15 +2,25 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { applyInit, devDbName, stripCliTooling } from "./apply";
+import { applyInit, devDbName, removeKitDocs, stripCliTooling } from "./apply";
 
 const FIXTURE_FILES: Record<string, string> = {
   "package.json": JSON.stringify({
     name: "saasprokit",
     bin: { saasprokit: "dist/index.js" },
-    scripts: { build: "turbo build", setup: "tsup --silent && node dist/index.js init" },
+    scripts: {
+      build: "turbo build --filter=!kit-docs",
+      dev: "turbo dev --filter=!kit-docs",
+      "kit-docs:dev": "pnpm --filter kit-docs dev",
+      "kit-docs:build": "pnpm --filter kit-docs build",
+      "kit-docs:deploy": "pnpm --filter kit-docs run deploy:site",
+      setup: "tsup --silent && node dist/index.js init",
+    },
     dependencies: { commander: "^15.0.0" },
   }),
+  "pnpm-workspace.yaml": 'packages:\n  - "apps/*"\n  - "packages/*"\n  - "docs"\n',
+  "docker/dev.Dockerfile": "COPY apps/docs/package.json apps/docs/source.config.ts ./apps/docs/\nCOPY docs/package.json docs/source.config.ts ./docs/\nCOPY apps/email/package.json ./apps/email/package.json\n",
+  "biome.jsonc": '{\n  "files": {\n    "includes": [\n      "**/*",\n      "!apps/docs/**/*.json",\n      "!docs/**/*.json"\n    ]\n  }\n}\n',
   "apps/web/package.json": JSON.stringify({
     name: "app",
     scripts: {
@@ -42,8 +52,9 @@ const FIXTURE_FILES: Record<string, string> = {
     devDependencies: { "@opennextjs/cloudflare": "^1", wrangler: "^4", typescript: "^5" },
   }),
   "apps/docs/wrangler.jsonc": `{
-  "name": "saasprokit-docs",
-  "r2_buckets": [{ "bucket_name": "saasprokit-docs-cache" }]
+  "name": "docs",
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "docs" }],
+  "r2_buckets": [{ "bucket_name": "docs-cache" }]
 }`,
   "apps/docs/open-next.config.ts": "export default {};",
   "apps/docs/public/_headers": "/x\n",
@@ -142,8 +153,9 @@ describe("applyInit", () => {
     root = makeFixture();
     applyInit(root, CONFIG("cloudflare"));
     const wrangler = readFileSync(join(root, "apps/docs/wrangler.jsonc"), "utf8");
-    expect(wrangler).toContain("acme-docs");
-    expect(wrangler).toContain("acme-docs-cache");
+    expect(wrangler).toContain('"name": "acme-docs"');
+    expect(wrangler).toContain('"service": "acme-docs"');
+    expect(wrangler).toContain('"bucket_name": "acme-docs-cache"');
     expect(wrangler).not.toContain("saasprokit");
     expect(existsSync(join(root, "apps/docs/Dockerfile"))).toBe(false);
   });
@@ -168,17 +180,10 @@ describe("applyInit", () => {
     expect(existsSync(join(root, "apps/docs/wrangler.jsonc"))).toBe(false);
   });
 
-  it("leaves the root docs/ kit documentation untouched", () => {
-    for (const host of ["cloudflare", "vercel", "docker"] as const) {
-      root = makeFixture();
-      applyInit(root, CONFIG(host));
-      expect(JSON.parse(readFileSync(join(root, "docs/package.json"), "utf8")).name).toBe("kit-docs");
-      const wrangler = readFileSync(join(root, "docs/wrangler.jsonc"), "utf8");
-      expect(wrangler).toContain("saasprokit-docs");
-      expect(wrangler).toContain("docs.saasprokit.com");
-      rmSync(root, { recursive: true, force: true });
-    }
+  it("host pruning alone never touches the root docs/", () => {
     root = makeFixture();
+    applyInit(root, CONFIG("cloudflare"));
+    expect(existsSync(join(root, "docs/package.json"))).toBe(true);
   });
 
   it("tolerates a clone with apps/docs deleted", () => {
@@ -253,6 +258,51 @@ describe("env file safety", () => {
   });
 });
 
+describe("removeKitDocs", () => {
+  it("deletes the kit documentation", () => {
+    root = makeFixture();
+    removeKitDocs(root);
+    expect(existsSync(join(root, "docs"))).toBe(false);
+  });
+
+  it("drops the kit-docs scripts and un-filters build/dev", () => {
+    root = makeFixture();
+    removeKitDocs(root);
+    const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+    // turbo hard-errors on a filter matching no package, so these must go
+    expect(pkg.scripts.build).toBe("turbo build");
+    expect(pkg.scripts.dev).toBe("turbo dev");
+    expect(pkg.scripts["kit-docs:dev"]).toBeUndefined();
+    expect(pkg.scripts["kit-docs:build"]).toBeUndefined();
+    expect(pkg.scripts["kit-docs:deploy"]).toBeUndefined();
+    expect(pkg.scripts.setup).toBeDefined();
+  });
+
+  it("removes every reference to docs/ while leaving apps/docs alone", () => {
+    root = makeFixture();
+    removeKitDocs(root);
+    const workspace = readFileSync(join(root, "pnpm-workspace.yaml"), "utf8");
+    expect(workspace).not.toContain('- "docs"');
+    expect(workspace).toContain('- "apps/*"');
+
+    const dockerfile = readFileSync(join(root, "docker/dev.Dockerfile"), "utf8");
+    expect(dockerfile).not.toContain("COPY docs/");
+    expect(dockerfile).toContain("COPY apps/docs/package.json");
+
+    const biome = readFileSync(join(root, "biome.jsonc"), "utf8");
+    expect(biome).not.toContain('"!docs/**/*.json"');
+    expect(biome).toContain('"!apps/docs/**/*.json"');
+  });
+
+  it("is safe on a clone that already lacks those files", () => {
+    root = makeFixture();
+    for (const file of ["pnpm-workspace.yaml", "docker/dev.Dockerfile", "biome.jsonc", "docs"]) {
+      rmSync(join(root, file), { recursive: true, force: true });
+    }
+    expect(() => removeKitDocs(root)).not.toThrow();
+  });
+});
+
 describe("stripCliTooling", () => {
   it("removes every file the CLI owns", () => {
     root = makeFixture();
@@ -279,6 +329,6 @@ describe("stripCliTooling", () => {
     expect(pkg.bin).toBeUndefined();
     expect(pkg.scripts.setup).toBeUndefined();
     expect(pkg.dependencies).toBeUndefined();
-    expect(pkg.scripts.build).toBe("turbo build");
+    expect(pkg.scripts.build).toBe("turbo build --filter=!kit-docs");
   });
 });

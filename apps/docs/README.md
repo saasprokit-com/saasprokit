@@ -1,8 +1,7 @@
 # docs
 
 Your product's documentation site — an empty [Fumadocs](https://fumadocs.dev) app, ready for you to
-fill in. Nothing here is SaaSProKit content; the boilerplate's own documentation lives in
-[`docs/`](../../docs) at the repo root.
+fill in.
 
 ```bash
 pnpm --filter docs dev      # http://localhost:3004
