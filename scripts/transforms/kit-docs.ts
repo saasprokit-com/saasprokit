@@ -34,7 +34,7 @@ export const KIT_DOCS_TEXT_REPLACEMENTS: {
   },
   {
     file: "CLAUDE.md",
-    from: "`apps/docs` ships as an **empty** Fumadocs starter — it is the customer's product documentation, not ours. SaaSProKit's own documentation is the root **`docs/`** folder (workspace package `kit-docs`, port 3006), excluded from the default `pnpm dev` / `pnpm build` fan-out. `pnpm setup` initializes `apps/docs` alongside `apps/web`, then deletes `docs/` and every reference to it (workspace entry, `kit-docs:*` scripts, the `--filter=!kit-docs` guards, the dev Dockerfile COPY, the Biome exclude, the README tree line, the VS Code launch config, the CI typecheck step, and kit-docs mentions in CLAUDE.md / AGENTS.md / CONTRIBUTING / env-setup) — the customer's clone keeps none of our documentation.",
+    from: "`apps/docs` ships as an **empty** Fumadocs starter — it is the customer's product documentation, not ours. SaaSProKit's own documentation is the root **`docs/`** folder (workspace package `kit-docs`, port 3006), excluded from the default `pnpm dev` / `pnpm build` fan-out. `pnpm setup` initializes `apps/docs` alongside `apps/web`, then deletes `docs/` and every reference to it (workspace entry, `kit-docs:*` scripts, the `--filter=!kit-docs` guards, the dev Dockerfile COPY, the Biome exclude, the README tree line, the VS Code launch config, the CI typecheck step, and kit-docs mentions in CLAUDE.md / AGENTS.md / env-setup) — the customer's clone keeps none of our documentation.",
     to: "`apps/docs` ships as an **empty** Fumadocs starter — it is the product documentation site (port 3004).",
   },
   {
@@ -63,9 +63,14 @@ export const KIT_DOCS_TEXT_REPLACEMENTS: {
     to: "pnpm build                              # All apps and packages",
   },
   {
-    file: ".github/CONTRIBUTING.md",
-    from: "- Ensure your PR follows the [project's philosophy](/docs/overview.mdx)",
-    to: "- Ensure your PR follows the [project README](../README.md)",
+    file: "README.md",
+    from: "pnpm dev                      # All apps except kit-docs (main app: 3000)",
+    to: "pnpm dev                      # All apps (main app: 3000)",
+  },
+  {
+    file: "README.md",
+    from: "pnpm build                    # Build all apps except kit-docs",
+    to: "pnpm build                    # Build all apps",
   },
   {
     file: "saasprokit-skills/skills/env-setup/SKILL.md",
