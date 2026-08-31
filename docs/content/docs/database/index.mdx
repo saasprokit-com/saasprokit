@@ -3,7 +3,7 @@ title: Database Overview
 description: Prisma schema and Better Auth database structure
 ---
 
-The `@repo/database` package provides a Prisma client configured for PostgreSQL (Neon) with Better Auth integration. It has 16 models in total — Better Auth core (`User`, `Session`, `Account`, `Verification`), plugin-backed (`TwoFactor`, `Organization`, `Member`, `Invitation`, `InviteLink`, `Team`, `TeamMember`, `Subscription`, `RateLimit`), and app-specific (`File`, `AuditLog`, `CSRFToken`, `WebhookEvent`). See [Database Design](/docs/database/database-design) for the full field-by-field reference.
+The `@repo/database` package provides a Prisma client configured for PostgreSQL (Neon) with Better Auth integration. It has 16 models in total — Better Auth core (`User`, `Session`, `Account`, `Verification`), plugin-backed (`TwoFactor`, `Organization`, `Member`, `Invitation`, `InviteLink`, `Team`, `TeamMember`, `Subscription`, `RateLimit`), and app-specific (`File`, `AuditLog`, `WebhookEvent`). See [Database Design](/docs/database/database-design) for the full field-by-field reference.
 
 ## Entity Relationships
 
@@ -24,7 +24,6 @@ erDiagram
     Organization ||--o{ Team : "has teams"
 
     Team ||--o{ TeamMember : "has members"
-    Session ||--o{ CSRFToken : "has tokens"
 ```
 
 `Subscription`, `WebhookEvent`, and `RateLimit` are standalone tables — not tied to `User`/`Organization` via a Prisma relation (`Subscription.referenceId` is a polymorphic user-or-org ID resolved in application code).
@@ -60,7 +59,12 @@ npx prisma generate      # Generate Prisma client
 npx prisma db push       # Push schema changes
 npx prisma studio        # Open Prisma Studio
 npx prisma migrate dev   # Create migration
-pnpm db:seed             # Run seed script
+```
+
+Seed wipes every table first and is blocked in production (`NODE_ENV === "production"` exits). From the repo root:
+
+```bash
+pnpm --filter @repo/database db:seed
 ```
 
 ## Schema Location

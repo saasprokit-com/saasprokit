@@ -3,10 +3,12 @@ title: Unit Tests
 description: Catalog of Vitest unit tests and coverage gaps
 ---
 
-**Total: 134 test cases** across 13 files in 2 packages/apps (`@repo/auth`: 83 across 7 files, `apps/web`: 51 across 6 files).
+import { Callout } from 'fumadocs-ui/components/callout';
+
+`@repo/auth` has 7 files, `apps/web` has 7 files (including `lib/seo-config.test.ts`), and `@repo/database` has `redact.test.ts` (10 tests). `pnpm test` (`turbo test`) runs all three because `@repo/database` has a `test` script. See the file list below rather than a single total that will rot.
 
 <Callout type="warn">
-If `apps/web` has stale build output on disk (`.next/standalone/`, `.open-next/server-functions/default/` — left behind by a prior `pnpm build` or `cf:build`), `pnpm --filter app test` overcounts: `apps/web/vitest.config.mts`'s `include: ["**/*.test.{ts,tsx}"]` has no exclude for those directories, so it also runs the build's bundled copy of `hooks/use-action-result.test.ts`, once per copy. The 51/6 figure above is the real source count — verified by filtering `vitest run --reporter=verbose` output down to non-build paths, and cross-checked against `find apps/web -name "*.test.ts" -not -path "*/.next/*" -not -path "*/.open-next/*"`.
+If `apps/web` has stale build output on disk (`.next/standalone/`, `.open-next/server-functions/default/` — left behind by a prior `pnpm build` or `cf:build`), `pnpm --filter app test` overcounts: `apps/web/vitest.config.mts`'s `include: ["**/*.test.{ts,tsx}"]` has no exclude for those directories, so it also runs the build's bundled copy of `hooks/use-action-result.test.ts`, once per copy. Count source files only — filter `vitest run --reporter=verbose` output down to non-build paths, or `find apps/web -name "*.test.ts" -not -path "*/.next/*" -not -path "*/.open-next/*"`.
 </Callout>
 
 ## Other test files
@@ -25,6 +27,8 @@ If `apps/web` has stale build output on disk (`.next/standalone/`, `.open-next/s
 | `apps/web/hooks/use-action-result.test.ts` | 15 | `useActionResult` — idle-state skip, success/error dispatch, silence on `fieldErrors`-only failures, and the replay guard under StrictMode |
 | `apps/web/lib/auth/action-error.test.ts` | 6 | `toActionError`, `actionError` — server-action error normalization and i18n fallback |
 | `apps/web/lib/billing/checkout-queries.test.ts` | 9 | `verifyCheckoutSession` — the independent post-checkout verification described in [Subscribe & Checkout](/docs/payment/subscribe-and-checkout) |
+| `apps/web/lib/seo-config.test.ts` | 2 | Site config carries no kit branding and derives the name from `NEXT_PUBLIC_APP_NAME` |
+| `packages/database/redact.test.ts` | 10 | `argShape` — redacts tokens, passwords, emails, and nested Prisma args so query logs stay diagnosable |
 
 ## Auth Permissions — 21 tests
 
@@ -92,8 +96,6 @@ These are pure functions with no external dependencies — ideal for unit testin
 | `checkOrgCreationEligibility()` | `packages/utils/payment.ts` | Org creation eligibility |
 | `generateSlug()` | `packages/utils/slug.ts` | Used across org creation |
 | `slugSchema` | `packages/utils/slug.ts` | Reserved slug validation |
-| `toActionError()` | `apps/web/lib/auth/action-error.ts` | Error handling for all server actions |
-| `actionError()` | `apps/web/lib/auth/action-error.ts` | i18n-aware error returns |
 
 ## Running Unit Tests
 
@@ -102,11 +104,12 @@ These are pure functions with no external dependencies — ideal for unit testin
 pnpm test
 
 # Run auth package tests only
-pnpm --filter auth test
+pnpm --filter @repo/auth test
 
 # Run in watch mode
-pnpm --filter auth test -- --watch
+pnpm --filter @repo/auth test -- --watch
 
-# Run a specific test by name
-pnpm --filter auth test -- --grep "canOrg"
+# Run a specific test by name (Vitest: --testNamePattern / -t, not --grep)
+pnpm --filter @repo/auth test -- --testNamePattern "canOrg"
+# equivalent: pnpm --filter @repo/auth test -- -t "canOrg"
 ```

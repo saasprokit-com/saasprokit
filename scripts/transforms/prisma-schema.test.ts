@@ -8,6 +8,11 @@ const SCHEMA = `generator client {
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
+generator clientNode {
+  provider = "prisma-client"
+  output   = "../generated/client-node"
+}
+
 datasource db {
   provider = "postgresql"
 }
@@ -28,5 +33,11 @@ describe("setPrismaRuntime", () => {
   it("is idempotent when the line is already gone", () => {
     const once = setPrismaRuntime(SCHEMA, null);
     expect(setPrismaRuntime(once, null)).toBe(once);
+  });
+
+  it("leaves the clientNode generator untouched for Node hosts", () => {
+    const out = setPrismaRuntime(SCHEMA, null);
+    expect(out).toContain("generator clientNode");
+    expect(out).toContain('output   = "../generated/client-node"');
   });
 });

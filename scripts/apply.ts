@@ -8,10 +8,18 @@ import {
   renderEnvLocal,
 } from "./transforms/env-file";
 import {
+  applyTextReplacements,
+  dropLines,
+  KIT_DOCS_REFERENCES,
+  KIT_DOCS_TEXT_REPLACEMENTS,
+  stripKitDocsLaunchConfig,
+} from "./transforms/kit-docs";
+import {
   type PackageJsonShape,
   pruneAppPackage,
   renameRootPackage,
   stripCliFromRootPackage,
+  stripKitDocsFromRootPackage,
 } from "./transforms/package-json";
 import { setPrismaRuntime } from "./transforms/prisma-schema";
 import { customizeWrangler } from "./transforms/wrangler";
@@ -130,6 +138,42 @@ export function applyInit(rootDir: string, config: ApplyConfig): string[] {
   }
 
   return log;
+}
+
+export function removeKitDocs(rootDir: string): void {
+  rmSync(join(rootDir, "docs"), { recursive: true, force: true });
+  editJson(join(rootDir, "package.json"), stripKitDocsFromRootPackage);
+
+  for (const { file, lines } of KIT_DOCS_REFERENCES) {
+    const path = join(rootDir, file);
+    if (existsSync(path)) {
+      writeFileSync(path, dropLines(readFileSync(path, "utf8"), lines));
+    }
+  }
+
+  const replacementsByFile = new Map<string, { from: string; to: string }[]>();
+  for (const { file, from, to } of KIT_DOCS_TEXT_REPLACEMENTS) {
+    const list = replacementsByFile.get(file) ?? [];
+    list.push({ from, to });
+    replacementsByFile.set(file, list);
+  }
+  for (const [file, replacements] of replacementsByFile) {
+    const path = join(rootDir, file);
+    if (existsSync(path)) {
+      writeFileSync(
+        path,
+        applyTextReplacements(readFileSync(path, "utf8"), replacements)
+      );
+    }
+  }
+
+  const launchPath = join(rootDir, ".vscode/launch.json");
+  if (existsSync(launchPath)) {
+    writeFileSync(
+      launchPath,
+      stripKitDocsLaunchConfig(readFileSync(launchPath, "utf8"))
+    );
+  }
 }
 
 export function stripCliTooling(rootDir: string): void {

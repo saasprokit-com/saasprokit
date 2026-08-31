@@ -3,11 +3,11 @@ title: Payment Overview
 description: "Architecture of the Stripe billing integration: packages, plan tiers, and how the pieces fit"
 ---
 
-Billing in this monorepo is built on the **`@better-auth/stripe`** plugin rather than hand-rolled API routes. Checkout, the billing portal, and the Stripe webhook receiver are all mounted under `/api/auth/*` by the plugin and configured in `packages/auth/server.ts`. Plan definitions, pricing math, and subscription helpers live alongside that wiring in **`@repo/auth`**.
+Billing in this monorepo is built on the **`@better-auth/stripe`** plugin rather than hand-rolled API routes. Checkout, the billing portal, and the Stripe webhook receiver are all mounted under `/api/auth/*` by the plugin and configured in `packages/auth/server.ts`. Plan definitions, pricing math, and subscription helpers live alongside that wiring in **`@repo/auth`**, with shared constants in **`@repo/utils/payment`**.
 
 ## Ownership: who owns what
 
-Everything billing-related lives in a single package, **`@repo/auth`**, which spans two layers: the **plugin layer** (Better Auth + Stripe wiring) and the **data/pure-logic layer** (plan data, types, guards, and helpers).
+Everything billing-related lives in **`@repo/auth`**, which spans two layers: the **plugin layer** (Better Auth + Stripe wiring) and the **data/pure-logic layer** (plan data, types, guards, and helpers). Shared constants (plan names, pricing, limits, statuses, Stripe API version) live one level deeper in **`@repo/utils/payment`** so all billing modules import the same values.
 
 ### `@better-auth/stripe` plugin (`packages/auth/server.ts`)
 
@@ -39,25 +39,22 @@ The plugin owns:
 
 - **HTTP surface** — checkout, billing-portal, upgrade/cancel, and the webhook endpoint, all under `/api/auth/*`. The webhook lands at `${NEXT_PUBLIC_APP_URL}/api/auth/stripe/webhook`.
 - **Signature verification** — incoming webhooks are verified against `STRIPE_WEBHOOK_SECRET` before any handler runs.
-- **Subscription persistence** — the plugin reads and writes the `Subscription` table via the Prisma adapter.
+- **Subscription persistence** — the plugin reads and **upserts** the `Subscription` table via the Prisma adapter. That write is the local source of truth for status, plan, and Stripe ids.
 - **Reference authorization** — `authorizeReference` delegates to `authorizeBillingAction` (`packages/auth/billing-authorize.ts`) so a user can only act on subscriptions for organizations they are allowed to manage.
-- **Event dispatch** — lifecycle events are routed to the custom hooks in `packages/auth/stripe-hooks.ts`: `handleSubscriptionComplete`, `handleSubscriptionUpdate`, `handleSubscriptionDeleted`. Each first calls `claimWebhookEvent` (`packages/auth/webhook-idempotency.ts`) so a redelivered Stripe event doesn't re-send its notification email.
+- **Event dispatch** — after the upsert, lifecycle events are routed to the custom hooks in `packages/auth/stripe-hooks.ts`: `handleSubscriptionComplete`, `handleSubscriptionUpdate`, `handleSubscriptionDeleted`. Those hooks are **email side-effects** plus `claimWebhookEvent` (`packages/auth/webhook-idempotency.ts`); they do **not** reconcile the `Subscription` row.
 
 Note `createCustomerOnSignUp: false` and `organization: { enabled: true }` — subscriptions are **organization-scoped**, keyed by `referenceId` (the organization id), not per-user.
 
-The Stripe SDK instance itself lives in `packages/auth/stripe-client.ts` as `stripeClient` (null when `STRIPE_SECRET_KEY` is unset), pinned to API version `2026-05-27.dahlia` (`STRIPE_API_VERSION`). On the browser side, `packages/auth/client.ts` registers the matching `stripeClient()` plugin from `@better-auth/stripe/client` so React components call typed subscription methods through `authClient`.
+The Stripe SDK instance itself lives in `packages/auth/stripe-client.ts` as `stripeClient` (null when `STRIPE_SECRET_KEY` is unset), pinned to API version `2026-06-24.dahlia` (`STRIPE_API_VERSION` in `packages/utils/payment.ts`). On the browser side, `packages/auth/client.ts` registers the matching `stripeClient()` plugin from `@better-auth/stripe/client`. The org billing page does **not** call `subscription.upgrade()` / `subscription.cancel()` / `subscription.billingPortal()` — checkout, portal, cancel, and plan changes go through the four server actions in `apps/web/app/[locale]/(app)/[orgSlug]/billing/actions.ts`.
 
 ### Data & pure-logic layer (`@repo/auth`)
 
 Alongside the plugin wiring, `@repo/auth` exposes the data and pure-logic layer for billing. These modules do **not** talk to Stripe's network API directly — that is the plugin's job. They provide:
 
 - **Plan catalog** — `plans.ts` defines `PLANS` and `PlanConfig` (the single source of truth) plus ordering/comparison helpers: `getPlanLimits`, `getAllPlans`, `isPlanHigherTier`, `getMonthlyFromAnnual`, `getAnnualSavingsPercent`, and `comparePlans` (returns `"upgrade" | "downgrade" | "same"`), and the Stripe plumbing `buildStripePlans` / `getPlanNameFromPriceId`.
-- **Types** — `types.ts` defines the `Subscription` shape, its runtime `SubscriptionSchema` (Zod), plus `SubscriptionWithPlan`, `UpgradeOptions`, `CancelOptions`, `BillingPortalSession`, `FeatureAccess`, and `UsageStats`.
+- **Types** — `types.ts` defines `SubscriptionWithPlan`, `UpgradeOptions`, `CancelOptions`, `BillingPortalSession`, `FeatureAccess`, and `UsageStats`. The subscription **row** shape is Prisma's: import `Subscription` from `@repo/database`. There is no hand-maintained `Subscription` interface or Zod `SubscriptionSchema` in `@repo/auth/types`.
 - **Subscription helpers** — `helpers.ts` provides `isSubscriptionActive`, `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getCurrentPlan`, `calculateUsageStats`, `formatStorage`, `getStatusDisplayText`, and `getStatusColor`.
 - **Guards** — `guards.ts` provides `guardDowngrade` (and `GuardResult`).
-- **Client hooks** — `use-subscription.ts` (`"use client"`) exports `useSubscription` and `useCancel`.
-
-Shared constants (plan names, pricing, limits, statuses) live one level deeper in `@repo/utils/payment` so all billing modules import the same values.
 
 ## Plan tiers
 
@@ -73,7 +70,17 @@ Pricing values are in whole dollars in `PRICING`; Stripe returns monetary amount
 
 ### Subscription statuses
 
-`SUBSCRIPTION_STATUS` mirrors `Stripe.Subscription.Status`: `incomplete`, `incomplete_expired`, `active`, `past_due`, `canceled`, `unpaid`, `paused`. Only `active` is in `ACTIVE_STATUSES`, so `isSubscriptionActive` treats every other status as inactive. Pending cancellation is detected by `isSubscriptionPendingCancel`, which checks **both** the legacy `cancelAtPeriodEnd` boolean and the newer `cancelAt` timestamp.
+`SUBSCRIPTION_STATUS` mirrors `Stripe.Subscription.Status`: `incomplete`, `incomplete_expired`, `trialing`, `active`, `past_due`, `canceled`, `unpaid`, `paused`. Entitlement-granting statuses are:
+
+```ts
+export const ACTIVE_STATUSES = [
+  SUBSCRIPTION_STATUS.ACTIVE,
+  SUBSCRIPTION_STATUS.TRIALING,
+  SUBSCRIPTION_STATUS.PAST_DUE,
+] as const;
+```
+
+`isSubscriptionActive` treats `active`, `trialing`, and `past_due` as granting the paid plan. `unpaid`, `paused`, `incomplete`, and the terminal states do not. `paused` is a Stripe status string only — it is not entitlement-granting, and the app has no pause/resume UI. Trial support is **partial**: the Prisma `Subscription` row has `trialStart`/`trialEnd` and `ACTIVE_STATUSES` includes `trialing`, but checkout and `buildStripePlans` do not configure trials. Pending cancellation is detected by `isSubscriptionPendingCancel`, which checks **both** the legacy `cancelAtPeriodEnd` boolean and the newer `cancelAt` timestamp.
 
 ## Architecture
 
@@ -81,15 +88,14 @@ Pricing values are in whole dollars in `PRICING`; Stripe returns monetary amount
 flowchart TD
     subgraph Client["Browser (React)"]
       UI["Billing UI components"]
-      AC["authClient + stripeClient()<br/>packages/auth/client.ts"]
     end
 
     subgraph Server["Next.js server"]
-      SA["Server actions / lib/billing"]
+      SA["Server actions<br/>billing/actions.ts"]
       BA["Better Auth + stripe() plugin<br/>packages/auth/server.ts"]
       AUTHZ["authorizeBillingAction<br/>billing-authorize.ts"]
       ROUTE["/api/auth/* handler<br/>(plugin-mounted)"]
-      HOOKS["stripe-hooks.ts<br/>onSubscriptionComplete / Update / Deleted<br/>(claimWebhookEvent gates each)"]
+      HOOKS["stripe-hooks.ts<br/>emails + claimWebhookEvent"]
       DB[("Subscription table<br/>@repo/database")]
     end
 
@@ -98,30 +104,30 @@ flowchart TD
       WH["Webhook events"]
     end
 
-    UI --> AC
-    AC --> ROUTE
+    UI --> SA
     SA --> BA
     ROUTE --> BA
     BA --> AUTHZ
     BA -->|"checkout / portal / cancel"| API
+    BA -->|"plugin upserts Subscription"| DB
 
     WH -->|"POST + signature"| ROUTE
     ROUTE -->|"verify STRIPE_WEBHOOK_SECRET"| BA
+    BA -->|"plugin upserts Subscription"| DB
     BA --> HOOKS
-    HOOKS --> DB
 ```
 
-Outbound: the billing UI calls subscription methods through `authClient` (and server-side code can call the Better Auth API directly via `lib/billing`), which the plugin translates into Stripe API calls after running `authorizeReference`. Inbound: Stripe posts webhook events to `/api/auth/stripe/webhook`; the plugin verifies the signature, then dispatches to the lifecycle hooks in `stripe-hooks.ts`, which reconcile the local `Subscription` row.
+Outbound: the billing UI calls four server actions (`upgradeSubscriptionAction`, `openBillingPortalAction`, `cancelSubscriptionAction`, `changePlanAction`), which wrap `auth.api.*` (except `changePlanAction`, which may return early). The plugin runs `authorizeReference`, then talks to Stripe. Inbound: Stripe posts webhook events to `/api/auth/stripe/webhook`; the plugin verifies the signature, **upserts the local `Subscription` row**, then dispatches to `stripe-hooks.ts` for notification emails (gated by `claimWebhookEvent`). See [Webhooks](./webhooks).
 
 ## Doc pages in this section
 
 | Page | What it covers |
 | --- | --- |
-| [Subscribe & Checkout](./subscribe-and-checkout) | Starting a paid subscription: building checkout via the plugin, success/cancel URLs, and `UpgradeOptions`. |
-| [Subscription Lifecycle](./subscription-lifecycle) | The `Subscription` model, statuses, active/pending-cancel detection, and how hooks keep local state in sync. |
-| [Plan Changes & Cancellation](./plan-changes-and-cancellation) | Upgrades/downgrades via `comparePlans`, scheduled cancellation (`cancelAtPeriodEnd` / `cancelAt`), and the `isAlreadyCancelingError` no-op case. |
-| [Billing Portal](./billing-portal) | Redirecting to the Stripe-hosted customer portal and the `BillingPortalSession` return shape. |
-| [Webhooks](./webhooks) | The `/api/auth/stripe/webhook` endpoint, signature verification, and the `stripe-hooks.ts` event handlers. |
+| [Subscribe & Checkout](./subscribe-and-checkout) | Starting a paid subscription: `upgradeSubscriptionAction`, success/cancel URLs, and independent session verification. |
+| [Subscription Lifecycle](./subscription-lifecycle) | The Prisma `Subscription` model, statuses, active/pending-cancel detection, and entitlement resolution. |
+| [Plan Changes & Cancellation](./plan-changes-and-cancellation) | Upgrades/downgrades via `comparePlans`, the four billing actions, and scheduled cancellation (`cancelAtPeriodEnd` / `cancelAt`). |
+| [Billing Portal](./billing-portal) | `openBillingPortalAction` and the Stripe-hosted customer portal. |
+| [Webhooks](./webhooks) | The `/api/auth/stripe/webhook` endpoint, signature verification, plugin upsert, and `stripe-hooks.ts` email handlers. |
 | [Billing Authorization](./billing-authorization) | How `authorizeReference` / `authorizeBillingAction` gates org-scoped subscription actions. |
 
 ## Source files
@@ -130,11 +136,13 @@ Outbound: the billing UI calls subscription methods through `authClient` (and se
 - `packages/auth/plans.ts` — `PLANS`, `PlanConfig`, `buildStripePlans`, `getPlanNameFromPriceId`, plus tier math (`getPlanLimits`, `getAllPlans`, `isPlanHigherTier`, `comparePlans`, …)
 - `packages/auth/stripe-client.ts` — `stripeClient` / `requireStripeClient`
 - `packages/auth/client.ts` — browser `stripeClient()` plugin registration
-- `packages/auth/stripe-hooks.ts` — `handleSubscriptionComplete` / `Update` / `Deleted`
+- `packages/auth/stripe-hooks.ts` — `handleSubscriptionComplete` / `Update` / `Deleted` (emails + `claimWebhookEvent`)
 - `packages/auth/webhook-idempotency.ts` — `claimWebhookEvent`, backed by the `WebhookEvent` model's `(provider, eventId)` unique constraint
 - `packages/auth/keys.ts` — Stripe env var schema (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, price-id vars)
-- `packages/auth/types.ts` — `Subscription`, `SubscriptionSchema`, `UpgradeOptions`, `CancelOptions`, `UsageStats`
+- `packages/auth/types.ts` — `SubscriptionWithPlan`, `UpgradeOptions`, `CancelOptions`, `FeatureAccess`, `UsageStats`
 - `packages/auth/helpers.ts` — subscription state + display helpers
 - `packages/auth/guards.ts` — `guardDowngrade`, `GuardResult`
-- `packages/auth/use-subscription.ts` — client hooks `useSubscription`, `useCancel`
-- `packages/utils/payment.ts` — `PLAN_NAMES`, `PRICING`, `LIMITS`, `SUBSCRIPTION_STATUS`, `STRIPE_API_VERSION`
+- `packages/utils/payment.ts` — `PLAN_NAMES`, `PRICING`, `LIMITS`, `SUBSCRIPTION_STATUS`, `ACTIVE_STATUSES`, `STRIPE_API_VERSION`
+- `apps/web/app/[locale]/(app)/[orgSlug]/billing/actions.ts` — `upgradeSubscriptionAction`, `openBillingPortalAction`, `cancelSubscriptionAction`, `changePlanAction`
+- `apps/web/lib/billing/subscription-queries.ts` — `getActiveSubscription`, `getCurrentPlanForOrg`, `getOrgUsageStats`
+- `apps/web/lib/billing/checkout-queries.ts` — `verifyCheckoutSession`

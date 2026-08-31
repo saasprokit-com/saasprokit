@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "saasprokit-docs",
+  "name": "docs",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-07-29",
   // nodejs_compat is required: fumadocs-mdx's runtime statically imports
@@ -10,10 +10,10 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
-  // No routes: a fresh clone deploys to <name>.<account>.workers.dev, which
-  // succeeds in any Cloudflare account. To attach a custom domain, add a
-  // "routes" entry with "custom_domain": true — wrangler creates the DNS record
-  // and certificate on deploy when the zone is in your account.
+  // No routes: a fresh deploy lands on <name>.<account>.workers.dev, which
+  // succeeds in any Cloudflare account. To attach your own domain, add a
+  // "routes" entry with "custom_domain": true — wrangler creates the DNS
+  // record and certificate on deploy when the zone is in your account.
   "observability": {
     "enabled": true
   },
@@ -22,16 +22,16 @@
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "saasprokit-docs"
+      "service": "docs"
     }
   ],
-  // Incremental page cache (open-next.config.ts r2IncrementalCache). R2 bucket
-  // names are account-scoped: create this one in your own account with
-  // `wrangler r2 bucket create saasprokit-docs-cache`.
+  // Incremental page cache (open-next.config.ts r2IncrementalCache). Create the
+  // bucket named below in your own account before the first deploy:
+  // `wrangler r2 bucket create <bucket_name>`.
   "r2_buckets": [
     {
       "binding": "NEXT_INC_CACHE_R2_BUCKET",
-      "bucket_name": "saasprokit-docs-cache"
+      "bucket_name": "docs-cache"
     }
   ]
   // No "vars": the only variable this app reads is NEXT_PUBLIC_APP_NAME, which

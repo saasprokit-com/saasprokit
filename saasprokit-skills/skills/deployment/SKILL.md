@@ -66,14 +66,19 @@ All verified in production. Four fail **only at runtime on workerd** — typeche
 | `Stripe.createFetchHttpClient()` in `packages/auth/stripe-client.ts` | Without `httpClient` the SDK picks `createNodeHttpClient`. `stripe` is in `serverExternalPackages`, so its own `workerd` export condition never applies | ✅ `fetch` is global on Node 18+ |
 | Plain numbers, never `BigInt`, across the Prisma boundary (`apps/web/lib/auth/rate-limit.ts`) | The wasm query compiler JSON-encodes query args: *"Do not know how to serialize a BigInt"*. `lastRequest` stays a BigInt **column**; only the values passed in/out are numbers, wrapped in `Number()` on read | ✅ Prisma accepts numbers for BigInt columns |
 | `ipAddressHeaders: ["cf-connecting-ip", "x-real-ip", "x-forwarded-for"]` (`packages/auth/ip-headers.ts`) | No IP resolves behind a CDN otherwise, so Better Auth collapses every visitor into one `no-trusted-ip` bucket — 3 signups lock out the whole site. `x-forwarded-for` stays in as the last resort for hosts whose proxy sets nothing else (ALB, nginx, Docker): Better Auth only trusts it when single-valued, rejecting a client-forged chain | ⚠️ Vercel sets `x-real-ip`. **Bare Docker with no reverse proxy sets none of the three** — legit traffic collapses back into the `no-trusted-ip` bucket, and a forged single-valued `x-forwarded-for` mints a fresh bucket per request. nginx/ALB must set one, or set `advanced.ipAddress.trustedProxies` |
-| `runtime = "workerd"` in the Prisma generator (`schema.prisma`) | Prisma 7 embeds its query compiler as base64 WASM and instantiates it at runtime, which workerd forbids (*"Wasm code generation disallowed by embedder"*) | ⚠️ **Open item, maintainer repo only** — see below |
+| `runtime = "workerd"` in the app `client` generator (`schema.prisma`) | Prisma 7 embeds its query compiler as base64 WASM and instantiates it at runtime, which workerd forbids (*"Wasm code generation disallowed by embedder"*) | ⚠️ **Open item, maintainer repo only** — see below |
 
 **The `runtime = "workerd"` open item.** `setup` removes this line for vercel/docker
 customer projects, so they get the standard Node client — it doesn't apply to them. It
 does apply to this repo, which is never pruned: local `next dev` verified working;
 Vercel/Docker **not yet verified**. Update this section after the maintainer's own
-Vercel deploy. If it breaks, the fix is two generate outputs behind a `workerd` export
-condition in `packages/database/package.json`.
+Vercel deploy.
+
+A second generator, `clientNode` (output `../generated/client-node`), now exists
+alongside the app client — not to close this item, but because the workerd client's
+WASM engine cannot initialize under `tsx`. `packages/database/prisma/seed.ts` is its
+only consumer; the app `client` generator above still targets workerd and is what
+this open item is about.
 
 ## Cloudflare requirements
 

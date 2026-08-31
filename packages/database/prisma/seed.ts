@@ -8,7 +8,7 @@ import { PLAN_NAMES, SUBSCRIPTION_STATUS } from "@repo/utils/payment";
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hashPassword } from "better-auth/crypto";
-import { PrismaClient } from "../generated/client/client";
+import { PrismaClient } from "../generated/client-node/client";
 
 if (process.env.NODE_ENV === "production") {
   console.error("Seed script cannot run in production environment.");

@@ -52,9 +52,11 @@ COPY --from=pruner /app/out/full/ .
 
 # Build-time args for NEXT_PUBLIC_* variables (non-sensitive, baked into client bundle)
 ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_APP_NAME
 ARG NEXT_PUBLIC_DOCS_URL
 
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME
 ENV NEXT_PUBLIC_DOCS_URL=$NEXT_PUBLIC_DOCS_URL
 
 # Generate Prisma client + build Next.js app

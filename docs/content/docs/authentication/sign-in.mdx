@@ -29,9 +29,16 @@ onSubmit={form.handleSubmit((values) =>
   startTransition(() => formAction(values))
 )}
 
-// on success the effect navigates to the resolved callbackUrl
-router.push(callbackUrl);
-router.refresh();
+useActionResult(state, {
+  onSuccess: (data) => {
+    if (data?.twoFactorRequired) {
+      router.push(PAGE_ROUTES.TWO_FACTOR);
+      return;
+    }
+    router.push(callbackUrl);
+    router.refresh();
+  },
+});
 
 // social stays a plain awaited call — it redirects to the provider
 async function handleSocialLogin(provider: SocialProvider) {
@@ -41,8 +48,8 @@ async function handleSocialLogin(provider: SocialProvider) {
 ```
 
 - **`rememberMe`** is passed through to Better Auth, which controls whether the session cookie is persistent or session-scoped.
-- On success the effect calls `router.push(callbackUrl)` **and** `router.refresh()` — the refresh re-runs Server Components so the freshly minted session cookie is picked up immediately.
-- **2FA short-circuits the redirect**: when the action returns `data.twoFactorRequired`, the effect routes to `/auth/2fa` instead and skips the refresh.
+- On success `useActionResult` calls `router.push(callbackUrl)` **and** `router.refresh()` — the refresh re-runs Server Components so the freshly minted session cookie is picked up immediately. Do not hand-roll a `useEffect` for this.
+- **2FA short-circuits the redirect**: when the action returns `data.twoFactorRequired`, `useActionResult` routes to `/auth/2fa` instead and skips the refresh.
 - Social sign-in returns a provider URL that the handler assigns to `window.location.href`; control never returns to the form.
 
 <Callout>
@@ -63,7 +70,7 @@ const [state, formAction, isPending] = useActionState(
 // success → render <MagicLinkSentCard /> inline
 ```
 
-The link is generated server-side by the `magicLink()` plugin and emailed via `sendMagicLinkEmail`. It **expires in 10 minutes** (`MAGIC_LINK_EXPIRES_IN_MINUTES`). Clicking it hits the plugin's verify endpoint, which establishes a session and redirects to `callbackURL` (`/org`).
+The link is generated server-side by the `magicLink()` plugin and emailed via `sendMagicLinkEmail`. It **expires in 10 minutes** (`MAGIC_LINK_EXPIRES_IN_MINUTES`). Clicking it hits the plugin's verify endpoint, which establishes a session and redirects to the resolved `callbackURL` (default `/org`) via `resolveCallbackUrl`.
 
 <Callout type="warn">
 There used to be a dedicated `/auth/magic-link` landing page for the failure/expired-link state (driven by a `?error=` param), but its `page.tsx` was removed. `PAGE_ROUTES.MAGIC_LINK` still exists in `lib/routes.ts` and is currently unused — the only live magic-link UI is the inline `MagicLinkSentCard` (`sign-in/components/magic-link-sent-card.tsx`) shown on this tab after a successful request.
@@ -87,7 +94,7 @@ The code is **6 digits** (`OTP_LENGTH`) and **expires in 5 minutes** (`OTP_EXPIR
 
 ## The two-factor hand-off
 
-When a user with 2FA enabled signs in with a correct password, Better Auth does **not** return a full session — it returns a "two-factor required" result, and the browser is sent to `/auth/2fa` before any session is granted. See [Two-Factor Authentication](./two-factor) for the redirect hook and the rest of the flow.
+When a user with 2FA enabled signs in with a correct password, Better Auth does **not** return a full session — `signInEmailAction` returns `data.twoFactorRequired`, and the browser is sent to `/auth/2fa` before any session is granted. After a successful second factor the 2FA form always lands on `/org` (the original `callbackUrl` is dropped). See [Two-Factor Authentication](./two-factor).
 
 ## Method comparison
 
@@ -106,14 +113,14 @@ flowchart LR
     OTP --> Dest
     Check -->|"no"| Dest
     Check -->|"yes"| TFA["/auth/2fa (verifyTwoFactorAction)"]
-    TFA --> Dest
+    TFA --> Org["/org"]
 ```
 
 ## Notes
 
 - **The email-based methods normalize identically** — password, magic link, and email OTP all apply `toLowerCase().trim()` before the call, so casing or whitespace can't fork an account across methods. Social sign-in delegates identity to the provider, so there's no email field to normalize.
 - **Tab deep-links work** — `page.tsx` reads the `?tab=` searchParam through `resolveTab()` and passes it to `<Tabs defaultValue>`, so links to `/auth/sign-in?tab=magic-link` / `?tab=otp` open directly on that tab (an unknown value falls back to `password`). The verify-email page's alternative-method buttons rely on this.
-- `apps/web/app/[locale]/auth/layout.tsx` redirects already-signed-in users away from `/auth/sign-in` to `/org`, so a logged-in user can't see this page. This check is DB-verified (via `getServerSession()`), not part of the edge `middleware.ts` gate — see [Sessions & Route Protection](./sessions-and-routing).
+- `apps/web/app/[locale]/auth/layout.tsx` redirects already-signed-in users away from `/auth/sign-in` to `/org`, so a logged-in user can't see this page. This check is session-verified via `getServerSession()` (cookie-cache eligible), not part of the edge `middleware.ts` gate — see [Sessions & Route Protection](./sessions-and-routing).
 
 ## Source files
 

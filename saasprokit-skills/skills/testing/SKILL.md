@@ -11,9 +11,10 @@ Two independent layers: **Vitest** unit tests (fast, no DB) and **Playwright** E
 ## Commands
 
 ```bash
-pnpm test                        # all unit tests via `turbo test` (app, @repo/auth)
+pnpm test                        # all unit tests via `turbo test` (app, @repo/auth, @repo/database)
 pnpm --filter @repo/auth test    # one package's unit tests (vitest run)
 pnpm --filter app test           # web-app unit tests (vitest run)
+pnpm --filter @repo/database test # database package unit tests (vitest run)
 pnpm --filter app test:e2e       # all Playwright projects
 pnpm --filter app test:e2e:ui    # Playwright UI mode
 pnpm --filter app test:e2e:auth  # --project=no-auth   (name is a misnomer)
@@ -26,9 +27,10 @@ of these are turbo `test` — see the task graph below.
 ## Layout — unit tests
 
 Runner: Vitest 4.x, one `vitest.config.mts` per runnable package. Tests are
-co-located as `**/*.test.{ts,tsx}` next to the code they cover. Two packages have a
-config **and** a `test` script: **app** (`environment: "jsdom"`) and **@repo/auth**
-(`environment: "node"`). Anything outside those two is not run by `pnpm test`.
+co-located as `**/*.test.{ts,tsx}` next to the code they cover. Three packages have a
+config **and** a `test` script: **app** (`environment: "jsdom"`), **@repo/auth**
+(`environment: "node"`), and **@repo/database** (`redact.test.ts`). Anything outside
+those three is not run by `pnpm test`.
 
 ## Layout — E2E (Playwright)
 

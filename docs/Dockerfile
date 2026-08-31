@@ -45,8 +45,10 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 # Copy full source code (busts cache on any source change)
 COPY --from=pruner /app/out/full/ .
 
-# Build Next.js docs app
-RUN pnpm build --filter=kit-docs
+# Build Next.js kit-docs app (do not use `pnpm build --filter=kit-docs` —
+# the root `build` script already passes `--filter=!kit-docs`, so that
+# combination matches zero packages).
+RUN pnpm --filter kit-docs build
 
 # ---------------------------------------------------------------------------
 # Stage 4: runner — Minimal production image

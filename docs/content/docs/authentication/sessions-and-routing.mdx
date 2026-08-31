@@ -3,7 +3,7 @@ title: Sessions & Route Protection
 description: Session lifetime and the cookie cache, the edge middleware gate, the cached server helpers, and how protected routes are enforced
 ---
 
-Once a flow mints a session, two layers enforce it: the edge **`middleware.ts`** gate (a cheap, cookie-only check for which page you can even reach) and the cached **server helpers** in `lib/auth/auth.ts` (the DB-verified check for what a Server Component or action actually sees). The middleware is a fast, optimistic filter — it never talks to the database — so the authoritative check always happens server-side, not at the edge.
+Once a flow mints a session, two layers enforce it: the edge **`middleware.ts`** gate (a cheap, cookie-only check for which page you can even reach) and the cached **server helpers** in `lib/auth/auth.ts` (session-verified, cookie-cache eligible — not a guaranteed DB read). The middleware is a fast, optimistic filter — it never talks to the database — so the authoritative check always happens server-side, not at the edge.
 
 ## Session lifetime & the cookie cache
 
@@ -16,7 +16,7 @@ session: {
 ```
 
 - A session lives **7 days** and slides forward when used (`updateAge` of 1 day).
-- The **cookie cache** stores a short-lived signed copy of the session in the cookie itself. For up to 5 minutes, `getSession` can be answered from the cookie **without a database round-trip** — this speeds up the DB-verified checks in `lib/auth/auth.ts`, which run on every protected Server Component render, not the edge middleware (which never calls `getSession` at all — see below).
+- The **cookie cache** stores a short-lived signed copy of the session in the cookie itself. For up to 5 minutes, `getSession` can be answered from the cookie **without a database round-trip**. A passing signature check is **not** a DB read. Call `getServerSession` / `requireAuth` **session-verified (cookie-cache eligible)** and expect up to 5 minutes of staleness. Reserve **fresh DB role** for the admin path, which re-reads `role`/`banned` from the database. The edge middleware never calls `getSession` at all — see below.
 - `multiSession()` allows several concurrent device sessions per user. The `Session` row records `ipAddress`, `userAgent`, `activeOrganizationId`, and `activeTeamId`, so the active org/team travels with the session.
 
 ## The edge middleware gate
@@ -25,12 +25,12 @@ session: {
 
 1. **Skip** `/api`, `/_next`, and any path containing a `.` (static files) — these bypass the middleware entirely (no CSP, no gating). Auth endpoints under `/api/auth/*` thus enforce their own auth.
 2. **i18n first** — run `internationalizationMiddleware`; if it returns a non-200 (locale redirect), return immediately. Route gating only happens once the locale is settled.
-3. **Strip locale** — `stripLocale()` normalizes `/vi/org`, `/fr/org`, … to `/org` so the route checks are locale-agnostic.
+3. **Strip locale** — `stripLocale()` normalizes `/es/org`, `/fr/org`, … to `/org` so the route checks are locale-agnostic. Supported locales are `en`, `es`, `de`, `zh`, `fr`, `pt`.
 4. **Gate** — match the normalized path against `AUTH_ROUTE_PREFIXES` (`startsWith`), `PUBLIC_ROUTE_EXACT` (exact `===`), and `PUBLIC_ROUTE_PREFIXES` (`startsWith`).
 5. **Check the cookie** — `getSessionCookie(request)` (from `better-auth/cookies`) reads the httpOnly session cookie's presence. It doesn't verify a signature or hit the database, and it doesn't throw — a missing/invalid cookie just reads as falsy.
 
 <Callout type="warn">
-This is an **optimistic** check only: spoofing the cookie's presence gets an attacker past this redirect, nothing more. Every layout re-verifies the real session against the database via `requireAuth`/`getServerSession` — that's where authorization actually happens, not here.
+This is an **optimistic** check only: spoofing the cookie's presence gets an attacker past this redirect, nothing more. `(app)/layout.tsx` only reads the session for the impersonation banner — it is **not** a gate. Real gates live one level down: `[orgSlug]` and `account` call `requireAuth` / `getActiveOrganization`; `admin` calls `requireAdminArea`; server actions call `verifySession` (`apps/web/lib/auth/action-auth.ts`) or `auth.api.*`.
 </Callout>
 
 ### Default-deny routing
@@ -52,7 +52,7 @@ Anything that is **neither public nor an auth route requires a session cookie**.
 
 - **No session cookie, not an auth route**: redirect to `/auth/sign-in?callbackUrl=<original path>`.
 
-The reverse case — a signed-in user opening `/auth/sign-in` — is **not** handled here. It's handled server-side in `apps/web/app/[locale]/auth/layout.tsx`, which calls the DB-verified `getServerSession()` and redirects to `/org` if a real session exists. That extra DB check matters: a revoked session (password change, ban) must land on sign-in, not bounce back into the app on cookie presence alone.
+The reverse case — a signed-in user opening `/auth/sign-in` — is **not** handled here. It's handled server-side in `apps/web/app/[locale]/auth/layout.tsx`, which calls the session-verified (cookie-cache eligible) `getServerSession()` and redirects to `/org` if a session exists. Cookie presence alone is not enough (a missing/invalid session lands on sign-in), but a just-revoked session can remain cookie-cached for up to 5 minutes.
 
 ### Decision flow
 
@@ -91,11 +91,16 @@ export const getServerSession = cache(async () =>
 - **`requireAuth(returnTo?)`** — returns the session or `redirect`s to `/auth/sign-in?callbackUrl=…` (the `returnTo` argument is the value that gets URL-encoded into that param). Use it in protected pages/layouts.
 - **`hasOrgPermission(orgId, permissions)`** — calls `auth.api.hasPermission(...)`, which resolves the caller's session from the request headers via the org plugin's session middleware; returns a `boolean` (`result?.success ?? false`), true when the caller holds the requested capability. The org-scoped authorization primitive, backed by the roles in `packages/auth/permissions.ts`.
 
-The edge middleware is a coarse, cookie-only gate (is there *a* session cookie?); these helpers are the real, DB-verified check (is *this* user allowed on *this* org/resource?). A protected page relies on the middleware only for the redirect-if-no-cookie shortcut — `requireAuth`/`validateOrgMembershipBySlug` is what actually authorizes the request.
+The edge middleware is a coarse, cookie-only gate (is there *a* session cookie?); these helpers are the real, **session-verified (cookie-cache eligible)** check — up to 5 minutes stale. A protected page relies on the middleware only for the redirect-if-no-cookie shortcut.
+
+- **`[orgSlug]`** — `getActiveOrganization(slug)` (`apps/web/lib/organization/queries.ts`) is the slug guard: `requireAuth` then membership lookup; missing org or non-member → `notFound()`. `validateOrganizationMembership(organizationId, userId)` is the lower-level boolean check, not the page guard.
+- **`account`** — `requireAuth`.
+- **`/admin`** — `requireAdminArea` (fresh DB `role`/`banned`).
+- **Server actions** — `verifySession` (`apps/web/lib/auth/action-auth.ts`) or `auth.api.*` (those calls authenticate from the cookie themselves).
 
 ## Notes
 
-- The edge middleware never calls the database — `getSessionCookie()` reads a cookie, nothing more. Real session verification (`auth.api.getSession`, via `getServerSession`) only happens server-side, in layouts/pages/actions.
+- The edge middleware never calls the database — `getSessionCookie()` reads a cookie, nothing more. Session verification (`auth.api.getSession`, via `getServerSession`) only happens server-side, in layouts/pages/actions, and is cookie-cache eligible (5-minute staleness). Admin gates re-read role/ban from the DB.
 - There is no fail-closed branch in the middleware, because there is nothing that can throw: a missing or invalid cookie just reads as "no session" and falls into the same redirect as an absent one. If the database itself is unreachable, that surfaces where the real check runs — `getServerSession()` in the server helpers — not in the middleware.
 
 ## Source files
@@ -103,6 +108,10 @@ The edge middleware is a coarse, cookie-only gate (is there *a* session cookie?)
 - `apps/web/middleware.ts` — edge gate, redirects, CSP nonce
 - `apps/web/lib/routes.ts` — `AUTH_ROUTE_PREFIXES`, `PUBLIC_ROUTE_EXACT`, `PUBLIC_ROUTE_PREFIXES`, `PAGE_ROUTES`
 - `apps/web/lib/auth/auth.ts` — `getServerSession`, `requireAuth`, `hasOrgPermission`
-- `apps/web/app/[locale]/auth/layout.tsx` — DB-verified redirect for signed-in users on auth routes
+- `apps/web/lib/auth/action-auth.ts` — `verifySession` (server-action guard)
+- `apps/web/lib/auth/admin.ts` — `requireAdminArea` (fresh DB role/ban)
+- `apps/web/lib/organization/queries.ts` — `getActiveOrganization`, `validateOrganizationMembership`
+- `apps/web/app/[locale]/auth/layout.tsx` — session-verified redirect for signed-in users on auth routes
+- `apps/web/app/[locale]/(app)/layout.tsx` — impersonation banner only (not a gate)
 - `packages/auth/server.ts` — `session` config, `multiSession()`
 - `packages/database/prisma/schema.prisma` — `Session` model

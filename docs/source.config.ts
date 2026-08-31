@@ -6,8 +6,7 @@ import {
   metaSchema,
 } from "fumadocs-mdx/config";
 
-// You can customise Zod schemas for frontmatter and `meta.json` here
-// see https://fumadocs.dev/docs/mdx/collections
+// Frontmatter/meta stay on Fumadocs defaults; mermaid is the only extra plugin.
 export const docs = defineDocs({
   dir: "content/docs",
   docs: {

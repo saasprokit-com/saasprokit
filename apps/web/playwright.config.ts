@@ -2,6 +2,29 @@ import { defineConfig, devices } from "@playwright/test";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 
+const CAPTURE_VIEWPORT = { width: 1920, height: 1080 };
+
+// Opt-in only: `playwright test` must never record video in CI or normal e2e runs.
+const captureProjects = process.env.CAPTURE
+  ? [
+      {
+        name: "capture",
+        testMatch: /capture\/.*\.capture\.ts/,
+        timeout: 180_000,
+        retries: 0,
+        use: {
+          ...devices["Desktop Chrome"],
+          viewport: CAPTURE_VIEWPORT,
+          launchOptions: { slowMo: 120 },
+          video: {
+            mode: "on" as const,
+            size: CAPTURE_VIEWPORT,
+          },
+        },
+      },
+    ]
+  : [];
+
 export default defineConfig({
   globalSetup: "./e2e/setup/global-setup.ts",
   testDir: "./e2e",
@@ -21,6 +44,7 @@ export default defineConfig({
     video: "retain-on-failure",
   },
   projects: [
+    ...captureProjects,
     // Setup: authenticate user
     {
       name: "auth-setup",

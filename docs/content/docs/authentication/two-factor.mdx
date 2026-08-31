@@ -1,9 +1,9 @@
 ---
 title: Two-Factor Authentication
-description: The TOTP second factor, the onTwoFactorRedirect hook, the /auth/2fa step, and how it gates session creation
+description: The TOTP second factor, the server-action handoff from password sign-in, the /auth/2fa step, and how it gates session creation
 ---
 
-When a user has two-factor enabled, a correct password (or other first factor) is **not enough** to mint a session. Better Auth returns a "two-factor required" result, the client redirects to `/auth/2fa`, and only a valid second factor completes the sign-in.
+When a user has two-factor enabled, a correct password (or other first factor) is **not enough** to mint a session. Better Auth returns a "two-factor required" result; the sign-in **server action** surfaces that flag, the form navigates to `/auth/2fa`, and only a valid second factor completes the sign-in. 2FA handoff is **not** a client hook.
 
 ## Server configuration
 
@@ -28,25 +28,18 @@ Per-user 2FA state is persisted in the `TwoFactor` model (`secret`, `backupCodes
 
 Generating the TOTP secret, showing the QR code, and issuing backup codes happens in **account settings** (`/account/security`), not on the auth pages — a user must already be signed in to turn it on. This section covers the *challenge* side: proving the second factor at sign-in.
 
-## The redirect hook
+## The server-action path
 
-The client never has to detect the 2FA branch manually. `twoFactorClient` (`packages/auth/client.ts`) registers a redirect callback that Better Auth invokes whenever a flow needs a second factor:
+`packages/auth/client.ts` registers a bare `twoFactorClient()` — no `onTwoFactorRedirect`. Password 2FA is handled in the sign-in server action and form:
 
-```ts
-twoFactorClient({
-  onTwoFactorRedirect() {
-    if (typeof window !== "undefined") {
-      window.location.href = "/auth/2fa";
-    }
-  },
-})
-```
+1. `signInEmailAction` (`sign-in/actions.ts`) calls `auth.api.signInEmail`. When Better Auth withholds the session it returns `twoFactorRedirect`; the action maps that to `data.twoFactorRequired`.
+2. `sign-in-form.tsx` reads the flag in `useActionResult` and `router.push(PAGE_ROUTES.TWO_FACTOR)`.
 
-So `signIn.email` (or any first factor) on a 2FA-enabled account triggers a full-page navigation to `/auth/2fa`.
+A 2FA-enabled account never gets a full session from the first factor — the form navigates to `/auth/2fa` instead of the post-login destination.
 
 ## The /auth/2fa page
 
-`2fa/components/two-factor-form.tsx` dispatches `verifyTwoFactorAction` and, on success, lands the user at `/org`:
+`2fa/components/two-factor-form.tsx` dispatches `verifyTwoFactorAction` and, on success, **always** `router.push(PAGE_ROUTES.ORG)` — the original `callbackUrl` from sign-in is dropped:
 
 ```tsx
 const [state, formAction, isPending] = useActionState(
@@ -58,9 +51,12 @@ onSubmit={form.handleSubmit((values) =>
   startTransition(() => formAction(values))
 )}
 
-// success effect
-router.push(PAGE_ROUTES.ORG);
-router.refresh();
+useActionResult(state, {
+  onSuccess: () => {
+    router.push(PAGE_ROUTES.ORG);
+    router.refresh();
+  },
+});
 
 // actions.ts — the verification itself runs server-side
 await auth.api.verifyTOTP({ headers: await headers(), body: { code } });
@@ -71,7 +67,7 @@ The page wires **TOTP** and a **backup-code** fallback (`verifyBackupCodeAction`
 </Callout>
 
 <Callout type="info">
-`/auth/2fa` (`PAGE_ROUTES.TWO_FACTOR`) is included in `AUTH_ROUTE_PREFIXES` (`apps/web/lib/routes.ts`), so the edge `middleware.ts` gate treats it like the other auth pages: reachable without a session cookie. The redirect for a fully-authenticated user visiting it directly happens separately, in `apps/web/app/[locale]/auth/layout.tsx`, which calls the DB-verified `getServerSession()` (i.e. `auth.api.getSession()`) and sends them to `/org` — the edge middleware itself never calls `getSession()`, it only checks cookie presence.
+`/auth/2fa` (`PAGE_ROUTES.TWO_FACTOR`) is included in `AUTH_ROUTE_PREFIXES` (`apps/web/lib/routes.ts`), so the edge `middleware.ts` gate treats it like the other auth pages: reachable without a session cookie. The redirect for a fully-authenticated user visiting it directly happens separately, in `apps/web/app/[locale]/auth/layout.tsx`, which calls the session-verified (cookie-cache eligible) `getServerSession()` (i.e. `auth.api.getSession()`) and sends them to `/org` — the edge middleware itself never calls `getSession()`, it only checks cookie presence.
 </Callout>
 
 ## End-to-end sequence
@@ -80,15 +76,17 @@ The page wires **TOTP** and a **backup-code** fallback (`verifyBackupCodeAction`
 sequenceDiagram
     actor User
     participant SignIn as SignInForm
-    participant BA as Better Auth<br/>/api/auth/*
-    participant Client as twoFactorClient
+    participant Action as signInEmailAction
+    participant BA as Better Auth<br/>auth.api.*
     participant TFA as /auth/2fa
     participant Org as /org
 
     User->>SignIn: Submit password (2FA-enabled account)
-    SignIn->>BA: signIn.email({...})
-    BA-->>Client: "two factor required" (no full session yet)
-    Client->>TFA: onTwoFactorRedirect → window.location = "/auth/2fa"
+    SignIn->>Action: formAction(values)
+    Action->>BA: auth.api.signInEmail({...})
+    BA-->>Action: twoFactorRedirect (no full session yet)
+    Action-->>SignIn: data.twoFactorRequired
+    SignIn->>TFA: router.push(PAGE_ROUTES.TWO_FACTOR)
     User->>TFA: Enter 6-digit TOTP code
     TFA->>BA: verifyTwoFactorAction → auth.api.verifyTOTP({ code })
     BA->>BA: validate against TwoFactor.secret, create Session
@@ -100,8 +98,10 @@ sequenceDiagram
 
 - `apps/web/app/[locale]/auth/2fa/page.tsx` — server page
 - `apps/web/app/[locale]/auth/2fa/components/two-factor-form.tsx` — dispatches `verifyTwoFactorAction`
-- `apps/web/app/[locale]/auth/2fa/actions.ts` — `verifyTwoFactorAction` → `auth.api.verifyTOTP`
+- `apps/web/app/[locale]/auth/2fa/actions.ts` — `verifyTwoFactorAction` → `auth.api.verifyTOTP`; `verifyBackupCodeAction` → `auth.api.verifyBackupCode`
+- `apps/web/app/[locale]/auth/sign-in/actions.ts` — `signInEmailAction` maps `twoFactorRedirect` → `data.twoFactorRequired`
+- `apps/web/app/[locale]/auth/sign-in/components/sign-in-form.tsx` — `router.push(PAGE_ROUTES.TWO_FACTOR)`
 - `packages/auth/server.ts` — `twoFactor()` plugin config
-- `packages/auth/client.ts` — `twoFactorClient({ onTwoFactorRedirect })`
+- `packages/auth/client.ts` — `twoFactorClient()`
 - `apps/web/lib/routes.ts` — `AUTH_ROUTE_PREFIXES` (includes `/auth/2fa`)
 - `packages/database/prisma/schema.prisma` — `TwoFactor` model, `User.twoFactorEnabled`

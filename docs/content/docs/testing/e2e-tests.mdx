@@ -7,6 +7,19 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 **56 tests** across 27 files — 25 `*.spec.ts` files plus 2 `setup/` files (`auth.setup.ts`, `org.setup.ts`) that seed the authenticated/org-scoped Playwright projects rather than assert anything themselves. Specs are organized into domain folders under `apps/web/e2e/` (plus `fixtures/` and `helpers/` for shared test infrastructure — see [Maildev helper](/docs/email/local-development)). Counted with `npx playwright test --list` in `apps/web`.
 
+## How E2E is wired
+
+Four Playwright projects in `apps/web/playwright.config.ts`:
+
+| Project | Matches | Depends on |
+| --- | --- | --- |
+| `auth-setup` | `setup/auth.setup.ts` — signs in, writes `e2e/.auth/user.json` | — |
+| `org-setup` | `setup/org.setup.ts` | `auth-setup` |
+| `no-auth` | `(public\|auth)/*.spec.ts` — no login | — |
+| `authenticated` | `(account\|admin\|dashboard\|members\|payment)/*.spec.ts` | `auth-setup`, `org-setup` |
+
+Setup projects run first and gate `authenticated`. Local infra: `docker compose -f docker-compose.e2e.yml up` (Postgres on **5433**, Maildev). CI (`.github/workflows/e2e.yml`) is **gated behind the `e2e` PR label**.
+
 <Callout type="info">
 One file still carries an old numbered title in its `test.describe()` block (`admin-access.spec.ts`: `"31 - Admin area access control"`, with test names like `TC-31-01`) left over from a prior flat `01-*.spec.ts`-style layout — the file itself already lives in the `admin/` domain folder below.
 </Callout>

@@ -26,14 +26,15 @@ router.push(`${PAGE_ROUTES.VERIFY_EMAIL}?email=${encodeURIComponent(email)}`);
 
 Two details worth noting:
 
-- **Email is normalized** (`toLowerCase().trim()`) before it ever reaches the server — the same normalization is applied on sign-in, so casing/whitespace can't create a "different" account.
-- **`callbackURL: "/org"`** is where the user lands *after they verify*, not after submitting the form. On a successful submit the client redirects to `/auth/verify-email`; the `callbackURL` is stored with the verification token and consumed when the emailed link is clicked.
+- **Email is normalized** (`toLowerCase().trim()`) in two places: the client does it only for the verify-email redirect query string (`?email=`); `signUpEmailAction` normalizes again before calling `auth.api.signUpEmail`, which is what Better Auth persists. Do not treat the client trim as the security boundary.
+- **`callbackURL`** is where the user lands *after they verify*, not after submitting the form. The action stores `resolveCallbackUrl(input.callbackUrl)` with the verification token — default `/org`, or a prior destination if `?callbackUrl=` was present and safe. On a successful submit the client redirects to `/auth/verify-email`; the stored callback is consumed when the emailed link is clicked.
 
-Social sign-up uses the same `signIn.social` call as sign-in — there is no separate "social sign-up" endpoint:
+Social sign-up uses the same `signInSocialAction(provider, callbackUrl)` as sign-in — there is no separate "social sign-up" endpoint, and auth pages do not import `@repo/auth/client`:
 
 ```tsx
-function handleSocialLogin(provider: SocialProvider) {
-  signIn.social({ provider, callbackURL: "/org" });
+async function handleSocialLogin(provider: SocialProvider) {
+  const result = await signInSocialAction(provider, callbackUrl);
+  if (result.success && result.data?.url) window.location.href = result.data.url;
 }
 ```
 
@@ -59,7 +60,7 @@ emailVerification: {
 ```
 
 - **`sendOnSignUp: true`** — the verification email is sent automatically as part of `signUp.email`; the client does not send it explicitly.
-- **`autoSignInAfterVerification: true`** — when the user clicks the link, Better Auth verifies the token, sets `User.emailVerified = true`, establishes a session, and redirects to the stored `callbackURL` (`/org`). The user does not have to return to the sign-in page.
+- **`autoSignInAfterVerification: true`** — when the user clicks the link, Better Auth verifies the token, sets `User.emailVerified = true`, establishes a session, and redirects to the stored `callbackURL` (resolved, default `/org`). The user does not have to return to the sign-in page.
 
 ## The verify-email page
 
@@ -86,7 +87,7 @@ const [state, formAction, isPending] = useActionState(
 
 The 60-second cooldown is pure UI state: one effect starts it on a successful resend, a second ticks it down once per second.
 
-The page also offers two **alternative sign-in methods** (magic link, email OTP) for users who don't want to wait on the verification email — both are passwordless and verify the address as a side effect.
+The page also offers two **alternative sign-in methods** (magic link, email OTP) for users who don't want to wait on the verification email. Better Auth's default for those passwordless methods is to treat a successful sign-in as verifying the address; this app does not implement a separate side-effect for that.
 
 <Callout type="info">
 The alternative-method buttons link to `/auth/sign-in?tab=magic-link` and `/auth/sign-in?tab=otp`. The sign-in page reads the `tab` searchParam through `resolveTab()` and passes it to `<Tabs defaultValue>`, so these links open directly on the matching tab (see [Sign In](./sign-in)).
@@ -126,8 +127,9 @@ sequenceDiagram
 ## Source files
 
 - `apps/web/app/[locale]/auth/sign-up/page.tsx` — server page (loads dictionary)
-- `apps/web/app/[locale]/auth/sign-up/components/sign-up-form.tsx` — `SignUpForm`: dispatches `signUpEmailAction`, social, redirect
+- `apps/web/app/[locale]/auth/sign-up/components/sign-up-form.tsx` — `SignUpForm`: dispatches `signUpEmailAction`, `signInSocialAction`, redirect
 - `apps/web/app/[locale]/auth/sign-up/actions.ts` — `signUpEmailAction`
+- `apps/web/app/[locale]/auth/actions.ts` — `signInSocialAction` (shared with sign-in)
 - `apps/web/app/[locale]/auth/verify-email/page.tsx` — server page; reads `?email=` server-side
 - `apps/web/app/[locale]/auth/verify-email/components/verify-email-card.tsx` — resend card + cooldown + alternative-method links
 - `apps/web/app/[locale]/auth/verify-email/actions.ts` — `resendVerificationEmailFormAction`

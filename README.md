@@ -53,22 +53,23 @@ saasprokit/
 ### Setup
 
 1. Clone the repository
-2. Copy environment variables: `cp apps/web/.env.example apps/web/.env.local`
-3. Copy database env: `cp packages/database/.env.example packages/database/.env` and set `DATABASE_URL`
-4. Install dependencies: `pnpm install`
-5. Run database migrations: `pnpm migrate`
-6. Start development: `pnpm dev`
-7. (Optional) Install AI coding-assistant skills: `pnpm skills:install` — requires `git`; not run automatically on `pnpm install`
+2. Install dependencies: `pnpm install`
+3. Initialize the project: `pnpm run setup` — interactive CLI that names the app, prunes to your deploy target, and generates `apps/web/.env.local` + `packages/database/.env` (manual alternative: copy the two `.env.example` files yourself, then fill in `DATABASE_URL` in both and generate `BETTER_AUTH_SECRET` with `openssl rand -base64 48`)
+4. Start local infra: `docker compose up postgres maildev`
+5. Push the schema: `pnpm migrate`
+6. Seed dev data: `pnpm --filter @repo/database db:seed` — wipes existing rows in every table, then creates `admin@example.com` / `Password@saaspro`
+7. Start development: `pnpm dev`
+8. (Optional) Install AI coding-assistant skills: `pnpm skills:install` — requires `git`; not run automatically on `pnpm install`
 
 ### Development
 
 ```bash
-pnpm dev                      # All apps
+pnpm dev                      # All apps except kit-docs (main app: 3000)
 pnpm --filter app dev         # Main app only (port 3000)
 pnpm check                    # Lint (Biome via ultracite)
 pnpm test                     # Unit tests (Vitest)
 pnpm --filter app test:e2e    # E2E tests (Playwright)
-pnpm build                    # Build all
+pnpm build                    # Build all apps except kit-docs
 ```
 
 ## License

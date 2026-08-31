@@ -1,12 +1,13 @@
 ---
 title: Deployment Overview
-description: Deploy the web app to Vercel or Cloudflare Workers — comparison, shared setup, and the verification checklist
+description: Deploy the web app to Vercel, Cloudflare Workers, or Docker — comparison, shared setup, and the verification checklist
 ---
 
-The web app (`apps/web`) deploys to two tested targets. Pick one guide and follow it end to end:
+The web app (`apps/web`) deploys to three hosts that `pnpm run setup` offers (`scripts/hosts.ts`). Vercel and Cloudflare have full guides; Docker has a short build guide:
 
 - **[Vercel](/docs/deployment/vercel)** — the recommended path. Zero code changes, native Next.js support.
 - **[Cloudflare Workers](/docs/deployment/cloudflare)** — cheaper at scale. Runs through the OpenNext adapter; the Prisma driver adapter and S3-compatible storage config it needs already ship in the repo, so it's accounts and env vars, not code.
+- **[Docker](/docs/deployment/docker)** — `docker build -f apps/web/Dockerfile .` from the repo root (AWS / VPS).
 
 ## One-time setup
 
@@ -27,7 +28,7 @@ Re-clone the kit if you later switch hosts — setup is one-way by design.
 |---|---|---|
 | Code changes required | None | None — driver adapter and storage config are pre-wired, gated on env vars |
 | Next.js 16 support | Native | Via `@opennextjs/cloudflare` |
-| Database access | Direct (Neon pooled) | Neon serverless driver over HTTP |
+| Database access | Direct (Neon pooled) | Neon serverless (WS pool; fetch for one-shots) |
 | File uploads | S3 provider (serverless FS is ephemeral) | S3 provider (R2 or S3) |
 | Stripe webhooks | Works as-is | Works as-is — `@better-auth/stripe` already prefers async crypto verification |
 | Effort | ~30 minutes | ~30–45 minutes |
@@ -72,7 +73,7 @@ After either guide's deploy step:
 
 ## Verification checklist
 
-Run this after every deploy, on both platforms:
+Run this after every deploy:
 
 - [ ] `GET /api/health` returns OK (database + auth checks pass)
 - [ ] Sign up with email/password; verification email arrives via Resend

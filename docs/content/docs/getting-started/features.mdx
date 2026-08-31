@@ -54,7 +54,7 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 | Default Organization | Implemented | Set and remember preferred org |
 | Member Management | Implemented | Add, remove, suspend members at `/[orgSlug]/members` |
 | Role-Based Access Control | Implemented | Owner, Admin, Member org roles |
-| Member Suspension | Implemented | Suspend members with reason tracking |
+| Member Suspension | Planned | No `suspendedAt` (or similar) on `Member` — membership is role + org only |
 | Member Invitations | Implemented | Email-based invitations with 7-day expiry |
 | Bulk Invitations | Implemented | Invite multiple members at once |
 | Resend Invitations | Implemented | Re-send pending invitations |
@@ -81,7 +81,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 | Subscription Plans | Implemented | Free, Pro ($19/mo), Enterprise ($49/mo) |
 | Plan Upgrade/Downgrade | Implemented | Upgrade/downgrade via Stripe Checkout |
 | Monthly & Annual Billing | Implemented | Annual discount (~17% savings) |
-| Cancellation | Implemented | Cancel, pause, and reactivate subscriptions |
+| Cancellation | Implemented | Cancel at period end and reactivate; `paused` is a Stripe status with no app UI |
 | Stripe Integration | Implemented | Checkout, webhooks, customer portal |
 | Auto Customer Creation | Implemented | Stripe customer created on first checkout, not on signup (`createCustomerOnSignUp: false`) |
 | Webhook Processing | Implemented | Idempotent Stripe event handling with deduplication |
@@ -89,7 +89,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 | Manage Billing | Implemented | Update payment methods via Stripe portal |
 | Usage Stats | Implemented | Display resource usage per org |
 | Free Org Limit | Implemented | Max 1 free org per user; additional require paid plan |
-| Trial Period | Partial | Schema supports trial dates, not wired to checkout |
+| Trial Period | Partial | Schema has `trialStart`/`trialEnd`; `trialing` is in `ACTIVE_STATUSES`. Checkout does not start trials |
 | Invoice History | Planned | View past invoices (via Stripe portal link only) |
 | Usage-Based Pricing | Planned | Not implemented |
 | Coupon Support | Planned | Not implemented |
@@ -183,10 +183,10 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 | Feature | Status | Notes |
 |---------|--------|-------|
 | UI Components | Implemented | 50+ shadcn/ui components (Radix-based) |
-| Landing Page Blocks | Implemented | 13 blocks: hero, pricing, testimonials, FAQ, CTA banner, features grid, feature showcase, footer, code preview, tech stack, deps table, social proof bar, stats section |
+| Landing Page Blocks | Implemented | 12 blocks: hero, pricing, testimonials, FAQ, CTA banner, features grid, feature showcase, code preview, tech stack, deps table, social proof bar, stats section (footer is `components/molecules/footer/`) |
 | Dark Mode | Implemented | Theme provider with dark mode toggle |
 | Responsive Design | Implemented | Mobile-first responsive layouts |
-| Direct Imports | Partial | Convention is no barrel imports, but two barrel re-export files remain (`design-system/index.tsx`, `header/index.ts`) |
+| Direct Imports | Partial | Convention is no barrel imports. Remaining package entry: `packages/design-system/index.tsx` (`@repo/auth` also has a `main` of `./index.ts` — prefer `@repo/auth/server` etc.) |
 
 ## Developer Experience
 
@@ -196,7 +196,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 | Turborepo | Implemented | Build orchestration with caching |
 | Component Library | Implemented | shadcn/ui components via design-system package |
 | Storybook | Implemented | Component documentation (port 6006) |
-| Documentation Site | Implemented | Fumadocs-powered docs (port 3004) |
+| Documentation Site | Implemented | Customer docs: Fumadocs starter `apps/docs` (port 3004). Kit docs: root `docs/` / `kit-docs` (port 3006), excluded from `pnpm dev` |
 | Email Preview | Implemented | React Email preview app (port 3003) |
 | Prisma Studio | Implemented | Database inspection (port 3005) |
 | Biome Linting | Implemented | Automated linting and formatting via ultracite |
@@ -207,8 +207,8 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Unit Tests | Partial | 70 tests: 50 in `@repo/auth`, 20 in `apps/web`; `@repo/storage`/`@repo/utils` have no test setup at all |
-| E2E Tests | Implemented | 341 Playwright tests across 26 spec files (see [Testing](/docs/testing)) |
+| Unit Tests | Partial | Vitest in `@repo/auth`, `apps/web`, and `@repo/database` (`redact.test.ts`). `@repo/storage` / `@repo/utils` have no test setup. See [Testing](/docs/testing) |
+| E2E Tests | Implemented | Playwright specs under `apps/web/e2e/` (see [Testing](/docs/testing)) |
 | Integration Tests | Planned | Not yet implemented |
 
 ## Infrastructure & DevOps
@@ -228,7 +228,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 | `@repo/auth` | Authentication, dual RBAC (admin + org), permissions, 2FA, magic links, email OTP, Stripe billing, subscriptions, plan management, checkout |
 | `@repo/database` | Prisma schema, client, types, migrations |
 | `@repo/email` | 21 React Email templates with Resend + Nodemailer |
-| `@repo/design-system` | 50+ shadcn/ui components, 11 landing page blocks, dark mode |
+| `@repo/design-system` | 50+ shadcn/ui components, 12 landing page blocks, dark mode |
 | `@repo/storage` | File uploads with local + S3 providers, quota management |
 | `@repo/seo` | Site metadata, Organization + WebSite JSON-LD schemas |
 | `@repo/internationalization` | 6 languages, locale routing, dictionary translations |
@@ -240,7 +240,8 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 | App | Port | Features |
 |-----|------|----------|
 | `web` | 3000 | Authentication, billing, org management, account settings, file uploads |
-| `docs` | 3004 | Documentation and guides (Fumadocs) |
+| `docs` | 3004 | Customer's product documentation (empty Fumadocs starter) |
 | `email` | 3003 | Email template preview (React Email) |
 | `storybook` | 6006 | Component showcase and design system |
 | `studio` | 3005 | Database inspection (Prisma Studio) |
+| `kit-docs` (root `docs/`) | 3006 | SaaSProKit's own documentation; excluded from `pnpm dev` / `pnpm build` |

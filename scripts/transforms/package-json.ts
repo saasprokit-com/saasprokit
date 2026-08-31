@@ -1,4 +1,5 @@
 import type { HostTarget } from "../hosts";
+import { KIT_DOCS_FILTER } from "./kit-docs";
 
 export interface PackageJsonShape {
   bin?: Record<string, string>;
@@ -40,6 +41,25 @@ export function renameRootPackage(
   slug: string
 ): PackageJsonShape {
   return { ...pkg, name: slug };
+}
+
+const KIT_DOCS_SCRIPTS = ["kit-docs:dev", "kit-docs:build", "kit-docs:deploy"];
+
+export function stripKitDocsFromRootPackage(
+  pkg: PackageJsonShape
+): PackageJsonShape {
+  const kept = omit(pkg.scripts, KIT_DOCS_SCRIPTS);
+  return {
+    ...pkg,
+    scripts:
+      kept &&
+      Object.fromEntries(
+        Object.entries(kept).map(([name, command]) => [
+          name,
+          command.replace(KIT_DOCS_FILTER, ""),
+        ])
+      ),
+  };
 }
 
 export function stripCliFromRootPackage(

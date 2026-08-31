@@ -108,10 +108,6 @@ if (!(await claimWebhookEvent(args.event))) {
 - **Stripe v22.2+ field move.** `handleSubscriptionDeleted` reads `current_period_end` from the first item in `stripeSubscription.items.data`, since Stripe relocated this field from the `Subscription` root onto each `SubscriptionItem`.
 - **Database writes.** The handlers in `stripe-hooks.ts` only **read** the `subscription`, `organization`, and `member` tables (aside from the `claimWebhookEvent` insert). The authoritative subscription row write (status/plan/`stripeSubscriptionId`) is done by the `@better-auth/stripe` plugin itself before our hooks fire.
 
-### Not a webhook handler
-
-`packages/auth/use-subscription.ts` is a `"use client"` module exporting React hooks (`useSubscription`, `useCancel`) that call the Better Auth client (`subscription.list`, `subscription.cancel`). It is unrelated to webhook ingestion (handled server-side in `stripe-hooks.ts`) and runs in the browser.
-
 ## Source files
 
 - `packages/auth/stripe-hooks.ts` — `handleSubscriptionComplete`, `handleSubscriptionUpdate`, `handleSubscriptionDeleted`, and helpers (`getOrgEmailContext`, `getBillingInterval`, `displayPlanName`)
@@ -119,4 +115,3 @@ if (!(await claimWebhookEvent(args.event))) {
 - `packages/auth/server.ts` — wires `stripeWebhookSecret` and the `subscription.*` callbacks into the `stripe()` plugin
 - `packages/auth/keys.ts` — declares `STRIPE_WEBHOOK_SECRET` and the `STRIPE_*_PRICE_ID_*` env vars
 - `packages/database/prisma/schema.prisma` — `WebhookEvent` model, `(provider, eventId)` unique constraint
-- `packages/auth/use-subscription.ts` — client-side subscription React hooks (not webhook handling)

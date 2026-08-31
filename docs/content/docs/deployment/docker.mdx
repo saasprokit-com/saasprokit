@@ -1,0 +1,39 @@
+---
+title: Deploy with Docker
+description: Build the web app (and optional customer docs) from the repo-root Dockerfiles
+---
+
+Setup offers Docker as a third host (`scripts/hosts.ts` — "Docker / AWS / VPS"). There is no Compose production stack; you build the image and run it behind your own reverse proxy.
+
+## Web app
+
+`apps/web/Dockerfile` exists. Build from the **repo root** (the Dockerfile copies the monorepo, then `turbo prune app`):
+
+```bash
+docker build -f apps/web/Dockerfile .
+```
+
+Optional public build args (`NEXT_PUBLIC_*` are baked in at build time):
+
+```bash
+docker build -f apps/web/Dockerfile \
+  --build-arg NEXT_PUBLIC_APP_URL=https://app.example.com \
+  --build-arg NEXT_PUBLIC_APP_NAME=YourApp \
+  --build-arg NEXT_PUBLIC_DOCS_URL=https://docs.example.com \
+  -t web:latest .
+```
+
+Run (port 3000) with runtime env — `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL`, `EMAIL_PROVIDER`, `EMAIL_FROM` (plus provider creds), `STORAGE_PROVIDER` (plus S3 creds when `s3`), and Stripe keys. Put a reverse proxy (nginx/ALB) in front; the app reads client IPs from `cf-connecting-ip`, then `x-real-ip`, then `x-forwarded-for`. With no proxy, rate limiting collapses every visitor into one bucket.
+
+Then follow the [shared post-deploy configuration](/docs/deployment#shared-post-deploy-configuration) (schema push, Stripe webhook, OAuth callbacks) and the [verification checklist](/docs/deployment#verification-checklist). Do **not** run the dev seed against production; it wipes every table.
+
+## Customer docs (optional)
+
+`apps/docs/Dockerfile` builds the customer's Fumadocs app (`apps/docs`, port **3004**). Same repo-root pattern:
+
+```bash
+docker build -f apps/docs/Dockerfile -t docs:latest .
+docker run -p 3004:3004 docs:latest
+```
+
+Tag it `docs:latest` (not `saasprokit-docs`). This is the customer's product docs, not kit-docs (`docs/` on port 3006).
