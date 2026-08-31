@@ -1,8 +1,20 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { execSync } from "node:child_process";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { applyInit, devDbName, removeKitDocs, stripCliTooling } from "./apply";
+
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const FIXTURE_FILES: Record<string, string> = {
   "package.json": JSON.stringify({
@@ -61,7 +73,7 @@ const FIXTURE_FILES: Record<string, string> = {
   "apps/docs/Dockerfile": "FROM node:22\n",
   "docs/package.json": JSON.stringify({ name: "kit-docs" }),
   "README.md": "saasprokit/\n├── apps/\n├── docs/           # SaaSProKit's own documentation (port 3006)\n└── packages/\n",
-  "CLAUDE.md": "pnpm dev                      # All apps except kit-docs\npnpm kit-docs:dev             # SaaSProKit's own documentation (port 3006)\npnpm build                    # All apps and packages (excludes kit-docs)\n`apps/docs` ships as an **empty** Fumadocs starter — it is the customer's product documentation, not ours. SaaSProKit's own documentation is the root **`docs/`** folder (workspace package `kit-docs`, port 3006), excluded from the default `pnpm dev` / `pnpm build` fan-out. `pnpm setup` initializes `apps/docs` alongside `apps/web`, then deletes `docs/` and every reference to it (workspace entry, `kit-docs:*` scripts, the `--filter=!kit-docs` guards, the dev Dockerfile COPY, the Biome exclude, the README tree line, the VS Code launch config, the CI typecheck step, and kit-docs mentions in CLAUDE.md / AGENTS.md / env-setup) — the customer's clone keeps none of our documentation.\nScratch plans, reviews, and specs go in **`.docs/`** (gitignored). Do not put them in `docs/` — that is kit-docs, the product we ship.\n",
+  "CLAUDE.md": "pnpm dev                      # All apps except kit-docs\npnpm kit-docs:dev             # SaaSProKit's own documentation (port 3006)\npnpm build                    # All apps and packages (excludes kit-docs)\n`apps/docs` ships as an **empty** Fumadocs starter — it is the customer's product documentation, not ours. SaaSProKit's own documentation is the root **`docs/`** folder (workspace package `kit-docs`, port 3006), excluded from the default `pnpm dev` / `pnpm build` fan-out. `pnpm setup` initializes `apps/docs` alongside `apps/web`, then deletes `docs/` and every reference to it (workspace entry, `kit-docs:*` scripts, the `--filter=!kit-docs` guards, the dev Dockerfile COPY, the Biome exclude, the README tree line, the VS Code launch config, and kit-docs mentions in CLAUDE.md / AGENTS.md / env-setup) — the customer's clone keeps none of our documentation.\nScratch plans, reviews, and specs go in **`.docs/`** (gitignored). Do not put them in `docs/` — that is kit-docs, the product we ship.\n",
   "AGENTS.md": "`apps/docs` is an empty Fumadocs starter for the **customer's** product docs (port 3004). Root `docs/` is kit-docs (port 3006), excluded from default `pnpm dev` / `pnpm build`. `pnpm setup` keeps `apps/docs` and deletes `docs/` plus every kit-docs reference. Scratch plans/reviews go in **`.docs/`** (gitignored), never `docs/`.\npnpm dev                                # All apps except kit-docs (main app: 3000)\npnpm kit-docs:dev                       # SaaSProKit's own docs (port 3006)\npnpm build                              # All apps and packages (excludes kit-docs)\n",
   ".vscode/launch.json": JSON.stringify({
     version: "0.2.0",
@@ -89,9 +101,6 @@ const FIXTURE_FILES: Record<string, string> = {
 
       - name: Run setup CLI tests
         run: pnpm test:cli
-
-      - name: Typecheck kit-docs
-        run: pnpm --filter kit-docs typecheck
 
   setup-cli:
     strategy:
@@ -343,6 +352,37 @@ describe("removeKitDocs", () => {
       rmSync(join(root, file), { recursive: true, force: true });
     }
     expect(() => removeKitDocs(root)).not.toThrow();
+  });
+
+  it("leaves no kit-docs reference in the real repo tree", () => {
+    const tracked = execSync(
+      `git grep -l "kit-docs" -- . ':(exclude)docs/' ':(exclude)pnpm-lock.yaml' ':(exclude)scripts/'`,
+      { cwd: REPO_ROOT, encoding: "utf8" }
+    )
+      .trim()
+      .split("\n")
+      .filter(Boolean);
+
+    root = mkdtempSync(join(tmpdir(), "saasprokit-real-"));
+    for (const file of tracked) {
+      mkdirSync(join(root, dirname(file)), { recursive: true });
+      cpSync(join(REPO_ROOT, file), join(root, file));
+    }
+    mkdirSync(join(root, "docs"), { recursive: true });
+
+    removeKitDocs(root);
+
+    for (const file of tracked) {
+      const path = join(root, file);
+      if (!existsSync(path)) {
+        continue;
+      }
+      expect(
+        readFileSync(path, "utf8"),
+        `${file} still mentions kit-docs after removeKitDocs`
+      ).not.toContain("kit-docs");
+    }
+    expect(existsSync(join(root, "docs"))).toBe(false);
   });
 });
 

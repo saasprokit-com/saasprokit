@@ -40,7 +40,6 @@ export function EmailLayout({
   return (
     <Html>
       <Head>
-        {/* Color scheme meta for dark mode support */}
         <meta content="light" name="color-scheme" />
         <meta content="light" name="supported-color-schemes" />
       </Head>

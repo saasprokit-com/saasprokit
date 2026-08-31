@@ -122,13 +122,4 @@ See [Unit Tests](/docs/testing/unit-tests) for what each file covers.
 
 ## How E2E is wired
 
-Four Playwright projects in `apps/web/playwright.config.ts`:
-
-| Project | Matches | Depends on |
-| --- | --- | --- |
-| `auth-setup` | `setup/auth.setup.ts` — signs in, writes `e2e/.auth/user.json` | — |
-| `org-setup` | `setup/org.setup.ts` | `auth-setup` |
-| `no-auth` | `(public\|auth)/*.spec.ts` — no login | — |
-| `authenticated` | `(account\|admin\|dashboard\|members\|payment)/*.spec.ts` | `auth-setup`, `org-setup` |
-
-Local infra: `docker compose -f docker-compose.e2e.yml up` (Postgres on **5433**, Maildev). CI (`.github/workflows/e2e.yml`) is gated on the `e2e` PR label. Details: [E2E Tests](/docs/testing/e2e-tests).
+Four Playwright projects in `apps/web/playwright.config.ts` — `auth-setup` and `org-setup` run first and gate `authenticated`, while `no-auth` runs without a login. Local infra: `docker compose -f docker-compose.e2e.yml up` (Postgres on **5433**, Maildev). CI (`.github/workflows/e2e.yml`) is gated on the `e2e` PR label. Project-by-project table: [E2E Tests](/docs/testing/e2e-tests#how-e2e-is-wired).

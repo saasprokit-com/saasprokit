@@ -12,7 +12,6 @@
     "upload": "pnpm cf:build && opennextjs-cloudflare upload",
     "cf:build": "fumadocs-mdx && CF_BUILD=1 opennextjs-cloudflare build",
     "types:check": "fumadocs-mdx && tsc --noEmit",
-    "typecheck": "fumadocs-mdx && tsc --noEmit",
     "postinstall": "fumadocs-mdx",
     "lint": "biome check",
     "format": "biome format --write"

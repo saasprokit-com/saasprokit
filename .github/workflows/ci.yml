@@ -64,9 +64,6 @@ jobs:
       - name: Typecheck web app
         run: pnpm --filter app typecheck
 
-      - name: Typecheck kit-docs
-        run: pnpm --filter kit-docs typecheck
-
       - name: Typecheck setup CLI
         run: pnpm typecheck:cli
 

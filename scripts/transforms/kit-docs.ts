@@ -5,10 +5,6 @@ export const KIT_DOCS_REFERENCES: { file: string; lines: string[] }[] = [
   { file: "docker/dev.Dockerfile", lines: ["COPY docs/"] },
   { file: "biome.jsonc", lines: ['"!docs/**/*.json"'] },
   { file: "README.md", lines: ["SaaSProKit's own documentation"] },
-  {
-    file: ".github/workflows/ci.yml",
-    lines: ["Typecheck kit-docs", "pnpm --filter kit-docs typecheck"],
-  },
 ];
 
 /** Whole-string swaps so leftover prose does not mention a deleted package. */
@@ -34,7 +30,7 @@ export const KIT_DOCS_TEXT_REPLACEMENTS: {
   },
   {
     file: "CLAUDE.md",
-    from: "`apps/docs` ships as an **empty** Fumadocs starter — it is the customer's product documentation, not ours. SaaSProKit's own documentation is the root **`docs/`** folder (workspace package `kit-docs`, port 3006), excluded from the default `pnpm dev` / `pnpm build` fan-out. `pnpm setup` initializes `apps/docs` alongside `apps/web`, then deletes `docs/` and every reference to it (workspace entry, `kit-docs:*` scripts, the `--filter=!kit-docs` guards, the dev Dockerfile COPY, the Biome exclude, the README tree line, the VS Code launch config, the CI typecheck step, and kit-docs mentions in CLAUDE.md / AGENTS.md / env-setup) — the customer's clone keeps none of our documentation.",
+    from: "`apps/docs` ships as an **empty** Fumadocs starter — it is the customer's product documentation, not ours. SaaSProKit's own documentation is the root **`docs/`** folder (workspace package `kit-docs`, port 3006), excluded from the default `pnpm dev` / `pnpm build` fan-out. `pnpm setup` initializes `apps/docs` alongside `apps/web`, then deletes `docs/` and every reference to it (workspace entry, `kit-docs:*` scripts, the `--filter=!kit-docs` guards, the dev Dockerfile COPY, the Biome exclude, the README tree line, the VS Code launch config, and kit-docs mentions in CLAUDE.md / AGENTS.md / env-setup) — the customer's clone keeps none of our documentation.",
     to: "`apps/docs` ships as an **empty** Fumadocs starter — it is the product documentation site (port 3004).",
   },
   {
