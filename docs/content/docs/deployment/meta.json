@@ -1,5 +1,6 @@
 {
   "title": "Deployment",
   "icon": "CloudUpload",
+  "description": "Ship to Vercel, Cloudflare Workers, or Docker.",
   "pages": ["index", "vercel", "cloudflare", "docker"]
 }

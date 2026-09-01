@@ -1,6 +1,7 @@
 {
   "title": "Payment",
   "icon": "CreditCard",
+  "description": "Stripe checkout, subscriptions, webhooks, and billing roles.",
   "pages": [
     "index",
     "subscribe-and-checkout",

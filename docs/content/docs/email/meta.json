@@ -1,6 +1,7 @@
 {
   "title": "Email",
   "icon": "Mail",
+  "description": "Transactional email with Resend, Nodemailer, and React Email.",
   "pages": [
     "index",
     "setup",

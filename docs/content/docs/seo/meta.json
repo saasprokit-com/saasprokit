@@ -1,5 +1,6 @@
 {
   "title": "SEO",
   "icon": "Search",
+  "description": "Metadata, JSON-LD, sitemap, and robots.txt.",
   "pages": ["index"]
 }

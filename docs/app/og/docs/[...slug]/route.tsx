@@ -23,7 +23,7 @@ export async function GET(
   return new ImageResponse(
     <DefaultImage
       description={page.data.description}
-      site="SaaSProKit"
+      site="saasprokit"
       title={page.data.title}
     />,
     {
