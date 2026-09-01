@@ -3,38 +3,13 @@
 import type { OrgRoleName } from "@repo/auth/permissions";
 import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
-import { INVITATION_STATUS } from "@repo/utils/organization";
 import { headers } from "next/headers";
 import type { z } from "zod";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
 import { getServerSession } from "@/lib/auth/auth";
-import {
-  canOrgAcceptMember,
-  canOrgAddMember,
-} from "@/lib/billing/subscription-queries";
+import { canOrgAddMember } from "@/lib/billing/subscription-queries";
 import { acceptInvitationSchema, acceptInviteLinkSchema } from "./schemas";
-
-async function handleExistingMember(
-  invitationId: string,
-  organizationId: string
-): Promise<ActionResult<{ organizationSlug: string }>> {
-  await database.invitation.update({
-    where: { id: invitationId },
-    data: { status: INVITATION_STATUS.ACCEPTED },
-  });
-  const org = await database.organization.findUnique({
-    where: { id: organizationId },
-    select: { slug: true },
-  });
-  if (!org) {
-    return actionError("orgNoLongerExists");
-  }
-  return {
-    success: true,
-    data: { organizationSlug: org.slug },
-  };
-}
 
 export async function acceptInvitationAction(
   input: z.infer<typeof acceptInvitationSchema>
@@ -42,47 +17,6 @@ export async function acceptInvitationAction(
   try {
     const validated = acceptInvitationSchema.parse(input);
 
-    const session = await getServerSession();
-
-    if (!session?.user?.id) {
-      return actionError("signInRequired");
-    }
-
-    const invitation = await database.invitation.findUnique({
-      where: { id: validated.invitationId },
-      select: { organizationId: true, email: true },
-    });
-
-    if (!invitation) {
-      return actionError("notFound");
-    }
-
-    if (invitation.email.toLowerCase() !== session.user.email.toLowerCase()) {
-      return actionError("unauthorized");
-    }
-
-    // Pre-check: if already a member, handle gracefully
-    const existingMember = await database.member.findFirst({
-      where: {
-        organizationId: invitation.organizationId,
-        userId: session.user.id,
-      },
-      select: { id: true },
-    });
-
-    if (existingMember) {
-      return handleExistingMember(
-        validated.invitationId,
-        invitation.organizationId
-      );
-    }
-
-    const memberCheck = await canOrgAcceptMember(invitation.organizationId);
-    if (!memberCheck.allowed) {
-      return actionError("memberLimitReached");
-    }
-
-    // Delegate to BA — handles email match, expiry, status, member creation
     const result = await auth.api.acceptInvitation({
       body: { invitationId: validated.invitationId },
       headers: await headers(),
@@ -150,8 +84,8 @@ export async function acceptInviteLinkAction(
       return actionError("inviteLinkUsageLimitReached");
     }
 
-    // Already a member — send them into the org instead of erroring (mirrors
-    // acceptInvitationAction). No use consumed and no seat check needed.
+    // Shared links are idempotent for existing members: no use is consumed and
+    // no seat-capacity check is needed.
     const existingMember = await database.member.findFirst({
       where: {
         organizationId: inviteLink.organizationId,
@@ -166,14 +100,12 @@ export async function acceptInviteLinkAction(
       };
     }
 
-    // Plan seat cap (Stripe) — Better Auth has no billing concept.
+    // Pending email invitations also reserve plan seats.
     const memberCheck = await canOrgAddMember(inviteLink.organizationId);
     if (!memberCheck.allowed) {
       return actionError("memberLimitReached");
     }
 
-    // Better Auth owns the membership write: it validates duplicates, enforces
-    // its own membership limit, and runs member-creation hooks.
     await auth.api.addMember({
       body: {
         userId: session.user.id,
@@ -185,9 +117,8 @@ export async function acceptInviteLinkAction(
     });
 
     // Consume a use only after the member is actually added, so a failed join
-    // (seat cap, or a concurrent duplicate) never burns a use. maxUses is a
-    // best-effort cap: two simultaneous joins can exceed it by one, which is
-    // fine for a shared link.
+    // does not burn a use. maxUses remains a best-effort cap: concurrent joins
+    // can exceed it, which is accepted for a shared link.
     await database.inviteLink.update({
       where: { id: inviteLink.id },
       data: { usedCount: { increment: 1 } },

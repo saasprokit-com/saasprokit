@@ -112,18 +112,6 @@ export async function canOrgAddMember(
   return evaluateMemberCapacity(subscription, memberCount + pendingCount);
 }
 
-export async function canOrgAcceptMember(
-  organizationId: string
-): Promise<{ allowed: boolean; reason?: string }> {
-  const [subscription, memberCount] = await Promise.all([
-    getActiveSubscription(organizationId),
-    getOrgMemberCount(organizationId),
-  ]);
-  const { allowed, reason } = evaluateMemberCapacity(subscription, memberCount);
-
-  return { allowed, reason };
-}
-
 export async function canUserCreateOrg(
   userId: string
 ): Promise<OrgCreationCheck> {

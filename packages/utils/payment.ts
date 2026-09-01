@@ -48,7 +48,7 @@ export const UNLIMITED = -1;
 
 export const LIMITS = {
   FREE: {
-    MAX_MEMBERS: 1,
+    MAX_MEMBERS: 3,
     MAX_STORAGE_MB: 100, // 100 MB
   },
   PRO: {
