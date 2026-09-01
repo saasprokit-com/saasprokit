@@ -1,6 +1,7 @@
 {
   "title": "Database",
   "icon": "Box",
+  "description": "Prisma schema, models, and migrations.",
   "pages": [
     "index",
     "database-design"

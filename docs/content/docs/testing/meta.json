@@ -1,6 +1,7 @@
 {
   "title": "Testing",
   "icon": "FlaskConical",
+  "description": "Vitest unit tests and the Playwright E2E suite.",
   "pages": [
     "index",
     "e2e-tests",

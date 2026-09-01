@@ -9,11 +9,12 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "SaaSProKit documentation",
-    template: "%s | SaaSProKit",
+    default: "saasprokit documentation",
+    template: "%s | saasprokit",
   },
   description:
-    "Architecture and setup for the SaaSProKit boilerplate — auth, billing, email, and deployment.",
+    "Architecture and setup for the saasprokit boilerplate — auth, billing, email, and deployment.",
+  icons: { icon: "/icon.svg" },
 };
 
 export default function Layout({ children }: LayoutProps<"/">) {

@@ -1,6 +1,7 @@
 {
   "title": "Authentication",
   "icon": "KeyRound",
+  "description": "Better Auth — sign-in, 2FA, sessions, and route protection.",
   "pages": [
     "index",
     "configuration",

@@ -1,6 +1,7 @@
 {
   "title": "Getting Started",
   "icon": "Rocket",
+  "description": "Install, configure, and run the kit locally.",
   "pages": [
     "index",
     "structure",
