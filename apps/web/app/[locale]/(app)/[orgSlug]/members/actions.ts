@@ -50,6 +50,13 @@ export async function inviteMemberAction(
   try {
     const validated = parsed.data;
 
+    const allowed = await hasOrgPermission(validated.organizationId, {
+      invitation: ["create"],
+    });
+    if (!allowed) {
+      return actionError("unauthorized");
+    }
+
     const memberCheck = await canOrgAddMember(validated.organizationId);
     if (!memberCheck.allowed) {
       return actionError("memberLimitReached");
