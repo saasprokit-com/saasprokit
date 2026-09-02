@@ -32,17 +32,8 @@ export async function removeOrganizationLogoAction(
       return actionError("unauthorized");
     }
 
-    const organization = await database.organization.findUnique({
-      where: { id: validated.organizationId },
-      select: { slug: true },
-    });
-
-    if (!organization) {
-      return actionError("orgNotFound");
-    }
-
     // Atomically: soft-delete attached logo files + clear the org logo reference
-    await database.$transaction([
+    const [, organization] = await database.$transaction([
       database.file.updateMany({
         where: {
           attachableType: ATTACHABLE_TYPE.ORGANIZATION,
@@ -54,6 +45,7 @@ export async function removeOrganizationLogoAction(
       database.organization.update({
         where: { id: validated.organizationId },
         data: { logo: null },
+        select: { slug: true },
       }),
     ]);
 
@@ -82,22 +74,16 @@ export async function updateOrganizationAction(
 
   try {
     // Permission (organization:update) is enforced by BA's updateOrganization itself.
-    const organization = await database.organization.findUnique({
-      where: { id: parsed.data.organizationId },
-      select: { slug: true },
-    });
-
-    if (!organization) {
-      return actionError("orgNotFound");
-    }
-
-    await auth.api.updateOrganization({
+    const organization = await auth.api.updateOrganization({
       headers: await headers(),
       body: {
         data: { name: parsed.data.name },
         organizationId: parsed.data.organizationId,
       },
     });
+    if (!organization) {
+      return actionError("orgNotFound");
+    }
 
     await revalidateOrgPage(organization.slug, ORG_PAGES.SETTINGS);
 
