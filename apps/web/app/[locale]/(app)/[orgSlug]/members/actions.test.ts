@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   actionError: vi.fn(),
-  canOrgAddMember: vi.fn(),
   createInvitation: vi.fn(),
   getServerSession: vi.fn(),
   hasOrgPermission: vi.fn(),
@@ -60,10 +59,6 @@ vi.mock("@/lib/auth/auth", () => ({
   hasOrgPermission: mocks.hasOrgPermission,
 }));
 
-vi.mock("@/lib/billing/subscription-queries", () => ({
-  canOrgAddMember: mocks.canOrgAddMember,
-}));
-
 vi.mock("@/lib/infrastructure/revalidation", () => ({
   revalidateOrgPage: mocks.revalidateOrgPage,
 }));
@@ -102,14 +97,13 @@ beforeEach(() => {
     })
   );
   mocks.hasOrgPermission.mockResolvedValue(true);
-  mocks.canOrgAddMember.mockResolvedValue({ allowed: true, remaining: 2 });
   mocks.createInvitation.mockResolvedValue({});
   mocks.headers.mockResolvedValue(requestHeaders);
   mocks.revalidateOrgPage.mockResolvedValue(undefined);
 });
 
 describe("inviteMemberAction", () => {
-  it("validates input before authorization", async () => {
+  it("validates input before calling Better Auth", async () => {
     const result = await inviteMemberAction(
       { status: "idle" },
       { ...input, email: "invalid-email" }
@@ -117,38 +111,41 @@ describe("inviteMemberAction", () => {
 
     expect(result.status).toBe("error");
     expect(result.fieldErrors?.email).toBeDefined();
-    expect(mocks.hasOrgPermission).not.toHaveBeenCalled();
-    expect(mocks.canOrgAddMember).not.toHaveBeenCalled();
     expect(mocks.createInvitation).not.toHaveBeenCalled();
   });
 
-  it("denies unauthorized callers before reading organization capacity", async () => {
-    mocks.hasOrgPermission.mockResolvedValue(false);
+  it("delegates authorization and the seat limit to Better Auth", async () => {
+    const result = await inviteMemberAction({ status: "idle" }, input);
+
+    expect(mocks.hasOrgPermission).not.toHaveBeenCalled();
+    expect(mocks.createInvitation).toHaveBeenCalledWith({
+      body: {
+        email: "new-member@example.com",
+        role: ORG_ROLES.MEMBER,
+        organizationId: "org_1",
+      },
+      headers: requestHeaders,
+    });
+    expect(mocks.revalidateOrgPage).toHaveBeenCalledWith(
+      "acme",
+      ORG_PAGES.MEMBERS
+    );
+    expect(result).toEqual({ status: "success" });
+  });
+
+  it("maps a Better Auth rejection without revalidating", async () => {
+    const failure = {
+      body: { code: "YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_ORGANIZATION" },
+    };
+    mocks.createInvitation.mockRejectedValue(failure);
 
     const result = await inviteMemberAction({ status: "idle" }, input);
 
-    expect(mocks.hasOrgPermission).toHaveBeenCalledWith("org_1", {
-      invitation: ["create"],
+    expect(mocks.toActionError).toHaveBeenCalledWith(failure, {
+      fallback: "invalidInput",
     });
-    expect(mocks.canOrgAddMember).not.toHaveBeenCalled();
-    expect(mocks.createInvitation).not.toHaveBeenCalled();
-    expect(result).toEqual({
-      code: "unauthorized",
-      error: "unauthorized",
-      status: "error",
-      success: false,
-    });
-  });
-
-  it("authorizes before checking capacity and creating the invitation", async () => {
-    await inviteMemberAction({ status: "idle" }, input);
-
-    expect(mocks.hasOrgPermission).toHaveBeenCalledBefore(
-      mocks.canOrgAddMember
-    );
-    expect(mocks.canOrgAddMember).toHaveBeenCalledBefore(
-      mocks.createInvitation
-    );
+    expect(mocks.revalidateOrgPage).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ status: "error", code: "invalidInput" });
   });
 });
 
@@ -166,7 +163,7 @@ describe("bulkInviteAction", () => {
     mocks.invitationFindMany.mockResolvedValue([]);
   });
 
-  it("denies unauthorized callers before any capacity or skip read", async () => {
+  it("denies unauthorized callers before any skip read", async () => {
     mocks.hasOrgPermission.mockResolvedValue(false);
 
     const result = await bulkInviteAction({ status: "idle" }, bulkInput);
@@ -174,20 +171,16 @@ describe("bulkInviteAction", () => {
     expect(mocks.hasOrgPermission).toHaveBeenCalledWith("org_1", {
       invitation: ["create"],
     });
-    expect(mocks.canOrgAddMember).not.toHaveBeenCalled();
     expect(mocks.userFindMany).not.toHaveBeenCalled();
     expect(mocks.invitationFindMany).not.toHaveBeenCalled();
     expect(mocks.createInvitation).not.toHaveBeenCalled();
     expect(result).toMatchObject({ status: "error", code: "unauthorized" });
   });
 
-  it("authorizes, then checks capacity, then reads skip state, then invites", async () => {
+  it("authorizes, then reads skip state, then invites", async () => {
     const result = await bulkInviteAction({ status: "idle" }, bulkInput);
 
-    expect(mocks.hasOrgPermission).toHaveBeenCalledBefore(
-      mocks.canOrgAddMember
-    );
-    expect(mocks.canOrgAddMember).toHaveBeenCalledBefore(mocks.userFindMany);
+    expect(mocks.hasOrgPermission).toHaveBeenCalledBefore(mocks.userFindMany);
     expect(mocks.userFindMany).toHaveBeenCalledBefore(mocks.createInvitation);
     expect(mocks.createInvitation).toHaveBeenCalledTimes(2);
     expect(mocks.revalidateOrgPage).toHaveBeenCalledWith(
@@ -198,16 +191,6 @@ describe("bulkInviteAction", () => {
       status: "success",
       data: { invited: 2, skipped: [] },
     });
-  });
-
-  it("returns seatLimitReached without inviting when valid emails exceed remaining seats", async () => {
-    mocks.canOrgAddMember.mockResolvedValue({ allowed: true, remaining: 1 });
-
-    const result = await bulkInviteAction({ status: "idle" }, bulkInput);
-
-    expect(mocks.createInvitation).not.toHaveBeenCalled();
-    expect(mocks.revalidateOrgPage).not.toHaveBeenCalled();
-    expect(result).toMatchObject({ status: "error", code: "seatLimitReached" });
   });
 });
 

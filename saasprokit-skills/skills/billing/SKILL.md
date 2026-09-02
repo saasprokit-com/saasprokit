@@ -42,8 +42,8 @@ All billing config and logic lives in **`packages/auth`** (exports `./plans`,
   owners/admins may mutate).
 - **Web helpers (server-only)**: `apps/web/lib/billing/` holds
   `subscription-queries.ts` (`getActiveSubscription`, `getCurrentPlanForOrg`,
-  `getOrgUsageStats`, `getOrgMemberCount`, `canOrgAddMember`, `canOrgAcceptMember`,
-  `canUserCreateOrg`, …) and `checkout-queries.ts` (`verifyCheckoutSession` —
+  `getOrgUsageStats` (members only — pending invitations occupy no seat),
+  `getOrgMemberCount`, `canUserCreateOrg`, …) and `checkout-queries.ts` (`verifyCheckoutSession` —
   confirms a Stripe Checkout session is paid and owned by the org; consumed by the
   checkout success page).
 - **Org billing page**: `apps/web/app/[locale]/(app)/[orgSlug]/billing/`. Its
@@ -97,5 +97,9 @@ Env vars: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
   needed there — `hasOrgPermission` throws `UNAUTHORIZED` when unauthenticated.
 - Edit plans in `packages/auth/plans.ts` — the single source of truth for tiers and
   tier math.
+- **Seat limits are not checked in the web app.** `maxMembers` is enforced once, by
+  the organization plugin's `membershipLimit` callback
+  (`packages/auth/membership-limit.ts`) when an invitation is accepted or a member is
+  added; invitations can always be sent. Details in `saasprokit:auth`.
 
 See `saasprokit:auth`, `saasprokit:data-access`, `saasprokit:env-setup`.

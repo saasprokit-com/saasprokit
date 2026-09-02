@@ -54,7 +54,7 @@ Optional: `pnpm skills:install` restores third-party skills into `.agents/skills
 
 Architecture docs live as skills in the `saasprokit` plugin at `saasprokit-skills/skills/*/SKILL.md`. Once the plugin is installed they are invocable as `/saasprokit:<name>`; either way, read the relevant SKILL.md **before** writing code in its area:
 
-- `saasprokit:auth` — Better Auth, dual admin + org RBAC, session helpers (`getServerSession`, `requireAuth`, `hasOrgPermission`), org-slug access (`getActiveOrganization`), server-action auth (`verifySession`, `toActionError`), platform `/admin` gates
+- `saasprokit:auth` — Better Auth, dual admin + org RBAC, session helpers (`getServerSession`, `requireAuth`, `hasOrgPermission`), org-slug access (`getActiveOrganization`), server-action auth (`verifySession`, `toActionError`), which org mutations delegate to Better Auth (members, roles, seat limits), platform `/admin` gates
 - `saasprokit:routing` — Route groups, edge `apps/web/middleware.ts`, centralized routes (`@/lib/routes`), locale handling
 - `saasprokit:data-access` — unified `lib/` server-side data layer in `apps/web` (domain queries/actions + foundation), Prisma workflow
 - `saasprokit:forms` — Recipe A (RHF + `useActionState` + typed values), Recipe B (`<form action>`), `useTransition` for non-forms; one zod schema on client and server

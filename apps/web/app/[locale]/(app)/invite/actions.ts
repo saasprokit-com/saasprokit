@@ -9,7 +9,6 @@ import type { z } from "zod";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
 import { getServerSession } from "@/lib/auth/auth";
-import { canOrgAddMember } from "@/lib/billing/subscription-queries";
 import { acceptInvitationSchema, acceptInviteLinkSchema } from "./schemas";
 
 export async function acceptInvitationAction(
@@ -104,8 +103,7 @@ export async function acceptInviteLinkAction(
       return actionError("inviteLinkUsageLimitReached");
     }
 
-    // Shared links are idempotent for existing members: no use is consumed and
-    // no seat-capacity check is needed.
+    // Shared links are idempotent for existing members: no use is consumed.
     const existingMember = await database.member.findFirst({
       where: {
         organizationId: inviteLink.organizationId,
@@ -118,12 +116,6 @@ export async function acceptInviteLinkAction(
         success: true,
         data: { organizationSlug: inviteLink.organization.slug },
       };
-    }
-
-    // Pending email invitations also reserve plan seats.
-    const memberCheck = await canOrgAddMember(inviteLink.organizationId);
-    if (!memberCheck.allowed) {
-      return actionError("memberLimitReached");
     }
 
     // Reserve the use before creating the member so concurrent joins cannot overshoot maxUses.

@@ -7,7 +7,6 @@ import {
   BULK_INVITE_CONCURRENCY,
   INVITATION_STATUS,
 } from "@repo/utils/organization";
-import { UNLIMITED } from "@repo/utils/payment";
 import { parseEmailInput } from "@repo/utils/user";
 import { headers } from "next/headers";
 import { verifySession } from "@/lib/auth/action-auth";
@@ -17,7 +16,6 @@ import {
   getServerSession,
   hasOrgPermission,
 } from "@/lib/auth/auth";
-import { canOrgAddMember } from "@/lib/billing/subscription-queries";
 import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
 import { ORG_PAGES } from "@/lib/routes";
@@ -50,18 +48,6 @@ export async function inviteMemberAction(
 
   try {
     const validated = parsed.data;
-
-    const allowed = await hasOrgPermission(validated.organizationId, {
-      invitation: ["create"],
-    });
-    if (!allowed) {
-      return actionError("unauthorized");
-    }
-
-    const memberCheck = await canOrgAddMember(validated.organizationId);
-    if (!memberCheck.allowed) {
-      return actionError("memberLimitReached");
-    }
 
     await auth.api.createInvitation({
       body: {
@@ -226,17 +212,12 @@ async function processBulkInviteEmail(
   }
 }
 
-type BulkInviteProcessResult =
-  | { status: "processed"; invited: number; skipped: string[] }
-  | { status: "seatLimit" };
-
 async function processBulkInviteEmails(
   emails: string[],
   organizationId: string,
   role: BulkInviteInput["role"],
-  opts: { reqHeaders: Headers; remainingCapacity: number }
-): Promise<BulkInviteProcessResult> {
-  const { reqHeaders, remainingCapacity } = opts;
+  reqHeaders: Headers
+): Promise<{ invited: number; skipped: string[] }> {
   const skipReasons = await checkBulkInviteSkip(emails, organizationId);
   const skipped: string[] = [];
   let invited = 0;
@@ -249,13 +230,6 @@ async function processBulkInviteEmails(
     } else {
       validEmails.push(email);
     }
-  }
-
-  if (
-    remainingCapacity !== UNLIMITED &&
-    validEmails.length > remainingCapacity
-  ) {
-    return { status: "seatLimit" };
   }
 
   for (let i = 0; i < validEmails.length; i += BULK_INVITE_CONCURRENCY) {
@@ -277,7 +251,7 @@ async function processBulkInviteEmails(
     }
   }
 
-  return { status: "processed", invited, skipped };
+  return { invited, skipped };
 }
 
 async function checkBulkInviteSkip(
@@ -375,28 +349,15 @@ export async function bulkInviteAction(
       return actionError("unauthorized");
     }
 
-    const memberCheck = await canOrgAddMember(validated.organizationId);
-    if (!memberCheck.allowed) {
-      return actionError("memberLimitReached");
-    }
-
-    const reqHeaders = await headers();
-
-    const result = await processBulkInviteEmails(
+    const { invited, skipped } = await processBulkInviteEmails(
       validated.emails,
       validated.organizationId,
       validated.role,
-      { reqHeaders, remainingCapacity: memberCheck.remaining }
+      await headers()
     );
-    if (result.status === "seatLimit") {
-      return actionError("seatLimitReached");
-    }
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
-    return {
-      status: "success",
-      data: { invited: result.invited, skipped: result.skipped },
-    };
+    return { status: "success", data: { invited, skipped } };
   } catch (error) {
     return toActionError(error, {
       fallback: "invalidInput",

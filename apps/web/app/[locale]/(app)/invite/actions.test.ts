@@ -4,7 +4,6 @@ const mocks = vi.hoisted(() => ({
   acceptInvitation: vi.fn(),
   addMember: vi.fn(),
   actionError: vi.fn(),
-  canOrgAddMember: vi.fn(),
   getServerSession: vi.fn(),
   headers: vi.fn(),
   inviteLinkFindUnique: vi.fn(),
@@ -49,10 +48,6 @@ vi.mock("@/lib/auth/auth", () => ({
   getServerSession: mocks.getServerSession,
 }));
 
-vi.mock("@/lib/billing/subscription-queries", () => ({
-  canOrgAddMember: mocks.canOrgAddMember,
-}));
-
 import {
   acceptInvitationAction,
   acceptInviteLinkAction,
@@ -94,7 +89,6 @@ describe("acceptInvitationAction", () => {
     });
     expect(mocks.getServerSession).not.toHaveBeenCalled();
     expect(mocks.memberFindFirst).not.toHaveBeenCalled();
-    expect(mocks.canOrgAddMember).not.toHaveBeenCalled();
     expect(result).toEqual({
       success: true,
       data: { organizationSlug: "acme" },
@@ -148,33 +142,13 @@ describe("acceptInviteLinkAction", () => {
     });
     mocks.inviteLinkFindUnique.mockResolvedValue(baseLink);
     mocks.memberFindFirst.mockResolvedValue(null);
-    mocks.canOrgAddMember.mockResolvedValue({ allowed: true, remaining: 3 });
     mocks.inviteLinkUpdateMany.mockResolvedValue({ count: 1 });
     mocks.addMember.mockResolvedValue({});
   });
 
-  it("reserves pending invitation seats before Better Auth adds a member", async () => {
-    mocks.canOrgAddMember.mockResolvedValue({ allowed: false, remaining: 0 });
-
+  it("reserves a use on an unlimited link before addMember", async () => {
     const result = await acceptInviteLinkAction({ token: "shared-token" });
 
-    expect(mocks.canOrgAddMember).toHaveBeenCalledWith("org_1");
-    expect(mocks.inviteLinkUpdateMany).not.toHaveBeenCalled();
-    expect(mocks.addMember).not.toHaveBeenCalled();
-    expect(result).toEqual({
-      success: false,
-      status: "error",
-      error: "memberLimitReached",
-      code: "memberLimitReached",
-    });
-  });
-
-  it("reserves a use on an unlimited link after the capacity check and before addMember", async () => {
-    const result = await acceptInviteLinkAction({ token: "shared-token" });
-
-    expect(mocks.canOrgAddMember).toHaveBeenCalledBefore(
-      mocks.inviteLinkUpdateMany
-    );
     expect(mocks.inviteLinkUpdateMany).toHaveBeenCalledBefore(mocks.addMember);
     expect(mocks.inviteLinkUpdateMany).toHaveBeenCalledTimes(1);
     expect(mocks.inviteLinkUpdateMany).toHaveBeenCalledWith({
@@ -220,7 +194,7 @@ describe("acceptInviteLinkAction", () => {
     expect(result).toMatchObject({ code: "inviteLinkUsageLimitReached" });
   });
 
-  it("releases the reserved use when addMember fails", async () => {
+  it("releases the reserved use when Better Auth rejects the member limit", async () => {
     const failure = {
       body: { code: "ORGANIZATION_MEMBERSHIP_LIMIT_REACHED" },
     };
@@ -244,7 +218,6 @@ describe("acceptInviteLinkAction", () => {
 
     const result = await acceptInviteLinkAction({ token: "shared-token" });
 
-    expect(mocks.canOrgAddMember).not.toHaveBeenCalled();
     expect(mocks.inviteLinkUpdateMany).not.toHaveBeenCalled();
     expect(mocks.addMember).not.toHaveBeenCalled();
     expect(result).toEqual({
