@@ -43,6 +43,10 @@ vi.mock("@repo/database", () => ({
   },
 }));
 
+vi.mock("@repo/logger/server", () => ({
+  createRequestLogger: () => ({ error: vi.fn() }),
+}));
+
 vi.mock("next/headers", () => ({ headers: mocks.headers }));
 
 vi.mock("@/lib/auth/action-auth", () => ({
@@ -257,6 +261,7 @@ describe("removeMembersAction", () => {
 
     expect(mocks.toActionError).toHaveBeenCalledWith(failure, {
       fallback: "removeMember",
+      logger: expect.anything(),
     });
     expect(mocks.revalidateOrgPage).not.toHaveBeenCalled();
     expect(result).toMatchObject({ code: "removeMember" });

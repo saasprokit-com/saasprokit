@@ -61,6 +61,19 @@ export const LIMITS = {
   },
 } as const;
 
+const STORAGE_GB_THRESHOLD = 1000;
+const FRACTION_DIGITS = 1;
+
+export function formatStorage(mb: number): string {
+  if (mb === UNLIMITED) {
+    return "Unlimited";
+  }
+  if (mb >= STORAGE_GB_THRESHOLD) {
+    return `${(mb / STORAGE_GB_THRESHOLD).toFixed(FRACTION_DIGITS)} GB`;
+  }
+  return `${mb} MB`;
+}
+
 export const PLAN_ORDER: PlanName[] = [
   PLAN_NAMES.FREE,
   PLAN_NAMES.PRO,

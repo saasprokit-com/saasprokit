@@ -11,9 +11,6 @@ import {
 import { getPlanLimits } from "./plans";
 import type { UsageStats } from "./types";
 
-const STORAGE_GB_THRESHOLD = 1000; // MB threshold for displaying as GB
-const FRACTION_DIGITS = 1; // For storage formatting
-
 export function isSubscriptionActive(
   subscription: Subscription | null | undefined
 ): boolean {
@@ -90,16 +87,6 @@ export function calculateUsageStats(
             ),
     },
   };
-}
-
-export function formatStorage(mb: number): string {
-  if (mb === UNLIMITED) {
-    return "Unlimited";
-  }
-  if (mb >= STORAGE_GB_THRESHOLD) {
-    return `${(mb / STORAGE_GB_THRESHOLD).toFixed(FRACTION_DIGITS)} GB`;
-  }
-  return `${mb} MB`;
 }
 
 export function getStatusDisplayText(

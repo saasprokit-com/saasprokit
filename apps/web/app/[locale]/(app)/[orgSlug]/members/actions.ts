@@ -1,8 +1,9 @@
 "use server";
 
-import { ORG_ROLES } from "@repo/auth/permissions";
+import { isOwnerRole, ORG_ROLES } from "@repo/auth/permissions";
 import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
+import { createRequestLogger } from "@repo/logger/server";
 import {
   BULK_INVITE_CONCURRENCY,
   INVITATION_STATUS,
@@ -70,6 +71,8 @@ export async function inviteMemberAction(
 export async function removeMembersAction(
   input: RemoveMembersInput
 ): Promise<ActionResult<{ removedCount: number }>> {
+  const logger = createRequestLogger({ action: "removeMembers" });
+
   try {
     const validated = removeMembersSchema.parse(input);
 
@@ -94,7 +97,7 @@ export async function removeMembersAction(
     });
 
     const validMembers = membersToRemove.filter(
-      (m) => m.role !== ORG_ROLES.OWNER && m.userId !== session.user.id
+      (m) => !isOwnerRole(m.role) && m.userId !== session.user.id
     );
 
     if (validMembers.length === 0) {
@@ -102,30 +105,50 @@ export async function removeMembersAction(
     }
 
     const reqHeaders = await headers();
-    const results = await Promise.allSettled(
-      validMembers.map((member) =>
-        auth.api.removeMember({
-          body: {
-            memberIdOrEmail: member.id,
-            organizationId: validated.organizationId,
-          },
-          headers: reqHeaders,
-        })
-      )
-    );
+    const results: PromiseSettledResult<unknown>[] = [];
+    for (let i = 0; i < validMembers.length; i += BULK_INVITE_CONCURRENCY) {
+      const batch = validMembers.slice(i, i + BULK_INVITE_CONCURRENCY);
+      const settled = await Promise.allSettled(
+        batch.map((member) =>
+          auth.api.removeMember({
+            body: {
+              memberIdOrEmail: member.id,
+              organizationId: validated.organizationId,
+            },
+            headers: reqHeaders,
+          })
+        )
+      );
+      results.push(...settled);
+    }
 
     const rejected = results.filter(
       (result): result is PromiseRejectedResult => result.status === "rejected"
     );
     const removedCount = results.length - rejected.length;
     if (removedCount === 0) {
-      return toActionError(rejected[0]?.reason, { fallback: "removeMember" });
+      return toActionError(rejected[0]?.reason, {
+        fallback: "removeMember",
+        logger,
+      });
+    }
+
+    if (rejected.length > 0) {
+      logger.error(
+        {
+          err: rejected[0].reason,
+          organizationId: validated.organizationId,
+          rejectedCount: rejected.length,
+          requestedCount: validMembers.length,
+        },
+        "Some member removals were rejected"
+      );
     }
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
     return { success: true, data: { removedCount } };
   } catch (error) {
-    return toActionError(error, { fallback: "removeMember" });
+    return toActionError(error, { fallback: "removeMember", logger });
   }
 }
 
@@ -169,7 +192,7 @@ export async function updateMemberRoleAction(
     if (!member) {
       return actionError("memberNotFound");
     }
-    if (member.role === ORG_ROLES.OWNER || member.userId === session.user.id) {
+    if (isOwnerRole(member.role) || member.userId === session.user.id) {
       return actionError("updateRole");
     }
 
