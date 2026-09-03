@@ -1,7 +1,7 @@
 import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
 import { createRequestLogger } from "@repo/logger/server";
-import { deleteFile, uploadFile } from "@repo/storage";
+import { uploadFile } from "@repo/storage";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { handlePostUploadOperations } from "@/lib/files/actions";
@@ -125,88 +125,6 @@ export async function POST(request: Request) {
     );
     return NextResponse.json(
       { error: "Failed to upload file" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request: Request) {
-  const logger = createRequestLogger({
-    endpoint: "/api/upload",
-    method: "DELETE",
-  });
-
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user?.id) {
-      logger.warn("Unauthorized file deletion attempt");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userLogger = logger.child({ userId: session.user.id });
-
-    const { searchParams } = new URL(request.url);
-    const fileId = searchParams.get("id");
-
-    if (!fileId) {
-      userLogger.warn({}, "File deletion missing file ID");
-      return NextResponse.json({ error: "File ID required" }, { status: 400 });
-    }
-
-    const file = await database.file.findFirst({
-      where: {
-        id: fileId,
-        uploadedById: session.user.id,
-        deletedAt: null,
-      },
-    });
-
-    if (!file) {
-      userLogger.warn({ fileId }, "File not found or unauthorized");
-      return NextResponse.json({ error: "File not found" }, { status: 404 });
-    }
-
-    try {
-      await deleteFile(file.storagePath, file.bucket ?? undefined);
-      userLogger.info(
-        {
-          storagePath: file.storagePath,
-        },
-        "File deleted from storage"
-      );
-    } catch (deleteError) {
-      userLogger.warn(
-        {
-          storagePath: file.storagePath,
-          err:
-            deleteError instanceof Error
-              ? deleteError
-              : new Error(String(deleteError)),
-        },
-        "Failed to delete file from storage"
-      );
-    }
-
-    await database.file.update({
-      where: { id: fileId },
-      data: { deletedAt: new Date() },
-    });
-
-    userLogger.info({ fileId }, "File soft-deleted successfully");
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    logger.error(
-      {
-        err: error instanceof Error ? error : new Error(String(error)),
-      },
-      "File deletion failed"
-    );
-    return NextResponse.json(
-      { error: "Failed to delete file" },
       { status: 500 }
     );
   }
