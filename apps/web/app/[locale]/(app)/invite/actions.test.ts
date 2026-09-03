@@ -4,11 +4,10 @@ const mocks = vi.hoisted(() => ({
   acceptInvitation: vi.fn(),
   addMember: vi.fn(),
   actionError: vi.fn(),
-  canOrgAddMember: vi.fn(),
   getServerSession: vi.fn(),
   headers: vi.fn(),
   inviteLinkFindUnique: vi.fn(),
-  inviteLinkUpdate: vi.fn(),
+  inviteLinkUpdateMany: vi.fn(),
   memberFindFirst: vi.fn(),
   organizationFindUnique: vi.fn(),
   toActionError: vi.fn(),
@@ -27,11 +26,15 @@ vi.mock("@repo/database", () => ({
   database: {
     inviteLink: {
       findUnique: mocks.inviteLinkFindUnique,
-      update: mocks.inviteLinkUpdate,
+      updateMany: mocks.inviteLinkUpdateMany,
     },
     member: { findFirst: mocks.memberFindFirst },
     organization: { findUnique: mocks.organizationFindUnique },
   },
+}));
+
+vi.mock("@repo/logger/server", () => ({
+  createRequestLogger: () => ({ error: vi.fn() }),
 }));
 
 vi.mock("next/headers", () => ({ headers: mocks.headers }));
@@ -43,10 +46,6 @@ vi.mock("@/lib/auth/action-error", () => ({
 
 vi.mock("@/lib/auth/auth", () => ({
   getServerSession: mocks.getServerSession,
-}));
-
-vi.mock("@/lib/billing/subscription-queries", () => ({
-  canOrgAddMember: mocks.canOrgAddMember,
 }));
 
 import {
@@ -90,7 +89,6 @@ describe("acceptInvitationAction", () => {
     });
     expect(mocks.getServerSession).not.toHaveBeenCalled();
     expect(mocks.memberFindFirst).not.toHaveBeenCalled();
-    expect(mocks.canOrgAddMember).not.toHaveBeenCalled();
     expect(result).toEqual({
       success: true,
       data: { organizationSlug: "acme" },
@@ -126,36 +124,105 @@ describe("acceptInvitationAction", () => {
 });
 
 describe("acceptInviteLinkAction", () => {
-  it("reserves pending invitation seats before Better Auth adds a member", async () => {
+  const baseLink = {
+    id: "link_1",
+    token: "shared-token",
+    organizationId: "org_1",
+    organization: { slug: "acme" },
+    isActive: true,
+    expiresAt: null,
+    maxUses: null,
+    usedCount: 0,
+    role: "member",
+  };
+
+  beforeEach(() => {
     mocks.getServerSession.mockResolvedValue({
       user: { id: "user_1", email: "member@example.com" },
     });
-    mocks.inviteLinkFindUnique.mockResolvedValue({
-      id: "link_1",
-      token: "shared-token",
-      organizationId: "org_1",
-      organization: { slug: "acme" },
-      isActive: true,
-      expiresAt: null,
-      maxUses: null,
-      usedCount: 0,
-      role: "member",
-    });
+    mocks.inviteLinkFindUnique.mockResolvedValue(baseLink);
     mocks.memberFindFirst.mockResolvedValue(null);
-    mocks.canOrgAddMember.mockResolvedValue({
-      allowed: false,
-      remaining: 0,
+    mocks.inviteLinkUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.addMember.mockResolvedValue({});
+  });
+
+  it("reserves a use on an unlimited link before addMember", async () => {
+    const result = await acceptInviteLinkAction({ token: "shared-token" });
+
+    expect(mocks.inviteLinkUpdateMany).toHaveBeenCalledBefore(mocks.addMember);
+    expect(mocks.inviteLinkUpdateMany).toHaveBeenCalledTimes(1);
+    expect(mocks.inviteLinkUpdateMany).toHaveBeenCalledWith({
+      where: { id: "link_1", isActive: true },
+      data: { usedCount: { increment: 1 } },
     });
+    expect(mocks.addMember).toHaveBeenCalledWith({
+      body: { userId: "user_1", organizationId: "org_1", role: "member" },
+      headers: requestHeaders,
+    });
+    expect(result).toEqual({
+      success: true,
+      data: { organizationSlug: "acme" },
+    });
+  });
+
+  it("bounds the reservation by maxUses on a capped link", async () => {
+    mocks.inviteLinkFindUnique.mockResolvedValue({
+      ...baseLink,
+      maxUses: 5,
+      usedCount: 4,
+    });
+
+    await acceptInviteLinkAction({ token: "shared-token" });
+
+    expect(mocks.inviteLinkUpdateMany).toHaveBeenCalledWith({
+      where: { id: "link_1", isActive: true, usedCount: { lt: 5 } },
+      data: { usedCount: { increment: 1 } },
+    });
+  });
+
+  it("returns the usage-limit error when the reservation matches no row", async () => {
+    mocks.inviteLinkFindUnique.mockResolvedValue({
+      ...baseLink,
+      maxUses: 5,
+      usedCount: 4,
+    });
+    mocks.inviteLinkUpdateMany.mockResolvedValue({ count: 0 });
 
     const result = await acceptInviteLinkAction({ token: "shared-token" });
 
-    expect(mocks.canOrgAddMember).toHaveBeenCalledWith("org_1");
+    expect(mocks.addMember).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ code: "inviteLinkUsageLimitReached" });
+  });
+
+  it("releases the reserved use when Better Auth rejects the member limit", async () => {
+    const failure = {
+      body: { code: "ORGANIZATION_MEMBERSHIP_LIMIT_REACHED" },
+    };
+    mocks.addMember.mockRejectedValue(failure);
+
+    const result = await acceptInviteLinkAction({ token: "shared-token" });
+
+    expect(mocks.inviteLinkUpdateMany).toHaveBeenCalledTimes(2);
+    expect(mocks.inviteLinkUpdateMany).toHaveBeenLastCalledWith({
+      where: { id: "link_1", usedCount: { gt: 0 } },
+      data: { usedCount: { decrement: 1 } },
+    });
+    expect(mocks.toActionError).toHaveBeenCalledWith(failure, {
+      fallback: "joinOrganization",
+    });
+    expect(result).toMatchObject({ code: "joinOrganization" });
+  });
+
+  it("returns success for an existing member without consuming a use", async () => {
+    mocks.memberFindFirst.mockResolvedValue({ id: "member_existing" });
+
+    const result = await acceptInviteLinkAction({ token: "shared-token" });
+
+    expect(mocks.inviteLinkUpdateMany).not.toHaveBeenCalled();
     expect(mocks.addMember).not.toHaveBeenCalled();
     expect(result).toEqual({
-      success: false,
-      status: "error",
-      error: "memberLimitReached",
-      code: "memberLimitReached",
+      success: true,
+      data: { organizationSlug: "acme" },
     });
   });
 });

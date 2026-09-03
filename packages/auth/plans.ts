@@ -2,6 +2,7 @@ import type { StripePlan } from "@better-auth/stripe";
 import { MONTHS_PER_YEAR } from "@repo/utils/date";
 import { PERCENTAGE_MULTIPLIER } from "@repo/utils/number";
 import {
+  formatStorage,
   LIMITS,
   PLAN_DISPLAY_NAMES,
   PLAN_NAMES,
@@ -37,8 +38,8 @@ export const PLANS: Record<PlanName, PlanConfig> = {
       advancedAnalytics: false,
     },
     features: [
-      "1 team member",
-      "100 MB storage",
+      `Up to ${LIMITS.FREE.MAX_MEMBERS} team members`,
+      `Up to ${formatStorage(LIMITS.FREE.MAX_STORAGE_MB)} storage`,
       "Basic features",
       "Community support",
     ],
@@ -57,8 +58,8 @@ export const PLANS: Record<PlanName, PlanConfig> = {
       advancedAnalytics: true,
     },
     features: [
-      "Up to 10 team members",
-      "5 GB storage",
+      `Up to ${LIMITS.PRO.MAX_MEMBERS} team members`,
+      `Up to ${formatStorage(LIMITS.PRO.MAX_STORAGE_MB)} storage`,
       "Priority support",
       "Advanced analytics",
     ],
@@ -79,8 +80,8 @@ export const PLANS: Record<PlanName, PlanConfig> = {
       advancedAnalytics: true,
     },
     features: [
-      "Up to 50 team members",
-      "50 GB storage",
+      `Up to ${LIMITS.ENTERPRISE.MAX_MEMBERS} team members`,
+      `Up to ${formatStorage(LIMITS.ENTERPRISE.MAX_STORAGE_MB)} storage`,
       "24/7 priority support",
       "Advanced analytics",
     ],

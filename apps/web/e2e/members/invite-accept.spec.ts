@@ -119,7 +119,7 @@ test.describe("Invite Accept — real invitation flow", () => {
         .click();
 
       await expect(
-        page.getByText(/reached its member limit/i)
+        page.getByText(/organization membership limit reached/i)
       ).toBeVisible({ timeout: TEST_CONFIG.timeouts.action });
     } finally {
       if (invitationId) {

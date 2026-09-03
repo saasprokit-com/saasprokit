@@ -80,8 +80,8 @@ export async function acceptInviteLinkAction(...) {}
 
 // Right — no docblock; add a comment only for the non-obvious "why"
 export async function acceptInviteLinkAction(...) {
-  // Plan seat cap (Stripe) — Better Auth has no billing concept.
-  const memberCheck = await canOrgAddMember(inviteLink.organizationId);
+  // Reserve the use before creating the member so concurrent joins cannot overshoot maxUses.
+  const reservation = await database.inviteLink.updateMany({ ... });
 }
 ```
 

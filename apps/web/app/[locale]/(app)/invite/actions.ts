@@ -3,12 +3,12 @@
 import type { OrgRoleName } from "@repo/auth/permissions";
 import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
+import { createRequestLogger } from "@repo/logger/server";
 import { headers } from "next/headers";
 import type { z } from "zod";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
 import { getServerSession } from "@/lib/auth/auth";
-import { canOrgAddMember } from "@/lib/billing/subscription-queries";
 import { acceptInvitationSchema, acceptInviteLinkSchema } from "./schemas";
 
 export async function acceptInvitationAction(
@@ -47,9 +47,28 @@ export async function acceptInvitationFormAction(
   return await acceptInvitationAction({ invitationId });
 }
 
+async function releaseInviteLinkUse(
+  inviteLinkId: string,
+  logger: ReturnType<typeof createRequestLogger>
+): Promise<void> {
+  try {
+    await database.inviteLink.updateMany({
+      where: { id: inviteLinkId, usedCount: { gt: 0 } },
+      data: { usedCount: { decrement: 1 } },
+    });
+  } catch (error) {
+    logger.error(
+      { err: error, inviteLinkId },
+      "Failed to release invite link use after addMember failed"
+    );
+  }
+}
+
 export async function acceptInviteLinkAction(
   input: z.infer<typeof acceptInviteLinkSchema>
 ): Promise<ActionResult<{ organizationSlug: string }>> {
+  const logger = createRequestLogger({ action: "acceptInviteLink" });
+
   try {
     const validated = acceptInviteLinkSchema.parse(input);
 
@@ -84,8 +103,7 @@ export async function acceptInviteLinkAction(
       return actionError("inviteLinkUsageLimitReached");
     }
 
-    // Shared links are idempotent for existing members: no use is consumed and
-    // no seat-capacity check is needed.
+    // Shared links are idempotent for existing members: no use is consumed.
     const existingMember = await database.member.findFirst({
       where: {
         organizationId: inviteLink.organizationId,
@@ -100,29 +118,34 @@ export async function acceptInviteLinkAction(
       };
     }
 
-    // Pending email invitations also reserve plan seats.
-    const memberCheck = await canOrgAddMember(inviteLink.organizationId);
-    if (!memberCheck.allowed) {
-      return actionError("memberLimitReached");
-    }
-
-    await auth.api.addMember({
-      body: {
-        userId: session.user.id,
-        organizationId: inviteLink.organizationId,
-        // Validated to admin|member at link creation (invite-links schema).
-        role: inviteLink.role as OrgRoleName,
+    // Reserve the use before creating the member so concurrent joins cannot overshoot maxUses.
+    const reservation = await database.inviteLink.updateMany({
+      where: {
+        id: inviteLink.id,
+        isActive: true,
+        ...(inviteLink.maxUses === null
+          ? {}
+          : { usedCount: { lt: inviteLink.maxUses } }),
       },
-      headers: await headers(),
-    });
-
-    // Consume a use only after the member is actually added, so a failed join
-    // does not burn a use. maxUses remains a best-effort cap: concurrent joins
-    // can exceed it, which is accepted for a shared link.
-    await database.inviteLink.update({
-      where: { id: inviteLink.id },
       data: { usedCount: { increment: 1 } },
     });
+    if (reservation.count === 0) {
+      return actionError("inviteLinkUsageLimitReached");
+    }
+
+    try {
+      await auth.api.addMember({
+        body: {
+          userId: session.user.id,
+          organizationId: inviteLink.organizationId,
+          role: inviteLink.role as OrgRoleName,
+        },
+        headers: await headers(),
+      });
+    } catch (error) {
+      await releaseInviteLinkUse(inviteLink.id, logger);
+      throw error;
+    }
 
     return {
       success: true,

@@ -55,19 +55,4 @@ test.describe("Members List", () => {
       page.getByText(/invalid email address/i).first()
     ).toBeVisible();
   });
-
-  test("Should show a member-limit error When inviting to a full Free-plan org", async ({
-    page,
-  }) => {
-    const dialog = await openInviteDialog(page);
-    await dialog
-      .getByLabel(/email address/i)
-      .fill(`invite-test-e2e-${Date.now()}@example.com`);
-    await dialog.getByRole("button", { name: /send invitation/i }).click();
-
-    await expect(
-      page.getByText(/reached its member limit/i).first()
-    ).toBeVisible();
-    await expect(dialog).toBeVisible();
-  });
 });
