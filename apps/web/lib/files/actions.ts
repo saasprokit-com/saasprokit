@@ -1,55 +1,42 @@
 import "server-only";
 
 import { database } from "@repo/database";
-import { ATTACHABLE_TYPE } from "@repo/utils/storage";
+import type { UploadType } from "@repo/storage/constants";
+import type { AttachableType } from "@repo/utils/storage";
 
 export async function handlePostUploadOperations(options: {
-  type: string | null;
+  type: UploadType;
   fileRecord: { id: string };
   uploadResult: { publicUrl: string | null };
-  userId: string;
-  organizationId: string | null;
+  attachableType: AttachableType;
+  attachableId: string;
 }): Promise<void> {
-  const { type, fileRecord, uploadResult, userId, organizationId } = options;
+  const { type, fileRecord, uploadResult, attachableType, attachableId } =
+    options;
 
-  // CRITICAL: Wrap all post-upload operations in a transaction
-  // Ensures either both user/org update AND old file soft-delete happen, or neither
-  // Prevents data inconsistency if one operation fails
-  if (type === "avatar") {
-    await database.$transaction(async (tx) => {
+  await database.$transaction(async (tx) => {
+    if (type === "avatar") {
       await tx.user.update({
-        where: { id: userId },
+        where: { id: attachableId },
         data: { image: uploadResult.publicUrl },
       });
+    }
 
-      await tx.file.updateMany({
-        where: {
-          attachableType: ATTACHABLE_TYPE.USER,
-          attachableId: userId,
-          id: { not: fileRecord.id },
-          deletedAt: null,
-        },
-        data: { deletedAt: new Date() },
-      });
-    });
-  }
-
-  if (type === "org-logo" && organizationId) {
-    await database.$transaction(async (tx) => {
+    if (type === "org-logo") {
       await tx.organization.update({
-        where: { id: organizationId },
+        where: { id: attachableId },
         data: { logo: uploadResult.publicUrl },
       });
+    }
 
-      await tx.file.updateMany({
-        where: {
-          attachableType: ATTACHABLE_TYPE.ORGANIZATION,
-          attachableId: organizationId,
-          id: { not: fileRecord.id },
-          deletedAt: null,
-        },
-        data: { deletedAt: new Date() },
-      });
+    await tx.file.updateMany({
+      where: {
+        attachableType,
+        attachableId,
+        id: { not: fileRecord.id },
+        deletedAt: null,
+      },
+      data: { deletedAt: new Date() },
     });
-  }
+  });
 }

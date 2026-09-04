@@ -2,11 +2,31 @@ import "server-only";
 
 import { database } from "@repo/database";
 import type { createRequestLogger } from "@repo/logger/server";
-import { imageFileSchema } from "@repo/storage";
-import { ATTACHABLE_TYPE } from "@repo/utils/storage";
+import { imageFileSchema, type UploadType } from "@repo/storage/constants";
+import { ATTACHABLE_TYPE, type AttachableType } from "@repo/utils/storage";
 import { NextResponse } from "next/server";
 import { hasOrgPermission } from "@/lib/auth/auth";
 import { validateStorageQuota } from "@/lib/files/storage-quota";
+
+type UploadTypeConfig =
+  | { attachableType: typeof ATTACHABLE_TYPE.USER; folder: string }
+  | {
+      attachableType: typeof ATTACHABLE_TYPE.ORGANIZATION;
+      folder: string;
+      quota: boolean;
+    };
+
+const UPLOAD_TYPES = {
+  avatar: {
+    attachableType: ATTACHABLE_TYPE.USER,
+    folder: "avatars",
+  },
+  "org-logo": {
+    attachableType: ATTACHABLE_TYPE.ORGANIZATION,
+    folder: "logos",
+    quota: true,
+  },
+} as const satisfies Record<UploadType, UploadTypeConfig>;
 
 export async function validateUploadedFile(
   file: File,
@@ -42,15 +62,19 @@ export async function validateUploadedFile(
   return { valid: true, buffer };
 }
 
-async function validateOrgLogoPermissions(
+type OrgUploadPermission =
+  | { valid: false; error: string; status: number }
+  | { valid: true; organizationId: string };
+
+async function validateOrgUploadPermission(
   organizationId: string | null,
   logger: ReturnType<typeof createRequestLogger>
-) {
+): Promise<OrgUploadPermission> {
   if (!organizationId) {
-    logger.warn({}, "Org logo upload missing organization ID");
+    logger.warn({}, "Organization upload missing organization ID");
     return {
       valid: false,
-      error: "Organization ID required for logo upload",
+      error: "Organization ID required for this upload",
       status: 400,
     };
   }
@@ -61,12 +85,7 @@ async function validateOrgLogoPermissions(
   });
 
   if (!organization) {
-    logger.warn(
-      {
-        organizationId,
-      },
-      "Organization not found for logo upload"
-    );
+    logger.warn({ organizationId }, "Organization not found for upload");
     return {
       valid: false,
       error: "Organization not found",
@@ -78,15 +97,10 @@ async function validateOrgLogoPermissions(
     organization: ["update"],
   });
   if (!allowed) {
-    logger.warn(
-      {
-        organizationId,
-      },
-      "Insufficient permissions for org logo upload"
-    );
+    logger.warn({ organizationId }, "Insufficient permissions for org upload");
     return {
       valid: false,
-      error: "You don't have permission to update this organization's logo",
+      error: "You don't have permission to update this organization",
       status: 403,
     };
   }
@@ -94,92 +108,71 @@ async function validateOrgLogoPermissions(
   return { valid: true, organizationId };
 }
 
+type SetupFileTypeResult =
+  | { success: false; response: Response }
+  | {
+      success: true;
+      folder: string;
+      attachableType: AttachableType;
+      attachableId: string;
+    };
+
 export async function setupFileType(options: {
-  type: string | null;
+  type: UploadType;
   file: File;
   organizationId: string | null;
   userId: string;
   userLogger: ReturnType<typeof createRequestLogger>;
-}): Promise<
-  | {
-      success: false;
-      response: Response;
-    }
-  | {
-      success: true;
-      folder: string;
-      attachableType: string | undefined;
-      attachableId: string | undefined;
-    }
-> {
-  const {
-    type: fileType,
-    file,
+}): Promise<SetupFileTypeResult> {
+  const { type, file, organizationId, userId, userLogger } = options;
+  const config = UPLOAD_TYPES[type];
+
+  if (config.attachableType === ATTACHABLE_TYPE.USER) {
+    return {
+      success: true,
+      folder: config.folder,
+      attachableType: config.attachableType,
+      attachableId: userId,
+    };
+  }
+
+  const permission = await validateOrgUploadPermission(
     organizationId,
-    userId: userId2,
-    userLogger,
-  } = options;
+    userLogger
+  );
 
-  let folder = "uploads";
-  let attachableType: string | undefined;
-  let attachableId: string | undefined;
+  if (!permission.valid) {
+    return {
+      success: false,
+      response: NextResponse.json(
+        { error: permission.error },
+        { status: permission.status }
+      ),
+    };
+  }
 
-  if (fileType === "avatar") {
-    folder = "avatars";
-    attachableType = ATTACHABLE_TYPE.USER;
-    attachableId = userId2;
-  } else if (fileType === "org-logo") {
-    const validation = await validateOrgLogoPermissions(
-      organizationId,
-      userLogger
-    );
-
-    if (!validation.valid) {
-      return {
-        success: false,
-        response: NextResponse.json(
-          { error: validation.error },
-          { status: validation.status }
-        ),
-      };
-    }
-
-    folder = "logos";
-    attachableType = ATTACHABLE_TYPE.ORGANIZATION;
-    attachableId = validation.organizationId;
-
-    if (!attachableId) {
-      userLogger.warn(
-        {},
-        "Organization ID missing after permission validation"
-      );
-      return {
-        success: false,
-        response: NextResponse.json(
-          { error: "Organization ID missing" },
-          { status: 400 }
-        ),
-      };
-    }
-
-    // CRITICAL: Validate organization storage quota before upload
-    // Prevents users from exceeding their storage limits
-    const storageQuotaCheck = await validateStorageQuota(
-      attachableId,
+  if (config.quota) {
+    const quotaCheck = await validateStorageQuota(
+      permission.organizationId,
       file.size,
       userLogger
     );
 
-    if (!storageQuotaCheck.valid) {
+    if (!quotaCheck.valid) {
       return {
         success: false,
         response: NextResponse.json(
-          { error: storageQuotaCheck.error },
-          { status: storageQuotaCheck.status }
+          { error: quotaCheck.error },
+          { status: quotaCheck.status }
         ),
       };
     }
   }
 
-  return { success: true, folder, attachableType, attachableId };
+  return {
+    success: true,
+    folder: config.folder,
+    attachableType: config.attachableType,
+    attachableId: permission.organizationId,
+  };
 }

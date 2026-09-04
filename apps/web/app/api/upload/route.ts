@@ -1,7 +1,8 @@
 import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
 import { createRequestLogger } from "@repo/logger/server";
-import { uploadFile } from "@repo/storage";
+import { uploadTypeSchema } from "@repo/storage/constants";
+import { uploadFile } from "@repo/storage/server";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { handlePostUploadOperations } from "@/lib/files/actions";
@@ -27,15 +28,25 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
-    const type = formData.get("type") as string | null;
-    const organizationId = formData.get("organizationId") as string | null;
+    const organizationIdEntry = formData.get("organizationId");
+    const organizationId =
+      typeof organizationIdEntry === "string" ? organizationIdEntry : null;
 
     if (!file) {
       userLogger.warn({}, "Upload request missing file");
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Validate file security and content requirements
+    const parsedType = uploadTypeSchema.safeParse(formData.get("type"));
+    if (!parsedType.success) {
+      userLogger.warn({}, "Upload request has an unsupported type");
+      return NextResponse.json(
+        { error: "Unsupported upload type" },
+        { status: 400 }
+      );
+    }
+    const type = parsedType.data;
+
     const fileValidation = await validateUploadedFile(file, userLogger);
     if (!fileValidation.valid) {
       return NextResponse.json(
@@ -44,7 +55,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Setup file type-specific parameters and validate permissions
     const typeSetup = await setupFileType({
       type,
       file,
@@ -85,13 +95,12 @@ export async function POST(request: Request) {
       },
     });
 
-    // Handle post-upload operations (set as avatar/logo, delete old files)
     await handlePostUploadOperations({
       type,
       fileRecord,
       uploadResult,
-      userId: session.user.id,
-      organizationId,
+      attachableType,
+      attachableId,
     });
 
     userLogger.info(
