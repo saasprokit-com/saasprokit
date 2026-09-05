@@ -1,8 +1,7 @@
 import "server-only";
 
-import { database } from "@repo/database";
 import type { createRequestLogger } from "@repo/logger/server";
-import { imageFileSchema, type UploadType } from "@repo/storage/constants";
+import type { UploadType } from "@repo/storage/constants";
 import { ATTACHABLE_TYPE, type AttachableType } from "@repo/utils/storage";
 import { NextResponse } from "next/server";
 import { hasOrgPermission } from "@/lib/auth/auth";
@@ -28,40 +27,6 @@ const UPLOAD_TYPES = {
   },
 } as const satisfies Record<UploadType, UploadTypeConfig>;
 
-export async function validateUploadedFile(
-  file: File,
-  logger: ReturnType<typeof createRequestLogger>
-): Promise<{
-  valid: boolean;
-  error?: string;
-  status?: number;
-  buffer?: Buffer;
-}> {
-  const validation = imageFileSchema.safeParse(file);
-  if (!validation.success) {
-    const issue = validation.error.issues[0];
-    logger.warn(
-      {
-        filename: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        rule: issue?.path[0] ?? "file",
-      },
-      "Uploaded file failed validation"
-    );
-    return {
-      valid: false,
-      error: issue?.message ?? "Invalid file",
-      status: 400,
-    };
-  }
-
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-
-  return { valid: true, buffer };
-}
-
 type OrgUploadPermission =
   | { valid: false; error: string; status: number }
   | { valid: true; organizationId: string };
@@ -76,20 +41,6 @@ async function validateOrgUploadPermission(
       valid: false,
       error: "Organization ID required for this upload",
       status: 400,
-    };
-  }
-
-  const organization = await database.organization.findUnique({
-    where: { id: organizationId },
-    select: { id: true },
-  });
-
-  if (!organization) {
-    logger.warn({ organizationId }, "Organization not found for upload");
-    return {
-      valid: false,
-      error: "Organization not found",
-      status: 404,
     };
   }
 

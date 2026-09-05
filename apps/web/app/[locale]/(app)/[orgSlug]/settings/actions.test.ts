@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   actionError: vi.fn(),
+  deleteStoredObjects: vi.fn(),
+  fileFindMany: vi.fn(),
   fileUpdateMany: vi.fn(),
   hasOrgPermission: vi.fn(),
   headers: vi.fn(),
@@ -20,7 +22,7 @@ vi.mock("@repo/auth/server", () => ({
 vi.mock("@repo/database", () => ({
   database: {
     $transaction: mocks.transaction,
-    file: { updateMany: mocks.fileUpdateMany },
+    file: { findMany: mocks.fileFindMany, updateMany: mocks.fileUpdateMany },
     organization: {
       findUnique: mocks.organizationFindUnique,
       update: mocks.organizationUpdate,
@@ -29,7 +31,7 @@ vi.mock("@repo/database", () => ({
 }));
 
 vi.mock("@repo/logger/server", () => ({
-  createRequestLogger: () => ({ error: vi.fn() }),
+  createRequestLogger: () => ({ error: vi.fn(), warn: vi.fn() }),
 }));
 
 vi.mock("next/headers", () => ({ headers: mocks.headers }));
@@ -41,6 +43,10 @@ vi.mock("@/lib/auth/action-error", () => ({
 
 vi.mock("@/lib/auth/auth", () => ({
   hasOrgPermission: mocks.hasOrgPermission,
+}));
+
+vi.mock("@/lib/files/actions", () => ({
+  deleteStoredObjects: mocks.deleteStoredObjects,
 }));
 
 vi.mock("@/lib/infrastructure/revalidation", () => ({
@@ -74,6 +80,8 @@ beforeEach(() => {
   );
   mocks.hasOrgPermission.mockResolvedValue(true);
   mocks.revalidateOrgPage.mockResolvedValue(undefined);
+  mocks.fileFindMany.mockResolvedValue([]);
+  mocks.deleteStoredObjects.mockResolvedValue(undefined);
 });
 
 describe("updateOrganizationAction", () => {
@@ -124,5 +132,30 @@ describe("removeOrganizationLogoAction", () => {
       ORG_PAGES.SETTINGS
     );
     expect(result).toEqual({ success: true });
+  });
+
+  it("deletes the replaced logo objects only after the transaction commits", async () => {
+    const replaced = [{ bucket: null, storagePath: "logos/old.png" }];
+    mocks.fileFindMany.mockResolvedValue(replaced);
+    mocks.transaction.mockResolvedValue([{ count: 1 }, { slug: "acme" }]);
+
+    await removeOrganizationLogoAction({ organizationId: "org_1" });
+
+    expect(mocks.deleteStoredObjects).toHaveBeenCalledWith(
+      replaced,
+      expect.anything()
+    );
+    expect(mocks.deleteStoredObjects).toHaveBeenCalledAfter(mocks.transaction);
+  });
+
+  it("skips object deletion when the transaction throws", async () => {
+    mocks.fileFindMany.mockResolvedValue([
+      { bucket: null, storagePath: "logos/old.png" },
+    ]);
+    mocks.transaction.mockRejectedValue(new Error("db down"));
+
+    await removeOrganizationLogoAction({ organizationId: "org_1" });
+
+    expect(mocks.deleteStoredObjects).not.toHaveBeenCalled();
   });
 });

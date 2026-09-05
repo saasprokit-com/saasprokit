@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import type { z } from "zod";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import { type ActionResult, hasOrgPermission } from "@/lib/auth/auth";
+import { deleteStoredObjects } from "@/lib/files/actions";
 import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
 import { ORG_PAGES } from "@/lib/routes";
@@ -32,14 +33,19 @@ export async function removeOrganizationLogoAction(
       return actionError("unauthorized");
     }
 
-    // Atomically: soft-delete attached logo files + clear the org logo reference
+    const attached = {
+      attachableType: ATTACHABLE_TYPE.ORGANIZATION,
+      attachableId: validated.organizationId,
+      deletedAt: null,
+    };
+    const replaced = await database.file.findMany({
+      where: attached,
+      select: { storagePath: true, bucket: true },
+    });
+
     const [, organization] = await database.$transaction([
       database.file.updateMany({
-        where: {
-          attachableType: ATTACHABLE_TYPE.ORGANIZATION,
-          attachableId: validated.organizationId,
-          deletedAt: null,
-        },
+        where: attached,
         data: { deletedAt: new Date() },
       }),
       database.organization.update({
@@ -50,6 +56,7 @@ export async function removeOrganizationLogoAction(
     ]);
 
     await revalidateOrgPage(organization.slug, ORG_PAGES.SETTINGS);
+    await deleteStoredObjects(replaced, logger);
 
     return { success: true };
   } catch (error) {

@@ -66,6 +66,8 @@
       // second worker named "saasprokit-web-demo", orphaning the existing
       // one (and its secrets) and breaking WORKER_SELF_REFERENCE below.
       "name": "saasprokit-web",
+      "workers_dev": false,
+      "preview_urls": false,
       "routes": [
         {
           "pattern": "multi-tenant.saasprokit.com",

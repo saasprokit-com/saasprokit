@@ -1,12 +1,12 @@
 import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
 import { createRequestLogger } from "@repo/logger/server";
-import { uploadTypeSchema } from "@repo/storage/constants";
+import { imageFileSchema, uploadTypeSchema } from "@repo/storage/constants";
 import { uploadFile } from "@repo/storage/server";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { handlePostUploadOperations } from "@/lib/files/actions";
-import { setupFileType, validateUploadedFile } from "@/lib/files/queries";
+import { setupFileType } from "@/lib/files/queries";
 
 export async function POST(request: Request) {
   const logger = createRequestLogger({
@@ -27,15 +27,23 @@ export async function POST(request: Request) {
     const userLogger = logger.child({ userId: session.user.id });
 
     const formData = await request.formData();
-    const file = formData.get("file") as File | null;
     const organizationIdEntry = formData.get("organizationId");
     const organizationId =
       typeof organizationIdEntry === "string" ? organizationIdEntry : null;
 
-    if (!file) {
-      userLogger.warn({}, "Upload request missing file");
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    const parsedFile = imageFileSchema.safeParse(formData.get("file"));
+    if (!parsedFile.success) {
+      const issue = parsedFile.error.issues[0];
+      userLogger.warn(
+        { rule: issue?.path[0] ?? "file" },
+        "Uploaded file failed validation"
+      );
+      return NextResponse.json(
+        { error: issue?.message ?? "Invalid file" },
+        { status: 400 }
+      );
     }
+    const file = parsedFile.data;
 
     const parsedType = uploadTypeSchema.safeParse(formData.get("type"));
     if (!parsedType.success) {
@@ -46,14 +54,6 @@ export async function POST(request: Request) {
       );
     }
     const type = parsedType.data;
-
-    const fileValidation = await validateUploadedFile(file, userLogger);
-    if (!fileValidation.valid) {
-      return NextResponse.json(
-        { error: fileValidation.error },
-        { status: fileValidation.status }
-      );
-    }
 
     const typeSetup = await setupFileType({
       type,
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
 
     const uploadResult = await uploadFile({
       filename: file.name,
-      buffer: fileValidation.buffer!,
+      buffer: Buffer.from(await file.arrayBuffer()),
       mimeType: file.type,
       folder,
       uploadedById: session.user.id,
@@ -101,6 +101,7 @@ export async function POST(request: Request) {
       uploadResult,
       attachableType,
       attachableId,
+      logger: userLogger,
     });
 
     userLogger.info(

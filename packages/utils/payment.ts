@@ -71,7 +71,7 @@ export function formatStorage(mb: number): string {
   if (mb >= STORAGE_GB_THRESHOLD) {
     return `${(mb / STORAGE_GB_THRESHOLD).toFixed(FRACTION_DIGITS)} GB`;
   }
-  return `${mb} MB`;
+  return `${Math.round(mb)} MB`;
 }
 
 export const PLAN_ORDER: PlanName[] = [
