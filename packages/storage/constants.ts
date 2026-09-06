@@ -19,7 +19,3 @@ export const imageFileSchema = z
     message: `Please upload an image smaller than ${MAX_FILE_SIZE_MB}MB.`,
     path: ["size"],
   });
-
-export const uploadTypeSchema = z.enum(["avatar", "org-logo"]);
-
-export type UploadType = z.infer<typeof uploadTypeSchema>;
