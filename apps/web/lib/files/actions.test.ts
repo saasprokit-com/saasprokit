@@ -7,16 +7,21 @@ const mocks = vi.hoisted(() => ({
   deleteFile: vi.fn(),
   fileCreate: vi.fn(),
   transaction: vi.fn(),
-  txFileFindMany: vi.fn(),
-  txFileUpdateMany: vi.fn(),
-  txOrganizationUpdate: vi.fn(),
+  fileFindMany: vi.fn(),
+  fileUpdateMany: vi.fn(),
+  organizationUpdate: vi.fn(),
   uploadFile: vi.fn(),
 }));
 
 vi.mock("@repo/database", () => ({
   database: {
     $transaction: mocks.transaction,
-    file: { create: mocks.fileCreate },
+    file: {
+      create: mocks.fileCreate,
+      findMany: mocks.fileFindMany,
+      updateMany: mocks.fileUpdateMany,
+    },
+    organization: { update: mocks.organizationUpdate },
   },
 }));
 
@@ -54,18 +59,12 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.uploadFile.mockResolvedValue(uploadResult);
   mocks.fileCreate.mockResolvedValue({ id: "file_new" });
-  mocks.txOrganizationUpdate.mockResolvedValue({ slug: "acme" });
-  mocks.txFileFindMany.mockResolvedValue([]);
-  mocks.txFileUpdateMany.mockResolvedValue({ count: 0 });
+  mocks.organizationUpdate.mockResolvedValue({ slug: "acme" });
+  mocks.fileFindMany.mockResolvedValue([]);
+  mocks.fileUpdateMany.mockResolvedValue({ count: 0 });
   mocks.deleteFile.mockResolvedValue(undefined);
-  mocks.transaction.mockImplementation((run) =>
-    run({
-      file: {
-        findMany: mocks.txFileFindMany,
-        updateMany: mocks.txFileUpdateMany,
-      },
-      organization: { update: mocks.txOrganizationUpdate },
-    })
+  mocks.transaction.mockImplementation((operations: unknown[]) =>
+    Promise.all(operations)
   );
 });
 
@@ -96,20 +95,20 @@ describe("storeOrganizationLogo", () => {
     expect(result).toEqual({ publicUrl: "/uploads/logos/logo.png", slug: "acme" });
   });
 
-  it("swaps the organization logo and retires the previous file in one transaction", async () => {
-    mocks.txFileFindMany.mockResolvedValue([
+  it("swaps the organization logo and retires the previous file in one batched transaction", async () => {
+    mocks.fileFindMany.mockResolvedValue([
       { bucket: null, storagePath: "logos/old.png" },
     ]);
 
     await storeOrganizationLogo(input);
 
     expect(mocks.transaction).toHaveBeenCalledTimes(1);
-    expect(mocks.txOrganizationUpdate).toHaveBeenCalledWith({
+    expect(mocks.organizationUpdate).toHaveBeenCalledWith({
       where: { id: "org_1" },
       data: { logo: "/uploads/logos/logo.png" },
       select: { slug: true },
     });
-    expect(mocks.txFileUpdateMany).toHaveBeenCalledWith({
+    expect(mocks.fileUpdateMany).toHaveBeenCalledWith({
       where: {
         attachableType: "Organization",
         attachableId: "org_1",
@@ -119,11 +118,11 @@ describe("storeOrganizationLogo", () => {
       data: { deletedAt: expect.any(Date) },
     });
     expect(mocks.deleteFile).toHaveBeenCalledWith("logos/old.png", undefined);
-    expect(mocks.deleteFile).toHaveBeenCalledAfter(mocks.txFileUpdateMany);
+    expect(mocks.deleteFile).toHaveBeenCalledAfter(mocks.transaction);
   });
 
   it("keeps the new logo when a previous object cannot be deleted", async () => {
-    mocks.txFileFindMany.mockResolvedValue([
+    mocks.fileFindMany.mockResolvedValue([
       { bucket: null, storagePath: "logos/old.png" },
     ]);
     mocks.deleteFile.mockRejectedValue(new Error("gone"));
@@ -136,5 +135,15 @@ describe("storeOrganizationLogo", () => {
       expect.objectContaining({ storagePath: "logos/old.png" }),
       "Stored object not deleted"
     );
+  });
+
+  it("leaves the previous object in place when the transaction fails", async () => {
+    mocks.fileFindMany.mockResolvedValue([
+      { bucket: null, storagePath: "logos/old.png" },
+    ]);
+    mocks.transaction.mockRejectedValue(new Error("db down"));
+
+    await expect(storeOrganizationLogo(input)).rejects.toThrow("db down");
+    expect(mocks.deleteFile).not.toHaveBeenCalled();
   });
 });

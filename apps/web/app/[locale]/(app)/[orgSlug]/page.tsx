@@ -10,11 +10,16 @@ import {
 import { Skeleton } from "@repo/design-system/components/ui/skeleton";
 import { formatDate } from "@repo/design-system/lib/date";
 import { Suspense } from "react";
+import { CountBarChart } from "@/components/count-bar-chart";
 import { DashboardRangeTabs } from "@/components/dashboard-range-tabs";
 import { getActiveOrganization } from "@/lib/organization/queries";
 import { dashboardSearchParamsCache } from "@/lib/parsers";
 import { TeamGrowthChart } from "./components/team-growth-chart";
-import { getOrgDashboardData, getOrgMemberGrowth } from "./queries";
+import {
+  getOrgActivityPlaceholder,
+  getOrgDashboardData,
+  getOrgMemberGrowth,
+} from "./queries";
 
 interface OrgDashboardPageProps {
   params: Promise<{ orgSlug: string }>;
@@ -36,6 +41,7 @@ export default async function OrgDashboardPage({
     organizationId: orgContext.organizationId,
     range,
   });
+  const activityPromise = getOrgActivityPlaceholder(range);
 
   const { memberCount, organization } = await getOrgDashboardData(
     orgContext.organizationId
@@ -120,15 +126,13 @@ export default async function OrgDashboardPage({
             <CardHeader>
               <CardTitle>Team activity</CardTitle>
               <CardDescription>
-                Member, invitation and settings changes
+                Sample data — not wired to a live source
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex h-55 items-center justify-center rounded-md border border-dashed">
-                <p className="text-muted-foreground text-sm">
-                  No activity data yet
-                </p>
-              </div>
+              <Suspense fallback={<Skeleton className="h-55 w-full" />}>
+                <CountBarChart dataPromise={activityPromise} label="Events" />
+              </Suspense>
             </CardContent>
           </Card>
         </div>

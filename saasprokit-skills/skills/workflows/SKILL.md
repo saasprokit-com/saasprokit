@@ -43,12 +43,12 @@ always a `Promise` — `await` them (see `saasprokit:conventions`).
 ## Recipe 3: new API route
 
 1. Create `apps/web/app/api/your-endpoint/route.ts`; export `GET`/`POST`/`DELETE`
-   returning `NextResponse`. Real routes: `health/` (no auth), `upload/`,
+   returning `NextResponse`. Real routes: `health/` (no auth),
    `user/activity/`, `auth/[...all]/` (Better Auth's own handler via
    `toNextJsHandler`).
 2. Guard with `const session = await getServerSession()` from `@/lib/auth/auth`;
    `if (!session?.user?.id) return new NextResponse(null, { status: 401 })`.
-   (`upload`/`user/activity` inline `auth.api.getSession({ headers })` — that call is
+   (`user/activity` inlines `auth.api.getSession({ headers })` — that call is
    exactly what `getServerSession` wraps and caches.)
 3. Add `createRequestLogger` from `@repo/logger/server`; scope all work by
    `session.user.id`, never a client-supplied id.

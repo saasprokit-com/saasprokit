@@ -84,5 +84,5 @@ Run this after every deploy:
 - [ ] Locale routing: `/es/...` (or another shipped locale: `es`, `de`, `zh`, `fr`, `pt`) renders. Default `en` has no prefix (`rewriteDefault`).
 - [ ] Middleware gating: signed-out visit to `/{orgSlug}/billing` redirects to sign-in with `callbackUrl`
 - [ ] Stripe test-mode checkout completes; the webhook deliveries show `200` in the Stripe Dashboard; the subscription appears on the billing page
-- [ ] File upload (avatar) succeeds and the file is served back
+- [ ] Organization logo upload at `/{orgSlug}/settings` succeeds and the file is served back
 - [ ] Response headers include `Content-Security-Policy` with a nonce

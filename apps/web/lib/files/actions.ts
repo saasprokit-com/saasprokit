@@ -69,24 +69,23 @@ export async function storeOrganizationLogo(options: {
     deletedAt: null,
   };
 
-  const { replaced, slug } = await database.$transaction(async (tx) => {
-    const organization = await tx.organization.update({
+  const [organization, replaced] = await database.$transaction([
+    database.organization.update({
       where: { id: organizationId },
       data: { logo: uploadResult.publicUrl },
       select: { slug: true },
-    });
-    const rows = await tx.file.findMany({
+    }),
+    database.file.findMany({
       where: siblings,
       select: { storagePath: true, bucket: true },
-    });
-    await tx.file.updateMany({
+    }),
+    database.file.updateMany({
       where: siblings,
       data: { deletedAt: new Date() },
-    });
-    return { replaced: rows, slug: organization.slug };
-  });
+    }),
+  ]);
 
   await deleteStoredObjects(replaced, logger);
 
-  return { publicUrl: uploadResult.publicUrl, slug };
+  return { publicUrl: uploadResult.publicUrl, slug: organization.slug };
 }

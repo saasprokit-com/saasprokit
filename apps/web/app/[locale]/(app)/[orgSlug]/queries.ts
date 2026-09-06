@@ -66,3 +66,42 @@ export async function getOrgMemberGrowth({
     return { count: running, day: row.day };
   });
 }
+
+const PLACEHOLDER_BASE = 4;
+const PLACEHOLDER_SPREAD = 18;
+const PLACEHOLDER_WEEKEND_WEIGHT = 0.3;
+const PLACEHOLDER_SEED = 7;
+const PLACEHOLDER_PRIME = 31;
+const PLACEHOLDER_MODULUS = 9973;
+const PLACEHOLDER_MIX = 7919;
+const SUNDAY = 0;
+const SATURDAY = 6;
+
+function placeholderCount(day: string): number {
+  const weekday = new Date(`${day}T00:00:00.000Z`).getUTCDay();
+  const isWeekend = weekday === SUNDAY || weekday === SATURDAY;
+  const rolled = Array.from(day).reduce(
+    (acc, char) =>
+      (acc * PLACEHOLDER_PRIME + char.charCodeAt(0)) % PLACEHOLDER_MODULUS,
+    PLACEHOLDER_SEED
+  );
+  const seed = (rolled * rolled + PLACEHOLDER_MIX) % PLACEHOLDER_MODULUS;
+
+  return Math.round(
+    (PLACEHOLDER_BASE + (seed % PLACEHOLDER_SPREAD)) *
+      (isWeekend ? PLACEHOLDER_WEEKEND_WEIGHT : 1)
+  );
+}
+
+export function getOrgActivityPlaceholder(
+  range: DashboardRange
+): Promise<DailyCount[]> {
+  const { since, days } = resolveRange(range);
+
+  return Promise.resolve(
+    zeroFill([], since, days).map(({ day }) => ({
+      count: placeholderCount(day),
+      day,
+    }))
+  );
+}
