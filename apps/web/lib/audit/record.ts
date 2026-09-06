@@ -25,9 +25,11 @@ async function resolveActorId(actorId?: string): Promise<string | null> {
 
 export async function recordAudit(input: RecordAuditInput): Promise<void> {
   const logger = createRequestLogger({ action: "recordAudit" });
+  let resolvedActorId = input.actorId ?? null;
 
   try {
     const actorId = await resolveActorId(input.actorId);
+    resolvedActorId = actorId;
     if (!actorId) {
       logger.warn(
         {
@@ -56,7 +58,7 @@ export async function recordAudit(input: RecordAuditInput): Promise<void> {
   } catch (error) {
     logger.error(
       {
-        actorId: input.actorId ?? null,
+        actorId: resolvedActorId,
         auditAction: input.action,
         changes: input.changes,
         err: error instanceof Error ? error : new Error(String(error)),

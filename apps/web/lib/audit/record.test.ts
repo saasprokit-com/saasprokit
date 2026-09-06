@@ -122,4 +122,27 @@ describe("recordAudit", () => {
       "Failed to record audit entry"
     );
   });
+
+  it("logs the resolved session actor when the write fails and no actorId was given", async () => {
+    mocks.getServerSession.mockResolvedValue({ user: { id: "user_session" } });
+    const failure = new Error("connection reset");
+    mocks.auditLogCreate.mockRejectedValue(failure);
+
+    await expect(
+      recordAudit({
+        action: ORG_AUDIT_ACTIONS.DELETE,
+        organizationId: "org_1",
+      })
+    ).resolves.toBeUndefined();
+
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: "user_session",
+        auditAction: "org.delete",
+        err: failure,
+        organizationId: "org_1",
+      }),
+      "Failed to record audit entry"
+    );
+  });
 });
