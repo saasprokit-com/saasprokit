@@ -129,7 +129,7 @@ export default async function OrgDashboardPage({
             <CardHeader>
               <CardTitle>Team activity</CardTitle>
               <CardDescription>
-                Account events from people on your team
+                Member, invitation and settings changes
               </CardDescription>
             </CardHeader>
             <CardContent>

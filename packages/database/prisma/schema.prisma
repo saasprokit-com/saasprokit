@@ -248,18 +248,20 @@ model File {
 }
 
 model AuditLog {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  action    String // "password_changed", "profile_updated", "2fa_enabled", "session_logout", "account_deletion_requested"
-  changes   String? // JSON object with before/after values
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String?
+  action         String
+  changes        String?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
 
   @@index([userId])
   @@index([action])
   @@index([createdAt])
+  @@index([organizationId, createdAt])
   @@map("audit_log")
 }
 

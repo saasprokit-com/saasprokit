@@ -74,15 +74,11 @@ export async function getOrgActivity({
   const { since, days } = resolveRange(range);
 
   const rows = await database.$queryRaw<DailyCount[]>`
-    SELECT to_char(date_trunc('day', a."createdAt"), 'YYYY-MM-DD') AS day,
+    SELECT to_char(date_trunc('day', "createdAt"), 'YYYY-MM-DD') AS day,
            count(*)::int AS count
-    FROM "audit_log" a
-    WHERE a."createdAt" >= ${since}
-      AND EXISTS (
-        SELECT 1 FROM "member" m
-        WHERE m."userId" = a."userId"
-          AND m."organizationId" = ${organizationId}
-      )
+    FROM "audit_log"
+    WHERE "organizationId" = ${organizationId}
+      AND "createdAt" >= ${since}
     GROUP BY day
     ORDER BY day
   `;

@@ -1,3 +1,4 @@
+import { ORG_AUDIT_ACTIONS } from "@repo/utils/audit";
 import {
   DAYS_PER_MONTH,
   DAYS_PER_WEEK,
@@ -33,13 +34,6 @@ const FIRST_EVENT_HOUR = 9;
 const EVENT_HOUR_SPREAD = 9;
 const EVENT_MINUTE_STEP = 7;
 const MINUTES_PER_HOUR = 60;
-
-const AUDIT_ACTIONS = [
-  "password_changed",
-  "profile_updated",
-  "2fa_enabled",
-  "session_logout",
-];
 
 const FIRST_NAMES = [
   "Ada",
@@ -658,10 +652,13 @@ async function main() {
     ACTIVITY_EVENT_COUNT
   );
 
+  const orgAuditActions = Object.values(ORG_AUDIT_ACTIONS);
+
   await prisma.auditLog.createMany({
     data: activityDates.map((createdAt, index) => ({
       userId: activityUsers[index % activityUsers.length].id,
-      action: AUDIT_ACTIONS[index % AUDIT_ACTIONS.length],
+      organizationId: acmeOrg.id,
+      action: orgAuditActions[index % orgAuditActions.length],
       ipAddress: `192.168.1.${(index % 250) + 1}`,
       userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
       createdAt,
