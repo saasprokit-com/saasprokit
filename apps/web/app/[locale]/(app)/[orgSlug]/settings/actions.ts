@@ -114,6 +114,15 @@ export async function uploadOrganizationLogoAction(
 
     await revalidateOrgPage(slug, ORG_PAGES.SETTINGS);
 
+    logger.info(
+      {
+        organizationId: validated.organizationId,
+        userId: session.user.id,
+        publicUrl,
+      },
+      "Organization logo uploaded"
+    );
+
     return { success: true, data: { publicUrl } };
   } catch (error) {
     return toActionError(error, { fallback: "uploadLogo", logger });

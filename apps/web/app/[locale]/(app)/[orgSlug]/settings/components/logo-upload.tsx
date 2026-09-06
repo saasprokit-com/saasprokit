@@ -60,8 +60,12 @@ export function LogoUpload({
     }
 
     startUploadTransition(async () => {
+      let outcomeKnown = false;
       const reader = new FileReader();
       reader.onload = (e) => {
+        if (outcomeKnown) {
+          return;
+        }
         setPreviewUrl(e.target?.result as string);
       };
       reader.readAsDataURL(file);
@@ -72,6 +76,10 @@ export function LogoUpload({
 
       try {
         const result = await uploadOrganizationLogoAction(formData);
+
+        if (!result.success) {
+          outcomeKnown = true;
+        }
 
         startUploadTransition(() => {
           setPreviewUrl(
@@ -85,6 +93,7 @@ export function LogoUpload({
           toast.error(errors.uploadLogo, { description: result.error });
         }
       } catch {
+        outcomeKnown = true;
         startUploadTransition(() => {
           setPreviewUrl(currentLogo);
         });

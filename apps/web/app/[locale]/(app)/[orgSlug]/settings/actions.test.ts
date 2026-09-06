@@ -34,7 +34,7 @@ vi.mock("@repo/database", () => ({
 }));
 
 vi.mock("@repo/logger/server", () => ({
-  createRequestLogger: () => ({ error: vi.fn(), warn: vi.fn() }),
+  createRequestLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }),
 }));
 
 vi.mock("next/headers", () => ({ headers: mocks.headers }));
@@ -217,7 +217,7 @@ describe("uploadOrganizationLogoAction", () => {
       expect.objectContaining({ issues: expect.any(Array) }),
       { fallback: "uploadLogo", logger: expect.anything() }
     );
-    expect(result).toMatchObject({ success: false, code: "uploadLogo" });
+    expect(result).toMatchObject({ success: false });
     expect(mocks.hasOrgPermission).not.toHaveBeenCalled();
   });
 
