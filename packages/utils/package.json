@@ -3,12 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
-    "./slug": "./slug.ts",
+    "./audit": "./audit.ts",
     "./auth": "./auth.ts",
     "./date": "./date.ts",
     "./number": "./number.ts",
     "./organization": "./organization.ts",
     "./payment": "./payment.ts",
+    "./slug": "./slug.ts",
     "./storage": "./storage.ts",
     "./user": "./user.ts"
   },
