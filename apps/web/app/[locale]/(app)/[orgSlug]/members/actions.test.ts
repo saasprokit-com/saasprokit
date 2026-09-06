@@ -15,6 +15,9 @@ const mocks = vi.hoisted(() => ({
   removeMember: vi.fn(),
   revalidateOrgPage: vi.fn(),
   toActionError: vi.fn(),
+  transaction: vi.fn(),
+  txMemberFindFirst: vi.fn(),
+  txMemberUpdate: vi.fn(),
   updateMemberRole: vi.fn(),
   userFindMany: vi.fn(),
   verifySession: vi.fn(),
@@ -32,6 +35,7 @@ vi.mock("@repo/auth/server", () => ({
 
 vi.mock("@repo/database", () => ({
   database: {
+    $transaction: mocks.transaction,
     invitation: { findMany: mocks.invitationFindMany },
     member: {
       deleteMany: mocks.memberDeleteMany,
@@ -63,6 +67,7 @@ vi.mock("@/lib/auth/auth", () => ({
   hasOrgPermission: mocks.hasOrgPermission,
 }));
 
+
 vi.mock("@/lib/infrastructure/revalidation", () => ({
   revalidateOrgPage: mocks.revalidateOrgPage,
 }));
@@ -72,6 +77,7 @@ import {
   bulkInviteAction,
   inviteMemberAction,
   removeMembersAction,
+  transferOwnershipAction,
   updateMemberRoleAction,
 } from "./actions";
 
@@ -151,6 +157,7 @@ describe("inviteMemberAction", () => {
     expect(mocks.revalidateOrgPage).not.toHaveBeenCalled();
     expect(result).toMatchObject({ status: "error", code: "invalidInput" });
   });
+
 });
 
 describe("bulkInviteAction", () => {
@@ -196,6 +203,7 @@ describe("bulkInviteAction", () => {
       data: { invited: 2, skipped: [] },
     });
   });
+
 });
 
 describe("removeMembersAction", () => {
@@ -356,4 +364,5 @@ describe("updateMemberRoleAction", () => {
     );
     expect(result).toEqual({ success: true });
   });
+
 });

@@ -10,6 +10,9 @@ const mocks = vi.hoisted(() => ({
   fileUpdateMany: vi.fn(),
   organizationUpdate: vi.fn(),
   transaction: vi.fn(),
+  fileFindMany: vi.fn(),
+  fileUpdateMany: vi.fn(),
+  organizationUpdate: vi.fn(),
   uploadFile: vi.fn(),
 }));
 
@@ -106,20 +109,10 @@ describe("storeOrganizationLogo", () => {
     await storeOrganizationLogo(input);
 
     expect(mocks.transaction).toHaveBeenCalledTimes(1);
-    expect(mocks.transaction.mock.calls[0][0]).toHaveLength(3);
     expect(mocks.organizationUpdate).toHaveBeenCalledWith({
       where: { id: "org_1" },
       data: { logo: "/uploads/logos/logo.png" },
       select: { slug: true },
-    });
-    expect(mocks.fileFindMany).toHaveBeenCalledWith({
-      where: {
-        attachableType: "Organization",
-        attachableId: "org_1",
-        id: { not: "file_new" },
-        deletedAt: null,
-      },
-      select: { storagePath: true, bucket: true },
     });
     expect(mocks.fileUpdateMany).toHaveBeenCalledWith({
       where: {

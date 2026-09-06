@@ -15,6 +15,11 @@ Start here. Fifteen minutes gets you off the default look.
 reads clearly on top of it. Tokens are OKLCH — [oklch.com](https://oklch.com) converts from
 hex and makes picking a matching dark-mode value much easier than juggling HSL.
 
+Light mode's `--chart-1` follows `--primary`, so charts pick up your brand for free. The
+`.dark` block sets `--chart-1` on its own, because a dark-mode `--primary` chosen to sit
+under white text is usually too dark to read as a chart mark against the card surface —
+pick a lighter, more saturated step there and check it clears 3:1 contrast.
+
 **2. Set your corner style.** `--radius`, same two blocks. `0rem` for sharp, `0.5rem` for
 soft, anything in between.
 

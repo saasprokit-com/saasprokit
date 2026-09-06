@@ -130,12 +130,12 @@ export async function revokeInviteLinksAction(
     }
 
     const result = await database.inviteLink.updateMany({
+      data: { isActive: false },
       where: {
         id: { in: validated.inviteLinkIds },
-        organizationId: validated.organizationId,
         isActive: true,
+        organizationId: validated.organizationId,
       },
-      data: { isActive: false },
     });
 
     if (result.count === 0) {

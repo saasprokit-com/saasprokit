@@ -3,16 +3,23 @@ import { ContentSection } from "@repo/design-system/components/layout/content-se
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@repo/design-system/components/ui/card";
+import { Skeleton } from "@repo/design-system/components/ui/skeleton";
 import {
   PLAN_DISPLAY_NAMES,
   PLAN_ORDER,
   type PlanName,
 } from "@repo/utils/payment";
+import { Suspense } from "react";
+import { CountBarChart } from "@/components/count-bar-chart";
+import { DashboardRangeTabs } from "@/components/dashboard-range-tabs";
 import { requireAdminArea } from "@/lib/auth/admin";
-import { getAdminKpis } from "./queries";
+import { dashboardSearchParamsCache } from "@/lib/parsers";
+import { PlanMixChart } from "./components/plan-mix-chart";
+import { getAdminKpis, getSignupTrend } from "./queries";
 
 interface AdminKpiCard {
   hint: string;
@@ -20,8 +27,16 @@ interface AdminKpiCard {
   value: number | string;
 }
 
-export default async function AdminDashboardPage() {
+interface AdminDashboardPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function AdminDashboardPage({
+  searchParams,
+}: AdminDashboardPageProps) {
   const ctx = await requireAdminArea();
+  const { range } = dashboardSearchParamsCache.parse(await searchParams);
+  const signupPromise = ctx.isAdmin ? getSignupTrend(range) : null;
   const kpis = await getAdminKpis({ includeUserStats: ctx.isAdmin });
 
   const planCounts = new Map(
@@ -44,6 +59,11 @@ export default async function AdminDashboardPage() {
       }
     );
   }
+  const planMix = PLAN_ORDER.map((plan: PlanName) => ({
+    count: planCounts.get(plan) ?? 0,
+    plan: PLAN_DISPLAY_NAMES[plan],
+  }));
+
   cards.push({
     title: "Organizations",
     value: kpis.totalOrgs,
@@ -53,7 +73,11 @@ export default async function AdminDashboardPage() {
   return (
     <>
       <SetBreadcrumbs items={[{ label: "Admin" }]} />
-      <ContentSection description="Platform overview" title="Admin Dashboard">
+      <ContentSection
+        action={<DashboardRangeTabs />}
+        description="Platform overview"
+        title="Admin Dashboard"
+      >
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {cards.map((card) => (
             <Card key={card.title}>
@@ -70,24 +94,32 @@ export default async function AdminDashboardPage() {
           ))}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          {PLAN_ORDER.map((plan: PlanName) => (
-            <Card key={plan}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="font-medium text-sm">
-                  {PLAN_DISPLAY_NAMES[plan]} subscriptions
-                </CardTitle>
+        <div className="grid gap-4 md:grid-cols-2">
+          {signupPromise ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>New signups</CardTitle>
+                <CardDescription>
+                  Accounts created over the selected range
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="font-bold text-2xl">
-                  {planCounts.get(plan) ?? 0}
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  Active subscriptions
-                </p>
+                <Suspense fallback={<Skeleton className="h-55 w-full" />}>
+                  <CountBarChart dataPromise={signupPromise} label="Signups" />
+                </Suspense>
               </CardContent>
             </Card>
-          ))}
+          ) : null}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Plan mix</CardTitle>
+              <CardDescription>Active subscriptions by plan</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PlanMixChart data={planMix} />
+            </CardContent>
+          </Card>
         </div>
       </ContentSection>
     </>

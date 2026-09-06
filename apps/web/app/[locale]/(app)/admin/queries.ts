@@ -3,6 +3,12 @@ import "server-only";
 import { database } from "@repo/database";
 import { SECONDS_PER_DAY } from "@repo/utils/date";
 import { ACTIVE_STATUSES } from "@repo/utils/payment";
+import {
+  type DailyCount,
+  resolveRange,
+  zeroFill,
+} from "@/lib/analytics/buckets";
+import type { DashboardRange } from "@/lib/parsers";
 
 export interface AdminKpis {
   bannedUsers: number | null;
@@ -50,4 +56,21 @@ export async function getAdminKpis(opts: {
       count: group._count,
     })),
   };
+}
+
+export async function getSignupTrend(
+  range: DashboardRange
+): Promise<DailyCount[]> {
+  const { since, days } = resolveRange(range);
+
+  const rows = await database.$queryRaw<DailyCount[]>`
+    SELECT to_char(date_trunc('day', "createdAt"), 'YYYY-MM-DD') AS day,
+           count(*)::int AS count
+    FROM "user"
+    WHERE "createdAt" >= ${since}
+    GROUP BY day
+    ORDER BY day
+  `;
+
+  return zeroFill(rows, since, days);
 }
