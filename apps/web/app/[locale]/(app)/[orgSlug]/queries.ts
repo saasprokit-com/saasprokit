@@ -66,22 +66,3 @@ export async function getOrgMemberGrowth({
     return { count: running, day: row.day };
   });
 }
-
-export async function getOrgActivity({
-  organizationId,
-  range,
-}: OrgChartArgs): Promise<DailyCount[]> {
-  const { since, days } = resolveRange(range);
-
-  const rows = await database.$queryRaw<DailyCount[]>`
-    SELECT to_char(date_trunc('day', "createdAt"), 'YYYY-MM-DD') AS day,
-           count(*)::int AS count
-    FROM "audit_log"
-    WHERE "organizationId" = ${organizationId}
-      AND "createdAt" >= ${since}
-    GROUP BY day
-    ORDER BY day
-  `;
-
-  return zeroFill(rows, since, days);
-}

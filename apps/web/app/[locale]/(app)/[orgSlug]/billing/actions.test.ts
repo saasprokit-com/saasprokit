@@ -1,4 +1,3 @@
-import { ORG_AUDIT_ACTIONS } from "@repo/utils/audit";
 import { BILLING_INTERVALS, PLAN_NAMES } from "@repo/utils/payment";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -12,7 +11,6 @@ const mocks = vi.hoisted(() => ({
   guardDowngrade: vi.fn(),
   hasOrgPermission: vi.fn(),
   headers: vi.fn(),
-  recordAudit: vi.fn(),
   toActionError: vi.fn(),
   upgradeSubscription: vi.fn(),
 }));
@@ -36,7 +34,6 @@ vi.mock("@repo/logger/server", () => ({
   }),
 }));
 vi.mock("next/headers", () => ({ headers: mocks.headers }));
-vi.mock("@/lib/audit/record", () => ({ recordAudit: mocks.recordAudit }));
 vi.mock("@/lib/auth/action-error", () => ({
   actionError: mocks.actionError,
   toActionError: mocks.toActionError,
@@ -83,7 +80,6 @@ beforeEach(() => {
   mocks.getServerSession.mockResolvedValue({ user: { id: "user_actor" } });
   mocks.hasOrgPermission.mockResolvedValue(true);
   mocks.headers.mockResolvedValue(new Headers());
-  mocks.recordAudit.mockResolvedValue(undefined);
   mocks.getActiveSubscription.mockResolvedValue(activeSubscription);
   mocks.getOrgMemberCount.mockResolvedValue(3);
   mocks.getOrgStorageUsage.mockResolvedValue(10);
@@ -93,7 +89,7 @@ beforeEach(() => {
 });
 
 describe("changePlanAction", () => {
-  it("records a scheduled plan change with from and to", async () => {
+  it("schedules the downgrade at period end", async () => {
     const result = await changePlanAction(input);
 
     expect(mocks.upgradeSubscription).toHaveBeenCalledWith({
@@ -105,21 +101,10 @@ describe("changePlanAction", () => {
         scheduleAtPeriodEnd: true,
       },
     });
-    expect(mocks.recordAudit).toHaveBeenCalledWith({
-      action: ORG_AUDIT_ACTIONS.PLAN_CHANGE,
-      actorId: "user_actor",
-      changes: {
-        billingInterval: BILLING_INTERVALS.MONTHLY,
-        from: PLAN_NAMES.ENTERPRISE,
-        scheduledAtPeriodEnd: true,
-        to: PLAN_NAMES.PRO,
-      },
-      organizationId: "org_1",
-    });
     expect(result).toEqual({ success: true, data: { action: "changed" } });
   });
 
-  it("does not record when there is no active subscription", async () => {
+  it("fails when there is no active subscription", async () => {
     mocks.getActiveSubscription.mockResolvedValue(null);
 
     const result = await changePlanAction(input);
@@ -127,24 +112,22 @@ describe("changePlanAction", () => {
     expect(mocks.comparePlans).not.toHaveBeenCalled();
     expect(mocks.guardDowngrade).not.toHaveBeenCalled();
     expect(mocks.upgradeSubscription).not.toHaveBeenCalled();
-    expect(mocks.recordAudit).not.toHaveBeenCalled();
     expect(mocks.actionError).toHaveBeenCalledWith("changePlan");
     expect(result).toMatchObject({ code: "changePlan" });
   });
 
-  it("does not record when the target is not a downgrade", async () => {
+  it("fails when the target is not a downgrade", async () => {
     mocks.comparePlans.mockReturnValue("upgrade");
 
     const result = await changePlanAction(input);
 
     expect(mocks.guardDowngrade).not.toHaveBeenCalled();
     expect(mocks.upgradeSubscription).not.toHaveBeenCalled();
-    expect(mocks.recordAudit).not.toHaveBeenCalled();
     expect(mocks.actionError).toHaveBeenCalledWith("changePlan");
     expect(result).toMatchObject({ code: "changePlan" });
   });
 
-  it("does not record when the downgrade is blocked", async () => {
+  it("returns the block reason when the downgrade is blocked", async () => {
     mocks.guardDowngrade.mockReturnValue({ allowed: false, reason: "members" });
 
     const result = await changePlanAction(input);
@@ -156,21 +139,19 @@ describe("changePlanAction", () => {
       10
     );
     expect(mocks.upgradeSubscription).not.toHaveBeenCalled();
-    expect(mocks.recordAudit).not.toHaveBeenCalled();
     expect(result).toEqual({
       success: true,
       data: { action: "changed", blockReason: "members" },
     });
   });
 
-  it("does not record when downgrading to free (client should use cancel flow)", async () => {
+  it("routes a downgrade to free into the cancel flow", async () => {
     const result = await changePlanAction({
       ...input,
       targetPlan: PLAN_NAMES.FREE,
     });
 
     expect(mocks.upgradeSubscription).not.toHaveBeenCalled();
-    expect(mocks.recordAudit).not.toHaveBeenCalled();
     expect(result).toEqual({ success: true, data: { action: "cancel" } });
   });
 });

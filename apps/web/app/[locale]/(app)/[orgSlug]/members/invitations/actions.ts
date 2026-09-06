@@ -3,10 +3,8 @@
 import { ORG_ROLES } from "@repo/auth/permissions";
 import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
-import { ORG_AUDIT_ACTIONS } from "@repo/utils/audit";
 import { INVITATION_STATUS } from "@repo/utils/organization";
 import { headers } from "next/headers";
-import { recordAudit } from "@/lib/audit/record";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import { type ActionResult, hasOrgPermission } from "@/lib/auth/auth";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
@@ -60,15 +58,6 @@ export async function resendInvitationAction(
       headers: await headers(),
     });
 
-    await recordAudit({
-      action: ORG_AUDIT_ACTIONS.INVITATION_RESEND,
-      changes: {
-        email: invitation.email,
-        invitationId: validated.invitationId,
-      },
-      organizationId: validated.organizationId,
-    });
-
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
     return { success: true };
   } catch (error) {
@@ -108,12 +97,6 @@ export async function cancelInvitationAction(
     await auth.api.cancelInvitation({
       body: { invitationId: validated.invitationId },
       headers: await headers(),
-    });
-
-    await recordAudit({
-      action: ORG_AUDIT_ACTIONS.INVITATION_CANCEL,
-      changes: { invitationId: validated.invitationId },
-      organizationId: validated.organizationId,
     });
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
@@ -175,21 +158,6 @@ export async function cancelInvitationsAction(
       (r) => r.status === "fulfilled"
     ).length;
     const failedCount = results.length - cancelledCount;
-
-    if (cancelledCount > 0) {
-      const cancelledInvitationIds = pendingInvitations
-        .filter((_, index) => results[index]?.status === "fulfilled")
-        .map((invitation) => invitation.id);
-
-      await recordAudit({
-        action: ORG_AUDIT_ACTIONS.INVITATION_CANCEL,
-        changes: {
-          cancelledCount,
-          invitationIds: cancelledInvitationIds,
-        },
-        organizationId: validated.organizationId,
-      });
-    }
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
     return { success: true, data: { cancelledCount, failedCount } };

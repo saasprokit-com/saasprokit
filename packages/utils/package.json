@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
-    "./audit": "./audit.ts",
     "./auth": "./auth.ts",
     "./date": "./date.ts",
     "./number": "./number.ts",

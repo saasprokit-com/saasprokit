@@ -41,7 +41,6 @@ model User {
   invitations           Invitation[]
   createdInviteLinks    InviteLink[] @relation("InviteLinkCreator")
   uploadedFiles         File[]
-  auditLogs             AuditLog[]
   teamMembers           TeamMember[]
 
   @@map("user")
@@ -245,24 +244,6 @@ model File {
   @@index([uploadedById, deletedAt])
   @@index([deletedAt])
   @@map("file")
-}
-
-model AuditLog {
-  id             String   @id @default(cuid())
-  userId         String?
-  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  organizationId String?
-  action         String
-  changes        String?
-  ipAddress      String?
-  userAgent      String?
-  createdAt      DateTime @default(now())
-
-  @@index([userId])
-  @@index([action])
-  @@index([createdAt])
-  @@index([organizationId, createdAt])
-  @@map("audit_log")
 }
 
 model WebhookEvent {

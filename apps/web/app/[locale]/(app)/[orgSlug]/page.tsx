@@ -10,16 +10,11 @@ import {
 import { Skeleton } from "@repo/design-system/components/ui/skeleton";
 import { formatDate } from "@repo/design-system/lib/date";
 import { Suspense } from "react";
-import { CountBarChart } from "@/components/count-bar-chart";
 import { DashboardRangeTabs } from "@/components/dashboard-range-tabs";
 import { getActiveOrganization } from "@/lib/organization/queries";
 import { dashboardSearchParamsCache } from "@/lib/parsers";
 import { TeamGrowthChart } from "./components/team-growth-chart";
-import {
-  getOrgActivity,
-  getOrgDashboardData,
-  getOrgMemberGrowth,
-} from "./queries";
+import { getOrgDashboardData, getOrgMemberGrowth } from "./queries";
 
 interface OrgDashboardPageProps {
   params: Promise<{ orgSlug: string }>;
@@ -38,10 +33,6 @@ export default async function OrgDashboardPage({
   const orgContext = await getActiveOrganization(orgSlug);
 
   const growthPromise = getOrgMemberGrowth({
-    organizationId: orgContext.organizationId,
-    range,
-  });
-  const activityPromise = getOrgActivity({
     organizationId: orgContext.organizationId,
     range,
   });
@@ -133,9 +124,11 @@ export default async function OrgDashboardPage({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Suspense fallback={<Skeleton className="h-55 w-full" />}>
-                <CountBarChart dataPromise={activityPromise} label="Events" />
-              </Suspense>
+              <div className="flex h-55 items-center justify-center rounded-md border border-dashed">
+                <p className="text-muted-foreground text-sm">
+                  No activity data yet
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>

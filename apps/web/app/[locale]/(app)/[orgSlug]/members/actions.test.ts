@@ -1,5 +1,4 @@
 import { ORG_ROLES } from "@repo/auth/permissions";
-import { ORG_AUDIT_ACTIONS } from "@repo/utils/audit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -13,7 +12,6 @@ const mocks = vi.hoisted(() => ({
   memberFindFirst: vi.fn(),
   memberFindMany: vi.fn(),
   memberUpdateMany: vi.fn(),
-  recordAudit: vi.fn(),
   removeMember: vi.fn(),
   revalidateOrgPage: vi.fn(),
   toActionError: vi.fn(),
@@ -69,9 +67,6 @@ vi.mock("@/lib/auth/auth", () => ({
   hasOrgPermission: mocks.hasOrgPermission,
 }));
 
-vi.mock("@/lib/audit/record", () => ({
-  recordAudit: mocks.recordAudit,
-}));
 
 vi.mock("@/lib/infrastructure/revalidation", () => ({
   revalidateOrgPage: mocks.revalidateOrgPage,
@@ -114,7 +109,6 @@ beforeEach(() => {
   mocks.hasOrgPermission.mockResolvedValue(true);
   mocks.createInvitation.mockResolvedValue({});
   mocks.headers.mockResolvedValue(requestHeaders);
-  mocks.recordAudit.mockResolvedValue(undefined);
   mocks.revalidateOrgPage.mockResolvedValue(undefined);
 });
 
@@ -164,23 +158,6 @@ describe("inviteMemberAction", () => {
     expect(result).toMatchObject({ status: "error", code: "invalidInput" });
   });
 
-  it("records an org audit row after the invitation is created", async () => {
-    await inviteMemberAction({ status: "idle" }, input);
-
-    expect(mocks.recordAudit).toHaveBeenCalledWith({
-      action: ORG_AUDIT_ACTIONS.MEMBER_INVITE,
-      changes: { email: "new-member@example.com", role: ORG_ROLES.MEMBER },
-      organizationId: "org_1",
-    });
-  });
-
-  it("does not record an audit row when Better Auth rejects", async () => {
-    mocks.createInvitation.mockRejectedValue({ body: { code: "NOPE" } });
-
-    await inviteMemberAction({ status: "idle" }, input);
-
-    expect(mocks.recordAudit).not.toHaveBeenCalled();
-  });
 });
 
 describe("bulkInviteAction", () => {
@@ -227,17 +204,6 @@ describe("bulkInviteAction", () => {
     });
   });
 
-  it("records the invite counts with skipped as a count, not the array", async () => {
-    mocks.invitationFindMany.mockResolvedValue([{ email: "one@example.com" }]);
-
-    await bulkInviteAction({ status: "idle" }, bulkInput);
-
-    expect(mocks.recordAudit).toHaveBeenCalledWith({
-      action: ORG_AUDIT_ACTIONS.MEMBER_BULK_INVITE,
-      changes: { invited: 1, role: ORG_ROLES.MEMBER, skipped: 1 },
-      organizationId: "org_1",
-    });
-  });
 });
 
 describe("removeMembersAction", () => {
@@ -307,40 +273,6 @@ describe("removeMembersAction", () => {
     });
     expect(mocks.revalidateOrgPage).not.toHaveBeenCalled();
     expect(result).toMatchObject({ code: "removeMember" });
-  });
-
-  it("index-matches settled results to validMembers so a rejected middle removal is excluded from the audit ids", async () => {
-    mocks.memberFindMany.mockResolvedValue([
-      { id: "member_a", role: ORG_ROLES.MEMBER, userId: "user_a" },
-      { id: "member_b", role: ORG_ROLES.MEMBER, userId: "user_b" },
-      { id: "member_c", role: ORG_ROLES.MEMBER, userId: "user_c" },
-    ]);
-    mocks.removeMember
-      .mockResolvedValueOnce({ member: {} })
-      .mockRejectedValueOnce(new Error("rejected by Better Auth"))
-      .mockResolvedValueOnce({ member: {} });
-
-    const result = await removeMembersAction({
-      ...removeInput,
-      memberIds: ["member_a", "member_b", "member_c"],
-    });
-
-    expect(mocks.recordAudit).toHaveBeenCalledWith({
-      action: ORG_AUDIT_ACTIONS.MEMBER_REMOVE,
-      actorId: "user_self",
-      changes: { memberIds: ["member_a", "member_c"], removedCount: 2 },
-      organizationId: "org_1",
-    });
-    expect(result).toEqual({ success: true, data: { removedCount: 2 } });
-  });
-
-  it("does not record an audit row when every removal fails", async () => {
-    mocks.removeMember.mockRejectedValue(new Error("rejected by Better Auth"));
-
-    const result = await removeMembersAction(removeInput);
-
-    expect(result).toMatchObject({ code: "removeMember" });
-    expect(mocks.recordAudit).not.toHaveBeenCalled();
   });
 
   it("returns noValidMembers when only the owner and the caller were selected", async () => {
@@ -433,75 +365,4 @@ describe("updateMemberRoleAction", () => {
     expect(result).toEqual({ success: true });
   });
 
-  it("records the role change with before and after", async () => {
-    const result = await updateMemberRoleAction(roleInput);
-
-    expect(mocks.recordAudit).toHaveBeenCalledWith({
-      action: ORG_AUDIT_ACTIONS.MEMBER_SET_ROLE,
-      actorId: "user_self",
-      changes: {
-        after: ORG_ROLES.ADMIN,
-        before: ORG_ROLES.MEMBER,
-        memberId: "member_a",
-        targetUserId: "user_a",
-      },
-      organizationId: "org_1",
-    });
-    expect(result).toEqual({ success: true });
-  });
-
-  it("does not record an audit row when Better Auth rejects", async () => {
-    mocks.updateMemberRole.mockRejectedValue({ body: { code: "NOPE" } });
-
-    await updateMemberRoleAction(roleInput);
-
-    expect(mocks.recordAudit).not.toHaveBeenCalled();
-  });
-});
-
-describe("transferOwnershipAction", () => {
-  const transferInput = {
-    newOwnerMemberId: "member_b",
-    organizationId: "org_1",
-    orgSlug: "acme",
-  };
-
-  beforeEach(() => {
-    mocks.verifySession.mockResolvedValue({
-      error: null,
-      session: { user: { id: "user_owner" } },
-    });
-    mocks.memberFindFirst.mockResolvedValue({
-      id: "member_b",
-      role: ORG_ROLES.MEMBER,
-      userId: "user_b",
-    });
-    mocks.txMemberFindFirst.mockResolvedValue({
-      id: "member_owner",
-      role: ORG_ROLES.OWNER,
-      userId: "user_owner",
-    });
-    mocks.txMemberUpdate.mockResolvedValue({});
-    mocks.transaction.mockImplementation(async (callback) =>
-      callback({
-        member: {
-          findFirst: mocks.txMemberFindFirst,
-          update: mocks.txMemberUpdate,
-        },
-      })
-    );
-  });
-
-  it("records the ownership transfer after the transaction commits", async () => {
-    const result = await transferOwnershipAction(transferInput);
-
-    expect(mocks.recordAudit).toHaveBeenCalledAfter(mocks.transaction);
-    expect(mocks.recordAudit).toHaveBeenCalledWith({
-      action: ORG_AUDIT_ACTIONS.OWNERSHIP_TRANSFER,
-      actorId: "user_owner",
-      changes: { newOwnerMemberId: "member_b", newOwnerUserId: "user_b" },
-      organizationId: "org_1",
-    });
-    expect(result).toEqual({ success: true });
-  });
 });

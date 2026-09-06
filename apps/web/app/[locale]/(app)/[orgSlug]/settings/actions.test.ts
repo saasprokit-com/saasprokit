@@ -10,7 +10,6 @@ const mocks = vi.hoisted(() => ({
   headers: vi.fn(),
   organizationFindUnique: vi.fn(),
   organizationUpdate: vi.fn(),
-  recordAudit: vi.fn(),
   revalidateOrgPage: vi.fn(),
   storeOrganizationLogo: vi.fn(),
   toActionError: vi.fn(),
@@ -29,7 +28,6 @@ vi.mock("@repo/auth/server", () => ({
   },
 }));
 
-vi.mock("@/lib/audit/record", () => ({ recordAudit: mocks.recordAudit }));
 
 vi.mock("@repo/database", () => ({
   database: {
@@ -74,7 +72,6 @@ vi.mock("@/lib/infrastructure/revalidation", () => ({
   revalidateOrgPage: mocks.revalidateOrgPage,
 }));
 
-import { ORG_AUDIT_ACTIONS } from "@repo/utils/audit";
 import { MAX_FILE_SIZE } from "@repo/utils/storage";
 import { ORG_PAGES } from "@/lib/routes";
 import {
@@ -104,7 +101,6 @@ beforeEach(() => {
     })
   );
   mocks.hasOrgPermission.mockResolvedValue(true);
-  mocks.recordAudit.mockResolvedValue(undefined);
   mocks.revalidateOrgPage.mockResolvedValue(undefined);
   mocks.fileFindMany.mockResolvedValue([]);
   mocks.deleteStoredObjects.mockResolvedValue(undefined);
@@ -148,57 +144,6 @@ describe("updateOrganizationAction", () => {
     expect(result).toMatchObject({ code: "orgNotFound" });
   });
 
-  it("records the settings update after Better Auth accepts it", async () => {
-    mocks.updateOrganization.mockResolvedValue({ slug: "acme" });
-
-    await updateOrganizationAction(
-      { status: "idle" },
-      { name: "Acme Renamed", organizationId: "org_1" }
-    );
-
-    expect(mocks.recordAudit).toHaveBeenCalledWith({
-      action: ORG_AUDIT_ACTIONS.SETTINGS_UPDATE,
-      changes: { name: "Acme Renamed" },
-      organizationId: "org_1",
-    });
-  });
-
-  it("does not record an audit entry when Better Auth rejects the update", async () => {
-    mocks.updateOrganization.mockRejectedValue(new Error("db down"));
-
-    await updateOrganizationAction({ status: "idle" }, input);
-
-    expect(mocks.recordAudit).not.toHaveBeenCalled();
-  });
-});
-
-describe("deleteOrganizationAction", () => {
-  it("records the deletion", async () => {
-    mocks.deleteOrganization.mockResolvedValue({ success: true });
-
-    await deleteOrganizationAction(
-      { organizationId: "org_1" },
-      null,
-      new FormData()
-    );
-
-    expect(mocks.recordAudit).toHaveBeenCalledWith({
-      action: ORG_AUDIT_ACTIONS.DELETE,
-      organizationId: "org_1",
-    });
-  });
-
-  it("does not record an audit entry when Better Auth rejects the deletion", async () => {
-    mocks.deleteOrganization.mockRejectedValue(new Error("db down"));
-
-    await deleteOrganizationAction(
-      { organizationId: "org_1" },
-      null,
-      new FormData()
-    );
-
-    expect(mocks.recordAudit).not.toHaveBeenCalled();
-  });
 });
 
 describe("removeOrganizationLogoAction", () => {

@@ -1,4 +1,3 @@
-import { ORG_AUDIT_ACTIONS } from "@repo/utils/audit";
 import {
   DAYS_PER_MONTH,
   DAYS_PER_WEEK,
@@ -24,7 +23,6 @@ const HISTORY_DAYS = 90;
 const FILLER_USER_COUNT = 180;
 const ACME_PICK_EVERY = 4;
 const FOUNDING_OFFSET_DAYS = 30;
-const ACTIVITY_EVENT_COUNT = 300;
 const WEEKEND_WEIGHT = 0.25;
 const TREND_FLOOR = 0.6;
 const TREND_RISE = 0.8;
@@ -157,7 +155,6 @@ async function main() {
     );
   });
   await prisma.file.deleteMany();
-  await prisma.auditLog.deleteMany();
   await prisma.webhookEvent.deleteMany();
   await prisma.invitation.deleteMany();
   await prisma.member.deleteMany();
@@ -645,29 +642,7 @@ async function main() {
     )
   );
 
-  const activityUsers = [adminUser, regularUser1, regularUser2, ...acmeFillers];
-  const activityDates = weekdayWeightedDates(
-    now,
-    HISTORY_DAYS,
-    ACTIVITY_EVENT_COUNT
-  );
-
-  const orgAuditActions = Object.values(ORG_AUDIT_ACTIONS);
-
-  await prisma.auditLog.createMany({
-    data: activityDates.map((createdAt, index) => ({
-      userId: activityUsers[index % activityUsers.length].id,
-      organizationId: acmeOrg.id,
-      action: orgAuditActions[index % orgAuditActions.length],
-      ipAddress: `192.168.1.${(index % 250) + 1}`,
-      userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-      createdAt,
-    })),
-  });
-
-  console.log(
-    `Seeded ${fillerUsers.length} users and ${activityDates.length} activity events over ${HISTORY_DAYS} days.`
-  );
+  console.log(`Seeded ${fillerUsers.length} users over ${HISTORY_DAYS} days.`);
 
   await Promise.all([
     prisma.session.create({

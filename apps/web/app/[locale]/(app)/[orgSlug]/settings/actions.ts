@@ -4,11 +4,9 @@ import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
 import { createRequestLogger } from "@repo/logger/server";
 import { imageFileSchema } from "@repo/storage/constants";
-import { ORG_AUDIT_ACTIONS } from "@repo/utils/audit";
 import { ATTACHABLE_TYPE } from "@repo/utils/storage";
 import { headers } from "next/headers";
 import type { z } from "zod";
-import { recordAudit } from "@/lib/audit/record";
 import { verifySession } from "@/lib/auth/action-auth";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import { type ActionResult, hasOrgPermission } from "@/lib/auth/auth";
@@ -158,12 +156,6 @@ export async function updateOrganizationAction(
       return actionError("orgNotFound");
     }
 
-    await recordAudit({
-      action: ORG_AUDIT_ACTIONS.SETTINGS_UPDATE,
-      changes: { name: parsed.data.name },
-      organizationId: parsed.data.organizationId,
-    });
-
     await revalidateOrgPage(organization.slug, ORG_PAGES.SETTINGS);
 
     return { status: "success" };
@@ -186,11 +178,6 @@ export async function deleteOrganizationAction(
     await auth.api.deleteOrganization({
       headers: await headers(),
       body: { organizationId: validated.organizationId },
-    });
-
-    await recordAudit({
-      action: ORG_AUDIT_ACTIONS.DELETE,
-      organizationId: validated.organizationId,
     });
 
     return { success: true };

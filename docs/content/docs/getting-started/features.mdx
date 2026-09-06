@@ -52,7 +52,6 @@ Staff surface at `/admin`, gated on platform `User.role` (not org `Member.role`)
 | Organization list and detail | Implemented | `/admin/organizations`, `/admin/organizations/[orgId]` |
 | Impersonation | Implemented | Staff can impersonate a non-admin user |
 | Ban / unban | Implemented | Staff can ban a user |
-| Audit log | Implemented | Writes `admin.user.*` actions only (set role, ban, impersonate, …) |
 
 ## Multi-Organization Support
 
@@ -161,7 +160,6 @@ The rest of `packages/email/templates/` exist for preview only — they are not 
 | Webhook Signature Verification | Implemented | Stripe webhook signature validation |
 | Idempotent Webhook Processing | Implemented | WebhookEvent deduplication model |
 | SQL Injection Prevention | Implemented | All queries via Prisma ORM (parameterized); one static `$queryRaw` health check with no user input |
-| Audit Logging | Implemented | `AuditLog` writes from platform-admin mutations (`admin.user.*`) only |
 | Edge Route Protection | Implemented | `middleware.ts` — optimistic cookie-presence gate; real auth checks happen server-side |
 | Rate Limiting | Implemented | Per-route limits (sign-in, sign-up, password reset, 2FA) via Better Auth, backed by a database-stored `RateLimit` model |
 
@@ -170,7 +168,6 @@ The rest of `packages/email/templates/` exist for preview only — they are not 
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Structured Logging | Implemented | Pino logger (separate server + client exports) |
-| Audit Logging | Implemented | Same `AuditLog` table — admin mutations, not password / 2FA / sessions |
 | Health Check | Implemented | `/api/health` endpoint with database + auth validation |
 | User Activity Tracking | Implemented | `/api/user/activity` endpoint |
 | Error Boundaries | Implemented | React error boundary components |
