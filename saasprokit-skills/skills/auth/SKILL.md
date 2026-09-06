@@ -142,7 +142,7 @@ trusts the `userId` it is handed.
   (`packages/auth/server.ts`). Keep the `admin()` plugin's `adminRoles` option unset
   or the impersonation block breaks.
 - **Impersonation:** amber banner mounts in `(app)/layout.tsx`; exit via
-  `stopImpersonatingAction`. Mutations write `AuditLog` via `recordAdminAudit`.
+  `stopImpersonatingAction`. Mutations write `AuditLog` via `recordAudit`.
 - **Seed staff (dev):** `admin@example.com`, `moderator@example.com`,
   `banned@example.com` — password `Password@saaspro`.
 

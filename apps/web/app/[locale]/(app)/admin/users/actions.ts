@@ -2,8 +2,9 @@
 
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
+import { ADMIN_AUDIT_ACTIONS } from "@repo/utils/audit";
 import { headers } from "next/headers";
-import { ADMIN_AUDIT_ACTIONS, recordAdminAudit } from "@/lib/admin/audit";
+import { recordAudit } from "@/lib/audit/record";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import { hasAdminPermission } from "@/lib/auth/admin";
 import { type ActionResult, getServerSession } from "@/lib/auth/auth";
@@ -66,7 +67,7 @@ export async function setUserRoleAction(
       headers: await headers(),
     });
 
-    await recordAdminAudit({
+    await recordAudit({
       actorId,
       action: ADMIN_AUDIT_ACTIONS.SET_ROLE,
       changes: { targetUserId: data.userId, role: data.role },
@@ -134,7 +135,7 @@ export async function banUserAction(
       headers: await headers(),
     });
 
-    await recordAdminAudit({
+    await recordAudit({
       actorId,
       action: ADMIN_AUDIT_ACTIONS.BAN,
       changes: {
@@ -182,7 +183,7 @@ export async function unbanUserAction(
       headers: await headers(),
     });
 
-    await recordAdminAudit({
+    await recordAudit({
       actorId,
       action: ADMIN_AUDIT_ACTIONS.UNBAN,
       changes: { targetUserId: data.userId },
@@ -238,7 +239,7 @@ export async function impersonateUserAction(
       headers: await headers(),
     });
 
-    await recordAdminAudit({
+    await recordAudit({
       actorId,
       action: ADMIN_AUDIT_ACTIONS.IMPERSONATE,
       changes: { targetUserId: data.userId },
@@ -280,7 +281,7 @@ export async function revokeUserSessionsAction(
       headers: await headers(),
     });
 
-    await recordAdminAudit({
+    await recordAudit({
       actorId,
       action: ADMIN_AUDIT_ACTIONS.REVOKE_SESSIONS,
       changes: { targetUserId: data.userId },
@@ -335,7 +336,7 @@ export async function removeUserAction(
       headers: await headers(),
     });
 
-    await recordAdminAudit({
+    await recordAudit({
       actorId,
       action: ADMIN_AUDIT_ACTIONS.DELETE_USER,
       changes: { targetUserId: data.userId },

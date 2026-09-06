@@ -33,7 +33,7 @@ it rather than creating a parallel location.
 | `lib/files/storage-quota.ts` | Per-org storage quota enforcement (coupled to plan limits via `lib/billing`). |
 | `lib/billing/subscription-queries.ts` | Subscription + usage queries feeding `@repo/auth` plan logic. **No `billing` action module — reads only.** |
 | `lib/billing/checkout-queries.ts` | `verifyCheckoutSession` — Stripe Checkout session verification (paid + owned by org) for the checkout success page. |
-| `lib/admin/audit.ts` | `AuditLog` write helpers for platform-admin mutations. |
+| `lib/audit/record.ts` | `recordAudit` — `AuditLog` write helper for both platform-admin and org mutations. Resolves the actor from the session unless one is passed. Action names live in `@repo/utils/audit`. |
 
 ## Map — `lib/` foundation & infrastructure
 
@@ -66,15 +66,15 @@ them.
 
 - **`lib/` is not client-safe and not DB-free.** `lib/auth/` (`admin.ts`,
   `rate-limit.ts`), `lib/billing/`, `lib/organization/`, `lib/files/`, and
-  `lib/admin/` run Prisma directly. The line between a *domain data-access* module
+  `lib/audit/` run Prisma directly. The line between a *domain data-access* module
   and a *foundation* module is organizational, not pure-vs-impure — never assume a
   `lib/` file is client-safe; check for the `import "server-only"` guard.
-- **`lib/files/actions.ts` and `lib/admin/audit.ts` are `server-only`, not
+- **`lib/files/actions.ts` and `lib/audit/record.ts` are `server-only`, not
   `"use server"` modules** — their first line is `import "server-only"`, so they hold
   mutation *helpers*, not directly-callable Server Actions. Feature Server Actions
   live colocated with the feature (see `saasprokit:forms`).
 - **Only `organization` and `files` have both query and action modules; `billing` is
-  reads-only and `admin` is a single audit-write helper.** Add new domain folders
+  reads-only and `audit` is a single write helper.** Add new domain folders
   under `lib/<domain>/` following the same `queries.ts`/`actions.ts` shape.
 
 See `saasprokit:auth`, `saasprokit:forms`, `saasprokit:tables`.
