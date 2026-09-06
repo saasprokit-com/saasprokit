@@ -148,23 +148,30 @@ export async function revokeInviteLinksAction(
       return actionError("unauthorized");
     }
 
-    const result = await database.inviteLink.updateMany({
+    const activeInviteLinks = await database.inviteLink.findMany({
+      select: { id: true },
       where: {
         id: { in: validated.inviteLinkIds },
-        organizationId: validated.organizationId,
         isActive: true,
+        organizationId: validated.organizationId,
       },
-      data: { isActive: false },
     });
 
-    if (result.count === 0) {
+    if (activeInviteLinks.length === 0) {
       return actionError("noActiveInviteLinks");
     }
+
+    const activeInviteLinkIds = activeInviteLinks.map((link) => link.id);
+
+    const result = await database.inviteLink.updateMany({
+      data: { isActive: false },
+      where: { id: { in: activeInviteLinkIds } },
+    });
 
     await recordAudit({
       action: ORG_AUDIT_ACTIONS.INVITE_LINK_REVOKE,
       changes: {
-        inviteLinkIds: validated.inviteLinkIds,
+        inviteLinkIds: activeInviteLinkIds,
         revokedCount: result.count,
       },
       organizationId: validated.organizationId,

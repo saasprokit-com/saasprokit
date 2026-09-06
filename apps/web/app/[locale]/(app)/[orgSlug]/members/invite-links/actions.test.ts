@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   hasOrgPermission: vi.fn(),
   inviteLinkCreate: vi.fn(),
   inviteLinkFindFirst: vi.fn(),
+  inviteLinkFindMany: vi.fn(),
   inviteLinkUpdate: vi.fn(),
   inviteLinkUpdateMany: vi.fn(),
   recordAudit: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock("@repo/database", () => ({
     inviteLink: {
       create: mocks.inviteLinkCreate,
       findFirst: mocks.inviteLinkFindFirst,
+      findMany: mocks.inviteLinkFindMany,
       update: mocks.inviteLinkUpdate,
       updateMany: mocks.inviteLinkUpdateMany,
     },
@@ -140,7 +142,12 @@ describe("revokeInviteLinkAction", () => {
 
 describe("revokeInviteLinksAction", () => {
   it("records the requested ids and the actual count", async () => {
-    mocks.inviteLinkUpdateMany.mockResolvedValue({ count: 2 });
+    mocks.inviteLinkFindMany.mockResolvedValue([
+      { id: "link_1" },
+      { id: "link_2" },
+      { id: "link_3" },
+    ]);
+    mocks.inviteLinkUpdateMany.mockResolvedValue({ count: 3 });
 
     await revokeInviteLinksAction(
       {
@@ -156,14 +163,42 @@ describe("revokeInviteLinksAction", () => {
       action: ORG_AUDIT_ACTIONS.INVITE_LINK_REVOKE,
       changes: {
         inviteLinkIds: ["link_1", "link_2", "link_3"],
-        revokedCount: 2,
+        revokedCount: 3,
+      },
+      organizationId: "org_1",
+    });
+  });
+
+  it("records only the ids that were actually still active", async () => {
+    mocks.inviteLinkFindMany.mockResolvedValue([{ id: "link_1" }]);
+    mocks.inviteLinkUpdateMany.mockResolvedValue({ count: 1 });
+
+    await revokeInviteLinksAction(
+      {
+        inviteLinkIds: ["link_1", "link_2", "link_3"],
+        organizationId: "org_1",
+        orgSlug: "acme",
+      },
+      null,
+      new FormData()
+    );
+
+    expect(mocks.inviteLinkUpdateMany).toHaveBeenCalledWith({
+      data: { isActive: false },
+      where: { id: { in: ["link_1"] } },
+    });
+    expect(mocks.recordAudit).toHaveBeenCalledWith({
+      action: ORG_AUDIT_ACTIONS.INVITE_LINK_REVOKE,
+      changes: {
+        inviteLinkIds: ["link_1"],
+        revokedCount: 1,
       },
       organizationId: "org_1",
     });
   });
 
   it("does not record when no active invite links matched", async () => {
-    mocks.inviteLinkUpdateMany.mockResolvedValue({ count: 0 });
+    mocks.inviteLinkFindMany.mockResolvedValue([]);
 
     await revokeInviteLinksAction(
       { inviteLinkIds: ["link_1"], organizationId: "org_1", orgSlug: "acme" },
@@ -171,6 +206,7 @@ describe("revokeInviteLinksAction", () => {
       new FormData()
     );
 
+    expect(mocks.inviteLinkUpdateMany).not.toHaveBeenCalled();
     expect(mocks.recordAudit).not.toHaveBeenCalled();
   });
 });
