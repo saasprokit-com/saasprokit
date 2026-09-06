@@ -364,9 +364,9 @@ Covers the canceled page and its retry navigation.
    server-side `guardDowngrade` in `changePlanAction` using real member/storage counts.
 
 3. **Webhook endpoint.** Point Stripe at `/api/auth/stripe/webhook` (the plugin's
-   catch-all mount) — **not** the stale `API_ROUTES.STRIPE_WEBHOOK = "/api/stripe/webhook"`
-   constant, which has no handler. The plugin is also **conditional**: without
-   `STRIPE_WEBHOOK_SECRET` the entire Stripe plugin is skipped and billing endpoints 404.
+   catch-all mount) — **not** `/api/stripe/webhook`. The plugin is also
+   **conditional**: without `STRIPE_WEBHOOK_SECRET` the entire Stripe plugin is
+   skipped and billing endpoints 404.
 
 4. **Success page trusts nothing from the URL.** `verifyCheckoutSession` re-checks
    the session with Stripe (`paid`/`complete`) and confirms an owning `Subscription`

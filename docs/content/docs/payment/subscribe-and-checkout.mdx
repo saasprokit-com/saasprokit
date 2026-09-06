@@ -46,7 +46,7 @@ Key parameters (built on the server from the action input):
 - **`plan`** — the plan *name* (`pro` / `enterprise`), not a Stripe price ID. The plugin maps the name to a Stripe price using the plan catalog (see below).
 - **`annual`** — boolean derived from the selected `billingInterval`. When true, the plugin uses the plan's `annualDiscountPriceId`; otherwise its `priceId`.
 - **`referenceId`** — the `organizationId`. This is what makes billing **organization-scoped** rather than per-user; the resulting `Subscription` row stores this in its `referenceId` column.
-- **`successUrl`** — points at `/[locale]/[orgSlug]/checkout/success` and carries the literal `{CHECKOUT_SESSION_ID}` placeholder, which Stripe substitutes with the real session id on redirect.
+- **`successUrl`** — app callback at `/[locale]/[orgSlug]/checkout/success?session_id={CHECKOUT_SESSION_ID}`. The plugin sets Stripe's `success_url` to `{baseURL}/subscription/success?callbackURL=…&checkoutSessionId={CHECKOUT_SESSION_ID}` (`GET /api/auth/subscription/success`), then redirects to this callback. Stripe does **not** hit the app URL first.
 - **`cancelUrl`** — points at `/[locale]/[orgSlug]/checkout/canceled`.
 - **`returnUrl`** — the org billing page; used when the plugin skips Checkout and sends the user through the customer portal instead (existing paid subscription).
 
@@ -61,7 +61,7 @@ The `@better-auth/stripe` plugin is wired up in `packages/auth/server.ts` (full 
 
 - **Plan catalog** — `buildStripePlans(...)` in `packages/auth/plans.ts` builds the `StripePlan[]` array, attaching `priceId` (monthly) and `annualDiscountPriceId` (annual) to the `pro` and `enterprise` plan configs from the `STRIPE_*_PRICE_ID_*` env vars. The plugin uses `plan` + `annual` from the action to pick the right price.
 - **Authorization** — `upgradeSubscriptionAction` does **not** call `hasOrgPermission`. The plugin's `authorizeReference` delegates to `authorizeBillingAction` in `packages/auth/billing-authorize.ts`. For `upgrade-subscription` this calls `canManageBilling(userId, referenceId)`, allowing only org `owner`/`admin` members (filtered by `userId` + `organizationId` + role). This server-side check is the real security boundary — the page-level `OrgPermissionGate` is only UX.
-- The plugin mounts the checkout/portal/webhook handlers under `/api/auth/*`; the success/cancel URLs sent from the action are passed through to the Stripe Checkout Session.
+- The plugin mounts the checkout/portal/webhook handlers under `/api/auth/*`. `cancelUrl` is passed through to Stripe Checkout. `successUrl` is a **callback** after the plugin's `/subscription/success` hop, not Stripe's `success_url`.
 
 ## Returning on success: independent verification
 
@@ -76,7 +76,7 @@ When Stripe redirects back, the success page at `apps/web/app/[locale]/(app)/[or
 
 The page does **not** call `revalidateOrgPage`. On `ok` it renders `CheckoutSuccessCard` (`.../checkout/success/components/checkout-success-card.tsx`), which looks up `PLANS[planName]` and displays the plan's display name and feature list. The `not_paid` reason renders `CheckoutProcessingCard` (session not yet paid/complete). `wrong_org`, `missing_session`, and `stripe_error` render `CheckoutErrorCard`.
 
-A missing owning `Subscription` row is **`wrong_org` → `CheckoutErrorCard`**, not `not_paid` / processing. That covers both a bookmarked success URL from a different organization and a redirect that lands before the plugin has upserted the row.
+A missing owning `Subscription` row is **`wrong_org` → `CheckoutErrorCard`**. That is a **cross-org / unmatched session**, not a first-checkout race: the plugin creates an incomplete `Subscription` row (with `referenceId` + `stripeCustomerId`) **before** `checkout.sessions.create`, and `/subscription/success` updates it before the app page loads. `findOwningSubscription` also matches `stripeCustomerId`.
 
 ### Verification result states
 
@@ -123,8 +123,9 @@ sequenceDiagram
     SA-->>Card: ActionResult { url }
     Card->>Stripe: window.location.href = url
     User->>Stripe: Enter payment & pay
+    Stripe->>BA: GET /api/auth/subscription/success (plugin may upsert, then redirect)
+    BA->>Success: redirect callbackURL?session_id=…
     Stripe-->>BA: webhook → plugin upserts Subscription, then onSubscriptionComplete
-    Stripe->>Success: Redirect successUrl?session_id={CHECKOUT_SESSION_ID}
     Success->>Verify: verifyCheckoutSession(sessionId, organizationId)
     Verify->>Stripe: checkout.sessions.retrieve(sessionId)
     Stripe-->>Verify: session (payment_status, status)
@@ -141,7 +142,7 @@ sequenceDiagram
 
 ## Notes
 
-- The webhook (plugin upsert, then `onSubscriptionComplete` email) and the success-page redirect are **independent**. The success page does not depend on the webhook having fired to read the Stripe session, but the `Subscription` row it joins against is written by the **plugin**, not by `stripe-hooks.ts`. If the redirect lands before the row exists, `findOwningSubscription` returns null and the page shows `CheckoutErrorCard` (`wrong_org`).
+- The webhook (plugin upsert, then `onSubscriptionComplete` email) and the success-page redirect are **independent**. The success page does not depend on the webhook having fired to read the Stripe session. `wrong_org` is cross-org / no owning row — not “redirect landed before upsert”.
 - Free is never a Checkout target. `buildStripePlans` only emits `pro` and `enterprise`; downgrades to `free` are routed to the cancel flow by `changePlanAction` in `billing/actions.ts`.
 
 ## Source files

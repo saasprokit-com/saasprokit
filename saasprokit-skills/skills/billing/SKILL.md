@@ -82,9 +82,7 @@ Env vars: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
   (API-only, not in the Dashboard portal settings UI); re-apply it on any new or
   live-mode account via `POST /v1/billing_portal/configurations/:id` on the default
   configuration.
-- **`API_ROUTES.STRIPE_WEBHOOK = "/api/stripe/webhook"`** (`apps/web/lib/routes.ts`)
-  is a stale constant — it does **not** match the real `/api/auth/stripe/webhook`
-  path and has **no handler**. Do not point Stripe at it or reference it.
+- The webhook path is **`/api/auth/stripe/webhook`** (Better Auth catch-all). Do not invent a `/api/stripe/webhook` route.
 - Plugin is **conditional** — miss `STRIPE_WEBHOOK_SECRET` and all billing endpoints
   silently 404.
 - Don't add `hasOrgPermission` before the thin `auth.api.*` wrappers

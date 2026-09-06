@@ -9,30 +9,18 @@ This project uses two levels of testing:
 
 | Type | Tool | Location | Status |
 |------|------|----------|--------|
-| **E2E Tests** | Playwright | `apps/web/e2e/` | **56** cases across 27 files — see [E2E Tests](/docs/testing/e2e-tests) |
-| **Unit Tests** | Vitest | `@repo/auth`, `apps/web`, `@repo/database` | See the file list on [Unit Tests](/docs/testing/unit-tests) — do not treat a single total as the source of truth |
+| **E2E Tests** | Playwright | `apps/web/e2e/` | See [E2E Tests](/docs/testing/e2e-tests) |
+| **Unit Tests** | Vitest | `@repo/auth`, `apps/web`, `@repo/database` | See [Unit Tests](/docs/testing/unit-tests) |
+| **CLI tests** | Vitest | `scripts/**/*.test.ts` | `pnpm test:cli` (root `vitest.config.mts`) — **not** inside `pnpm test` |
 | **Integration Tests** | — | — | Not started |
 
-`pnpm test` (`turbo test`) runs all three unit packages because `@repo/database` has a `test` script.
+`pnpm test` is cached `turbo test` and only runs packages with a `test` script (app, `@repo/auth`, `@repo/database`). CI (`.github/workflows/ci.yml`) always runs unit + `pnpm test:cli`. Playwright is `.github/workflows/e2e.yml`, gated on the `e2e` PR label — default CI does **not** run it.
 
 ## Coverage Summary
 
 ### E2E Coverage by Feature Area
 
-See [E2E Tests](/docs/testing/e2e-tests) for the file-by-file breakdown.
-
-| Feature Area | Folder | Files | Test Cases |
-|-------------|--------|-------|------------|
-| Home / Landing Page | `public/` | 1 | 2 |
-| Authentication | `auth/` | 6 | 13 |
-| Account Management | `account/` | 5 | 9 |
-| Admin | `admin/` | 1 | 4 |
-| Organization Dashboard | `dashboard/` | 3 | 5 |
-| Members & Invitations | `members/` | 5 | 13 |
-| Billing & Payment | `payment/` | 4 | 8 |
-| **Total** | | **25** | **54** |
-
-The 54 spec-file tests above plus 2 `setup/` files (`auth.setup.ts`, `org.setup.ts`, which seed fixtures rather than assert anything) bring the full Playwright count to 56 tests in 27 files.
+See [E2E Tests](/docs/testing/e2e-tests) for the file-by-file breakdown (`npx playwright test --list` in `apps/web`). Folders: `public/`, `auth/`, `account/`, `admin/`, `dashboard/`, `members/`, `payment/`, plus `setup/`, `fixtures/`, `helpers/`, and opt-in `capture/`.
 
 ### Unit Test Coverage
 
@@ -40,9 +28,10 @@ See [Unit Tests](/docs/testing/unit-tests) for the file-by-file list. `@repo/sto
 
 | Package/App | Files |
 |---------|------|
-| `@repo/auth` | 7 |
-| `apps/web` | 7 (including `lib/seo-config.test.ts`) |
-| `@repo/database` | 1 (`redact.test.ts`, 10 tests) |
+| `@repo/auth` | see [Unit Tests](/docs/testing/unit-tests) |
+| `apps/web` | see [Unit Tests](/docs/testing/unit-tests) |
+| `@repo/database` | `redact.test.ts` |
+| root CLI | `scripts/**/*.test.ts` via `pnpm test:cli` |
 
 ### Uncovered Areas
 
@@ -60,35 +49,30 @@ See [Unit Tests](/docs/testing/unit-tests) for the file-by-file list. `@repo/sto
 ### E2E Tests (Playwright)
 
 ```bash
-# Run all E2E tests
+# E2E Postgres on 5433 + MailDev
+docker compose -f docker-compose.e2e.yml up -d
+
+# All default Playwright projects (not capture)
 pnpm --filter app test:e2e
 
-# Run with browser UI
 pnpm --filter app test:e2e:ui
-
-# Run a specific test file
-pnpm --filter app test:e2e -- --grep "Sign In"
-
-# Run a specific folder
-pnpm --filter app test:e2e -- e2e/payment
+pnpm --filter app test:e2e:auth   # --project=no-auth
+pnpm --filter app test:e2e:app    # --project=authenticated
+pnpm --filter app capture         # CAPTURE=1, e2e/capture/*.capture.ts
 ```
 
 ### Unit Tests (Vitest)
 
 ```bash
-# Run all unit tests
+# turbo test — app, @repo/auth, @repo/database only
 pnpm test
 
-# Run tests for a specific package
+# Setup CLI tests (not in turbo)
+pnpm test:cli
+
 pnpm --filter @repo/auth test
 pnpm --filter app test
 pnpm --filter @repo/database test
-
-# Run in watch mode
-pnpm --filter @repo/auth test -- --watch
-
-# Run a specific test by name (Vitest: --testNamePattern / -t, not --grep)
-pnpm --filter @repo/auth test -- --testNamePattern "canOrg"
 ```
 
 ## Test File Organization
@@ -122,4 +106,4 @@ See [Unit Tests](/docs/testing/unit-tests) for what each file covers.
 
 ## How E2E is wired
 
-Four Playwright projects in `apps/web/playwright.config.ts` — `auth-setup` and `org-setup` run first and gate `authenticated`, while `no-auth` runs without a login. Local infra: `docker compose -f docker-compose.e2e.yml up` (Postgres on **5433**, Maildev). CI (`.github/workflows/e2e.yml`) is gated on the `e2e` PR label. Project-by-project table: [E2E Tests](/docs/testing/e2e-tests#how-e2e-is-wired).
+Four Playwright projects in `apps/web/playwright.config.ts` by default — `auth-setup` and `org-setup` run first and gate `authenticated`, while `no-auth` runs without a login. A fifth **`capture`** project is prepended only when `CAPTURE=1` (`pnpm --filter app capture`). Local infra: `docker compose -f docker-compose.e2e.yml up` (Postgres on **5433**, Maildev). CI (`.github/workflows/e2e.yml`) is gated on the `e2e` PR label. Project-by-project table: [E2E Tests](/docs/testing/e2e-tests#how-e2e-is-wired).

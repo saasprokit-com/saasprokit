@@ -28,7 +28,7 @@ Re-clone the kit if you later switch hosts — setup is one-way by design.
 |---|---|---|
 | Code changes required | None | None — driver adapter and storage config are pre-wired, gated on env vars |
 | Next.js 16 support | Native | Via `@opennextjs/cloudflare` |
-| Database access | Direct (Neon pooled) | Neon serverless (WS pool; fetch for one-shots) |
+| Database access | Postgres via `PrismaPg` (Neon pooled URL is fine at runtime; DDL needs unpooled `DIRECT_URL`) | Neon serverless (WS pool; fetch for one-shots) |
 | File uploads | S3 provider (serverless FS is ephemeral) | S3 provider (R2 or S3) |
 | Stripe webhooks | Works as-is | Works as-is — `@better-auth/stripe` already prefers async crypto verification |
 | Effort | ~30 minutes | ~30–45 minutes |
@@ -37,7 +37,7 @@ Re-clone the kit if you later switch hosts — setup is one-way by design.
 
 Both platforms need these accounts provisioned first:
 
-1. **Neon** (or any hosted Postgres) — copy the pooled connection string as `DATABASE_URL`
+1. **Neon** (or any hosted Postgres) — copy the pooled connection string as `DATABASE_URL`. For `prisma db push`, also set unpooled `DIRECT_URL` in `packages/database/.env` (`prisma.config.ts` uses `DIRECT_URL || DATABASE_URL`; the pooler cannot run DDL).
 2. **Stripe** — create the Pro and Enterprise products with monthly/annual prices; note the four `price_...` IDs
 3. **Resend** — verify your sending domain; note the API key
 4. **OAuth apps** (optional) — Google and GitHub apps; callback URLs are added post-deploy
@@ -46,7 +46,7 @@ Both platforms need these accounts provisioned first:
 
 After either guide's deploy step:
 
-1. **Push the schema** — from your machine, with the production `DATABASE_URL` in `packages/database/.env`:
+1. **Push the schema** — from your machine, with unpooled `DIRECT_URL` (or a non-pooler `DATABASE_URL`) in `packages/database/.env`:
 
    ```bash
    cd packages/database && npx prisma db push
@@ -81,7 +81,7 @@ Run this after every deploy:
 - [ ] 2FA enrolment works (QR code renders, TOTP accepted)
 - [ ] Social sign-in works (if OAuth configured)
 - [ ] Create an organization; invite a member; the invite email arrives
-- [ ] Locale routing: `/vi/...` (or another locale) renders and redirects correctly
+- [ ] Locale routing: `/es/...` (or another shipped locale: `es`, `de`, `zh`, `fr`, `pt`) renders. Default `en` has no prefix (`rewriteDefault`).
 - [ ] Middleware gating: signed-out visit to `/{orgSlug}/billing` redirects to sign-in with `callbackUrl`
 - [ ] Stripe test-mode checkout completes; the webhook deliveries show `200` in the Stripe Dashboard; the subscription appears on the billing page
 - [ ] File upload (avatar) succeeds and the file is served back
