@@ -150,10 +150,10 @@ trusts the `userId` it is handed.
 
 - `hasOrgPermission`/`hasAdminPermission` return `boolean`, not `ActionResult` —
   branch to `actionError("unauthorized")` yourself.
-- `hasOrgPermission` **throws** (Better Auth `UNAUTHORIZED`) when the caller is not a
-  member of the org at all; its `false` branch only runs for members lacking the
-  permission. Both paths fail closed — a non-member just receives the mapped
-  fallback message instead of `unauthorized`.
+- `hasOrgPermission` returns `false` for non-members too. Better Auth throws
+  `UNAUTHORIZED` when the caller has no member row; the helper maps any `APIError`
+  to `false` so every caller reaches its own `unauthorized` branch. Failures that
+  are not `APIError` (a DB outage) still propagate.
 - Don't remove `enforceRateLimit` from auth actions believing the client transport
   still protects them; these are server actions, not `/api/auth/*` requests.
 - Never pass a client-supplied role to `canOrg`/`canAdmin`.

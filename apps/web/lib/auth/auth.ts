@@ -1,6 +1,7 @@
 import "server-only";
 
 import { auth } from "@repo/auth/server";
+import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -37,10 +38,16 @@ export async function hasOrgPermission(
   organizationId: string,
   permissions: Record<string, string[]>
 ): Promise<boolean> {
-  const result = await auth.api.hasPermission({
-    headers: await headers(),
-    body: { organizationId, permissions },
-  });
-
-  return result?.success ?? false;
+  try {
+    const result = await auth.api.hasPermission({
+      headers: await headers(),
+      body: { organizationId, permissions },
+    });
+    return result?.success ?? false;
+  } catch (error) {
+    if (error instanceof APIError) {
+      return false;
+    }
+    throw error;
+  }
 }

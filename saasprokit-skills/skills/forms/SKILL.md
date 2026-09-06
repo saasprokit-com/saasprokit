@@ -235,8 +235,10 @@ Interactions that call a server action but aren't a submitted `<form>` keep the
 - **Select `onChange`** that mutates immediately (`role-selector.tsx`).
 - **Buttons that redirect** to Stripe / OAuth, or refresh (`billing-actions.tsx`,
   `sessions-manager.tsx`, `org-sidebar.tsx`, …).
-- **File uploads** — `fetch()` → Route Handler, the one non-server-action transport
-  (`logo-upload.tsx`).
+- **File uploads** — `FormData` carrying the `File` goes straight into a server
+  action (`logo-upload.tsx` → `uploadOrganizationLogoAction`). Keep
+  `experimental.serverActions.bodySizeLimit` in `next.config.ts` above
+  `MAX_FILE_SIZE_MB`; the default is 1 MB.
 
 ```tsx
 const [isPending, startTransition] = useTransition();

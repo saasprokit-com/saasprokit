@@ -17,18 +17,13 @@ import { imageFileSchema } from "@repo/storage/constants";
 import { ALLOWED_IMAGE_TYPES, MAX_FILE_SIZE_MB } from "@repo/utils/storage";
 import { Building2, Loader2, Trash2, Upload } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { type ChangeEvent, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { removeOrganizationLogoAction } from "../actions";
-
-// Shape returned by POST /api/upload — response.json() is untyped, so narrow it
-// here rather than trusting the payload
-interface UploadResponse {
-  error?: string;
-  file?: { publicUrl: string | null };
-}
+import {
+  removeOrganizationLogoAction,
+  uploadOrganizationLogoAction,
+} from "../actions";
 
 interface LogoUploadProps {
   canEdit: boolean;
@@ -45,7 +40,6 @@ export function LogoUpload({
   canEdit,
   errors,
 }: LogoUploadProps) {
-  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, startUploadTransition] = useTransition();
   const [isRemoving, startRemoveTransition] = useTransition();
@@ -57,7 +51,6 @@ export function LogoUpload({
       return;
     }
 
-    // Validate file
     const validation = imageFileSchema.safeParse(file);
     if (!validation.success) {
       toast.error("Invalid file", {
@@ -67,40 +60,44 @@ export function LogoUpload({
     }
 
     startUploadTransition(async () => {
+      let outcomeKnown = false;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (outcomeKnown) {
+          return;
+        }
+        setPreviewUrl(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("organizationId", organizationId);
+
       try {
-        // Create preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setPreviewUrl(e.target?.result as string);
-        };
-        reader.readAsDataURL(file);
+        const result = await uploadOrganizationLogoAction(formData);
 
-        // Upload file
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("type", "org-logo");
-        formData.append("organizationId", organizationId);
-
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        const result = (await response.json()) as UploadResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error || "Upload failed");
+        if (!result.success) {
+          outcomeKnown = true;
         }
 
-        toast.success("Logo updated successfully");
-        setPreviewUrl(result.file?.publicUrl ?? null);
-        router.refresh();
-      } catch (error) {
-        toast.error(errors.uploadLogo, {
-          description:
-            error instanceof Error ? error.message : "Please try again",
+        startUploadTransition(() => {
+          setPreviewUrl(
+            result.success ? (result.data?.publicUrl ?? null) : currentLogo
+          );
         });
-        setPreviewUrl(currentLogo);
+
+        if (result.success) {
+          toast.success("Logo updated successfully");
+        } else {
+          toast.error(errors.uploadLogo, { description: result.error });
+        }
+      } catch {
+        outcomeKnown = true;
+        startUploadTransition(() => {
+          setPreviewUrl(currentLogo);
+        });
+        toast.error(errors.uploadLogo, { description: "Please try again" });
       } finally {
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
