@@ -2,9 +2,8 @@ import "server-only";
 
 import { database } from "@repo/database";
 import type { createRequestLogger } from "@repo/logger/server";
-import type { UploadType } from "@repo/storage/constants";
 import { deleteFile, uploadFile } from "@repo/storage/server";
-import { ATTACHABLE_TYPE, type AttachableType } from "@repo/utils/storage";
+import { ATTACHABLE_TYPE } from "@repo/utils/storage";
 
 interface StoredObject {
   bucket: string | null;
@@ -90,56 +89,4 @@ export async function storeOrganizationLogo(options: {
   await deleteStoredObjects(replaced, logger);
 
   return { publicUrl: uploadResult.publicUrl, slug };
-}
-
-export async function handlePostUploadOperations(options: {
-  type: UploadType;
-  fileRecord: { id: string };
-  uploadResult: { publicUrl: string | null };
-  attachableType: AttachableType;
-  attachableId: string;
-  logger: ReturnType<typeof createRequestLogger>;
-}): Promise<void> {
-  const {
-    type,
-    fileRecord,
-    uploadResult,
-    attachableType,
-    attachableId,
-    logger,
-  } = options;
-
-  const replaced = await database.$transaction(async (tx) => {
-    if (type === "avatar") {
-      await tx.user.update({
-        where: { id: attachableId },
-        data: { image: uploadResult.publicUrl },
-      });
-    }
-
-    if (type === "org-logo") {
-      await tx.organization.update({
-        where: { id: attachableId },
-        data: { logo: uploadResult.publicUrl },
-      });
-    }
-
-    const siblings = {
-      attachableType,
-      attachableId,
-      id: { not: fileRecord.id },
-      deletedAt: null,
-    };
-    const rows = await tx.file.findMany({
-      where: siblings,
-      select: { storagePath: true, bucket: true },
-    });
-    await tx.file.updateMany({
-      where: siblings,
-      data: { deletedAt: new Date() },
-    });
-    return rows;
-  });
-
-  await deleteStoredObjects(replaced, logger);
 }

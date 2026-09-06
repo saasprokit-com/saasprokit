@@ -13,7 +13,7 @@ export async function validateStorageQuota(
   organizationId: string,
   fileSizeBytes: number,
   logger: ReturnType<typeof createRequestLogger>
-): Promise<{ valid: true } | { valid: false; error: string; status: number }> {
+): Promise<{ valid: true } | { valid: false; error: string }> {
   const [usageMB, planName] = await Promise.all([
     getOrgStorageUsage(organizationId),
     getCurrentPlanForOrg(organizationId),
@@ -32,6 +32,5 @@ export async function validateStorageQuota(
   return {
     valid: false,
     error: `Storage quota exceeded. You have used ${usageMB.toFixed(1)} MB of ${maxStorageMB} MB. Please upgrade your plan or delete unused files.`,
-    status: 403,
   };
 }
