@@ -3,26 +3,23 @@ title: E2E Tests
 description: Playwright end-to-end test suite organized by feature area
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
-
-**56 tests** across 27 files — 25 `*.spec.ts` files plus 2 `setup/` files (`auth.setup.ts`, `org.setup.ts`) that seed the authenticated/org-scoped Playwright projects rather than assert anything themselves. Specs are organized into domain folders under `apps/web/e2e/` (plus `fixtures/` and `helpers/` for shared test infrastructure — see [Maildev helper](/docs/email/local-development)). Counted with `npx playwright test --list` in `apps/web`.
+Specs live in domain folders under `apps/web/e2e/` (plus `fixtures/` and `helpers/` — see [Maildev helper](/docs/email/local-development)). List current cases with `npx playwright test --list` in `apps/web`.
 
 ## How E2E is wired
 
-Four Playwright projects in `apps/web/playwright.config.ts`:
+Default projects in `apps/web/playwright.config.ts`:
 
 | Project | Matches | Depends on |
 | --- | --- | --- |
-| `auth-setup` | `setup/auth.setup.ts` — signs in, writes `e2e/.auth/user.json` | — |
-| `org-setup` | `setup/org.setup.ts` | `auth-setup` |
+| `auth-setup` | `setup/auth.setup.ts` — `ensureVerifiedUser` writes `e2e/.auth/user.json` | — |
+| `org-setup` | `setup/org.setup.ts` — writes org slug | `auth-setup` |
 | `no-auth` | `(public\|auth)/*.spec.ts` — no login | — |
 | `authenticated` | `(account\|admin\|dashboard\|members\|payment)/*.spec.ts` | `auth-setup`, `org-setup` |
+| `capture` (opt-in) | `e2e/capture/*.capture.ts` | `CAPTURE=1` / `pnpm --filter app capture` |
 
-Setup projects run first and gate `authenticated`. Local infra: `docker compose -f docker-compose.e2e.yml up` (Postgres on **5433**, Maildev). CI (`.github/workflows/e2e.yml`) is **gated behind the `e2e` PR label**.
+`globalSetup` (`e2e/setup/global-setup.ts`) clears MailDev. `pnpm --filter app test:e2e` is plain `playwright test` and does **not** load `capture`.
 
-<Callout type="info">
-One file still carries an old numbered title in its `test.describe()` block (`admin-access.spec.ts`: `"31 - Admin area access control"`, with test names like `TC-31-01`) left over from a prior flat `01-*.spec.ts`-style layout — the file itself already lives in the `admin/` domain folder below.
-</Callout>
+Local infra: `docker compose -f docker-compose.e2e.yml up -d` (Postgres on **5433**, Maildev). CI (`.github/workflows/e2e.yml`) is **gated behind the `e2e` PR label**.
 
 ## `account/` — 9 tests
 
@@ -87,8 +84,11 @@ One file still carries an old numbered title in its `test.describe()` block (`ad
 ## Running these tests
 
 ```bash
-pnpm --filter app test:e2e                          # all E2E tests
-pnpm --filter app test:e2e -- --grep "Sign In"       # by describe/test title
-pnpm --filter app test:e2e -- e2e/payment            # by folder
-pnpm --filter app test:e2e:ui                        # with the Playwright UI
+docker compose -f docker-compose.e2e.yml up -d
+pnpm --filter app test:e2e
+pnpm --filter app test:e2e:ui
+pnpm --filter app test:e2e:auth          # --project=no-auth
+pnpm --filter app test:e2e:app           # --project=authenticated
+pnpm --filter app capture                # CAPTURE=1
+pnpm --filter app test:e2e -- e2e/payment
 ```

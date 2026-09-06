@@ -3,7 +3,7 @@ title: Authentication Overview
 description: "Architecture of the Better Auth integration: the auth instance, plugins, packages, and how the auth pages talk to it"
 ---
 
-Authentication is built on **[Better Auth](https://www.better-auth.com/)** rather than hand-rolled session logic. A single `auth` instance is configured in `packages/auth/server.ts`, mounted at the catch-all route `/api/auth/[...all]`, and backed by the Prisma/PostgreSQL adapter. Every flow — email/password, social, magic link, email OTP, two-factor, and password reset — runs through that one instance. The auth pages reach it **server-side**: a form dispatches a server action, and the action calls `auth.api.*` directly. The typed `authClient` (`packages/auth/client.ts`) remains for session hooks and browser-side plugin calls, but the auth pages no longer use it.
+Authentication is built on **[Better Auth](https://www.better-auth.com/)** rather than hand-rolled session logic. A single `auth` instance is configured in `packages/auth/server.ts`, mounted at the catch-all route `/api/auth/[...all]`, and backed by the Prisma/PostgreSQL adapter. Every flow — email/password, social, magic link, email OTP, two-factor, and password reset — runs through that one instance. The auth pages reach it **server-side**: a form dispatches a server action, and the action calls `auth.api.*` directly. The typed `authClient` (`packages/auth/client.ts`) matches the server plugin list and exports types. Auth pages and session reads do **not** call it at runtime — forms use `auth.api.*` in server actions; session helpers are `getServerSession` / `requireAuth`.
 
 ## Ownership: who owns what
 
@@ -15,7 +15,7 @@ The integration is split between the **`@repo/auth` package** (the Better Auth s
 | --- | --- |
 | `server.ts` | The `betterAuth({...})` instance — providers, plugins, sessions, rate limits, email hooks. The source of truth for what auth can do. |
 | `client.ts` | The `createAuthClient({...})` instance and the re-exported method bindings (`signIn`, `signUp`, `useSession`, `twoFactor`, `organization`, `subscription`, `emailOtp`, `admin`). |
-| `permissions.ts` | Dual RBAC: platform `admin` roles and organization roles, plus the access-control statements. The role/permission matrix itself is out of scope here — see `packages/auth/permissions.ts`. |
+| `permissions.ts` | Dual RBAC: platform `admin` roles and organization roles, plus the access-control statements. See [Sessions & Route Protection](./sessions-and-routing). |
 | `keys.ts` | The Zod-validated env schema (`BETTER_AUTH_SECRET`, OAuth keys, Stripe keys, `MAX_ORGS_PER_USER`). Throws on startup if a required var is missing or malformed. |
 | `stripe-client.ts`, `plans.ts`, `stripe-hooks.ts`, `billing-authorize.ts` | Billing — see the [Payment](../payment) section. |
 
@@ -146,7 +146,7 @@ Better Auth's Prisma adapter reads and writes a small set of tables (`packages/d
 
 - `packages/auth/server.ts` — the `betterAuth({...})` instance and plugin array
 - `packages/auth/client.ts` — `authClient` and the bound method exports
-- `packages/auth/permissions.ts` — admin + org RBAC (see Authorization)
+- `packages/auth/permissions.ts` — admin + org RBAC (see [Sessions & Route Protection](./sessions-and-routing))
 - `packages/auth/keys.ts` — env schema
 - `packages/utils/auth.ts` — timing constants (session/OTP/magic-link expiry)
 - `apps/web/app/api/auth/[...all]/route.ts` — the Better Auth Next.js handler

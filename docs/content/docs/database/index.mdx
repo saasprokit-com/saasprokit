@@ -1,76 +1,44 @@
 ---
 title: Database Overview
-description: Prisma schema and Better Auth database structure
+description: Prisma client, adapters, and the migrate/seed workflow
 ---
 
-The `@repo/database` package provides a Prisma client configured for PostgreSQL (Neon) with Better Auth integration. It has 16 models in total — Better Auth core (`User`, `Session`, `Account`, `Verification`), plugin-backed (`TwoFactor`, `Organization`, `Member`, `Invitation`, `InviteLink`, `Team`, `TeamMember`, `Subscription`, `RateLimit`), and app-specific (`File`, `AuditLog`, `WebhookEvent`). See [Database Design](/docs/database/database-design) for the full field-by-field reference.
+`@repo/database` is a Prisma client over **PostgreSQL**. Local default is Docker Postgres (`docker compose up -d postgres`), not Neon. Neon is what you use on Cloudflare Workers (and optionally on Vercel).
 
-## Entity Relationships
+There are 16 models. Better Auth owns most of them; four are app tables.
 
-```mermaid
-erDiagram
-    User ||--o{ Session : "has many"
-    User ||--o{ Account : "has many"
-    User ||--o{ TwoFactor : "has many"
-    User ||--o{ Member : "belongs to orgs"
-    User ||--o{ Invitation : "invites"
-    User ||--o{ File : "uploads"
-    User ||--o{ AuditLog : "logged actions"
-    User ||--o{ InviteLink : "creates"
+| Kind | Models |
+|------|--------|
+| Better Auth core | `User`, `Session`, `Account`, `Verification` |
+| Better Auth plugins | `TwoFactor`, `Organization`, `Member`, `Invitation`, `Team`, `TeamMember`, `Subscription`, `RateLimit` |
+| App-specific | `InviteLink`, `File`, `AuditLog`, `WebhookEvent` |
 
-    Organization ||--o{ Member : "has members"
-    Organization ||--o{ Invitation : "has invitations"
-    Organization ||--o{ InviteLink : "has invite links"
-    Organization ||--o{ Team : "has teams"
+`InviteLink` is **not** a Better Auth plugin. Field-by-field: [Database Design](/docs/database/database-design). Schema: `packages/database/prisma/schema.prisma`.
 
-    Team ||--o{ TeamMember : "has members"
-```
+## Adapters
 
-`Subscription`, `WebhookEvent`, and `RateLimit` are standalone tables — not tied to `User`/`Organization` via a Prisma relation (`Subscription.referenceId` is a polymorphic user-or-org ID resolved in application code).
+`packages/database/index.ts` picks the driver at runtime:
 
-## Quick Start
+| Runtime | Adapter |
+|---------|---------|
+| Node (local Docker, Vercel, Docker image) | `PrismaPg` (TCP) |
+| Cloudflare `workerd` (`CF_BUILD` / Workers UA) | `PrismaNeon` — `DATABASE_URL` must be a Neon **pooled** (`-pooler`) endpoint |
 
-### Import the Database Client
+## Commands
 
-```typescript
-import { database } from '@repo/database';
-
-// Query users
-const users = await database.user.findMany();
-
-// Create organization
-const org = await database.organization.create({
-  data: {
-    name: 'My Team',
-    slug: 'my-team',
-  },
-});
-```
-
-### Common Commands
+Happy path from the repo root:
 
 ```bash
-# Format, generate client, and push schema
-pnpm migrate
-
-# Individual commands
-cd packages/database
-npx prisma generate      # Generate Prisma client
-npx prisma db push       # Push schema changes
-npx prisma studio        # Open Prisma Studio
-npx prisma migrate dev   # Create migration
+pnpm migrate                              # format + generate + db push
+pnpm --filter @repo/database db:seed      # wipe (keeps RateLimit), then seed
 ```
 
-Seed wipes every table first and is blocked in production (`NODE_ENV === "production"` exits). From the repo root:
+`pnpm migrate` is **not** `prisma migrate dev`. Do not add versioned migrations unless you are changing the kit's workflow.
 
-```bash
-pnpm --filter @repo/database db:seed
-```
+Seed is blocked when `NODE_ENV=production`. It does not delete `RateLimit` rows.
 
-## Schema Location
+## Client import
 
-The Prisma schema is located at:
-
-```
-packages/database/prisma/schema.prisma
+```ts
+import { database } from "@repo/database";
 ```

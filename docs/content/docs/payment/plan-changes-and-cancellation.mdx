@@ -14,7 +14,7 @@ The billing UI reduces every tier transition to one of four outcomes, decided by
 | **Upgrade** | target is a higher tier | `upgradeSubscriptionAction` → `auth.api.upgradeSubscription` → Stripe Checkout (first subscription) or portal `subscription_update_confirm` (existing subscription) |
 | **Downgrade** (to paid) | target is lower but not `free` | `changePlanAction` → `auth.api.upgradeSubscription({ scheduleAtPeriodEnd: true })` |
 | **Downgrade to free** | target is `free` | `changePlanAction` returns `{ action: "cancel" }`; client routes the user to the Cancel flow |
-| **Cancel** | user clicks "Cancel Subscription" | `cancelSubscriptionAction` → `auth.api.cancelSubscription` → Stripe schedules cancellation at period end |
+| **Cancel** | user clicks "Cancel Subscription" | `cancelSubscriptionAction` → `auth.api.cancelSubscription` → Stripe Billing Portal `flow_data.type: "subscription_cancel"`. Period-end vs immediate is **portal config**, not this call. There is no immediate-cancel API in the app. |
 
 `changePlanAction` drives cancel-vs-change **UI** (`{ action: "cancel" | "changed"; blockReason? }`). It does not redirect.
 
@@ -66,11 +66,11 @@ On a successful downgrade, `ChangePlanView.handleDowngradeSuccess` shows `"Plan 
 
 ## Cancellation
 
-Cancellation lives in `BillingActions` (`billing-actions.tsx`). There is no `current-plan.tsx`. The Cancel button only renders when the org is on a paid plan and the subscription is not already pending-cancel (`isSubscriptionActive && isSubscriptionPendingCancel`). Clicking it opens an `AlertDialog`; confirming calls `cancelSubscriptionAction` with the org `referenceId`, optional `stripeSubscriptionId`, locale, and slug.
+Cancellation lives in `BillingActions` (`billing-actions.tsx`). There is no `current-plan.tsx`. The Cancel button renders when `isPaid && !isCanceled`. Clicking it opens an `AlertDialog`; confirming calls `cancelSubscriptionAction` with the org `referenceId`, optional `stripeSubscriptionId`, locale, and slug.
 
-Stripe does **not** delete the subscription immediately — it schedules cancellation at period end, so the row stays `active` with a pending-cancel marker until the period boundary passes, at which point a webhook flips the status to `canceled`.
+The happy path returns a **portal URL**; `BillingActions` redirects there. `{ success: true }` with no URL is only `isAlreadyCancelingError`. Period-end vs immediate cancel is decided in the Stripe portal, not by `subscriptions.update` in this app.
 
-If the action returns a URL, `BillingActions` redirects there (Stripe-hosted confirmation). If it returns success without a URL (immediate cancel, or the benign already-canceling case), the dialog closes, a toast is shown, and `router.refresh()` runs. `isAlreadyCancelingError` is handled **inside** `cancelSubscriptionAction`, which returns `{ success: true }` instead of an error.
+`customer.subscription.updated` writes `cancelAt` / `cancelAtPeriodEnd` while status stays `active`. `customer.subscription.deleted` sets `status: "canceled"`.
 
 ```mermaid
 sequenceDiagram
@@ -84,17 +84,16 @@ sequenceDiagram
   U->>UI: Click "Yes, Cancel"
   UI->>SA: cancelSubscriptionAction({ organizationId, subscriptionId, ... })
   SA->>BA: auth.api.cancelSubscription({ referenceId, subscriptionId, returnUrl })
-  BA->>S: Schedule cancel at period end
+  BA->>S: create portal session (subscription_cancel)
   alt action returns url
     SA-->>UI: { success, data: { url } }
     UI->>S: window.location.href = url
-  else success with no url (or already-canceling)
+  else already-canceling
     SA-->>UI: { success: true }
     UI->>UI: toast + router.refresh()
   end
-  Note over S,DB: Later, at period end
-  S->>BA: Stripe webhook (customer.subscription.updated/deleted)
-  BA->>DB: plugin upserts cancelAt / cancelAtPeriodEnd, then status = canceled
+  Note over S,DB: updated → cancelAt / cancelAtPeriodEnd (status still active)
+  Note over S,DB: deleted → status = canceled
 ```
 
 ### How cancellation is surfaced in the UI

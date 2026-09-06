@@ -15,6 +15,14 @@ The webhook handler is mounted by the Better Auth catch-all route. Point the Str
 ${NEXT_PUBLIC_APP_URL}/api/auth/stripe/webhook
 ```
 
+Locally:
+
+```bash
+stripe listen --forward-to localhost:3000/api/auth/stripe/webhook
+```
+
+Put the CLI `whsec_` into `STRIPE_WEBHOOK_SECRET`. HTTP mount: `apps/web/app/api/auth/[...all]/route.ts`.
+
 Signature verification is performed entirely by the plugin using `stripeWebhookSecret`. In `packages/auth/server.ts` the Stripe plugin is only added when **both** a Stripe client and a webhook secret are present:
 
 ```ts
@@ -64,13 +72,16 @@ sequenceDiagram
     Plugin->>Plugin: verify signature with STRIPE_WEBHOOK_SECRET
     alt invalid signature
         Plugin-->>Stripe: 400 (rejected)
-    else valid, subscription.* event
+    else valid, checkout.session.completed
         Plugin->>DB: upsert subscription (status/plan/ids)
-        Plugin->>Hooks: onSubscriptionComplete / Update / Deleted
+        Plugin->>Hooks: onSubscriptionComplete
         Hooks->>Hooks: claimWebhookEvent(event) — dedupe by (provider, eventId)
-        Hooks->>DB: lookup org owner (read)
+        Hooks->>DB: lookup org owner (organization + member)
         Hooks->>Email: send lifecycle email
         Plugin-->>Stripe: 200 OK
+    else valid, customer.subscription.updated / deleted
+        Plugin->>DB: upsert subscription
+        Plugin->>Hooks: onSubscriptionUpdate / onSubscriptionDeleted
     else valid, other event type (e.g. invoice.*)
         Plugin-->>Stripe: 200 OK (no handler configured, no-op)
     end
@@ -82,7 +93,7 @@ Every handler first calls `claimWebhookEvent(event)` (`packages/auth/webhook-ide
 
 | Dispatch source | Stripe trigger | Handler in `stripe-hooks.ts` | What it does |
 | --- | --- | --- | --- |
-| `subscription.onSubscriptionComplete` | First successful subscription checkout | `handleSubscriptionComplete` | Sends `sendSubscriptionStartedEmail` with the plan display name and billing interval (`getBillingInterval` compares the price ID against `STRIPE_*_PRICE_ID_ANNUAL`). |
+| `subscription.onSubscriptionComplete` | `checkout.session.completed` | `handleSubscriptionComplete` | Sends `sendSubscriptionStartedEmail` with the plan display name and billing interval (`getBillingInterval` compares the price ID against `STRIPE_*_PRICE_ID_ANNUAL`). |
 | `subscription.onSubscriptionUpdate` | `customer.subscription.updated` | `handleSubscriptionUpdate` | Reads `event.data.previous_attributes.items`. If no item change, returns (skips status-only updates / period rollovers). Otherwise resolves the previous plan from the previous price ID via `getPlanNameFromPriceId`, compares plan positions using `PLAN_ORDER`, and sends `sendSubscriptionDowngradedEmail` when `previousIndex > newIndex`, else `sendSubscriptionUpgradedEmail`. |
 | `subscription.onSubscriptionDeleted` | `customer.subscription.deleted` | `handleSubscriptionDeleted` | Computes the access cutoff from the first subscription item's `current_period_end` (Stripe v22.2+ moved this onto each `SubscriptionItem`) and sends `sendSubscriptionCancelledEmail` with `accessUntil` and a `reactivateUrl`. |
 
@@ -106,12 +117,12 @@ if (!(await claimWebhookEvent(args.event))) {
 
 - **Plan naming.** `displayPlanName` maps internal plan keys to `PLAN_DISPLAY_NAMES[PlanName]`, falling back to the raw value.
 - **Stripe v22.2+ field move.** `handleSubscriptionDeleted` reads `current_period_end` from the first item in `stripeSubscription.items.data`, since Stripe relocated this field from the `Subscription` root onto each `SubscriptionItem`.
-- **Database writes.** The handlers in `stripe-hooks.ts` only **read** the `subscription`, `organization`, and `member` tables (aside from the `claimWebhookEvent` insert). The authoritative subscription row write (status/plan/`stripeSubscriptionId`) is done by the `@better-auth/stripe` plugin itself before our hooks fire.
+- **Database writes.** The handlers in `stripe-hooks.ts` only **read** `organization` and `member` (aside from the `claimWebhookEvent` insert). They do not query `subscription`. The authoritative subscription row write is done by the `@better-auth/stripe` plugin before our hooks fire.
 
 ## Source files
 
 - `packages/auth/stripe-hooks.ts` — `handleSubscriptionComplete`, `handleSubscriptionUpdate`, `handleSubscriptionDeleted`, and helpers (`getOrgEmailContext`, `getBillingInterval`, `displayPlanName`)
 - `packages/auth/webhook-idempotency.ts` — `claimWebhookEvent`
 - `packages/auth/server.ts` — wires `stripeWebhookSecret` and the `subscription.*` callbacks into the `stripe()` plugin
-- `packages/auth/keys.ts` — declares `STRIPE_WEBHOOK_SECRET` and the `STRIPE_*_PRICE_ID_*` env vars
+- `apps/web/app/api/auth/[...all]/route.ts` — HTTP mount (`/api/auth/stripe/webhook`)
 - `packages/database/prisma/schema.prisma` — `WebhookEvent` model, `(provider, eventId)` unique constraint

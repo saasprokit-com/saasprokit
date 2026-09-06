@@ -3,13 +3,7 @@ title: Unit Tests
 description: Catalog of Vitest unit tests and coverage gaps
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
-
-`@repo/auth` has 7 files, `apps/web` has 7 files (including `lib/seo-config.test.ts`), and `@repo/database` has `redact.test.ts` (10 tests). `pnpm test` (`turbo test`) runs all three because `@repo/database` has a `test` script. See the file list below rather than a single total that will rot.
-
-<Callout type="warn">
-If `apps/web` has stale build output on disk (`.next/standalone/`, `.open-next/server-functions/default/` — left behind by a prior `pnpm build` or `cf:build`), `pnpm --filter app test` overcounts: `apps/web/vitest.config.mts`'s `include: ["**/*.test.{ts,tsx}"]` has no exclude for those directories, so it also runs the build's bundled copy of `hooks/use-action-result.test.ts`, once per copy. Count source files only — filter `vitest run --reporter=verbose` output down to non-build paths, or `find apps/web -name "*.test.ts" -not -path "*/.next/*" -not -path "*/.open-next/*"`.
-</Callout>
+`@repo/auth`, `apps/web`, and `@repo/database` have co-located `*.test.{ts,tsx}` files. `pnpm test` (`turbo test`) runs those three. Setup CLI tests are **`pnpm test:cli`** (root `vitest.config.mts` → `scripts/**/*.test.ts`) and are not in the turbo graph.
 
 ## Other test files
 
@@ -100,16 +94,10 @@ These are pure functions with no external dependencies — ideal for unit testin
 ## Running Unit Tests
 
 ```bash
-# Run all unit tests
 pnpm test
-
-# Run auth package tests only
-pnpm --filter @repo/auth test
-
-# Run in watch mode
+pnpm test:cli
+pnpm --filter app test
+pnpm --filter @repo/database test
 pnpm --filter @repo/auth test -- --watch
-
-# Run a specific test by name (Vitest: --testNamePattern / -t, not --grep)
 pnpm --filter @repo/auth test -- --testNamePattern "canOrg"
-# equivalent: pnpm --filter @repo/auth test -- -t "canOrg"
 ```

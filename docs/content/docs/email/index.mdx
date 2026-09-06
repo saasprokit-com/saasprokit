@@ -1,71 +1,42 @@
 ---
 title: Email Overview
-description: Transactional email system with dual provider support
+description: Transactional email — send from @repo/email, preview in apps/email
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-The `@repo/email` package provides a complete transactional email system with React Email templates and support for multiple email providers.
+Two packages:
 
-## Features
+| Package | Role | How to run |
+|---------|------|------------|
+| `@repo/email` (`packages/email`) | Templates + send via Resend or Nodemailer | imported by `@repo/auth` |
+| `apps/email` | React Email preview of `packages/email/templates/` | `pnpm --filter email dev` → http://localhost:3003 |
 
-- **Dual Provider Support**: Switch between Resend (production) and Nodemailer (local development)
-- **React Email Templates**: 21 pre-built templates for common use cases
-- **i18n Support**: Message catalogs for English and Spanish (the `Locale` type declares more locales for future use, but only `en`/`es` have translated content)
-- **Type-Safe**: Full TypeScript support with validated configurations
-- **Auto-Detection**: Automatically selects the appropriate provider based on environment
+Caught SMTP in local dev is MailDev (http://localhost:1080), not the preview app. Preview never sends.
 
-## Architecture
+## What actually sends
 
-```
-packages/email/
-├── providers/           # Email provider implementations
-│   ├── types.ts         # Interface definitions
-│   ├── resend.ts        # Resend provider
-│   ├── nodemailer.ts    # Nodemailer provider
-│   └── index.ts         # Provider factory
-├── templates/           # React Email templates
-├── components/          # Shared UI components
-├── i18n/                # Translation messages
-├── keys.ts              # Environment configuration
-└── index.ts             # Public API
+Better Auth hooks in `packages/auth/server.ts` call the wired senders (password reset, verification, magic link, OTPs, org invitation). Stripe lifecycle mail is `packages/auth/stripe-hooks.ts`.
+
+```ts
+// packages/auth/server.ts — a live send
+sendResetPassword: async ({ user, url }) => {
+  await sendPasswordResetEmail({
+    email: user.email,
+    resetUrl: url,
+  });
+},
 ```
 
-## Quick Start
+`sendWelcomeEmail` exists on `@repo/email` and is **not called** from the app. i18n catalogs under `packages/email/i18n/` are unused — template copy is hardcoded English.
 
-### Installation
+## Providers
 
-The package is already included in the monorepo. Import it in your app:
-
-```typescript
-import { sendWelcomeEmail, sendPasswordResetEmail } from '@repo/email';
-```
-
-### Send an Email
-
-```typescript
-await sendWelcomeEmail({
-  email: 'user@example.com',
-  name: 'John Doe',
-});
-```
-
-## Template Categories
-
-| Category | Templates |
-|----------|-----------|
-| **Auth & Security** | Password Reset, Email Verification, Magic Link, Sign-In OTP, Verification OTP, 2FA OTP, Account Locked, Password Changed, Login from New Device |
-| **Organization** | Invitation, Invitation Accepted, Role Changed, Removed from Org |
-| **Billing** | Subscription Started, Upgraded, Downgraded, Cancelled, Payment Receipt |
-| **Content** | Article Published, Welcome, Account Deleted |
-
-<Callout type="info">
-Not every template is currently wired up to a real code path — see [Templates](/docs/email/templates) for which ones the app actually triggers today versus which exist but aren't called from anywhere yet.
-</Callout>
+Only `resend` and `nodemailer`. Unset `EMAIL_PROVIDER` auto-detects: production + `RESEND_API_KEY` → Resend, otherwise Nodemailer (`localhost:1025`). See [Setup](/docs/email/setup) and [Providers](/docs/email/providers).
 
 ## Next Steps
 
-- [Setup Guide](/docs/email/setup) - Configure email for your environment
-- [Providers](/docs/email/providers) - Learn about Resend and Nodemailer
-- [Templates](/docs/email/templates) - Explore available email templates
-- [Local Development](/docs/email/local-development) - Set up Maildev for testing
+- [Setup Guide](/docs/email/setup) — env vars in `apps/web/.env.local`
+- [Providers](/docs/email/providers) — Resend vs Nodemailer
+- [Templates](/docs/email/templates) — wired vs preview-only
+- [Local Development](/docs/email/local-development) — MailDev

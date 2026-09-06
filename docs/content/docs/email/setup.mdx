@@ -6,136 +6,68 @@ description: Configure email providers for your environment
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
-## Environment Variables
+Put these in **`apps/web/.env.local`** (copied from `apps/web/.env.example` by `pnpm run setup`). `packages/email/.env.example` is reference only.
 
-Configure your email provider using environment variables in your `.env` file.
+Schema lives in `packages/email/keys.ts`. Booleans (`SMTP_SECURE`, `SMTP_POOL`) use a `stringBool` transform — `z.coerce.boolean()` would treat `"false"` as `true`.
 
-### Common Variables
+## Common variables
 
 ```bash
-# Sender address for all outgoing emails
-EMAIL_FROM="App Name <noreply@yourdomain.com>"
+# Shipped value in apps/web/.env.example
+EMAIL_FROM="noreply@yourdomain.com"
 
-# Provider selection (optional - auto-detected if not set)
-EMAIL_PROVIDER=resend|nodemailer
+# Optional. Unset = auto-detect (see below).
+# EMAIL_PROVIDER="resend"
+# EMAIL_PROVIDER="nodemailer"
 ```
 
-### Provider-Specific Variables
+Never set `EMAIL_PROVIDER=resend|nodemailer` — that is not a valid enum value.
 
-<Tabs items={['Resend (Production)', 'Nodemailer (Local/SMTP)']}>
-  <Tab value="Resend (Production)">
+<Tabs items={['Resend (production)', 'Nodemailer (local SMTP)']}>
+  <Tab value="Resend (production)">
     ```bash
-    # Required for Resend
     RESEND_API_KEY=re_xxxxxxxxxxxxx
+    EMAIL_FROM="noreply@yourdomain.com"
     ```
 
-    Get your API key from the [Resend Dashboard](https://resend.com/api-keys).
+    Production `EMAIL_FROM` must be a domain you verified in [Resend](https://resend.com/domains). An unverified from-address fails the send; Resend does not rewrite it to `onboarding@resend.dev`.
   </Tab>
-  <Tab value="Nodemailer (Local/SMTP)">
+  <Tab value="Nodemailer (local SMTP)">
     ```bash
-    # SMTP Configuration
-    SMTP_HOST=localhost        # Default: localhost
-    SMTP_PORT=1025             # Default: 1025 (Maildev)
-    SMTP_SECURE=false          # Default: false
-    SMTP_USER=                 # Optional - for authenticated SMTP
-    SMTP_PASS=                 # Optional - for authenticated SMTP
-    SMTP_POOL=false            # Default: false - enable connection pooling
+    SMTP_HOST=localhost
+    SMTP_PORT=1025
+    SMTP_SECURE=false
+    SMTP_USER=
+    SMTP_PASS=
+    SMTP_POOL=false
     ```
+
+    These are the defaults when `EMAIL_PROVIDER` is unset. Start MailDev: `docker compose up -d maildev`, then open http://localhost:1080.
   </Tab>
 </Tabs>
 
-## Provider Auto-Detection
+## Auto-detect
 
-The email package automatically selects the appropriate provider based on your environment:
+When `EMAIL_PROVIDER` is **unset**:
 
-| Condition | Selected Provider |
-|-----------|-------------------|
-| `EMAIL_PROVIDER` is set | Uses specified provider |
-| `NODE_ENV=production` + `RESEND_API_KEY` present | Resend |
-| `NODE_ENV=development` | Nodemailer |
-| No configuration | Nodemailer (localhost:1025) |
+| Condition | Provider |
+|-----------|----------|
+| `NODE_ENV=production` **and** `RESEND_API_KEY` is set | Resend |
+| Anything else | Nodemailer |
 
-<Callout type="info">
-  Auto-detection means you can run locally without any configuration - emails will be sent to localhost:1025 where Maildev can catch them.
-</Callout>
+A `RESEND_API_KEY` in `pnpm dev` does **not** select Resend. `NODE_ENV=development` is not its own branch.
 
-## Configuration Schema
+Factory: `packages/email/providers/index.ts` (`getProviderName()`, `getEmailProvider()`).
 
-The configuration is validated using Zod via `@t3-oss/env-nextjs`. Here's the real schema:
+## What the app actually calls
 
-```typescript
-// packages/email/keys.ts
-import { createEnv } from '@t3-oss/env-nextjs';
-import { z } from 'zod';
-
-export const keys = () =>
-  createEnv({
-    server: {
-      EMAIL_PROVIDER: z.enum(['resend', 'nodemailer']).optional(),
-      EMAIL_FROM: z.string().default('App <noreply@localhost>'),
-
-      // Resend
-      RESEND_API_KEY: z.string().optional(),
-
-      // SMTP/Nodemailer
-      SMTP_HOST: z.string().default('localhost'),
-      SMTP_PORT: z.coerce.number().default(1025),
-      SMTP_SECURE: z.coerce.boolean().default(false), // custom string->bool transform, not z.coerce.boolean() directly (see source)
-      SMTP_USER: z.string().optional(),
-      SMTP_PASS: z.string().optional(),
-      SMTP_POOL: z.coerce.boolean().default(false),
-    },
-    runtimeEnv: {
-      EMAIL_PROVIDER: process.env.EMAIL_PROVIDER,
-      EMAIL_FROM: process.env.EMAIL_FROM,
-      RESEND_API_KEY: process.env.RESEND_API_KEY,
-      SMTP_HOST: process.env.SMTP_HOST,
-      SMTP_PORT: process.env.SMTP_PORT,
-      SMTP_SECURE: process.env.SMTP_SECURE,
-      SMTP_USER: process.env.SMTP_USER,
-      SMTP_PASS: process.env.SMTP_PASS,
-      SMTP_POOL: process.env.SMTP_POOL,
-    },
-  });
-```
-
-## Usage in Applications
-
-<Callout type="info">
-In `apps/web`, the auth-related templates (password reset, email verification, magic link, OTPs, org invitations) are **not** called directly from app routes or server actions — they're triggered by Better Auth plugin hooks in `packages/auth/server.ts` (e.g. `emailAndPassword.sendResetPassword`), and the subscription templates by `packages/auth/stripe-hooks.ts`. See [Configuration](/docs/authentication/configuration) for those hooks. Several other templates (welcome, account-deleted, role-changed, and others — see [Templates](/docs/email/templates)) are fully built but not currently called from anywhere; the example below shows the pattern for wiring one up yourself.
-</Callout>
-
-### Calling a send function directly
-
-```typescript
-'use server';
-
-import { sendWelcomeEmail } from '@repo/email';
-
-export async function onUserCreated(email: string, name: string) {
-  await sendWelcomeEmail({ email, name });
-}
-```
-
-## Verifying Setup
-
-Check if your email configuration is working:
-
-```typescript
-import { getEmailProvider } from '@repo/email/providers';
-
-const provider = getEmailProvider();
-```
-
-`getEmailProvider()` reads `keys()` and returns the cached singleton. It does not log which provider is selected.
+Auth mail is triggered from Better Auth hooks in `packages/auth/server.ts`, not from app routes. Subscription mail is `packages/auth/stripe-hooks.ts`. See [Templates](/docs/email/templates) for wired vs preview-only.
 
 ## Troubleshooting
 
-### Common Issues
-
-| Issue | Solution |
-|-------|----------|
-| "RESEND_API_KEY required" | Set the `RESEND_API_KEY` environment variable or switch to nodemailer |
-| Connection refused on port 1025 | Start Maildev: `docker compose up maildev` |
-| Emails not appearing | Check Maildev UI at http://localhost:1080 |
-| Invalid sender address | Verify domain in Resend dashboard for production |
+| Issue | Fix |
+|-------|-----|
+| `RESEND_API_KEY required` | Set `RESEND_API_KEY`, or leave `EMAIL_PROVIDER` unset locally |
+| Connection refused on port 1025 | `docker compose up -d maildev` |
+| Emails not appearing | http://localhost:1080 |
+| Invalid sender | Verify the domain in Resend; set `EMAIL_FROM` to that domain |
