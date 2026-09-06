@@ -87,14 +87,24 @@ describe("createInviteLinkAction", () => {
     );
 
     const call = mocks.recordAudit.mock.calls[0][0];
-    expect(call).toMatchObject({
+    const generatedToken = mocks.inviteLinkCreate.mock.calls[0][0].data.token;
+
+    expect(Object.keys(call.changes).sort()).toEqual([
+      "expiresAt",
+      "maxUses",
+      "role",
+    ]);
+    expect(call).toEqual({
       action: ORG_AUDIT_ACTIONS.INVITE_LINK_CREATE,
       actorId: "user_actor",
-      changes: { maxUses: 5, role: "member" },
+      changes: {
+        expiresAt: expect.any(String),
+        maxUses: 5,
+        role: "member",
+      },
       organizationId: "org_1",
     });
-    expect(typeof call.changes.expiresAt).toBe("string");
-    expect(JSON.stringify(call.changes)).not.toContain("token");
+    expect(JSON.stringify(call.changes)).not.toContain(generatedToken);
   });
 });
 
