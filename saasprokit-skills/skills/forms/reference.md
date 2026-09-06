@@ -18,8 +18,9 @@ decision tree live in `SKILL.md`; nothing here repeats them.
 Schemas and actions are colocated with the feature (`schemas.ts`, `actions.ts`,
 `queries.ts`, `components/` per route — including auth routes; there is no
 design-system auth layer). One schema validates on the client via `zodResolver` **and**
-on the server via `safeParse` — defense in depth from one definition. The only
-non-server-action transport is `fetch()` → Route Handler for file uploads.
+on the server via `safeParse` — defense in depth from one definition.
+Every mutation, file uploads included, is a server action; there is no `fetch()`
+transport in the app.
 
 ## Why the design is what it is
 
