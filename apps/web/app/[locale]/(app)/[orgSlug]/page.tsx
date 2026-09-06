@@ -7,19 +7,44 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/design-system/components/ui/card";
+import { Skeleton } from "@repo/design-system/components/ui/skeleton";
 import { formatDate } from "@repo/design-system/lib/date";
+import { Suspense } from "react";
+import { CountBarChart } from "@/components/count-bar-chart";
+import { DashboardRangeTabs } from "@/components/dashboard-range-tabs";
 import { getActiveOrganization } from "@/lib/organization/queries";
-import { getOrgDashboardData } from "./queries";
+import { dashboardSearchParamsCache } from "@/lib/parsers";
+import { TeamGrowthChart } from "./components/team-growth-chart";
+import {
+  getOrgActivity,
+  getOrgDashboardData,
+  getOrgMemberGrowth,
+} from "./queries";
 
 interface OrgDashboardPageProps {
   params: Promise<{ orgSlug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export default async function OrgDashboardPage({
   params,
+  searchParams,
 }: OrgDashboardPageProps) {
-  const { orgSlug } = await params;
+  const [{ orgSlug }, resolvedSearchParams] = await Promise.all([
+    params,
+    searchParams,
+  ]);
+  const { range } = dashboardSearchParamsCache.parse(resolvedSearchParams);
   const orgContext = await getActiveOrganization(orgSlug);
+
+  const growthPromise = getOrgMemberGrowth({
+    organizationId: orgContext.organizationId,
+    range,
+  });
+  const activityPromise = getOrgActivity({
+    organizationId: orgContext.organizationId,
+    range,
+  });
 
   const { memberCount, organization } = await getOrgDashboardData(
     orgContext.organizationId
@@ -29,6 +54,7 @@ export default async function OrgDashboardPage({
     <>
       <SetBreadcrumbs items={[{ label: organization?.name ?? "Dashboard" }]} />
       <ContentSection
+        action={<DashboardRangeTabs />}
         description="Organization Dashboard"
         title={organization?.name ?? "Dashboard"}
       >
@@ -87,28 +113,29 @@ export default async function OrgDashboardPage({
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Manage your organization</CardDescription>
+              <CardTitle>Team growth</CardTitle>
+              <CardDescription>
+                Total members over the selected range
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <p className="text-muted-foreground text-sm">
-                Use the sidebar to navigate to different sections of your
-                organization.
-              </p>
+            <CardContent>
+              <Suspense fallback={<Skeleton className="h-55 w-full" />}>
+                <TeamGrowthChart dataPromise={growthPromise} />
+              </Suspense>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
+              <CardTitle>Team activity</CardTitle>
               <CardDescription>
-                Latest updates in your organization
+                Account events from people on your team
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground text-sm">
-                No recent activity to display.
-              </p>
+              <Suspense fallback={<Skeleton className="h-55 w-full" />}>
+                <CountBarChart dataPromise={activityPromise} label="Events" />
+              </Suspense>
             </CardContent>
           </Card>
         </div>
