@@ -5,12 +5,14 @@ import { isAlreadyCancelingError } from "@repo/auth/helpers";
 import { comparePlans } from "@repo/auth/plans";
 import { auth } from "@repo/auth/server";
 import { createRequestLogger } from "@repo/logger/server";
+import { ORG_AUDIT_ACTIONS } from "@repo/utils/audit";
 import {
   BILLING_INTERVALS,
   PLAN_NAMES,
   type PlanName,
 } from "@repo/utils/payment";
 import { headers } from "next/headers";
+import { recordAudit } from "@/lib/audit/record";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import {
   type ActionResult,
@@ -119,6 +121,18 @@ export async function changePlanAction(
         referenceId: validated.organizationId,
         scheduleAtPeriodEnd: true,
       },
+    });
+
+    await recordAudit({
+      action: ORG_AUDIT_ACTIONS.PLAN_CHANGE,
+      actorId: session.user.id,
+      changes: {
+        billingInterval: validated.billingInterval,
+        from: currentPlan,
+        scheduledAtPeriodEnd: true,
+        to: validated.targetPlan,
+      },
+      organizationId: validated.organizationId,
     });
 
     userLogger.info(
