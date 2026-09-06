@@ -15,7 +15,7 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 | OAuth (Google, GitHub) | Implemented | Third-party sign-in via Better Auth plugins |
 | Magic Links | Implemented | Passwordless email link authentication (10-min expiry) |
 | Email OTP | Implemented | One-time password via email (5-min expiry) |
-| Two-Factor Authentication (2FA) | Implemented | TOTP-based with backup codes (6 digits, 5-min expiry) |
+| Two-Factor Authentication (2FA) | Implemented | TOTP + backup codes at password sign-in. Magic link, email OTP, and OAuth skip 2FA |
 | Account Linking | Implemented | Link multiple social providers (Google, GitHub) to one account |
 | Multi-Session Support | Implemented | Concurrent sessions with device tracking |
 | Session Management | Implemented | Secure cookie-based sessions with IP/UA tracking (7-day expiry) |
@@ -25,8 +25,8 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Sign-Up | Implemented | User registration with email verification enforced |
-| Password Reset | Implemented | Forgot password flow with email verification |
-| Profile Management | Implemented | Update name, avatar at `/account/profile` |
+| Password Reset | Implemented | Reset-token email, not the verification flow |
+| Profile Management | Implemented | Update name at `/account/profile` (no avatar uploader) |
 | Security Settings | Implemented | View active sessions, enable/disable 2FA at `/account/security` |
 | Account Deletion | Implemented | Delete account with confirmation at `/account/danger` |
 | Email Change | Planned | Not yet implemented |
@@ -42,6 +42,18 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 | Verify Email | `/auth/verify-email` | Email verification flow |
 | Two-Factor | `/auth/2fa` | 2FA challenge screen |
 
+## Platform Admin
+
+Staff surface at `/admin`, gated on platform `User.role` (not org `Member.role`). Dual RBAC: see [Authentication](/docs/authentication).
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| User list and detail | Implemented | `/admin/users`, `/admin/users/[userId]` |
+| Organization list and detail | Implemented | `/admin/organizations`, `/admin/organizations/[orgId]` |
+| Impersonation | Implemented | Staff can impersonate a non-admin user |
+| Ban / unban | Implemented | Staff can ban a user |
+| Audit log | Implemented | Writes `admin.user.*` actions only (set role, ban, impersonate, …) |
+
 ## Multi-Organization Support
 
 | Feature | Status | Notes |
@@ -50,9 +62,9 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 | Organization Creation | Implemented | Create new orgs at `/account/new-org` |
 | Auto Personal Workspace | Planned | `createDefaultWorkspace()` helper exists but is not called anywhere — not wired to sign-up |
 | Organization Settings | Implemented | Configure name, logo, slug at `/[orgSlug]/settings` |
-| Organization Switcher | Implemented | Quick switching between orgs at `/org` |
+| Organization Switcher | Implemented | Sidebar dropdown. `/org` is a post-login redirect hop, not a switcher UI |
 | Default Organization | Implemented | Set and remember preferred org |
-| Member Management | Implemented | Add, remove, suspend members at `/[orgSlug]/members` |
+| Member Management | Implemented | Invite, remove, and transfer ownership at `/[orgSlug]/members` |
 | Role-Based Access Control | Implemented | Owner, Admin, Member org roles |
 | Member Suspension | Planned | No `suspendedAt` (or similar) on `Member` — membership is role + org only |
 | Member Invitations | Implemented | Email-based invitations with 7-day expiry |
@@ -79,7 +91,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Subscription Plans | Implemented | Free, Pro ($19/mo), Enterprise ($49/mo) |
-| Plan Upgrade/Downgrade | Implemented | Upgrade/downgrade via Stripe Checkout |
+| Plan Upgrade/Downgrade | Implemented | First paid sub via Checkout. Existing upgrades use the portal. Paid downgrades use `changePlanAction` + a period-end schedule |
 | Monthly & Annual Billing | Implemented | Annual discount (~17% savings) |
 | Cancellation | Implemented | Cancel at period end and reactivate; `paused` is a Stripe status with no app UI |
 | Stripe Integration | Implemented | Checkout, webhooks, customer portal |
@@ -100,7 +112,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 |---------|--------|-------|
 | Multiple Languages | Implemented | English, Spanish, French, German, Portuguese, Chinese |
 | Locale-Based Routing | Implemented | `/[locale]/...` URL structure |
-| Language Switching | Implemented | Language selector in UI |
+| Language Switching | Partial | Locale in the URL (`/[locale]/…`). No language selector in the UI |
 | SEO-Friendly URLs | Implemented | Locale in URL path |
 | Dictionary-Based Translations | Implemented | Type-safe dictionary access with English fallback |
 | Translation Workflow | Implemented | Locale JSON translated by hand or with AI coding agents |
@@ -110,7 +122,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| File Upload | Implemented | Upload API at `/api/upload` with MIME validation |
+| File Upload | Implemented | `uploadOrganizationLogoAction` server action — MIME/size validation, org permission, per-plan quota |
 | Local Storage | Implemented | Local filesystem storage provider |
 | S3 Storage | Implemented | AWS S3 provider with configurable credentials |
 | Per-Plan Storage Quotas | Implemented | 100 MB / 5 GB / 50 GB per plan |
@@ -125,20 +137,16 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Email Preview | Implemented | Preview templates in email app (port 3003) |
-| Email Templating | Implemented | 21 React Email templates with components |
+| Email Templating | Implemented | React Email templates in `packages/email/` — wired subset vs preview-only; see [Templates](/docs/email/templates) |
 | Resend Integration | Implemented | Primary email provider via Resend API |
 | Nodemailer (SMTP) | Implemented | Fallback SMTP provider |
 | Pluggable Providers | Implemented | Swap between Resend and Nodemailer |
 
-### Email Templates (21 total)
+### Email Templates
 
-| Category | Templates |
-|----------|-----------|
-| Auth | Email verification, password reset, magic link, sign-in OTP, verification OTP, 2FA OTP, password changed, account locked, new device login |
-| Organization | Invitation, invitation accepted, role changed, member removed |
-| Billing | Subscription started, upgraded, downgraded, cancelled, payment receipt |
-| Account | Welcome, account deleted |
-| Content | Article published |
+Wired today (Better Auth hooks + Stripe hooks): email verification, password reset, magic link, sign-in OTP, verification OTP, 2FA OTP, org invitation, subscription started / upgraded / downgraded / cancelled.
+
+The rest of `packages/email/templates/` exist for preview only — they are not sent. See [Templates](/docs/email/templates).
 
 ## Security
 
@@ -153,7 +161,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 | Webhook Signature Verification | Implemented | Stripe webhook signature validation |
 | Idempotent Webhook Processing | Implemented | WebhookEvent deduplication model |
 | SQL Injection Prevention | Implemented | All queries via Prisma ORM (parameterized); one static `$queryRaw` health check with no user input |
-| Audit Logging | Implemented | AuditLog model for user actions with IP tracking |
+| Audit Logging | Implemented | `AuditLog` writes from platform-admin mutations (`admin.user.*`) only |
 | Edge Route Protection | Implemented | `middleware.ts` — optimistic cookie-presence gate; real auth checks happen server-side |
 | Rate Limiting | Implemented | Per-route limits (sign-in, sign-up, password reset, 2FA) via Better Auth, backed by a database-stored `RateLimit` model |
 
@@ -162,7 +170,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Structured Logging | Implemented | Pino logger (separate server + client exports) |
-| Audit Logging | Implemented | AuditLog model for user actions (password, 2FA, sessions) |
+| Audit Logging | Implemented | Same `AuditLog` table — admin mutations, not password / 2FA / sessions |
 | Health Check | Implemented | `/api/health` endpoint with database + auth validation |
 | User Activity Tracking | Implemented | `/api/user/activity` endpoint |
 | Error Boundaries | Implemented | React error boundary components |
@@ -184,7 +192,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 |---------|--------|-------|
 | UI Components | Implemented | 50+ shadcn/ui components (Radix-based) |
 | Landing Page Blocks | Implemented | 12 blocks: hero, pricing, testimonials, FAQ, CTA banner, features grid, feature showcase, code preview, tech stack, deps table, social proof bar, stats section (footer is `components/molecules/footer/`) |
-| Dark Mode | Implemented | Theme provider with dark mode toggle |
+| Dark Mode | Partial | `ThemeProvider` follows the system preference. No in-app toggle |
 | Responsive Design | Implemented | Mobile-first responsive layouts |
 | Direct Imports | Partial | Convention is no barrel imports. Remaining package entry: `packages/design-system/index.tsx` (`@repo/auth` also has a `main` of `./index.ts` — prefer `@repo/auth/server` etc.) |
 
@@ -216,7 +224,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Monorepo Setup | Implemented | pnpm workspaces with Turborepo |
-| Database Migrations | Implemented | Prisma migrate and db push |
+| Database Migrations | Implemented | `pnpm migrate` = format + generate + **db push**. Not `prisma migrate dev` |
 | Database Seeding | Implemented | Comprehensive seed script |
 | CI/CD | Implemented | GitHub Actions workflows |
 | Docker Support | Partial | Dockerfiles exist for `web` and `docs`; `email`, `storybook`, `studio` do not have one |
@@ -227,7 +235,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 |---------|----------|
 | `@repo/auth` | Authentication, dual RBAC (admin + org), permissions, 2FA, magic links, email OTP, Stripe billing, subscriptions, plan management, checkout |
 | `@repo/database` | Prisma schema, client, types, migrations |
-| `@repo/email` | 21 React Email templates with Resend + Nodemailer |
+| `@repo/email` | React Email templates with Resend + Nodemailer |
 | `@repo/design-system` | 50+ shadcn/ui components, 12 landing page blocks, dark mode |
 | `@repo/storage` | File uploads with local + S3 providers, quota management |
 | `@repo/seo` | Site metadata, Organization + WebSite JSON-LD schemas |
@@ -239,7 +247,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 
 | App | Port | Features |
 |-----|------|----------|
-| `web` | 3000 | Authentication, billing, org management, account settings, file uploads |
+| `web` | 3000 | Authentication, billing, org management, account settings, file uploads, platform `/admin` |
 | `docs` | 3004 | Customer's product documentation (empty Fumadocs starter) |
 | `email` | 3003 | Email template preview (React Email) |
 | `storybook` | 6006 | Component showcase and design system |

@@ -48,7 +48,7 @@ export async function getOrgStorageUsage(
   });
 
   const bytes = result._sum.size || 0;
-  return Math.round(bytes / BYTES_PER_MB);
+  return bytes / BYTES_PER_MB;
 }
 
 export async function getOrgUsageStats(organizationId: string) {

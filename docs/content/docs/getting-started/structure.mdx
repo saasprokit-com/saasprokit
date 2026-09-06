@@ -22,7 +22,7 @@ saasprokit/
 │   │   │   ├── api/               # API routes
 │   │   │   └── layout.tsx         # Root layout
 │   │   ├── components/            # Shared app components
-│   │   ├── lib/                   # Utilities and helpers
+│   │   ├── lib/                   # Server data-access layer (auth, org, billing, files, admin)
 │   │   ├── public/                # Static assets
 │   │   ├── middleware.ts          # Edge middleware (cookie-presence route gate)
 │   │   └── package.json
@@ -160,8 +160,8 @@ A few notes beyond what the tree above already shows:
 
 ```
 /[locale]/(frontier)/
-├── page.tsx           # Home/landing page (Hero, Features, Pricing blocks)
-└── components/        # Home-page section blocks
+├── page.tsx           # Home/landing page (Hero, Features, Pricing from `@repo/design-system/components/blocks/*`)
+└── components/        # Header user-menu only
 ```
 
 > There is no separate `/pricing` route — pricing is a block on the home page.
@@ -191,7 +191,6 @@ Each route is a Server-Component `page.tsx` plus a `components/` folder of `"use
 /api/
 ├── auth/[...all]/    # Better Auth handler (incl. Stripe webhooks via @better-auth/stripe)
 ├── health/           # Health check (database + auth)
-├── upload/           # File uploads
 └── user/activity/    # User activity tracking
 ```
 
