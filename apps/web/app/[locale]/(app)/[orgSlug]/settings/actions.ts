@@ -47,12 +47,11 @@ export async function removeOrganizationLogoAction(
       attachableId: validated.organizationId,
       deletedAt: null,
     };
-    const replaced = await database.file.findMany({
-      where: attached,
-      select: { storagePath: true, bucket: true },
-    });
-
-    const [, organization] = await database.$transaction([
+    const [replaced, , organization] = await database.$transaction([
+      database.file.findMany({
+        where: attached,
+        select: { storagePath: true, bucket: true },
+      }),
       database.file.updateMany({
         where: attached,
         data: { deletedAt: new Date() },

@@ -75,6 +75,7 @@ vi.mock("@/lib/infrastructure/revalidation", () => ({
 }));
 
 import { ORG_AUDIT_ACTIONS } from "@repo/utils/audit";
+import { MAX_FILE_SIZE } from "@repo/utils/storage";
 import { ORG_PAGES } from "@/lib/routes";
 import {
   deleteOrganizationAction,
@@ -202,7 +203,7 @@ describe("deleteOrganizationAction", () => {
 
 describe("removeOrganizationLogoAction", () => {
   it("takes the slug from the transaction result instead of a pre-read", async () => {
-    mocks.transaction.mockResolvedValue([{ count: 1 }, { slug: "acme" }]);
+    mocks.transaction.mockResolvedValue([[], { count: 1 }, { slug: "acme" }]);
 
     const result = await removeOrganizationLogoAction({
       organizationId: "org_1",
@@ -220,10 +221,29 @@ describe("removeOrganizationLogoAction", () => {
     expect(result).toEqual({ success: true });
   });
 
+  it("reads the rows to delete inside the same transaction that retires them", async () => {
+    mocks.transaction.mockResolvedValue([[], { count: 1 }, { slug: "acme" }]);
+
+    await removeOrganizationLogoAction({ organizationId: "org_1" });
+
+    expect(mocks.transaction.mock.calls[0][0]).toHaveLength(3);
+    expect(mocks.fileFindMany).toHaveBeenCalledWith({
+      where: {
+        attachableType: "Organization",
+        attachableId: "org_1",
+        deletedAt: null,
+      },
+      select: { storagePath: true, bucket: true },
+    });
+  });
+
   it("deletes the replaced logo objects only after the transaction commits", async () => {
     const replaced = [{ bucket: null, storagePath: "logos/old.png" }];
-    mocks.fileFindMany.mockResolvedValue(replaced);
-    mocks.transaction.mockResolvedValue([{ count: 1 }, { slug: "acme" }]);
+    mocks.transaction.mockResolvedValue([
+      replaced,
+      { count: 1 },
+      { slug: "acme" },
+    ]);
 
     await removeOrganizationLogoAction({ organizationId: "org_1" });
 
@@ -235,9 +255,6 @@ describe("removeOrganizationLogoAction", () => {
   });
 
   it("skips object deletion when the transaction throws", async () => {
-    mocks.fileFindMany.mockResolvedValue([
-      { bucket: null, storagePath: "logos/old.png" },
-    ]);
     mocks.transaction.mockRejectedValue(new Error("db down"));
 
     await removeOrganizationLogoAction({ organizationId: "org_1" });
@@ -283,6 +300,46 @@ describe("uploadOrganizationLogoAction", () => {
     );
     expect(result).toMatchObject({ success: false });
     expect(mocks.hasOrgPermission).not.toHaveBeenCalled();
+  });
+
+  it("rejects a disallowed image type before any permission check", async () => {
+    const svg = new File(["<svg />"], "logo.svg", { type: "image/svg+xml" });
+
+    const result = await uploadOrganizationLogoAction(formDataWith(svg));
+
+    expect(mocks.toActionError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        issues: expect.arrayContaining([
+          expect.objectContaining({ path: ["type"] }),
+        ]),
+      }),
+      { fallback: "uploadLogo", logger: expect.anything() }
+    );
+    expect(result).toMatchObject({ success: false });
+    expect(mocks.hasOrgPermission).not.toHaveBeenCalled();
+    expect(mocks.storeOrganizationLogo).not.toHaveBeenCalled();
+  });
+
+  it("rejects a file over the size cap before any permission check", async () => {
+    const tooBig = new File(
+      [new Uint8Array(MAX_FILE_SIZE + 1)],
+      "logo.png",
+      { type: "image/png" }
+    );
+
+    const result = await uploadOrganizationLogoAction(formDataWith(tooBig));
+
+    expect(mocks.toActionError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        issues: expect.arrayContaining([
+          expect.objectContaining({ path: ["size"] }),
+        ]),
+      }),
+      { fallback: "uploadLogo", logger: expect.anything() }
+    );
+    expect(result).toMatchObject({ success: false });
+    expect(mocks.hasOrgPermission).not.toHaveBeenCalled();
+    expect(mocks.storeOrganizationLogo).not.toHaveBeenCalled();
   });
 
   it("refuses members without organization:update", async () => {
