@@ -37,7 +37,7 @@ Runtime env: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `BETTER_AU
 
 The app reads client IPs from `cf-connecting-ip`, then `x-real-ip`, then `x-forwarded-for`. Put a reverse proxy in front; without one, rate limiting collapses every visitor into one bucket.
 
-Then follow the [shared post-deploy configuration](/docs/deployment#shared-post-deploy-configuration) and the [verification checklist](/docs/deployment#verification-checklist). Do **not** run the dev seed against production.
+Then follow the [shared post-deploy configuration](/deployment#shared-post-deploy-configuration) and the [verification checklist](/deployment#verification-checklist). Do **not** run the dev seed against production.
 
 ## Customer docs (optional)
 

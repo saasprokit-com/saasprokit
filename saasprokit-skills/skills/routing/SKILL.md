@@ -37,7 +37,7 @@ default-deny.
 
 **API** (`app/api/`, all bypass the middleware matcher): `auth/[...all]` (Better
 Auth handler, incl. the Stripe webhook via `@better-auth/stripe`), `health`,
-`upload`, `user/activity`.
+`user/activity`.
 
 ## Edge middleware — `apps/web/middleware.ts`
 

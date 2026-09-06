@@ -1,16 +1,18 @@
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import Image from "next/image";
+import { DEMO_URL, DOCS_PATH, SITE_URL } from "@/lib/site";
 
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
       title: (
         <>
+          {/* next/image does not apply the basePath to src. */}
           <Image
             alt=""
             height={24}
             priority
-            src="/icon.svg"
+            src={`${DOCS_PATH}/icon.svg`}
             unoptimized
             width={24}
           />
@@ -18,6 +20,9 @@ export function baseOptions(): BaseLayoutProps {
         </>
       ),
     },
-    links: [{ text: "Docs", url: "/docs" }],
+    links: [
+      { text: "Live demo", url: DEMO_URL, external: true },
+      { text: "saasprokit.com", url: SITE_URL, external: true },
+    ],
   };
 }

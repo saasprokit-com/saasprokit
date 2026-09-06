@@ -57,7 +57,7 @@ Which URL comes back depends on the org's subscription state:
 
 ## Server configuration: the Stripe plugin
 
-The `@better-auth/stripe` plugin is wired up in `packages/auth/server.ts` (full config in [Payment Overview](/docs/payment)); for checkout specifically, the relevant pieces are `subscription.plans` and `subscription.authorizeReference`:
+The `@better-auth/stripe` plugin is wired up in `packages/auth/server.ts` (full config in [Payment Overview](/payment)); for checkout specifically, the relevant pieces are `subscription.plans` and `subscription.authorizeReference`:
 
 - **Plan catalog** — `buildStripePlans(...)` in `packages/auth/plans.ts` builds the `StripePlan[]` array, attaching `priceId` (monthly) and `annualDiscountPriceId` (annual) to the `pro` and `enterprise` plan configs from the `STRIPE_*_PRICE_ID_*` env vars. The plugin uses `plan` + `annual` from the action to pick the right price.
 - **Authorization** — `upgradeSubscriptionAction` does **not** call `hasOrgPermission`. The plugin's `authorizeReference` delegates to `authorizeBillingAction` in `packages/auth/billing-authorize.ts`. For `upgrade-subscription` this calls `canManageBilling(userId, referenceId)`, allowing only org `owner`/`admin` members (filtered by `userId` + `organizationId` + role). This server-side check is the real security boundary — the page-level `OrgPermissionGate` is only UX.

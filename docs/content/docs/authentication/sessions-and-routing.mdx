@@ -89,7 +89,7 @@ export const getServerSession = cache(async () =>
 
 - **`getServerSession()`** — wrapped in `React.cache`, so the layout, the page, and any helper share a **single** auth round-trip per request.
 - **`requireAuth(returnTo?)`** — returns the session or `redirect`s to `/auth/sign-in?callbackUrl=…` (the `returnTo` argument is the value that gets URL-encoded into that param). Use it in protected pages/layouts.
-- **`hasOrgPermission(orgId, permissions)`** — calls `auth.api.hasPermission(...)`, which resolves the caller's session from the request headers via the org plugin's session middleware; returns a `boolean` (`result?.success ?? false`), true when the caller holds the requested capability. The org-scoped authorization primitive, backed by the roles in `packages/auth/permissions.ts`.
+- **`hasOrgPermission(orgId, permissions)`** — calls `auth.api.hasPermission(...)`, which resolves the caller's session from the request headers via the org plugin's session middleware; returns a `boolean`, true when the caller holds the requested capability. A Better Auth `APIError` (`UNAUTHORIZED` when the caller has no member row in that org) is mapped to `false`; failures that are not `APIError` propagate. The org-scoped authorization primitive, backed by the roles in `packages/auth/permissions.ts`.
 
 The edge middleware is a coarse, cookie-only gate (is there *a* session cookie?); these helpers are the real, **session-verified (cookie-cache eligible)** check — up to 5 minutes stale. A protected page relies on the middleware only for the redirect-if-no-cookie shortcut.
 

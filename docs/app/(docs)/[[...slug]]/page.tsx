@@ -7,10 +7,11 @@ import {
 import { createRelativeLink } from "fumadocs-ui/mdx";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { docsUrl } from "@/lib/site";
 import { getPageImage, source } from "@/lib/source";
 import { getMDXComponents } from "@/mdx-components";
 
-export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
+export default async function Page(props: PageProps<"/[[...slug]]">) {
   const params = await props.params;
   const page = source.getPage(params.slug);
   if (!page) {
@@ -40,7 +41,7 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata(
-  props: PageProps<"/docs/[[...slug]]">
+  props: PageProps<"/[[...slug]]">
 ): Promise<Metadata> {
   const params = await props.params;
   const page = source.getPage(params.slug);
@@ -51,6 +52,9 @@ export async function generateMetadata(
   return {
     title: page.data.title,
     description: page.data.description,
+    // Absolute: resolving page.url against metadataBase yields a trailing
+    // slash on the index, which Next then redirects away from.
+    alternates: { canonical: docsUrl(page.url) },
     openGraph: {
       images: getPageImage(page).url,
     },

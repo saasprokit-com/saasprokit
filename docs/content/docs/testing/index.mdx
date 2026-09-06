@@ -9,8 +9,8 @@ This project uses two levels of testing:
 
 | Type | Tool | Location | Status |
 |------|------|----------|--------|
-| **E2E Tests** | Playwright | `apps/web/e2e/` | See [E2E Tests](/docs/testing/e2e-tests) |
-| **Unit Tests** | Vitest | `@repo/auth`, `apps/web`, `@repo/database` | See [Unit Tests](/docs/testing/unit-tests) |
+| **E2E Tests** | Playwright | `apps/web/e2e/` | See [E2E Tests](/testing/e2e-tests) |
+| **Unit Tests** | Vitest | `@repo/auth`, `apps/web`, `@repo/database` | See [Unit Tests](/testing/unit-tests) |
 | **CLI tests** | Vitest | `scripts/**/*.test.ts` | `pnpm test:cli` (root `vitest.config.mts`) — **not** inside `pnpm test` |
 | **Integration Tests** | — | — | Not started |
 
@@ -20,16 +20,16 @@ This project uses two levels of testing:
 
 ### E2E Coverage by Feature Area
 
-See [E2E Tests](/docs/testing/e2e-tests) for the file-by-file breakdown (`npx playwright test --list` in `apps/web`). Folders: `public/`, `auth/`, `account/`, `admin/`, `dashboard/`, `members/`, `payment/`, plus `setup/`, `fixtures/`, `helpers/`, and opt-in `capture/`.
+See [E2E Tests](/testing/e2e-tests) for the file-by-file breakdown (`npx playwright test --list` in `apps/web`). Folders: `public/`, `auth/`, `account/`, `admin/`, `dashboard/`, `members/`, `payment/`, plus `setup/`, `fixtures/`, `helpers/`, and opt-in `capture/`.
 
 ### Unit Test Coverage
 
-See [Unit Tests](/docs/testing/unit-tests) for the file-by-file list. `@repo/storage` and `@repo/utils` have no test files (and no Vitest config at all).
+See [Unit Tests](/testing/unit-tests) for the file-by-file list. `@repo/storage` and `@repo/utils` have no test files (and no Vitest config at all).
 
 | Package/App | Files |
 |---------|------|
-| `@repo/auth` | see [Unit Tests](/docs/testing/unit-tests) |
-| `apps/web` | see [Unit Tests](/docs/testing/unit-tests) |
+| `@repo/auth` | see [Unit Tests](/testing/unit-tests) |
+| `apps/web` | see [Unit Tests](/testing/unit-tests) |
 | `@repo/database` | `redact.test.ts` |
 | root CLI | `scripts/**/*.test.ts` via `pnpm test:cli` |
 
@@ -79,7 +79,7 @@ pnpm --filter @repo/database test
 
 ### E2E Tests
 
-E2E specs live in domain folders under `apps/web/e2e/`: `account/`, `admin/`, `auth/`, `dashboard/`, `members/`, `payment/`, `public/`, plus `fixtures/`, `helpers/`, and `setup/` for shared test infrastructure (e.g. the Maildev REST helper — see [Local Development](/docs/email/local-development)). See [E2E Tests](/docs/testing/e2e-tests) for the full file list.
+E2E specs live in domain folders under `apps/web/e2e/`: `account/`, `admin/`, `auth/`, `dashboard/`, `members/`, `payment/`, `public/`, plus `fixtures/`, `helpers/`, and `setup/` for shared test infrastructure (e.g. the Maildev REST helper — see [Local Development](/email/local-development)). See [E2E Tests](/testing/e2e-tests) for the full file list.
 
 ### Unit Tests
 
@@ -102,8 +102,8 @@ apps/web/lib/seo-config.test.ts
 packages/database/redact.test.ts
 ```
 
-See [Unit Tests](/docs/testing/unit-tests) for what each file covers.
+See [Unit Tests](/testing/unit-tests) for what each file covers.
 
 ## How E2E is wired
 
-Four Playwright projects in `apps/web/playwright.config.ts` by default — `auth-setup` and `org-setup` run first and gate `authenticated`, while `no-auth` runs without a login. A fifth **`capture`** project is prepended only when `CAPTURE=1` (`pnpm --filter app capture`). Local infra: `docker compose -f docker-compose.e2e.yml up` (Postgres on **5433**, Maildev). CI (`.github/workflows/e2e.yml`) is gated on the `e2e` PR label. Project-by-project table: [E2E Tests](/docs/testing/e2e-tests#how-e2e-is-wired).
+Four Playwright projects in `apps/web/playwright.config.ts` by default — `auth-setup` and `org-setup` run first and gate `authenticated`, while `no-auth` runs without a login. A fifth **`capture`** project is prepended only when `CAPTURE=1` (`pnpm --filter app capture`). Local infra: `docker compose -f docker-compose.e2e.yml up` (Postgres on **5433**, Maildev). CI (`.github/workflows/e2e.yml`) is gated on the `e2e` PR label. Project-by-project table: [E2E Tests](/testing/e2e-tests#how-e2e-is-wired).
