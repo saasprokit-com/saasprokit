@@ -84,9 +84,11 @@ function generateS3Key(
       RANDOM_SUBSTRING_START,
       RANDOM_SUBSTRING_START + RANDOM_SUBSTRING_LENGTH
     );
-  const ext = originalFilename.includes(".")
-    ? `.${originalFilename.split(".").pop()}`
-    : MIME_TO_EXTENSION[mimeType as keyof typeof MIME_TO_EXTENSION] || "";
+  const ext =
+    MIME_TO_EXTENSION[mimeType as keyof typeof MIME_TO_EXTENSION] ||
+    (originalFilename.includes(".")
+      ? `.${originalFilename.split(".").pop()}`
+      : "");
   const baseName = originalFilename
     .replace(EXTENSION_REGEX, "")
     .replace(INVALID_CHAR_REGEX, "_");

@@ -41,7 +41,6 @@ model User {
   invitations           Invitation[]
   createdInviteLinks    InviteLink[] @relation("InviteLinkCreator")
   uploadedFiles         File[]
-  auditLogs             AuditLog[]
   teamMembers           TeamMember[]
 
   @@map("user")
@@ -245,22 +244,6 @@ model File {
   @@index([uploadedById, deletedAt])
   @@index([deletedAt])
   @@map("file")
-}
-
-model AuditLog {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  action    String // "password_changed", "profile_updated", "2fa_enabled", "session_logout", "account_deletion_requested"
-  changes   String? // JSON object with before/after values
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([action])
-  @@index([createdAt])
-  @@map("audit_log")
 }
 
 model WebhookEvent {

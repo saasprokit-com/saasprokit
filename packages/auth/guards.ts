@@ -63,7 +63,7 @@ export function guardDowngrade(
     const excessMB = currentStorageMB - targetLimits.maxStorageMB;
     return {
       allowed: false,
-      reason: `You are using ${currentStorageMB}MB of storage but the ${targetPlan} plan allows ${targetLimits.maxStorageMB}MB. Free up ${excessMB}MB before downgrading.`,
+      reason: `You are using ${currentStorageMB.toFixed(1)}MB of storage but the ${targetPlan} plan allows ${targetLimits.maxStorageMB}MB. Free up ${excessMB.toFixed(1)}MB before downgrading.`,
       requiredPlan: currentPlan,
     };
   }
