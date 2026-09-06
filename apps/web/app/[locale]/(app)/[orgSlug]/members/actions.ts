@@ -4,12 +4,14 @@ import { isOwnerRole, ORG_ROLES } from "@repo/auth/permissions";
 import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
 import { createRequestLogger } from "@repo/logger/server";
+import { ORG_AUDIT_ACTIONS } from "@repo/utils/audit";
 import {
   BULK_INVITE_CONCURRENCY,
   INVITATION_STATUS,
 } from "@repo/utils/organization";
 import { parseEmailInput } from "@repo/utils/user";
 import { headers } from "next/headers";
+import { recordAudit } from "@/lib/audit/record";
 import { verifySession } from "@/lib/auth/action-auth";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import {
@@ -57,6 +59,12 @@ export async function inviteMemberAction(
         organizationId: validated.organizationId,
       },
       headers: await headers(),
+    });
+
+    await recordAudit({
+      action: ORG_AUDIT_ACTIONS.MEMBER_INVITE,
+      changes: { email: validated.email, role: validated.role },
+      organizationId: validated.organizationId,
     });
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
@@ -145,6 +153,17 @@ export async function removeMembersAction(
       );
     }
 
+    const removedMemberIds = validMembers
+      .filter((_, index) => results[index]?.status === "fulfilled")
+      .map((member) => member.id);
+
+    await recordAudit({
+      action: ORG_AUDIT_ACTIONS.MEMBER_REMOVE,
+      actorId: session.user.id,
+      changes: { memberIds: removedMemberIds, removedCount },
+      organizationId: validated.organizationId,
+    });
+
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
     return { success: true, data: { removedCount } };
   } catch (error) {
@@ -203,6 +222,18 @@ export async function updateMemberRoleAction(
         role: validated.newRole,
       },
       headers: await headers(),
+    });
+
+    await recordAudit({
+      action: ORG_AUDIT_ACTIONS.MEMBER_SET_ROLE,
+      actorId: session.user.id,
+      changes: {
+        after: validated.newRole,
+        before: member.role,
+        memberId: validated.memberId,
+        targetUserId: member.userId,
+      },
+      organizationId: validated.organizationId,
     });
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
@@ -379,6 +410,12 @@ export async function bulkInviteAction(
       await headers()
     );
 
+    await recordAudit({
+      action: ORG_AUDIT_ACTIONS.MEMBER_BULK_INVITE,
+      changes: { invited, role: validated.role, skipped: skipped.length },
+      organizationId: validated.organizationId,
+    });
+
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
     return { status: "success", data: { invited, skipped } };
   } catch (error) {
@@ -441,6 +478,16 @@ export async function transferOwnershipAction(
         where: { id: newOwner.id },
         data: { role: ORG_ROLES.OWNER },
       });
+    });
+
+    await recordAudit({
+      action: ORG_AUDIT_ACTIONS.OWNERSHIP_TRANSFER,
+      actorId: session.user.id,
+      changes: {
+        newOwnerMemberId: validated.newOwnerMemberId,
+        newOwnerUserId: newOwner.userId,
+      },
+      organizationId: validated.organizationId,
     });
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);

@@ -1,4 +1,5 @@
 import { ORG_ROLES } from "@repo/auth/permissions";
+import { ORG_AUDIT_ACTIONS } from "@repo/utils/audit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -12,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   memberFindFirst: vi.fn(),
   memberFindMany: vi.fn(),
   memberUpdateMany: vi.fn(),
+  recordAudit: vi.fn(),
   removeMember: vi.fn(),
   revalidateOrgPage: vi.fn(),
   toActionError: vi.fn(),
@@ -63,6 +65,10 @@ vi.mock("@/lib/auth/auth", () => ({
   hasOrgPermission: mocks.hasOrgPermission,
 }));
 
+vi.mock("@/lib/audit/record", () => ({
+  recordAudit: mocks.recordAudit,
+}));
+
 vi.mock("@/lib/infrastructure/revalidation", () => ({
   revalidateOrgPage: mocks.revalidateOrgPage,
 }));
@@ -103,6 +109,7 @@ beforeEach(() => {
   mocks.hasOrgPermission.mockResolvedValue(true);
   mocks.createInvitation.mockResolvedValue({});
   mocks.headers.mockResolvedValue(requestHeaders);
+  mocks.recordAudit.mockResolvedValue(undefined);
   mocks.revalidateOrgPage.mockResolvedValue(undefined);
 });
 
@@ -150,6 +157,24 @@ describe("inviteMemberAction", () => {
     });
     expect(mocks.revalidateOrgPage).not.toHaveBeenCalled();
     expect(result).toMatchObject({ status: "error", code: "invalidInput" });
+  });
+
+  it("records an org audit row after the invitation is created", async () => {
+    await inviteMemberAction({ status: "idle" }, input);
+
+    expect(mocks.recordAudit).toHaveBeenCalledWith({
+      action: ORG_AUDIT_ACTIONS.MEMBER_INVITE,
+      changes: { email: "new-member@example.com", role: ORG_ROLES.MEMBER },
+      organizationId: "org_1",
+    });
+  });
+
+  it("does not record an audit row when Better Auth rejects", async () => {
+    mocks.createInvitation.mockRejectedValue({ body: { code: "NOPE" } });
+
+    await inviteMemberAction({ status: "idle" }, input);
+
+    expect(mocks.recordAudit).not.toHaveBeenCalled();
   });
 });
 
@@ -354,6 +379,23 @@ describe("updateMemberRoleAction", () => {
       "acme",
       ORG_PAGES.MEMBERS
     );
+    expect(result).toEqual({ success: true });
+  });
+
+  it("records the role change with before and after", async () => {
+    const result = await updateMemberRoleAction(roleInput);
+
+    expect(mocks.recordAudit).toHaveBeenCalledWith({
+      action: ORG_AUDIT_ACTIONS.MEMBER_SET_ROLE,
+      actorId: "user_self",
+      changes: {
+        after: ORG_ROLES.ADMIN,
+        before: ORG_ROLES.MEMBER,
+        memberId: "member_a",
+        targetUserId: "user_a",
+      },
+      organizationId: "org_1",
+    });
     expect(result).toEqual({ success: true });
   });
 });
