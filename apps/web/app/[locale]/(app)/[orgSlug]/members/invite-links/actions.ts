@@ -2,8 +2,10 @@
 
 import crypto from "node:crypto";
 import { database } from "@repo/database";
+import { ORG_AUDIT_ACTIONS } from "@repo/utils/audit";
 import { MILLISECONDS_PER_DAY } from "@repo/utils/date";
 import { INVITE_TOKEN_BYTES } from "@repo/utils/organization";
+import { recordAudit } from "@/lib/audit/record";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import {
   type ActionResult,
@@ -68,6 +70,17 @@ export async function createInviteLinkAction(
       },
     });
 
+    await recordAudit({
+      action: ORG_AUDIT_ACTIONS.INVITE_LINK_CREATE,
+      actorId: session.user.id,
+      changes: {
+        expiresAt: expiresAt.toISOString(),
+        maxUses: validated.maxUses || null,
+        role: validated.role,
+      },
+      organizationId: validated.organizationId,
+    });
+
     const url = `${env.BETTER_AUTH_URL}/invite/${token}`;
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
@@ -107,6 +120,12 @@ export async function revokeInviteLinkAction(
       data: { isActive: false },
     });
 
+    await recordAudit({
+      action: ORG_AUDIT_ACTIONS.INVITE_LINK_REVOKE,
+      changes: { inviteLinkId: inviteLink.id },
+      organizationId: validated.organizationId,
+    });
+
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
     return { success: true };
   } catch (error) {
@@ -141,6 +160,15 @@ export async function revokeInviteLinksAction(
     if (result.count === 0) {
       return actionError("noActiveInviteLinks");
     }
+
+    await recordAudit({
+      action: ORG_AUDIT_ACTIONS.INVITE_LINK_REVOKE,
+      changes: {
+        inviteLinkIds: validated.inviteLinkIds,
+        revokedCount: result.count,
+      },
+      organizationId: validated.organizationId,
+    });
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
     return { success: true, data: { revokedCount: result.count } };
