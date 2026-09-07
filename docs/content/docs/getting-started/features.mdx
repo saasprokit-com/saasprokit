@@ -122,6 +122,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 | Feature | Status | Notes |
 |---------|--------|-------|
 | File Upload | Implemented | `uploadOrganizationLogoAction` server action — MIME/size validation, org permission, per-plan quota |
+| AI Chat | Implemented | Org-scoped chat with live provider/model switching (Anthropic, OpenAI via the Vercel AI SDK), image generation, persisted conversations, and per-org monthly token/image quotas tied to plans. |
 | Local Storage | Implemented | Local filesystem storage provider |
 | S3 Storage | Implemented | AWS S3 provider with configurable credentials |
 | Per-Plan Storage Quotas | Implemented | 100 MB / 5 GB / 50 GB per plan |
