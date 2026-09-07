@@ -63,19 +63,31 @@ export async function waitForEmail(
     timeout?: number;
     /** Poll interval in ms (default: 500ms) */
     interval?: number;
+    /**
+     * Ignore mail that reached Maildev before this timestamp — capture it with
+     * `Date.now()` before triggering the send. The inbox is shared by every
+     * worker, so recency, not an inbox wipe, is what isolates a run.
+     */
+    since?: number;
   } = {}
 ): Promise<MaildevEmail> {
-  const { subjectContains, timeout = 15_000, interval = 500 } = options;
+  const { subjectContains, timeout = 15_000, interval = 500, since } = options;
   const deadline = Date.now() + timeout;
   const normalizedRecipient = recipientEmail.toLowerCase();
+  // Maildev truncates `time` to whole seconds, so a mail sent at .900 reports
+  // .000 — without this slack an exact `since` would discard its own email.
+  const cutoff = since === undefined ? undefined : since - 1000;
 
   while (Date.now() < deadline) {
     const emails = await getAllEmails();
-    const found = emails.find((email) => {
+    const matches = emails.filter((email) => {
       const toMatch = email.to.some(
         (t) => t.address.toLowerCase() === normalizedRecipient
       );
       if (!toMatch) {
+        return false;
+      }
+      if (cutoff !== undefined && new Date(email.time).getTime() < cutoff) {
         return false;
       }
       if (subjectContains) {
@@ -85,6 +97,10 @@ export async function waitForEmail(
       }
       return true;
     });
+
+    const found = matches.sort(
+      (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
+    )[0];
 
     if (found) {
       return found;
@@ -126,6 +142,7 @@ export async function waitForEmailLink(
   options?: {
     subjectContains?: string;
     timeout?: number;
+    since?: number;
   }
 ): Promise<{ email: MaildevEmail; url: string }> {
   const email = await waitForEmail(recipientEmail, options);

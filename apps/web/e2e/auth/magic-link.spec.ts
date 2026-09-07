@@ -1,4 +1,4 @@
-import { clearInbox, isMaildevAvailable, waitForEmailLink } from "../helpers/maildev";
+import { isMaildevAvailable, waitForEmailLink } from "../helpers/maildev";
 import { expect, localePath, TEST_CONFIG, test } from "../fixtures/fixtures";
 
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -8,13 +8,13 @@ test("Should sign in When the magic link is requested, emailed, and clicked", as
 }) => {
   const available = await isMaildevAvailable();
   test.skip(!available, "Maildev is not available");
-  await clearInbox();
 
   await page.goto(localePath("/auth/sign-in"));
   await page.getByRole("tab", { name: /magic link/i }).click();
   await page
     .getByRole("textbox", { name: /email/i })
     .fill(TEST_CONFIG.user.email);
+  const since = Date.now();
   await page.getByRole("button", { name: /send magic link/i }).click();
 
   await expect(
@@ -24,7 +24,11 @@ test("Should sign in When the magic link is requested, emailed, and clicked", as
   const { url: magicLinkUrl } = await waitForEmailLink(
     TEST_CONFIG.user.email,
     "magic-link",
-    { subjectContains: "sign in", timeout: TEST_CONFIG.timeouts.navigation }
+    {
+      subjectContains: "sign in",
+      timeout: TEST_CONFIG.timeouts.navigation,
+      since,
+    }
   );
 
   await page.goto(magicLinkUrl);
