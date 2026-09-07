@@ -8,6 +8,7 @@ import {
   Html,
   Preview,
   Section,
+  Tailwind,
   Text,
 } from "@react-email/components";
 
@@ -29,207 +30,119 @@ export default function SubscriptionCancelled({
   feedbackUrl = "https://example.com/feedback",
 }: SubscriptionCancelledProps) {
   return (
-    <Html>
-      <Head />
-      <Preview>Your {planName} subscription has been cancelled</Preview>
-      <Body style={main}>
-        <Container style={container}>
-          <Section style={noticeBanner}>
-            <Text style={noticeText}>Subscription Cancelled</Text>
-          </Section>
+    <Tailwind>
+      <Html>
+        <Head />
+        <Preview>Your {planName} subscription has been cancelled</Preview>
+        <Body className="bg-[#f6f9fc] font-[-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,'Helvetica_Neue',Ubuntu,sans-serif]">
+          <Container className="mx-auto my-0 max-w-[560px] rounded-[8px] bg-white px-[20px] py-[40px]">
+            <Section className="mb-[24px] rounded-[8px] bg-[#f3f4f6] p-[12px] text-center">
+              <Text className="m-0 font-semibold text-[#4b5563] text-[14px]">
+                Subscription Cancelled
+              </Text>
+            </Section>
 
-          <Heading style={h1}>We're Sorry to See You Go</Heading>
+            <Heading
+              as="h1"
+              className="m-0 mb-[24px] text-center font-bold text-[#1a1a1a] text-[24px] leading-[32px]"
+            >
+              We're Sorry to See You Go
+            </Heading>
 
-          <Text style={text}>Hi {userName},</Text>
-
-          <Text style={text}>
-            Your <strong>{planName}</strong> subscription has been cancelled.
-            We're sorry to see you go!
-          </Text>
-
-          <Section style={detailsBox}>
-            <Text style={detailLabel}>Plan</Text>
-            <Text style={detailValue}>{planName}</Text>
-
-            <Text style={detailLabel}>Access Until</Text>
-            <Text style={detailValue}>{accessUntil}</Text>
-
-            <Text style={detailLabel}>Reason</Text>
-            <Text style={detailValue}>{cancellationReason}</Text>
-          </Section>
-
-          <Section style={infoBox}>
-            <Text style={infoTitle}>What happens next?</Text>
-            <Text style={infoText}>
-              • You'll retain access to all {planName} features until{" "}
-              {accessUntil}
+            <Text className="m-0 mb-[16px] text-[#525f7f] text-[16px] leading-[26px]">
+              Hi {userName},
             </Text>
-            <Text style={infoText}>
-              • After that date, your account will revert to the free plan
+
+            <Text className="m-0 mb-[16px] text-[#525f7f] text-[16px] leading-[26px]">
+              Your <strong>{planName}</strong> subscription has been cancelled.
+              We're sorry to see you go!
             </Text>
-            <Text style={infoText}>
-              • Your data will be preserved, but some features will be limited
+
+            <Section className="my-[24px] rounded-[8px] bg-[#f9fafb] p-[20px]">
+              <Text className="m-0 mb-[4px] font-semibold text-[#6b7280] text-[12px] uppercase">
+                Plan
+              </Text>
+              <Text className="m-0 mb-[16px] text-[#1f2937] text-[14px]">
+                {planName}
+              </Text>
+
+              <Text className="m-0 mb-[4px] font-semibold text-[#6b7280] text-[12px] uppercase">
+                Access Until
+              </Text>
+              <Text className="m-0 mb-[16px] text-[#1f2937] text-[14px]">
+                {accessUntil}
+              </Text>
+
+              <Text className="m-0 mb-[4px] font-semibold text-[#6b7280] text-[12px] uppercase">
+                Reason
+              </Text>
+              <Text className="m-0 mb-[16px] text-[#1f2937] text-[14px]">
+                {cancellationReason}
+              </Text>
+            </Section>
+
+            <Section className="my-[24px] rounded-[8px] bg-[#eff6ff] p-[16px]">
+              <Text className="m-0 mb-[8px] font-semibold text-[#1e40af] text-[14px]">
+                What happens next?
+              </Text>
+              <Text className="m-0 mb-[4px] text-[#1e40af] text-[14px]">
+                • You'll retain access to all {planName} features until{" "}
+                {accessUntil}
+              </Text>
+              <Text className="m-0 mb-[4px] text-[#1e40af] text-[14px]">
+                • After that date, your account will revert to the free plan
+              </Text>
+              <Text className="m-0 mb-[4px] text-[#1e40af] text-[14px]">
+                • Your data will be preserved, but some features will be limited
+              </Text>
+            </Section>
+
+            <Text className="m-0 mb-[16px] text-[#525f7f] text-[16px] leading-[26px]">
+              Changed your mind? You can reactivate your subscription anytime
+              before {accessUntil} and continue where you left off.
             </Text>
-          </Section>
 
-          <Text style={text}>
-            Changed your mind? You can reactivate your subscription anytime
-            before {accessUntil} and continue where you left off.
-          </Text>
+            <Section className="my-[16px] text-center">
+              <Button
+                className="inline-block rounded-[8px] bg-[#6366f1] px-[32px] py-[12px] text-center font-semibold text-[16px] text-white no-underline"
+                href={reactivateUrl}
+              >
+                Reactivate Subscription
+              </Button>
+            </Section>
 
-          <Section style={buttonContainer}>
-            <Button href={reactivateUrl} style={primaryButton}>
-              Reactivate Subscription
-            </Button>
-          </Section>
+            <Section className="my-[16px] text-center">
+              <Button
+                className="inline-block rounded-[8px] border border-[#6366f1] bg-white px-[24px] py-[10px] text-center font-semibold text-[#6366f1] text-[14px] no-underline"
+                href={feedbackUrl}
+              >
+                Share Feedback
+              </Button>
+            </Section>
 
-          <Section style={buttonContainer}>
-            <Button href={feedbackUrl} style={secondaryButton}>
-              Share Feedback
-            </Button>
-          </Section>
+            <Hr className="my-[32px] border-[#e6ebf1]" />
 
-          <Hr style={hr} />
+            <Text className="m-0 mb-[8px] text-[#8898aa] text-[14px] leading-[22px]">
+              We'd love to hear why you cancelled. Your feedback helps us
+              improve SaaS App for everyone.
+            </Text>
 
-          <Text style={footer}>
-            We'd love to hear why you cancelled. Your feedback helps us improve
-            SaaS App for everyone.
-          </Text>
-
-          <Text style={footer}>
-            Thank you for being a SaaS App subscriber. We hope to see you again
-            soon!
-          </Text>
-        </Container>
-      </Body>
-    </Html>
+            <Text className="m-0 mb-[8px] text-[#8898aa] text-[14px] leading-[22px]">
+              Thank you for being a SaaS App subscriber. We hope to see you
+              again soon!
+            </Text>
+          </Container>
+        </Body>
+      </Html>
+    </Tailwind>
   );
 }
 
-const main = {
-  backgroundColor: "#f6f9fc",
-  fontFamily:
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif',
-};
-
-const container = {
-  backgroundColor: "#ffffff",
-  margin: "0 auto",
-  padding: "40px 20px",
-  maxWidth: "560px",
-  borderRadius: "8px",
-};
-
-const noticeBanner = {
-  backgroundColor: "#f3f4f6",
-  borderRadius: "8px",
-  padding: "12px",
-  marginBottom: "24px",
-  textAlign: "center" as const,
-};
-
-const noticeText = {
-  color: "#4b5563",
-  fontSize: "14px",
-  fontWeight: "600",
-  margin: "0",
-};
-
-const h1 = {
-  color: "#1a1a1a",
-  fontSize: "24px",
-  fontWeight: "700",
-  lineHeight: "32px",
-  margin: "0 0 24px",
-  textAlign: "center" as const,
-};
-
-const text = {
-  color: "#525f7f",
-  fontSize: "16px",
-  lineHeight: "26px",
-  margin: "0 0 16px",
-};
-
-const detailsBox = {
-  backgroundColor: "#f9fafb",
-  borderRadius: "8px",
-  padding: "20px",
-  margin: "24px 0",
-};
-
-const detailLabel = {
-  color: "#6b7280",
-  fontSize: "12px",
-  fontWeight: "600",
-  textTransform: "uppercase" as const,
-  margin: "0 0 4px",
-};
-
-const detailValue = {
-  color: "#1f2937",
-  fontSize: "14px",
-  margin: "0 0 16px",
-};
-
-const infoBox = {
-  backgroundColor: "#eff6ff",
-  borderRadius: "8px",
-  padding: "16px",
-  margin: "24px 0",
-};
-
-const infoTitle = {
-  color: "#1e40af",
-  fontSize: "14px",
-  fontWeight: "600",
-  margin: "0 0 8px",
-};
-
-const infoText = {
-  color: "#1e40af",
-  fontSize: "14px",
-  margin: "0 0 4px",
-};
-
-const buttonContainer = {
-  textAlign: "center" as const,
-  margin: "16px 0",
-};
-
-const primaryButton = {
-  backgroundColor: "#6366f1",
-  borderRadius: "8px",
-  color: "#ffffff",
-  fontSize: "16px",
-  fontWeight: "600",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  padding: "12px 32px",
-};
-
-const secondaryButton = {
-  backgroundColor: "#ffffff",
-  borderRadius: "8px",
-  color: "#6366f1",
-  fontSize: "14px",
-  fontWeight: "600",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  padding: "10px 24px",
-  border: "1px solid #6366f1",
-};
-
-const hr = {
-  borderColor: "#e6ebf1",
-  margin: "32px 0",
-};
-
-const footer = {
-  color: "#8898aa",
-  fontSize: "14px",
-  lineHeight: "22px",
-  margin: "0 0 8px",
-};
+SubscriptionCancelled.PreviewProps = {
+  userName: "there",
+  planName: "Pro",
+  accessUntil: "January 13, 2025",
+  cancellationReason: "User requested",
+  reactivateUrl: "https://example.com/pricing",
+  feedbackUrl: "https://example.com/feedback",
+} satisfies SubscriptionCancelledProps;

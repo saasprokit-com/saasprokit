@@ -62,7 +62,6 @@
       "!packages/cms/basehub-types.d.ts",
       "!apps/api/**/*",
       "!packages/storage/magic-bytes.ts",
-      "!packages/email/i18n/index.ts",
       "!**/*.test.ts",
       "!**/*.spec.ts"
     ]

@@ -19,16 +19,15 @@ pnpm migrate                  # prisma format + generate + db push
 pnpm --filter @repo/database db:seed   # wipes every table, then seeds admin@example.com
 
 # Development
-pnpm dev                      # All apps except kit-docs
+pnpm dev                      # All apps
 pnpm --filter app dev         # Main app only (port 3000)
 pnpm --filter docs dev        # Customer's product docs, empty Fumadocs starter (port 3004)
 pnpm --filter storybook dev   # Component library (port 6006)
 pnpm --filter email dev       # Email preview (port 3003)
 pnpm --filter studio dev      # Prisma Studio (port 3005)
-pnpm kit-docs:dev             # SaaSProKit's own documentation (port 3006)
 
 # Build & Quality
-pnpm build                    # All apps and packages (excludes kit-docs)
+pnpm build                    # All apps and packages
 pnpm check                    # Lint via ultracite + Biome
 pnpm fix                      # Auto-fix lint issues
 pnpm --filter app typecheck   # Type check web app
@@ -44,7 +43,7 @@ Optional: `pnpm skills:install` restores third-party skills into `.agents/skills
 
 **Apps** (independently deployable): `web` (main SaaS app, port 3000, package name `app`), `docs` (customer's Fumadocs, 3004), `email` (React Email previews, 3003), `storybook` (design system, 6006), `studio` (Prisma Studio, 3005).
 
-`apps/docs` ships as an **empty** Fumadocs starter — it is the customer's product documentation, not ours. SaaSProKit's own documentation is the root **`docs/`** folder (workspace package `kit-docs`, port 3006), excluded from the default `pnpm dev` / `pnpm build` fan-out. `pnpm setup` initializes `apps/docs` alongside `apps/web`, then deletes `docs/` and every reference to it (workspace entry, `kit-docs:*` scripts, the `--filter=!kit-docs` guards, the dev Dockerfile COPY, the Biome exclude, the README tree line, the VS Code launch config, and kit-docs mentions in CLAUDE.md / AGENTS.md / env-setup) — the customer's clone keeps none of our documentation.
+`apps/docs` ships as an **empty** Fumadocs starter for the customer's own product documentation (port 3004).
 
 **Core packages**: `@repo/auth` (Better Auth, dual RBAC, Stripe billing + plans), `@repo/database` (Prisma), `@repo/design-system` (shadcn/ui + Radix), `@repo/email` (React Email + Resend).
 
@@ -91,7 +90,7 @@ Biome (`biome.jsonc`) extends `ultracite/biome/core`, `ultracite/biome/react`, `
 
 ### Generated notes
 
-Scratch plans, reviews, and specs go in **`.docs/`** (gitignored). Do not put them in `docs/` — that is kit-docs, the product we ship.
+Scratch plans, reviews, and specs go in **`.docs/`** (gitignored — note the leading dot; it is not the `docs/` folder).
 
 ## Skills & Plugins
 

@@ -1,23 +1,10 @@
 "use client";
 
 import { ORG_ROLES } from "@repo/auth/permissions";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@repo/design-system/components/ui/alert-dialog";
-import { Button } from "@repo/design-system/components/ui/button";
 import type { ActionErrorMessages } from "@repo/internationalization";
-import { Loader2, XCircle } from "lucide-react";
+import { XCircle } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useActionState, useState } from "react";
-import { toast } from "sonner";
-import { useActionResult } from "@/hooks/use-action-result";
-import type { ActionResult } from "@/lib/auth/auth";
+import { BulkConfirmDialog } from "../../components/bulk-confirm-dialog";
 import {
   type CancelInvitationsResult,
   cancelInvitationsAction,
@@ -38,87 +25,38 @@ export function CancelInvitationsDialog({
   onSuccess,
 }: CancelInvitationsDialogProps) {
   const { orgSlug } = useParams<{ orgSlug: string }>();
-  const [open, setOpen] = useState(false);
-
   const count = selectedInvitations.length;
 
-  const boundAction = cancelInvitationsAction.bind(null, {
-    organizationId,
-    orgSlug,
-    invitationIds: selectedInvitations.map((inv) => inv.id),
-  });
-
-  const [state, formAction, isPending] = useActionState<
-    ActionResult<CancelInvitationsResult> | null,
-    FormData
-  >(boundAction, null);
-
-  useActionResult(state, {
-    onError: (error) =>
-      toast.error(errors.cancelInvitations, {
-        description: error ?? "Something went wrong",
-      }),
-    onSuccess: (data) => {
-      toast.success("Invitations cancelled", {
-        description: `Successfully cancelled ${data?.cancelledCount ?? 0} invitation(s)`,
-      });
-      setOpen(false);
-      onSuccess();
-    },
-  });
-
   return (
-    <AlertDialog onOpenChange={setOpen} open={open}>
-      <Button
-        disabled={count === 0}
-        onClick={() => setOpen(true)}
-        size="sm"
-        variant="destructive"
-      >
-        <XCircle className="mr-2 size-4" />
-        Cancel ({count})
-      </Button>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Cancel Invitations</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to cancel {count} invitation
-            {count > 1 ? "s" : ""}? The invited users will no longer be able to
-            join with these invitations.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <div className="max-h-[200px] overflow-y-auto rounded-md border p-2">
-          <ul className="space-y-1 text-sm">
-            {selectedInvitations.map((invitation) => (
-              <li className="flex items-center gap-2" key={invitation.id}>
-                <span className="font-medium">{invitation.email}</span>
-                <span className="text-muted-foreground capitalize">
-                  ({invitation.role ?? ORG_ROLES.MEMBER})
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Close</AlertDialogCancel>
-          <form action={formAction}>
-            <Button
-              className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={isPending}
-              type="submit"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                  Cancelling...
-                </>
-              ) : (
-                "Cancel Invitations"
-              )}
-            </Button>
-          </form>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <BulkConfirmDialog<Invitation, CancelInvitationsResult>
+      action={cancelInvitationsAction.bind(null, {
+        organizationId,
+        orgSlug,
+        invitationIds: selectedInvitations.map((inv) => inv.id),
+      })}
+      cancelLabel="Close"
+      confirmLabel="Cancel Invitations"
+      description={`Are you sure you want to cancel ${count} invitation${count > 1 ? "s" : ""}? The invited users will no longer be able to join with these invitations.`}
+      errorTitle={errors.cancelInvitations}
+      fullWidthConfirm
+      items={selectedInvitations}
+      onSuccess={onSuccess}
+      pendingLabel="Cancelling..."
+      renderItem={(invitation) => (
+        <>
+          <span className="font-medium">{invitation.email}</span>
+          <span className="text-muted-foreground capitalize">
+            ({invitation.role ?? ORG_ROLES.MEMBER})
+          </span>
+        </>
+      )}
+      successDescription={(data) =>
+        `Successfully cancelled ${data?.cancelledCount ?? 0} invitation(s)`
+      }
+      successTitle="Invitations cancelled"
+      title="Cancel Invitations"
+      triggerIcon={XCircle}
+      triggerLabel="Cancel"
+    />
   );
 }

@@ -40,6 +40,7 @@ interface NavUserProps {
   onSignOut?: () => void;
   onUpgrade?: () => void;
   securityUrl?: string;
+  showDangerZone?: boolean;
   user: User;
 }
 
@@ -50,6 +51,7 @@ export function NavUser({
   accountUrl = "/account/profile",
   securityUrl = "/account/security",
   dangerUrl = "/account/danger",
+  showDangerZone = true,
   adminUrl,
 }: NavUserProps) {
   const { isMobile } = useSidebar();
@@ -141,15 +143,17 @@ export function NavUser({
                   Security
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link
-                  className="text-destructive focus:text-destructive"
-                  href={dangerUrl}
-                >
-                  <AlertTriangle />
-                  Danger Zone
-                </Link>
-              </DropdownMenuItem>
+              {showDangerZone && (
+                <DropdownMenuItem asChild>
+                  <Link
+                    className="text-destructive focus:text-destructive"
+                    href={dangerUrl}
+                  >
+                    <AlertTriangle />
+                    Danger Zone
+                  </Link>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem

@@ -8,10 +8,8 @@ import {
   renderEnvLocal,
 } from "./transforms/env-file";
 import {
-  applyTextReplacements,
   dropLines,
   KIT_DOCS_REFERENCES,
-  KIT_DOCS_TEXT_REPLACEMENTS,
   stripKitDocsLaunchConfig,
 } from "./transforms/kit-docs";
 import {
@@ -148,22 +146,6 @@ export function removeKitDocs(rootDir: string): void {
     const path = join(rootDir, file);
     if (existsSync(path)) {
       writeFileSync(path, dropLines(readFileSync(path, "utf8"), lines));
-    }
-  }
-
-  const replacementsByFile = new Map<string, { from: string; to: string }[]>();
-  for (const { file, from, to } of KIT_DOCS_TEXT_REPLACEMENTS) {
-    const list = replacementsByFile.get(file) ?? [];
-    list.push({ from, to });
-    replacementsByFile.set(file, list);
-  }
-  for (const [file, replacements] of replacementsByFile) {
-    const path = join(rootDir, file);
-    if (existsSync(path)) {
-      writeFileSync(
-        path,
-        applyTextReplacements(readFileSync(path, "utf8"), replacements)
-      );
     }
   }
 

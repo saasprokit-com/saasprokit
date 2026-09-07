@@ -1,4 +1,4 @@
-import { configureSeo, type SiteConfig } from "@repo/seo";
+import type { SiteConfig } from "@repo/seo";
 import { env } from "@/lib/env";
 
 // Site configuration - Update these values for your site
@@ -9,6 +9,3 @@ export const siteConfig: SiteConfig = {
   ogImage: "/og-image.png",
   locale: "en_US",
 };
-
-// Initialize SEO configuration
-configureSeo(siteConfig);

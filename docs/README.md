@@ -4,6 +4,10 @@ The documentation for the SaaSProKit boilerplate itself — how the monorepo is 
 billing, email, and deployment work. This is **not** your product's documentation: that lives in
 [`apps/docs`](../apps/docs), which ships as an empty Fumadocs starter.
 
+Scratch plans, reviews, and specs written while working on the kit go in `.docs/` (gitignored),
+never in this `docs/` folder — this one is the product we ship, and `pnpm setup` deletes it from a
+customer's clone along with every reference to it.
+
 ```bash
 pnpm kit-docs:dev      # http://localhost:3006/docs
 pnpm kit-docs:build
@@ -29,6 +33,17 @@ Two patterns rather than `/docs*`, which would also swallow `/docsfoo`. Deployin
 It is a workspace package named `kit-docs`, excluded from the default `pnpm dev` / `pnpm build`
 fan-out so it never slows down app work. It deploys to Cloudflare Workers only — build it with
 `pnpm --filter kit-docs build`, not the root `pnpm build --filter=kit-docs`, which turbo-excludes this package.
+It has no Docker Compose service — start it directly with `pnpm kit-docs:dev`.
+
+## Removal at setup
+
+`pnpm run setup` deletes this entire directory (`rmSync`) along with every reference to it: the
+`docs` entry in `pnpm-workspace.yaml`, the `kit-docs:*` scripts and `--filter=!kit-docs` guards on
+`build`/`dev` in the root `package.json`, the `COPY docs/` step in `docker/dev.Dockerfile`, the
+`!docs/**/*.json` exclude in `biome.jsonc`, and the `(kit-docs)` entry in `.vscode/launch.json`. The
+customer's clone never contains this package or a dangling mention of it — `CLAUDE.md`, `AGENTS.md`,
+`README.md`, and the `env-setup` skill are written to already describe a repo without it, so nothing
+there needs rewriting at setup time.
 
 ## Layout
 
