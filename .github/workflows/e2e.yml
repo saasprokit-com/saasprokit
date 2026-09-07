@@ -59,15 +59,21 @@ jobs:
 
       - name: Start Maildev
         run: |
-          docker run -d --name maildev -p 1025:1025 -p 1080:1080 maildev/maildev:2.1.0
+          docker run -d --name maildev -p 1025:1025 -p 1080:1080 maildev/maildev:3.0.0-rc.1
+          # Probe the REST endpoint the tests use, not "/": every Maildev
+          # version serves the web UI at "/", so a version whose API lives
+          # elsewhere still looks ready and fails three minutes later instead.
           for i in $(seq 1 15); do
-            if curl -sf http://localhost:1080 > /dev/null 2>&1; then
+            if curl -sf http://localhost:1080/api/email > /dev/null 2>&1; then
               echo "Maildev is ready"
-              break
+              exit 0
             fi
             echo "Waiting for Maildev... ($i/15)"
             sleep 2
           done
+          echo "Maildev never answered on /api/email"
+          docker logs maildev || true
+          exit 1
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6

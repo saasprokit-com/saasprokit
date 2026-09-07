@@ -1,15 +1,15 @@
 import type { APIRequestContext } from "@playwright/test";
 
-import { BASE_URL } from "../fixtures/test-config";
+import { postAuth } from "./auth-api";
 import { isMaildevAvailable, waitForEmailLink } from "./maildev";
 
 export async function ensureVerifiedUser(
   request: APIRequestContext,
   user: { name: string; email: string; password: string }
 ): Promise<{ verified: boolean }> {
-  const signInRes = await request.post("/api/auth/sign-in/email", {
-    headers: { origin: BASE_URL },
-    data: { email: user.email, password: user.password },
+  const signInRes = await postAuth(request, "/api/auth/sign-in/email", {
+    email: user.email,
+    password: user.password,
   });
 
   if (signInRes.ok()) {
@@ -19,13 +19,10 @@ export async function ensureVerifiedUser(
   const maildevUp = await isMaildevAvailable();
   const since = Date.now();
 
-  await request.post("/api/auth/sign-up/email", {
-    headers: { origin: BASE_URL },
-    data: {
-      name: user.name,
-      email: user.email,
-      password: user.password,
-    },
+  await postAuth(request, "/api/auth/sign-up/email", {
+    name: user.name,
+    email: user.email,
+    password: user.password,
   });
 
   if (!maildevUp) {
@@ -41,12 +38,15 @@ export async function ensureVerifiedUser(
 
     await request.get(verifyUrl);
 
-    const retryRes = await request.post("/api/auth/sign-in/email", {
-      headers: { origin: BASE_URL },
-      data: { email: user.email, password: user.password },
-    });
-
-    return { verified: retryRes.ok() };
+    // `autoSignInAfterVerification` is on, so following the link already left a
+    // session on this context. Reading it back confirms verification without
+    // spending a second /sign-in/email against the production rate limit.
+    const sessionRes = await request.get("/api/auth/get-session");
+    if (!sessionRes.ok()) {
+      return { verified: false };
+    }
+    const session = await sessionRes.json().catch(() => null);
+    return { verified: Boolean(session?.user) };
   } catch {
     return { verified: false };
   }
