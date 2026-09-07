@@ -12,7 +12,11 @@ export const registry = createProviderRegistry({
 });
 
 export function isConfigured(modelId: string): boolean {
-  return Boolean(modelId.startsWith("anthropic:") ? env.ANTHROPIC_API_KEY : env.OPENAI_API_KEY);
+  return Boolean(
+    modelId.startsWith("anthropic:")
+      ? env.ANTHROPIC_API_KEY
+      : env.OPENAI_API_KEY
+  );
 }
 
 export function availableChatModels(): AiModelOption[] {
