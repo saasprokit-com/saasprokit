@@ -34,6 +34,8 @@ export const PLANS: Record<PlanName, PlanConfig> = {
     limits: {
       maxMembers: LIMITS.FREE.MAX_MEMBERS,
       maxStorageMB: LIMITS.FREE.MAX_STORAGE_MB,
+      maxAiTokensPerMonth: LIMITS.FREE.MAX_AI_TOKENS_PER_MONTH,
+      maxAiImagesPerMonth: LIMITS.FREE.MAX_AI_IMAGES_PER_MONTH,
       prioritySupport: false,
       advancedAnalytics: false,
     },
@@ -54,6 +56,8 @@ export const PLANS: Record<PlanName, PlanConfig> = {
     limits: {
       maxMembers: LIMITS.PRO.MAX_MEMBERS,
       maxStorageMB: LIMITS.PRO.MAX_STORAGE_MB,
+      maxAiTokensPerMonth: LIMITS.PRO.MAX_AI_TOKENS_PER_MONTH,
+      maxAiImagesPerMonth: LIMITS.PRO.MAX_AI_IMAGES_PER_MONTH,
       prioritySupport: true,
       advancedAnalytics: true,
     },
@@ -76,6 +80,8 @@ export const PLANS: Record<PlanName, PlanConfig> = {
     limits: {
       maxMembers: LIMITS.ENTERPRISE.MAX_MEMBERS,
       maxStorageMB: LIMITS.ENTERPRISE.MAX_STORAGE_MB,
+      maxAiTokensPerMonth: LIMITS.ENTERPRISE.MAX_AI_TOKENS_PER_MONTH,
+      maxAiImagesPerMonth: LIMITS.ENTERPRISE.MAX_AI_IMAGES_PER_MONTH,
       prioritySupport: true,
       advancedAnalytics: true,
     },
