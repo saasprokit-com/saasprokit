@@ -32,8 +32,7 @@ RUN pnpm add -g turbo@^2
 COPY . .
 
 # Turbo 2.x positional syntax: turbo prune <package> --docker
-# "app" is the package name from apps/web/package.json
-RUN turbo prune app --docker
+RUN turbo prune web --docker
 
 # ---------------------------------------------------------------------------
 # Stage 3: builder — Install dependencies and build

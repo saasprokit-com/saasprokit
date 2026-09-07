@@ -9,8 +9,8 @@ set -e
 echo "[entrypoint] Refreshing workspace symlinks..."
 CI=true pnpm install --frozen-lockfile 2>/dev/null || CI=true pnpm install
 
-# Only run migrations + seed for services that need the database (web/app, studio)
-if echo "$@" | grep -qE "(app|studio)"; then
+# Only run migrations + seed for services that need the database (web, studio)
+if echo "$@" | grep -qE -- '--filter (web|studio)'; then
   echo "[entrypoint] Generating Prisma client..."
   # NODE_TLS_REJECT_UNAUTHORIZED=0 works around SSL issues in Docker networking
   # when Prisma downloads engine binaries (local dev only)
