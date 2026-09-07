@@ -34,7 +34,7 @@ pnpm fix                      # Auto-fix lint issues
 pnpm --filter web typecheck   # Type check web app
 
 # Testing (details: saasprokit:testing)
-pnpm test                     # Unit tests via turbo (app, @repo/auth, @repo/database)
+pnpm test                     # Unit tests via turbo (web, @repo/auth, @repo/database)
 pnpm --filter web test:e2e    # Playwright E2E
 ```
 
@@ -42,7 +42,7 @@ Optional: `pnpm skills:install` restores third-party skills into `.agents/skills
 
 ## Monorepo Structure
 
-**Apps** (independently deployable): `web` (main SaaS app, port 3000, package name `app`), `docs` (customer's Fumadocs, 3004), `email` (React Email previews, 3003), `storybook` (design system, 6006), `studio` (Prisma Studio, 3005).
+**Apps** (independently deployable): `web` (main SaaS app, port 3000), `docs` (customer's Fumadocs, 3004), `email` (React Email previews, 3003), `storybook` (design system, 6006), `studio` (Prisma Studio, 3005).
 
 `apps/docs` ships as an **empty** Fumadocs starter — it is the customer's product documentation, not ours. SaaSProKit's own documentation is the root **`docs/`** folder (workspace package `kit-docs`, port 3006), excluded from the default `pnpm dev` / `pnpm build` fan-out. `pnpm setup` initializes `apps/docs` alongside `apps/web`, then deletes `docs/` and every reference to it (workspace entry, `kit-docs:*` scripts, the `--filter=!kit-docs` guards, the dev Dockerfile COPY, the Biome exclude, the README tree line, the VS Code launch config, and kit-docs mentions in CLAUDE.md / AGENTS.md / env-setup) — the customer's clone keeps none of our documentation.
 

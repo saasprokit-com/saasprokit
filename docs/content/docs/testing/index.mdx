@@ -14,7 +14,7 @@ This project uses two levels of testing:
 | **CLI tests** | Vitest | `scripts/**/*.test.ts` | `pnpm test:cli` (root `vitest.config.mts`) — **not** inside `pnpm test` |
 | **Integration Tests** | — | — | Not started |
 
-`pnpm test` is cached `turbo test` and only runs packages with a `test` script (app, `@repo/auth`, `@repo/database`). CI (`.github/workflows/ci.yml`) always runs unit + `pnpm test:cli`. Playwright is `.github/workflows/e2e.yml`, gated on the `e2e` PR label — default CI does **not** run it.
+`pnpm test` is cached `turbo test` and only runs packages with a `test` script (web, `@repo/auth`, `@repo/database`). CI (`.github/workflows/ci.yml`) always runs unit + `pnpm test:cli`. Playwright is `.github/workflows/e2e.yml`, gated on the `e2e` PR label — default CI does **not** run it.
 
 ## Coverage Summary
 
@@ -64,7 +64,7 @@ pnpm --filter web capture         # CAPTURE=1, e2e/capture/*.capture.ts
 ### Unit Tests (Vitest)
 
 ```bash
-# turbo test — app, @repo/auth, @repo/database only
+# turbo test — web, @repo/auth, @repo/database only
 pnpm test
 
 # Setup CLI tests (not in turbo)

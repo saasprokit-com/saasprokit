@@ -24,7 +24,7 @@ pnpm kit-docs:dev                       # SaaSProKit's own docs (port 3006)
 pnpm build                              # All apps and packages (excludes kit-docs)
 pnpm check                              # Lint (Biome via ultracite)
 pnpm --filter web typecheck
-pnpm test                               # Unit tests via turbo (app, @repo/auth)
+pnpm test                               # Unit tests via turbo (web, @repo/auth)
 pnpm --filter web test:e2e              # Playwright
 ```
 
