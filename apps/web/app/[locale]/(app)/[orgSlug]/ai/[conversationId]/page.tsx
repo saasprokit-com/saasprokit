@@ -1,6 +1,6 @@
 import { SetBreadcrumbs } from "@repo/design-system/components/layout/breadcrumb-context";
 import { notFound } from "next/navigation";
-import { IMAGE_MODEL } from "@/lib/ai/models";
+import { IMAGE_MODEL, MOCK_IMAGE_MODEL } from "@/lib/ai/models";
 import {
   getAiQuotaStatus,
   getOwnedConversation,
@@ -39,7 +39,9 @@ export default async function ConversationPage({
         ]}
       />
       <ChatThread
-        canGenerateImages={isConfigured(IMAGE_MODEL)}
+        canGenerateImages={
+          isConfigured(IMAGE_MODEL) || isConfigured(MOCK_IMAGE_MODEL)
+        }
         chatModels={availableChatModels()}
         conversationId={conversation.id}
         initialMessages={conversation.messages}
