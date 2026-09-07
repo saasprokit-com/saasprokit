@@ -11,13 +11,6 @@
   "observability": {
     "enabled": true
   },
-  // saasprokit.com is a Custom Domain on the separate "saasprokit-site" worker.
-  // A zone route on the same hostname takes precedence for the paths it matches,
-  // so /docs lands here and every other path still hits the site worker. Two
-  // patterns rather than "/docs*", which would also swallow /docsfoo. Deploying
-  // these needs Workers Routes edit on the saasprokit.com zone, which the
-  // custom-domain-only config did not. docs.saasprokit.com stays attached so the
-  // old URLs still reach this worker for the 308s in next.config.mjs.
   "env": {
     "site": {
       "name": "saasprokit-docs",

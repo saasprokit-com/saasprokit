@@ -7,7 +7,6 @@ export function baseOptions(): BaseLayoutProps {
     nav: {
       title: (
         <>
-          {/* next/image does not apply the basePath to src. */}
           <Image
             alt=""
             height={24}

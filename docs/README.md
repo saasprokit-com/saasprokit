@@ -10,10 +10,21 @@ pnpm kit-docs:build
 pnpm kit-docs:deploy   # Cloudflare Workers, --env=site (maintainers only)
 ```
 
-Production URL is <https://saasprokit.com/docs> — a zone route layered on the marketing site's
-apex, not a hostname of its own (see the comments in `wrangler.jsonc`). The app is served under
-Next's `basePath: "/docs"`, so `/` is a 404 everywhere including local dev and Docker; the docs
-index is `/docs`. `docs.saasprokit.com` still resolves here and 308s to the new URLs.
+Production URL is <https://saasprokit.com/docs>. The app is served under Next's
+`basePath: "/docs"` (from `DOCS_PATH` in `lib/site.ts`, the single source for both the basePath
+and the canonical URLs), so `/` is a 404 everywhere including local dev; the docs index is `/docs`.
+
+### Why a zone route, not a hostname
+
+`saasprokit.com` is a Custom Domain on the separate `saasprokit-site` worker, so this worker cannot
+claim the hostname. It attaches as **zone routes**, which Cloudflare gives precedence over a Custom
+Domain for the paths they match: `/docs` lands here, every other path still hits the site worker.
+Two patterns rather than `/docs*`, which would also swallow `/docsfoo`. Deploying them needs
+**Workers Routes edit on the `saasprokit.com` zone** — the custom-domain-only config did not.
+
+`docs.saasprokit.com` stays attached so old URLs still reach this worker, where the two redirects in
+`next.config.ts` 308 them to the new host. Both opt out of the basePath: the first maps
+`/docs/:path+` one-to-one, the second sweeps every remaining old-host path to the docs index.
 
 It is a workspace package named `kit-docs`, excluded from the default `pnpm dev` / `pnpm build`
 fan-out so it never slows down app work. It deploys to Cloudflare Workers only — build it with

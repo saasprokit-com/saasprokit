@@ -52,8 +52,6 @@ export async function generateMetadata(
   return {
     title: page.data.title,
     description: page.data.description,
-    // Absolute: resolving page.url against metadataBase yields a trailing
-    // slash on the index, which Next then redirects away from.
     alternates: { canonical: docsUrl(page.url) },
     openGraph: {
       images: getPageImage(page).url,
