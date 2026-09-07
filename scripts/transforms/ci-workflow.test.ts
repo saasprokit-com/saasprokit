@@ -24,7 +24,7 @@ describe("stripCliCi", () => {
     expect(out).toContain("  typecheck:");
     expect(out).toContain("  test:");
     expect(out).toContain("run: pnpm test\n");
-    expect(out).toContain("run: pnpm --filter app typecheck");
+    expect(out).toContain("run: pnpm --filter web typecheck");
     expect(out).toContain("run: pnpm check");
   });
 
