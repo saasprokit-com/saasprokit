@@ -1,7 +1,7 @@
 import type { APIRequestContext } from "@playwright/test";
 
 import { BASE_URL } from "../fixtures/test-config";
-import { clearInbox, isMaildevAvailable, waitForEmailLink } from "./maildev";
+import { isMaildevAvailable, waitForEmailLink } from "./maildev";
 
 export async function ensureVerifiedUser(
   request: APIRequestContext,
@@ -17,9 +17,7 @@ export async function ensureVerifiedUser(
   }
 
   const maildevUp = await isMaildevAvailable();
-  if (maildevUp) {
-    await clearInbox();
-  }
+  const since = Date.now();
 
   await request.post("/api/auth/sign-up/email", {
     headers: { origin: BASE_URL },
@@ -38,6 +36,7 @@ export async function ensureVerifiedUser(
     const { url: verifyUrl } = await waitForEmailLink(user.email, "verify", {
       subjectContains: "verif",
       timeout: 10_000,
+      since,
     });
 
     await request.get(verifyUrl);

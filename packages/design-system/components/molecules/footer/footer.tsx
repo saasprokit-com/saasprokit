@@ -86,7 +86,7 @@ export function Footer({
                   </h3>
                   <ul className="space-y-3">
                     {section.links.map((link) => (
-                      <li key={link.href}>
+                      <li key={link.label}>
                         {link.external ? (
                           <a
                             className="text-muted-foreground text-sm transition-colors hover:text-foreground"
@@ -125,7 +125,7 @@ export function Footer({
                 <Link
                   className="text-muted-foreground text-sm transition-colors hover:text-foreground"
                   href={link.href}
-                  key={link.href}
+                  key={link.label}
                 >
                   {link.label}
                 </Link>
