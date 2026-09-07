@@ -2,7 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ORG_ROLES } from "@repo/auth/permissions";
-import { DataTableToolbar } from "@repo/design-system/components/data-table/toolbar";
+import { DataTableFacetedFilter } from "@repo/design-system/components/data-table/faceted-filter";
+import { DataTableViewOptions } from "@repo/design-system/components/data-table/view-options";
 import { Button } from "@repo/design-system/components/ui/button";
 import {
   Dialog,
@@ -36,12 +37,13 @@ import {
   MAX_INVITE_LINK_USES,
 } from "@repo/utils/organization";
 import type { Table } from "@tanstack/react-table";
-import { Copy, Plus } from "lucide-react";
+import { Copy, Plus, X } from "lucide-react";
 import { useParams } from "next/navigation";
 import {
   type ComponentType,
   startTransition,
   useActionState,
+  useEffect,
   useState,
 } from "react";
 import { useForm } from "react-hook-form";
@@ -49,6 +51,7 @@ import { toast } from "sonner";
 
 import { useActionFieldErrors } from "@/hooks/use-action-field-errors";
 import { useActionResult } from "@/hooks/use-action-result";
+import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { initialFormState } from "@/lib/forms";
 import { SEARCH_DEBOUNCE_MS } from "../../utils";
 import { createInviteLinkAction } from "../actions";
@@ -83,6 +86,26 @@ export function InviteLinksToolbar({
   filters = [],
 }: InviteLinksToolbarProps) {
   const { orgSlug } = useParams<{ orgSlug: string }>();
+  const isFiltered = table.getState().columnFilters.length > 0;
+
+  // Search input
+  const tokenColumn = table.getColumn("token");
+  const urlSearchValue = (tokenColumn?.getFilterValue() as string) ?? "";
+  const [searchInput, setSearchInput] = useState(urlSearchValue);
+
+  useEffect(() => {
+    setSearchInput(urlSearchValue);
+  }, [urlSearchValue]);
+
+  const debouncedSetFilter = useDebouncedCallback((value: string) => {
+    tokenColumn?.setFilterValue(value || undefined);
+  }, SEARCH_DEBOUNCE_MS);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSearchInput(value);
+    debouncedSetFilter(value);
+  };
 
   // Create link dialog state
   const [createOpen, setCreateOpen] = useState(false);
@@ -134,187 +157,216 @@ export function InviteLinksToolbar({
   };
 
   return (
-    <DataTableToolbar
-      actions={
-        <>
-          {canManage && selectedLinks.length > 0 && (
-            <RevokeInviteLinksDialog
-              errors={errors}
-              onSuccess={handleClearSelection}
-              organizationId={organizationId}
-              selectedLinks={selectedLinks}
+    <div className="flex items-center justify-between">
+      <div className="flex flex-1 items-center gap-2">
+        <Input
+          className="h-8 w-[150px] lg:w-[250px]"
+          onChange={handleSearchChange}
+          placeholder="Filter invite links..."
+          value={searchInput}
+        />
+        {filters.map((filter) => {
+          const column = table.getColumn(filter.columnId);
+          if (!column) {
+            return null;
+          }
+          return (
+            <DataTableFacetedFilter
+              column={column}
+              key={filter.columnId}
+              options={filter.options}
+              title={filter.title}
             />
-          )}
-          {canManage && (
-            <Dialog
-              onOpenChange={(open) => {
-                setCreateOpen(open);
-                if (!open) {
-                  resetForm();
-                }
-              }}
-              open={createOpen}
-            >
-              <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Link
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create Invite Link</DialogTitle>
-                  <DialogDescription>
-                    Create a shareable link that anyone can use to join your
-                    organization.
-                  </DialogDescription>
-                </DialogHeader>
+          );
+        })}
+        {isFiltered && (
+          <Button
+            onClick={() => {
+              table.resetColumnFilters();
+              setSearchInput("");
+            }}
+            size="sm"
+            variant="ghost"
+          >
+            Reset
+            <X />
+          </Button>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        {canManage && selectedLinks.length > 0 && (
+          <RevokeInviteLinksDialog
+            errors={errors}
+            onSuccess={handleClearSelection}
+            organizationId={organizationId}
+            selectedLinks={selectedLinks}
+          />
+        )}
+        {canManage && (
+          <Dialog
+            onOpenChange={(open) => {
+              setCreateOpen(open);
+              if (!open) {
+                resetForm();
+              }
+            }}
+            open={createOpen}
+          >
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Link
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create Invite Link</DialogTitle>
+                <DialogDescription>
+                  Create a shareable link that anyone can use to join your
+                  organization.
+                </DialogDescription>
+              </DialogHeader>
 
-                {newLinkUrl ? (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Your invite link</Label>
-                      <div className="flex gap-2">
-                        <Input readOnly value={newLinkUrl} />
-                        <Button
-                          onClick={() => {
-                            navigator.clipboard.writeText(newLinkUrl);
-                            toast.success("Copied!");
-                          }}
-                          size="icon"
-                          variant="outline"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
+              {newLinkUrl ? (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Your invite link</Label>
+                    <div className="flex gap-2">
+                      <Input readOnly value={newLinkUrl} />
+                      <Button
+                        onClick={() => {
+                          navigator.clipboard.writeText(newLinkUrl);
+                          toast.success("Copied!");
+                        }}
+                        size="icon"
+                        variant="outline"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <DialogFooter>
-                      <Button onClick={() => setCreateOpen(false)}>Done</Button>
-                    </DialogFooter>
                   </div>
-                ) : (
-                  <Form {...form}>
-                    <form
-                      className="space-y-4"
-                      onSubmit={form.handleSubmit(onSubmit)}
-                    >
-                      <FormField
-                        control={form.control}
-                        name="role"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Role</FormLabel>
-                            <Select
-                              disabled={isPending}
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value={ORG_ROLES.MEMBER}>
-                                  Member
-                                </SelectItem>
-                                <SelectItem value={ORG_ROLES.ADMIN}>
-                                  Admin
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="expiresInDays"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Expires in</FormLabel>
-                            <Select
-                              disabled={isPending}
-                              onValueChange={(v) =>
-                                field.onChange(Number.parseInt(v, 10))
-                              }
-                              value={String(field.value)}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="1">1 day</SelectItem>
-                                <SelectItem value="7">7 days</SelectItem>
-                                <SelectItem value="14">14 days</SelectItem>
-                                <SelectItem value="30">30 days</SelectItem>
-                                <SelectItem value="90">90 days</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="maxUses"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Max uses (optional)</FormLabel>
+                  <DialogFooter>
+                    <Button onClick={() => setCreateOpen(false)}>Done</Button>
+                  </DialogFooter>
+                </div>
+              ) : (
+                <Form {...form}>
+                  <form
+                    className="space-y-4"
+                    onSubmit={form.handleSubmit(onSubmit)}
+                  >
+                    <FormField
+                      control={form.control}
+                      name="role"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Role</FormLabel>
+                          <Select
+                            disabled={isPending}
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
                             <FormControl>
-                              <Input
-                                disabled={isPending}
-                                max={MAX_INVITE_LINK_USES}
-                                min="1"
-                                name={field.name}
-                                onBlur={field.onBlur}
-                                onChange={(e) =>
-                                  field.onChange(
-                                    e.target.value === ""
-                                      ? undefined
-                                      : Number(e.target.value)
-                                  )
-                                }
-                                placeholder="Unlimited"
-                                ref={field.ref}
-                                type="number"
-                                value={field.value ?? ""}
-                              />
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
                             </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                            <SelectContent>
+                              <SelectItem value={ORG_ROLES.MEMBER}>
+                                Member
+                              </SelectItem>
+                              <SelectItem value={ORG_ROLES.ADMIN}>
+                                Admin
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                      <DialogFooter>
-                        <Button
-                          onClick={() => setCreateOpen(false)}
-                          type="button"
-                          variant="outline"
-                        >
-                          Cancel
-                        </Button>
-                        <Button disabled={isPending} type="submit">
-                          {isPending ? "Creating..." : "Create Link"}
-                        </Button>
-                      </DialogFooter>
-                    </form>
-                  </Form>
-                )}
-              </DialogContent>
-            </Dialog>
-          )}
-        </>
-      }
-      filters={filters}
-      searchDebounceMs={SEARCH_DEBOUNCE_MS}
-      searchKey="token"
-      searchPlaceholder="Filter invite links..."
-      table={table}
-    />
+                    <FormField
+                      control={form.control}
+                      name="expiresInDays"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Expires in</FormLabel>
+                          <Select
+                            disabled={isPending}
+                            onValueChange={(v) =>
+                              field.onChange(Number.parseInt(v, 10))
+                            }
+                            value={String(field.value)}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="1">1 day</SelectItem>
+                              <SelectItem value="7">7 days</SelectItem>
+                              <SelectItem value="14">14 days</SelectItem>
+                              <SelectItem value="30">30 days</SelectItem>
+                              <SelectItem value="90">90 days</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="maxUses"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Max uses (optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              disabled={isPending}
+                              max={MAX_INVITE_LINK_USES}
+                              min="1"
+                              name={field.name}
+                              onBlur={field.onBlur}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === ""
+                                    ? undefined
+                                    : Number(e.target.value)
+                                )
+                              }
+                              placeholder="Unlimited"
+                              ref={field.ref}
+                              type="number"
+                              value={field.value ?? ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <DialogFooter>
+                      <Button
+                        onClick={() => setCreateOpen(false)}
+                        type="button"
+                        variant="outline"
+                      >
+                        Cancel
+                      </Button>
+                      <Button disabled={isPending} type="submit">
+                        {isPending ? "Creating..." : "Create Link"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              )}
+            </DialogContent>
+          </Dialog>
+        )}
+        <DataTableViewOptions table={table} />
+      </div>
+    </div>
   );
 }

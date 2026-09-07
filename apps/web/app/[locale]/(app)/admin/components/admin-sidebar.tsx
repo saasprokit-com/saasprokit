@@ -1,20 +1,44 @@
 "use client";
 
 import { NavGroup } from "@repo/design-system/components/layout/nav-group";
-import { NavUser } from "@repo/design-system/components/layout/nav-user";
 import type {
   NavGroup as NavGroupType,
   User,
 } from "@repo/design-system/components/layout/types";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/design-system/components/ui/avatar";
 import { Badge } from "@repo/design-system/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@repo/design-system/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
 } from "@repo/design-system/components/ui/sidebar";
-import { ArrowLeft, Building2, LayoutDashboard, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  ChevronsUpDown,
+  LayoutDashboard,
+  Lock,
+  LogOut,
+  User as UserIcon,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOutAction } from "@/lib/auth/actions";
@@ -112,13 +136,74 @@ export function AdminSidebar({ user, locale, isAdmin }: AdminSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter>
-        <NavUser
-          accountUrl={`/${locale}${accountRoutes.profile()}`}
-          onSignOut={handleSignOut}
-          securityUrl={`/${locale}${accountRoutes.security()}`}
-          showDangerZone={false}
-          user={user}
-        />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  size="lg"
+                >
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarImage alt={user.name} src={user.avatar} />
+                    <AvatarFallback className="rounded-lg">
+                      {initialsOf(user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-start text-sm leading-tight">
+                    <span className="truncate font-semibold">{user.name}</span>
+                    <span className="truncate text-xs">{user.email}</span>
+                  </div>
+                  <ChevronsUpDown className="ms-auto size-4" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56 rounded-lg"
+                side="right"
+                sideOffset={4}
+              >
+                <DropdownMenuLabel className="p-0 font-normal">
+                  <div className="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
+                    <Avatar className="h-8 w-8 rounded-lg">
+                      <AvatarImage alt={user.name} src={user.avatar} />
+                      <AvatarFallback className="rounded-lg">
+                        {initialsOf(user.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-start text-sm leading-tight">
+                      <span className="truncate font-semibold">
+                        {user.name}
+                      </span>
+                      <span className="truncate text-xs">{user.email}</span>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href={`/${locale}${accountRoutes.profile()}`}>
+                    <UserIcon />
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/${locale}${accountRoutes.security()}`}>
+                    <Lock />
+                    Security
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={handleSignOut}
+                >
+                  <LogOut />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
 
       <SidebarRail />

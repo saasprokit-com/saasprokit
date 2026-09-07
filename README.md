@@ -27,6 +27,7 @@ saasprokit/
 │   ├── email/      # Email template previews (port 3003)
 │   ├── storybook/  # Component library (port 6006)
 │   └── studio/     # Prisma Studio (port 3005)
+├── docs/           # SaaSProKit's own documentation (port 3006)
 └── packages/
     ├── auth/              # Better Auth config + dual RBAC + Stripe billing
     ├── database/          # Prisma schema + client
@@ -63,12 +64,12 @@ saasprokit/
 ### Development
 
 ```bash
-pnpm dev                      # All apps (main app: 3000)
+pnpm dev                      # All apps except kit-docs (main app: 3000)
 pnpm --filter app dev         # Main app only (port 3000)
 pnpm check                    # Lint (Biome via ultracite)
 pnpm test                     # Unit tests (Vitest)
 pnpm --filter app test:e2e    # E2E tests (Playwright)
-pnpm build                    # Build all apps
+pnpm build                    # Build all apps except kit-docs
 ```
 
 ## License

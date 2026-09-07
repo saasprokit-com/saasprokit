@@ -9,11 +9,10 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 ## Site config
 
-`SiteConfig` describes the site's identity. It is a plain value passed explicitly to every helper —
-there is no module-level state and nothing to initialise before use:
+`configureSeo()` sets a single, module-level `SiteConfig` that the rest of the package reads via `getSiteConfig()`:
 
 ```ts
-// packages/seo/metadata.ts
+// packages/seo/config.ts
 export interface SiteConfig {
   name: string;
   description: string;
@@ -26,10 +25,10 @@ export interface SiteConfig {
 }
 ```
 
-The web app declares one in `apps/web/lib/seo-config.ts`:
+The web app configures it once in `apps/web/lib/seo-config.ts`:
 
 ```ts
-import type { SiteConfig } from "@repo/seo";
+import { configureSeo, type SiteConfig } from "@repo/seo";
 import { env } from "@/lib/env";
 
 export const siteConfig: SiteConfig = {
@@ -39,32 +38,24 @@ export const siteConfig: SiteConfig = {
   ogImage: "/og-image.png",
   locale: "en_US",
 };
+
+configureSeo(siteConfig);
 ```
 
-Identity comes entirely from `NEXT_PUBLIC_APP_NAME` and `NEXT_PUBLIC_APP_URL` — the optional `twitterHandle`, `author`, and `links` fields are left unset, since the app has no per-customer values to put there.
+Identity comes entirely from `NEXT_PUBLIC_APP_NAME` and `NEXT_PUBLIC_APP_URL` — the optional `twitterHandle`, `author`, and `links` fields on `SiteConfig` are left unset, since the app has no per-customer values to put there.
 
-## Metadata
+`apps/web/app/[locale]/layout.tsx` imports this module (for its side effect) before calling anything else in `@repo/seo`.
 
-`createMetadata(properties, config)` builds a Next.js `Metadata` object: title, description, Open Graph, Twitter card, `robots` (full index/follow + Googlebot directives), and a canonical alternate. Anything you pass in `properties` is deep-merged over those defaults, so a page can override any field without restating the rest.
+## Default metadata
 
-Omit `title` and you get the site-wide template (`%s | AppName`); pass one and you get `Title | AppName`. Pass `image` to override the Open Graph image for a single page.
-
-The root layout uses it with no title, so every page inherits the template:
+`getDefaultMetadata()` builds a Next.js `Metadata` object from the site config: title template, description, Open Graph, Twitter card, `robots` (full index/follow + Googlebot directives), and a canonical alternate. It's used directly as the root layout's `metadata` export:
 
 ```ts
 // apps/web/app/[locale]/layout.tsx
-export const metadata = createMetadata(
-  { description: siteConfig.description },
-  siteConfig
-);
+export const metadata = getDefaultMetadata();
 ```
 
-A page supplies its own:
-
-```ts
-export const generateMetadata = async (): Promise<Metadata> =>
-  createMetadata({ title: "Billing", description: "Manage your subscription." }, siteConfig);
-```
+> `keywords` is currently hardcoded to a generic list (`"blog", "technology", "development", ...`) — update `packages/seo/metadata.ts` if you want keywords tailored to your product.
 
 ## Structured data (JSON-LD)
 
@@ -73,18 +64,18 @@ The `JsonLd` component renders an escaped `application/ld+json` script tag. Exac
 ```tsx
 import { generateOrganizationSchema, generateWebSiteSchema, JsonLd } from "@repo/seo";
 
-<JsonLd code={generateOrganizationSchema(siteConfig)} />
-<JsonLd code={generateWebSiteSchema(siteConfig)} />
+<JsonLd code={generateOrganizationSchema()} />
+<JsonLd code={generateWebSiteSchema()} />
 ```
 
-- **`generateOrganizationSchema(config)`** — `Organization` schema from the config you pass (name, url, logo, a generic `ContactPoint`). `sameAs` reads `links.twitter`/`links.github`, but the app's `siteConfig` sets no `links`, so it's always an empty array.
-- **`generateWebSiteSchema(config)`** — `WebSite` schema with a `SearchAction` pointing at `/search?q={search_term_string}`.
+- **`generateOrganizationSchema()`** — `Organization` schema from `SiteConfig` (name, url, logo, a generic `ContactPoint`). `sameAs` reads `links.twitter`/`links.github`, but the app's `siteConfig` sets no `links`, so it's always an empty array.
+- **`generateWebSiteSchema()`** — `WebSite` schema with a `SearchAction` pointing at `/search?q={search_term_string}`.
 
 <Callout type="warn">
 The JSON-LD `SearchAction` targets `/search`, but the app has no `/search` route. Remove or replace that `potentialAction` before relying on sitelinks search box rich results.
 </Callout>
 
-To add another schema type (Article, FAQPage, etc.), add a generator function to `packages/seo/schemas.tsx` following the same pattern — typed against `schema-dts`, taking a `SiteConfig` argument — and render it with the same `JsonLd` component. None of these exist yet; add them when you actually have the page type to back them (e.g. don't add `Product` schema without product pages).
+To add another schema type (Article, FAQPage, etc.), add a generator function to `packages/seo/schemas.tsx` following the same pattern — typed against `schema-dts`, reading from `getSiteConfig()` — and render it with the same `JsonLd` component. None of these exist yet; add them when you actually have the page type to back them (e.g. don't add `Product` schema without product pages).
 
 ## Sitemap and robots
 
