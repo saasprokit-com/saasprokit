@@ -76,7 +76,8 @@ docker compose -f docker-compose.e2e.yml up     # isolated E2E stack
 UI 1080), `web` (3000), `docs` (3004), `email` (3003), `storybook` (6006), `studio`
 (3005). The `web` / `studio` containers override `DATABASE_URL` to the container
 host `postgres:5432`. The `docs` service is `apps/docs` — the customer's own,
-empty-by-default docs site (port 3004).
+empty-by-default docs site. SaaSProKit's own documentation is the root `docs/`
+folder (`kit-docs`, port 3006); it has no compose service, run `pnpm kit-docs:dev`.
 
 `docker-compose.e2e.yml` runs an isolated `e2e-postgres` on **5433** (→5432, tmpfs,
 no persistent volume) plus a `maildev` service, to avoid clashing with the dev

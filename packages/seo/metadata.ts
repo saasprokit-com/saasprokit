@@ -1,35 +1,27 @@
-import merge from "lodash.merge";
 import type { Metadata } from "next";
+import { getSiteConfig } from "./config";
 
-export interface SiteConfig {
-  author?: { name: string; url?: string };
-  description: string;
-  links?: { twitter?: string; github?: string };
-  locale?: string;
-  name: string;
-  ogImage?: string;
-  twitterHandle?: string;
-  url: string;
-}
+// Default metadata for the site
+export const getDefaultMetadata = (): Metadata => {
+  const config = getSiteConfig();
 
-type MetadataGenerator = Omit<Metadata, "description" | "title"> & {
-  title?: string;
-  description: string;
-  image?: string;
-};
-
-export const createMetadata = (
-  { title, description, image, ...properties }: MetadataGenerator,
-  config: SiteConfig
-): Metadata => {
-  const parsedTitle = title
-    ? `${title} | ${config.name}`
-    : { default: config.name, template: `%s | ${config.name}` };
-
-  const defaultMetadata: Metadata = {
+  return {
     metadataBase: new URL(config.url),
-    title: parsedTitle,
-    description,
+    title: {
+      default: config.name,
+      template: `%s | ${config.name}`,
+    },
+    description: config.description,
+    keywords: [
+      "blog",
+      "technology",
+      "development",
+      "programming",
+      "web development",
+      "software engineering",
+      "tutorials",
+      "guides",
+    ],
     authors: config.author ? [config.author] : undefined,
     creator: config.name,
     publisher: config.name,
@@ -43,8 +35,8 @@ export const createMetadata = (
       locale: config.locale || "en_US",
       url: config.url,
       siteName: config.name,
-      title: title ?? config.name,
-      description,
+      title: config.name,
+      description: config.description,
       images: config.ogImage
         ? [
             {
@@ -58,8 +50,8 @@ export const createMetadata = (
     },
     twitter: {
       card: "summary_large_image",
-      title: title ?? config.name,
-      description,
+      title: config.name,
+      description: config.description,
       images: config.ogImage ? [config.ogImage] : undefined,
       creator: config.twitterHandle,
     },
@@ -78,19 +70,4 @@ export const createMetadata = (
       canonical: config.url,
     },
   };
-
-  const metadata: Metadata = merge(defaultMetadata, properties);
-
-  if (image && metadata.openGraph) {
-    metadata.openGraph.images = [
-      {
-        url: image,
-        width: 1200,
-        height: 630,
-        alt: title ?? config.name,
-      },
-    ];
-  }
-
-  return metadata;
 };

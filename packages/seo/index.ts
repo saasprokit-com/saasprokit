@@ -1,7 +1,10 @@
+// Config
+
+export { configureSeo, getSiteConfig, type SiteConfig } from "./config";
 // JSON-LD Component
 export { JsonLd } from "./json-ld";
 // Metadata helpers
-export { createMetadata, type SiteConfig } from "./metadata";
+export { getDefaultMetadata } from "./metadata";
 // Schema generators
 export {
   generateOrganizationSchema,

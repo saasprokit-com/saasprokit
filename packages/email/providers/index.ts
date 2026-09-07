@@ -1,114 +1,91 @@
-import { render } from "@react-email/render";
-import nodemailer from "nodemailer";
-import type Mail from "nodemailer/lib/mailer";
-import type { ReactElement } from "react";
-import { Resend } from "resend";
 import { keys } from "../keys";
+import { NodemailerProvider } from "./nodemailer";
+import { ResendProvider } from "./resend";
+import type { EmailProvider } from "./types";
 
+// Validated environment variables
 const env = keys();
 
-export interface SendEmailOptions {
-  from?: string;
-  react: ReactElement;
-  subject: string;
-  to: string | string[];
-}
+export { NodemailerProvider } from "./nodemailer";
 
-export interface SendEmailResult {
-  error?: Error;
-  messageId?: string;
-  success: boolean;
-}
+// Re-export providers for direct use if needed
+export { ResendProvider } from "./resend";
+// Re-export types
+export type {
+  EmailProvider,
+  SendEmailOptions,
+  SendEmailResult,
+  SMTPConfig,
+} from "./types";
 
-let resendClient: Resend | undefined;
+/**
+ * Cached provider instance (singleton pattern)
+ */
+let cachedProvider: EmailProvider | null = null;
 
-async function sendViaResend(
-  options: SendEmailOptions
-): Promise<SendEmailResult> {
-  const apiKey = env.RESEND_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      "RESEND_API_KEY environment variable is required for Resend provider"
-    );
+function detectProvider(): "resend" | "nodemailer" {
+  // Production with Resend API key → use Resend
+  if (process.env.NODE_ENV === "production" && env.RESEND_API_KEY) {
+    return "resend";
   }
-  resendClient ??= new Resend(apiKey);
 
-  try {
-    const { data, error } = await resendClient.emails.send({
-      from: options.from!,
-      to: options.to,
-      subject: options.subject,
-      react: options.react,
-    });
+  // Development or no Resend key → use Nodemailer
+  return "nodemailer";
+}
 
-    if (error) {
-      return { success: false, error: new Error(error.message) };
+/**
+ * Provider selection priority:
+ * 1. Explicit EMAIL_PROVIDER env var
+ * 2. Auto-detection based on environment
+ *
+ * Auto-detection logic:
+ * - Production + RESEND_API_KEY → Resend
+ * - Development or no API key → Nodemailer (localhost:1025)
+ */
+export function getEmailProvider(): EmailProvider {
+  if (cachedProvider) {
+    return cachedProvider;
+  }
+
+  // Determine provider type
+  const providerType =
+    (env.EMAIL_PROVIDER as "resend" | "nodemailer") || detectProvider();
+
+  if (providerType === "resend") {
+    const apiKey = env.RESEND_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        "RESEND_API_KEY environment variable is required for Resend provider"
+      );
     }
-
-    return { success: true, messageId: data?.id };
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err : new Error(String(err)),
-    };
-  }
-}
-
-let transporter: Mail | undefined;
-
-function getTransporter() {
-  if (transporter) {
-    return transporter;
-  }
-
-  const transportOptions = {
-    host: env.SMTP_HOST,
-    port: env.SMTP_PORT,
-    secure: env.SMTP_SECURE,
-    pool: env.SMTP_POOL,
-    auth: env.SMTP_USER
-      ? { user: env.SMTP_USER, pass: env.SMTP_PASS }
-      : undefined,
-    tls:
-      env.SMTP_HOST === "localhost" ? { rejectUnauthorized: false } : undefined,
-  };
-  transporter = nodemailer.createTransport(transportOptions);
-
-  return transporter;
-}
-
-async function sendViaNodemailer(
-  options: SendEmailOptions
-): Promise<SendEmailResult> {
-  try {
-    const html = await render(options.react);
-    const text = await render(options.react, { plainText: true });
-
-    const info = await getTransporter().sendMail({
-      from: options.from,
-      to: Array.isArray(options.to) ? options.to.join(", ") : options.to,
-      subject: options.subject,
-      html,
-      text,
+    cachedProvider = new ResendProvider(apiKey);
+  } else {
+    cachedProvider = new NodemailerProvider({
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
+      secure: env.SMTP_SECURE,
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASS,
+      pool: env.SMTP_POOL,
     });
-
-    return { success: true, messageId: info.messageId };
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err : new Error(String(err)),
-    };
   }
+
+  return cachedProvider;
 }
 
-export function sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
-  const provider =
-    env.EMAIL_PROVIDER ??
-    (process.env.NODE_ENV === "production" && env.RESEND_API_KEY
-      ? "resend"
-      : "nodemailer");
+/**
+ * Reset the cached provider (useful for testing)
+ */
+export function resetEmailProvider(): void {
+  cachedProvider = null;
+}
 
-  return provider === "resend"
-    ? sendViaResend(options)
-    : sendViaNodemailer(options);
+/**
+ * Get the current provider name without initializing
+ */
+export function getProviderName(): string {
+  if (cachedProvider) {
+    return cachedProvider.name;
+  }
+  return env.EMAIL_PROVIDER || detectProvider();
 }

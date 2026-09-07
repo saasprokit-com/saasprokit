@@ -7,7 +7,6 @@ import {
   Html,
   Preview,
   Section,
-  Tailwind,
   Text,
 } from "@react-email/components";
 
@@ -23,59 +22,101 @@ export default function TwoFactorOTPEmail({
   expiresInMinutes = 5,
 }: TwoFactorOTPEmailProps) {
   return (
-    <Tailwind>
-      <Html>
-        <Head />
-        <Preview>Use this code to complete your sign-in</Preview>
-        <Body className="bg-[#f6f9fc] font-[-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,'Helvetica_Neue',Ubuntu,sans-serif]">
-          <Container className="mx-auto my-0 max-w-[560px] rounded-[8px] bg-white px-[20px] py-[40px]">
-            <Heading
-              as="h1"
-              className="m-0 mb-[24px] text-center font-bold text-[#1a1a1a] text-[24px] leading-[32px]"
-            >
-              Verification Code
-            </Heading>
+    <Html>
+      <Head />
+      <Preview>Use this code to complete your sign-in</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          <Heading style={h1}>Verification Code</Heading>
 
-            <Text className="m-0 mb-[16px] text-[#525f7f] text-[16px] leading-[26px]">
-              Hi,
-            </Text>
+          <Text style={text}>Hi,</Text>
 
-            <Text className="m-0 mb-[16px] text-[#525f7f] text-[16px] leading-[26px]">
-              You're trying to sign in to your account. Use the verification
-              code below to complete your login:
-            </Text>
+          <Text style={text}>
+            You're trying to sign in to your account. Use the verification code
+            below to complete your login:
+          </Text>
 
-            <Section className="my-[24px] rounded-[8px] bg-[#f4f4f5] p-[24px] text-center">
-              <Text className="m-0 font-[monospace] font-bold text-[#1a1a1a] text-[36px] tracking-[8px]">
-                {otp}
-              </Text>
-            </Section>
+          <Section style={codeContainer}>
+            <Text style={code}>{otp}</Text>
+          </Section>
 
-            <Text className="m-0 mb-[16px] text-[#525f7f] text-[16px] leading-[26px]">
-              This code will expire in{" "}
-              <strong>{expiresInMinutes} minutes</strong>.
-            </Text>
+          <Text style={text}>
+            This code will expire in <strong>{expiresInMinutes} minutes</strong>
+            .
+          </Text>
 
-            <Hr className="my-[32px] border-[#e6ebf1]" />
+          <Hr style={hr} />
 
-            <Text className="m-0 mb-[8px] text-[#8898aa] text-[14px] leading-[22px]">
-              If you didn't try to sign in, someone else may be trying to access
-              your account. Please secure your account immediately by changing
-              your password.
-            </Text>
+          <Text style={footer}>
+            If you didn't try to sign in, someone else may be trying to access
+            your account. Please secure your account immediately by changing
+            your password.
+          </Text>
 
-            <Text className="m-0 mb-[8px] text-[#8898aa] text-[14px] leading-[22px]">
-              This email was sent to <strong>{userEmail}</strong> by SaaS App.
-            </Text>
-          </Container>
-        </Body>
-      </Html>
-    </Tailwind>
+          <Text style={footer}>
+            This email was sent to <strong>{userEmail}</strong> by SaaS App.
+          </Text>
+        </Container>
+      </Body>
+    </Html>
   );
 }
 
-TwoFactorOTPEmail.PreviewProps = {
-  userEmail: "user@example.com",
-  otp: "123456",
-  expiresInMinutes: 5,
-} satisfies TwoFactorOTPEmailProps;
+const main = {
+  backgroundColor: "#f6f9fc",
+  fontFamily:
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif',
+};
+
+const container = {
+  backgroundColor: "#ffffff",
+  margin: "0 auto",
+  padding: "40px 20px",
+  maxWidth: "560px",
+  borderRadius: "8px",
+};
+
+const h1 = {
+  color: "#1a1a1a",
+  fontSize: "24px",
+  fontWeight: "700",
+  lineHeight: "32px",
+  margin: "0 0 24px",
+  textAlign: "center" as const,
+};
+
+const text = {
+  color: "#525f7f",
+  fontSize: "16px",
+  lineHeight: "26px",
+  margin: "0 0 16px",
+};
+
+const codeContainer = {
+  backgroundColor: "#f4f4f5",
+  borderRadius: "8px",
+  margin: "24px 0",
+  padding: "24px",
+  textAlign: "center" as const,
+};
+
+const code = {
+  color: "#1a1a1a",
+  fontSize: "36px",
+  fontWeight: "700",
+  letterSpacing: "8px",
+  margin: "0",
+  fontFamily: "monospace",
+};
+
+const hr = {
+  borderColor: "#e6ebf1",
+  margin: "32px 0",
+};
+
+const footer = {
+  color: "#8898aa",
+  fontSize: "14px",
+  lineHeight: "22px",
+  margin: "0 0 8px",
+};

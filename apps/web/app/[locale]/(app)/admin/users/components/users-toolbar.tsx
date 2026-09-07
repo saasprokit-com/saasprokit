@@ -1,6 +1,9 @@
 "use client";
 
-import { DataTableToolbar } from "@repo/design-system/components/data-table/toolbar";
+import { DataTableFacetedFilter } from "@repo/design-system/components/data-table/faceted-filter";
+import { DataTableViewOptions } from "@repo/design-system/components/data-table/view-options";
+import { Button } from "@repo/design-system/components/ui/button";
+import { Input } from "@repo/design-system/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -9,10 +12,13 @@ import {
   SelectValue,
 } from "@repo/design-system/components/ui/select";
 import type { Table } from "@tanstack/react-table";
-import type { ComponentType } from "react";
+import { X } from "lucide-react";
+import { type ComponentType, useEffect, useState } from "react";
 
-import { SEARCH_DEBOUNCE_MS } from "../../../[orgSlug]/members/utils";
+import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import type { AdminUserRow } from "../queries";
+
+const SEARCH_DEBOUNCE_MS = 300;
 
 const statusOptions = [
   { label: "All statuses", value: "all" },
@@ -34,14 +40,55 @@ interface UsersToolbarProps {
 }
 
 export function UsersToolbar({ table, filters = [] }: UsersToolbarProps) {
+  const isFiltered = table.getState().columnFilters.length > 0;
+
+  const searchColumn = table.getColumn("name");
+  const urlSearchValue = (searchColumn?.getFilterValue() as string) ?? "";
+  const [searchInput, setSearchInput] = useState(urlSearchValue);
+
+  // Sync local input from URL state on back/forward
+  useEffect(() => {
+    setSearchInput(urlSearchValue);
+  }, [urlSearchValue]);
+
+  const debouncedSetFilter = useDebouncedCallback((value: string) => {
+    searchColumn?.setFilterValue(value || undefined);
+  }, SEARCH_DEBOUNCE_MS);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSearchInput(value);
+    debouncedSetFilter(value);
+  };
+
   // Status is a single-value filter (all/active/banned) — a select, not a
   // multi-select facet, so it stays compatible with the string-literal URL param.
   const statusColumn = table.getColumn("banned");
   const statusValue = (statusColumn?.getFilterValue() as string) ?? "all";
 
   return (
-    <DataTableToolbar
-      extraFilters={
+    <div className="flex items-center justify-between">
+      <div className="flex flex-1 items-center gap-2">
+        <Input
+          className="h-8 w-[150px] lg:w-[250px]"
+          onChange={handleSearchChange}
+          placeholder="Filter users..."
+          value={searchInput}
+        />
+        {filters.map((filter) => {
+          const column = table.getColumn(filter.columnId);
+          if (!column) {
+            return null;
+          }
+          return (
+            <DataTableFacetedFilter
+              column={column}
+              key={filter.columnId}
+              options={filter.options}
+              title={filter.title}
+            />
+          );
+        })}
         <Select
           onValueChange={(value) =>
             statusColumn?.setFilterValue(value === "all" ? undefined : value)
@@ -59,12 +106,23 @@ export function UsersToolbar({ table, filters = [] }: UsersToolbarProps) {
             ))}
           </SelectContent>
         </Select>
-      }
-      filters={filters}
-      searchDebounceMs={SEARCH_DEBOUNCE_MS}
-      searchKey="name"
-      searchPlaceholder="Filter users..."
-      table={table}
-    />
+        {isFiltered && (
+          <Button
+            onClick={() => {
+              table.resetColumnFilters();
+              setSearchInput("");
+            }}
+            size="sm"
+            variant="ghost"
+          >
+            Reset
+            <X />
+          </Button>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <DataTableViewOptions table={table} />
+      </div>
+    </div>
   );
 }
