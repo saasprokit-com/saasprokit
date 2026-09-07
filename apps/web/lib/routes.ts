@@ -101,6 +101,7 @@ export const ORG_PAGES = {
   TEAMS: "teams",
   INVITATION: "members/invitations",
   INVITE_LINKS: "members/invite-links",
+  AI: "ai",
 } as const;
 
 /**
@@ -113,6 +114,9 @@ export const orgRoutes = {
   membersInviteLinks: (slug: string) => `/${slug}/${ORG_PAGES.INVITE_LINKS}`,
   settings: (slug: string) => `/${slug}/${ORG_PAGES.SETTINGS}`,
   billing: (slug: string) => `/${slug}/${ORG_PAGES.BILLING}`,
+  ai: (slug: string) => `/${slug}/${ORG_PAGES.AI}`,
+  aiConversation: (slug: string, conversationId: string) =>
+    `/${slug}/${ORG_PAGES.AI}/${conversationId}`,
 } as const;
 
 export const accountRoutes = {
@@ -138,4 +142,11 @@ export const adminRoutes = {
   organizations: () => PAGE_ROUTES.ADMIN_ORGANIZATIONS,
   organization: (orgId: string) =>
     `${PAGE_ROUTES.ADMIN_ORGANIZATIONS}/${orgId}`,
+} as const;
+
+export const API_ROUTES = {
+  AUTH: "/api/auth",
+  HEALTH: "/api/health",
+  USER_ACTIVITY: "/api/user/activity",
+  AI_CHAT: "/api/ai/chat",
 } as const;

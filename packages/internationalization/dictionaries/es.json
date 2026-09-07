@@ -96,6 +96,10 @@
       "deleteUser": "Failed to delete user",
       "cannotBanSelf": "You cannot ban your own account",
       "cannotDeleteSelf": "You cannot delete your own account",
+      "createConversation": "No se pudo iniciar la conversación",
+      "deleteConversation": "No se pudo eliminar la conversación",
+      "generateImage": "No se pudo generar la imagen",
+      "aiQuotaExceeded": "Tu organización alcanzó su límite mensual de IA",
       "unknownError": "Se produjo un error"
     }
   }

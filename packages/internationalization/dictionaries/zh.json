@@ -96,6 +96,10 @@
       "deleteUser": "Failed to delete user",
       "cannotBanSelf": "You cannot ban your own account",
       "cannotDeleteSelf": "You cannot delete your own account",
+      "createConversation": "无法开始对话",
+      "deleteConversation": "无法删除对话",
+      "generateImage": "无法生成图片",
+      "aiQuotaExceeded": "您的组织已达到本月 AI 使用上限",
       "unknownError": "发生错误"
     }
   }
