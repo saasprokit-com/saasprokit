@@ -246,4 +246,27 @@ describe("POST /api/ai/chat", () => {
       }
     );
   });
+
+  it("warns when coerced token usage is zero", async () => {
+    await POST(request(validBody));
+    const streamArgs = mocks.streamText.mock.calls[0]?.[0] as {
+      onEnd: (event: { totalUsage: unknown }) => Promise<void>;
+    };
+
+    await streamArgs.onEnd({ totalUsage: {} });
+
+    expect(mocks.recordAiUsage).toHaveBeenCalledWith({
+      organizationId: "org_1",
+      userId: "user_1",
+      modelId: "anthropic:claude-opus-5",
+      totalTokens: 0,
+    });
+    expect(mocks.logger.warn).toHaveBeenCalledWith(
+      "Chat usage recorded zero tokens",
+      {
+        conversationId: "c1",
+        modelId: "anthropic:claude-opus-5",
+      }
+    );
+  });
 });

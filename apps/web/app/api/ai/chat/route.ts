@@ -106,11 +106,18 @@ export async function POST(request: Request) {
     providerOptions: { anthropic: { thinking: { type: "adaptive" } } },
     onEnd: async ({ totalUsage }) => {
       try {
+        const totalTokens = totalTokensOf(totalUsage);
+        if (totalTokens === 0) {
+          logger.warn("Chat usage recorded zero tokens", {
+            conversationId: id,
+            modelId,
+          });
+        }
         await recordAiUsage({
           organizationId: conversation.organizationId,
           userId,
           modelId,
-          totalTokens: totalTokensOf(totalUsage),
+          totalTokens,
         });
       } catch (error) {
         logger.error("Failed to record chat usage", {
