@@ -19,7 +19,7 @@
     "analyze": "turbo analyze",
     "boundaries": "turbo boundaries",
     "bump-deps": "npx npm-check-updates --deep -u -x recharts && pnpm install",
-    "bump-ui": "npx shadcn@latest add --all --overwrite -c packages/design-system",
+    "bump-ui": "npx shadcn@latest add alert alert-dialog avatar badge breadcrumb button card chart checkbox collapsible command dialog dropdown-menu form input label navigation-menu popover progress select separator sheet sidebar skeleton sonner switch table tabs textarea toggle toggle-group tooltip --overwrite -c packages/design-system",
     "skills:install": "npx --yes skills experimental_install",
     "migrate": "cd packages/database && npx prisma format && npx prisma generate && npx prisma db push",
     "clean": "git clean -xdf node_modules",

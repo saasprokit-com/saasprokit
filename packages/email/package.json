@@ -8,16 +8,12 @@
     ".": "./index.ts",
     "./providers": "./providers/index.ts",
     "./templates/*": "./templates/*",
-    "./components": "./components/index.ts",
-    "./components/*": "./components/*",
-    "./i18n": "./i18n/index.ts",
-    "./i18n/*": "./i18n/*",
     "./keys": "./keys.ts"
   },
   "scripts": {
     "dev": "email dev --port 3030 --dir templates",
     "preview": "email preview --dir templates",
-    "export": "email export --out-dir dist --dir templates"
+    "export": "email export --outDir dist --dir templates"
   },
   "dependencies": {
     "@react-email/components": "^1.0.12",

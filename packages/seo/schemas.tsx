@@ -1,10 +1,10 @@
 import type { Organization, WebSite, WithContext } from "schema-dts";
-import { getSiteConfig } from "./config";
+import type { SiteConfig } from "./metadata";
 
 // Organization JSON-LD Schema
-export function generateOrganizationSchema(): WithContext<Organization> {
-  const config = getSiteConfig();
-
+export function generateOrganizationSchema(
+  config: SiteConfig
+): WithContext<Organization> {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -23,9 +23,9 @@ export function generateOrganizationSchema(): WithContext<Organization> {
 }
 
 // WebSite JSON-LD Schema (for search box)
-export function generateWebSiteSchema(): WithContext<WebSite> {
-  const config = getSiteConfig();
-
+export function generateWebSiteSchema(
+  config: SiteConfig
+): WithContext<WebSite> {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",

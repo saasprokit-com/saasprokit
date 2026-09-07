@@ -8,6 +8,7 @@ import {
   Html,
   Preview,
   Section,
+  Tailwind,
   Text,
 } from "@react-email/components";
 
@@ -29,171 +30,107 @@ export default function SubscriptionStarted({
   dashboardUrl = "https://example.com/user",
 }: SubscriptionStartedProps) {
   return (
-    <Html>
-      <Head />
-      <Preview>Welcome to {planName} - Your subscription is active!</Preview>
-      <Body style={main}>
-        <Container style={container}>
-          <Section style={successBanner}>
-            <Text style={successText}>Subscription Activated</Text>
-          </Section>
+    <Tailwind>
+      <Html>
+        <Head />
+        <Preview>Welcome to {planName} - Your subscription is active!</Preview>
+        <Body className="bg-[#f6f9fc] font-[-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,'Helvetica_Neue',Ubuntu,sans-serif]">
+          <Container className="mx-auto my-0 max-w-[560px] rounded-[8px] bg-white px-[20px] py-[40px]">
+            <Section className="mb-[24px] rounded-[8px] bg-[#dcfce7] p-[12px] text-center">
+              <Text className="m-0 font-semibold text-[#166534] text-[14px]">
+                Subscription Activated
+              </Text>
+            </Section>
 
-          <Heading style={h1}>Welcome to {planName}!</Heading>
+            <Heading
+              as="h1"
+              className="m-0 mb-[24px] text-center font-bold text-[#1a1a1a] text-[24px] leading-[32px]"
+            >
+              Welcome to {planName}!
+            </Heading>
 
-          <Text style={text}>Hi {userName},</Text>
-
-          <Text style={text}>
-            Thank you for subscribing! Your <strong>{planName}</strong> plan is
-            now active, and you have access to all premium features.
-          </Text>
-
-          <Section style={detailsBox}>
-            <Text style={detailLabel}>Plan</Text>
-            <Text style={detailValue}>{planName}</Text>
-
-            <Text style={detailLabel}>Billing</Text>
-            <Text style={detailValue}>
-              {amount}/{billingInterval}
+            <Text className="m-0 mb-[16px] text-[#525f7f] text-[16px] leading-[26px]">
+              Hi {userName},
             </Text>
 
-            <Text style={detailLabel}>Next Billing Date</Text>
-            <Text style={detailValue}>{nextBillingDate}</Text>
-          </Section>
+            <Text className="m-0 mb-[16px] text-[#525f7f] text-[16px] leading-[26px]">
+              Thank you for subscribing! Your <strong>{planName}</strong> plan
+              is now active, and you have access to all premium features.
+            </Text>
 
-          <Text style={text}>Here's what you can do with your new plan:</Text>
+            <Section className="my-[24px] rounded-[8px] bg-[#f9fafb] p-[20px]">
+              <Text className="m-0 mb-[4px] font-semibold text-[#6b7280] text-[12px] uppercase">
+                Plan
+              </Text>
+              <Text className="m-0 mb-[16px] text-[#1f2937] text-[14px]">
+                {planName}
+              </Text>
 
-          <Section style={featuresBox}>
-            <Text style={featureItem}>Unlimited articles</Text>
-            <Text style={featureItem}>Advanced analytics</Text>
-            <Text style={featureItem}>Priority support</Text>
-            <Text style={featureItem}>Create organizations</Text>
-          </Section>
+              <Text className="m-0 mb-[4px] font-semibold text-[#6b7280] text-[12px] uppercase">
+                Billing
+              </Text>
+              <Text className="m-0 mb-[16px] text-[#1f2937] text-[14px]">
+                {amount}/{billingInterval}
+              </Text>
 
-          <Section style={buttonContainer}>
-            <Button href={dashboardUrl} style={button}>
-              Go to Dashboard
-            </Button>
-          </Section>
+              <Text className="m-0 mb-[4px] font-semibold text-[#6b7280] text-[12px] uppercase">
+                Next Billing Date
+              </Text>
+              <Text className="m-0 mb-[16px] text-[#1f2937] text-[14px]">
+                {nextBillingDate}
+              </Text>
+            </Section>
 
-          <Hr style={hr} />
+            <Text className="m-0 mb-[16px] text-[#525f7f] text-[16px] leading-[26px]">
+              Here's what you can do with your new plan:
+            </Text>
 
-          <Text style={footer}>
-            You can manage your subscription anytime from your account settings.
-          </Text>
+            <Section className="my-[24px] rounded-[8px] bg-[#f0f9ff] p-[20px]">
+              <Text className="m-0 mb-[8px] pl-[20px] text-[#0369a1] text-[14px]">
+                Unlimited articles
+              </Text>
+              <Text className="m-0 mb-[8px] pl-[20px] text-[#0369a1] text-[14px]">
+                Advanced analytics
+              </Text>
+              <Text className="m-0 mb-[8px] pl-[20px] text-[#0369a1] text-[14px]">
+                Priority support
+              </Text>
+              <Text className="m-0 mb-[8px] pl-[20px] text-[#0369a1] text-[14px]">
+                Create organizations
+              </Text>
+            </Section>
 
-          <Text style={footer}>Thank you for choosing SaaS App!</Text>
-        </Container>
-      </Body>
-    </Html>
+            <Section className="my-[32px] text-center">
+              <Button
+                className="inline-block rounded-[8px] bg-[#6366f1] px-[32px] py-[12px] text-center font-semibold text-[16px] text-white no-underline"
+                href={dashboardUrl}
+              >
+                Go to Dashboard
+              </Button>
+            </Section>
+
+            <Hr className="my-[32px] border-[#e6ebf1]" />
+
+            <Text className="m-0 mb-[8px] text-[#8898aa] text-[14px] leading-[22px]">
+              You can manage your subscription anytime from your account
+              settings.
+            </Text>
+
+            <Text className="m-0 mb-[8px] text-[#8898aa] text-[14px] leading-[22px]">
+              Thank you for choosing SaaS App!
+            </Text>
+          </Container>
+        </Body>
+      </Html>
+    </Tailwind>
   );
 }
 
-const main = {
-  backgroundColor: "#f6f9fc",
-  fontFamily:
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif',
-};
-
-const container = {
-  backgroundColor: "#ffffff",
-  margin: "0 auto",
-  padding: "40px 20px",
-  maxWidth: "560px",
-  borderRadius: "8px",
-};
-
-const successBanner = {
-  backgroundColor: "#dcfce7",
-  borderRadius: "8px",
-  padding: "12px",
-  marginBottom: "24px",
-  textAlign: "center" as const,
-};
-
-const successText = {
-  color: "#166534",
-  fontSize: "14px",
-  fontWeight: "600",
-  margin: "0",
-};
-
-const h1 = {
-  color: "#1a1a1a",
-  fontSize: "24px",
-  fontWeight: "700",
-  lineHeight: "32px",
-  margin: "0 0 24px",
-  textAlign: "center" as const,
-};
-
-const text = {
-  color: "#525f7f",
-  fontSize: "16px",
-  lineHeight: "26px",
-  margin: "0 0 16px",
-};
-
-const detailsBox = {
-  backgroundColor: "#f9fafb",
-  borderRadius: "8px",
-  padding: "20px",
-  margin: "24px 0",
-};
-
-const detailLabel = {
-  color: "#6b7280",
-  fontSize: "12px",
-  fontWeight: "600",
-  textTransform: "uppercase" as const,
-  margin: "0 0 4px",
-};
-
-const detailValue = {
-  color: "#1f2937",
-  fontSize: "14px",
-  margin: "0 0 16px",
-};
-
-const featuresBox = {
-  backgroundColor: "#f0f9ff",
-  borderRadius: "8px",
-  padding: "20px",
-  margin: "24px 0",
-};
-
-const featureItem = {
-  color: "#0369a1",
-  fontSize: "14px",
-  margin: "0 0 8px",
-  paddingLeft: "20px",
-  position: "relative" as const,
-};
-
-const buttonContainer = {
-  textAlign: "center" as const,
-  margin: "32px 0",
-};
-
-const button = {
-  backgroundColor: "#6366f1",
-  borderRadius: "8px",
-  color: "#ffffff",
-  fontSize: "16px",
-  fontWeight: "600",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  padding: "12px 32px",
-};
-
-const hr = {
-  borderColor: "#e6ebf1",
-  margin: "32px 0",
-};
-
-const footer = {
-  color: "#8898aa",
-  fontSize: "14px",
-  lineHeight: "22px",
-  margin: "0 0 8px",
-};
+SubscriptionStarted.PreviewProps = {
+  userName: "there",
+  planName: "Pro",
+  billingInterval: "monthly",
+  amount: "$19.00",
+  nextBillingDate: "January 13, 2025",
+  dashboardUrl: "https://example.com/user",
+} satisfies SubscriptionStartedProps;

@@ -8,7 +8,7 @@ A production-grade Next.js 16 monorepo using pnpm workspaces and Turborepo. Mult
 
 `apps/web/app/[locale]/` holds `(frontier)` (marketing home), `auth/`, `(app)` (dashboard: `[orgSlug]/`, `account/`, `admin/`, `invite/`), and top-level `org/` (post-login redirect hop **outside** `(app)`). Details: `routing` skill.
 
-`apps/docs` is an empty Fumadocs starter for the **customer's** product docs (port 3004). Root `docs/` is kit-docs (port 3006), excluded from default `pnpm dev` / `pnpm build`. `pnpm setup` keeps `apps/docs` and deletes `docs/` plus every kit-docs reference. Scratch plans/reviews go in **`.docs/`** (gitignored), never `docs/`.
+`apps/docs` is an empty Fumadocs starter for product docs (port 3004). Scratch plans/reviews go in **`.docs/`** (gitignored — note the leading dot; it is not the `docs/` folder).
 
 ## Commands
 
@@ -18,10 +18,9 @@ docker compose up postgres maildev
 pnpm migrate                            # prisma format + generate + db push
 pnpm --filter @repo/database db:seed    # wipes tables, seeds admin@example.com
 
-pnpm dev                                # All apps except kit-docs (main app: 3000)
+pnpm dev                                # All apps (main app: 3000)
 pnpm --filter app dev                   # Main app only
-pnpm kit-docs:dev                       # SaaSProKit's own docs (port 3006)
-pnpm build                              # All apps and packages (excludes kit-docs)
+pnpm build                              # All apps and packages
 pnpm check                              # Lint (Biome via ultracite)
 pnpm --filter app typecheck
 pnpm test                               # Unit tests via turbo (app, @repo/auth)

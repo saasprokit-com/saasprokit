@@ -3,20 +3,22 @@ import { MotionProvider } from "@repo/design-system/providers/motion";
 import { ThemeProvider } from "@repo/design-system/providers/theme";
 import { locales } from "@repo/internationalization";
 import {
+  createMetadata,
   generateOrganizationSchema,
   generateWebSiteSchema,
-  getDefaultMetadata,
   JsonLd,
 } from "@repo/seo";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type { ReactNode } from "react";
-// Import seo-config to initialize SEO configuration
-import "../../lib/seo-config";
+import { siteConfig } from "@/lib/seo-config";
 
 // Export metadata for SEO
-export const metadata = getDefaultMetadata();
+export const metadata = createMetadata(
+  { description: siteConfig.description },
+  siteConfig
+);
 
 // Viewport configuration
 export const viewport = {
@@ -52,8 +54,8 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
 
   return (
     <>
-      <JsonLd code={generateOrganizationSchema()} />
-      <JsonLd code={generateWebSiteSchema()} />
+      <JsonLd code={generateOrganizationSchema(siteConfig)} />
+      <JsonLd code={generateWebSiteSchema(siteConfig)} />
       <ThemeProvider nonce={nonce}>
         <MotionProvider>
           <NuqsAdapter>{children}</NuqsAdapter>
