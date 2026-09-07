@@ -2,7 +2,7 @@
 
 import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
-import { createRequestLogger } from "@repo/logger/server";
+import { createRequestLogger } from "@repo/logger/log";
 import { imageFileSchema } from "@repo/storage/constants";
 import { ATTACHABLE_TYPE } from "@repo/utils/storage";
 import { headers } from "next/headers";
@@ -113,14 +113,11 @@ export async function uploadOrganizationLogoAction(
 
     await revalidateOrgPage(slug, ORG_PAGES.SETTINGS);
 
-    logger.info(
-      {
-        organizationId: validated.organizationId,
-        userId: session.user.id,
-        publicUrl,
-      },
-      "Organization logo uploaded"
-    );
+    logger.info("Organization logo uploaded", {
+      organizationId: validated.organizationId,
+      userId: session.user.id,
+      publicUrl,
+    });
 
     return { success: true, data: { publicUrl } };
   } catch (error) {

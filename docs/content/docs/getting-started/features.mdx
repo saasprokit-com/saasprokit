@@ -59,7 +59,7 @@ Staff surface at `/admin`, gated on platform `User.role` (not org `Member.role`)
 |---------|--------|-------|
 | Multiple Organizations per User | Implemented | Up to 10 orgs per user (configurable) |
 | Organization Creation | Implemented | Create new orgs at `/account/new-org` |
-| Auto Personal Workspace | Planned | `createDefaultWorkspace()` helper exists but is not called anywhere — not wired to sign-up |
+| Auto Personal Workspace | Planned | Sign-up creates no organization — no scaffold in the repo |
 | Organization Settings | Implemented | Configure name, logo, slug at `/[orgSlug]/settings` |
 | Organization Switcher | Implemented | Sidebar dropdown. `/org` is a post-login redirect hop, not a switcher UI |
 | Default Organization | Implemented | Set and remember preferred org |
@@ -169,7 +169,6 @@ The rest of `packages/email/templates/` exist for preview only — they are not 
 |---------|--------|-------|
 | Structured Logging | Implemented | Pino logger (separate server + client exports) |
 | Health Check | Implemented | `/api/health` endpoint with database + auth validation |
-| User Activity Tracking | Implemented | `/api/user/activity` endpoint |
 | Error Boundaries | Implemented | React error boundary components |
 
 ## SEO & Metadata
@@ -237,7 +236,7 @@ The rest of `packages/email/templates/` exist for preview only — they are not 
 | `@repo/storage` | File uploads with local + S3 providers, quota management |
 | `@repo/seo` | Site metadata, Organization + WebSite JSON-LD schemas |
 | `@repo/internationalization` | 6 languages, locale routing, dictionary translations |
-| `@repo/logger` | Structured logging with Pino (server + client) |
+| `@repo/logger` | Console-backed logging, one universal export (`@repo/logger/log`) |
 | `@repo/utils` | Date, payment, slug, organization, storage, user utilities |
 
 ## Feature Coverage by App

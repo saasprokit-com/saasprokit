@@ -17,7 +17,6 @@
     "./stripe-client": "./stripe-client.ts",
     "./guards": "./guards.ts",
     "./helpers": "./helpers.ts",
-    "./types": "./types.ts",
     "./ip-headers": "./ip-headers.ts"
   },
   "dependencies": {

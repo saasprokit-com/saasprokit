@@ -114,10 +114,9 @@ isolates: queries run 950ms–2.5s and ~2% fail with *"Cannot perform I/O on beh
 different request"*. `poolQueryViaFetch` does not help — it only affects
 `pool.query()`, which the adapter bypasses. Fix is **Hyperdrive** (free on the paid
 plan): warm pooled connections, interactive transactions retained. `PrismaNeonHttp` is
-faster but cannot do interactive transactions, and two callback-form `$transaction`
-sites exist — `members/actions.ts` (ownership transfer, TOCTOU guard) and
-`lib/organization/personal-org.ts` (unreachable — `createDefaultWorkspace` has no
-callers) — so that route costs one rewrite. The three array-form batches
+faster but cannot do interactive transactions, and one callback-form `$transaction`
+site exists — `members/actions.ts` (ownership transfer, TOCTOU guard) — so that
+route costs one rewrite. The three array-form batches
 (`settings/actions.ts`, `lib/files/actions.ts`, `packages/auth/user-deletion.ts`) are
 fine either way.
 

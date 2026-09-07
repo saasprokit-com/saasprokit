@@ -5,7 +5,7 @@ import { ErrorContent } from "@repo/design-system/components/molecules/error/err
 import { Button } from "@repo/design-system/components/ui/button";
 import { fonts } from "@repo/design-system/lib/fonts";
 import { cn } from "@repo/design-system/lib/utils";
-import { logger } from "@repo/logger/client";
+import { logger } from "@repo/logger/log";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 

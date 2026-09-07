@@ -1,7 +1,7 @@
 import "server-only";
 
 import { database } from "@repo/database";
-import type { createRequestLogger } from "@repo/logger/server";
+import type { createRequestLogger } from "@repo/logger/log";
 import { deleteFile, uploadFile } from "@repo/storage/server";
 import { ATTACHABLE_TYPE } from "@repo/utils/storage";
 
@@ -18,10 +18,10 @@ export async function deleteStoredObjects(
     files.map((file) =>
       deleteFile(file.storagePath, file.bucket ?? undefined).catch(
         (error: unknown) =>
-          logger.warn(
-            { storagePath: file.storagePath, err: error },
-            "Stored object not deleted"
-          )
+          logger.warn("Stored object not deleted", {
+            storagePath: file.storagePath,
+            err: error,
+          })
       )
     )
   );

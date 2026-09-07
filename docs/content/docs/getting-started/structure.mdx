@@ -99,9 +99,8 @@ saasprokit/
 │   │   ├── organization.ts, payment.ts, storage.ts, auth.ts
 │   │   └── package.json
 │   │
-│   ├── logger/                    # Structured logging (Pino)
-│   │   ├── server.ts              # @repo/logger/server
-│   │   ├── client.ts              # @repo/logger/client
+│   ├── logger/                    # Console-backed structured logging
+│   │   ├── log.ts                 # @repo/logger/log
 │   │   └── package.json
 │   │
 │   ├── seo/                       # SEO utilities
@@ -190,8 +189,7 @@ Each route is a Server-Component `page.tsx` plus a `components/` folder of `"use
 ```
 /api/
 ├── auth/[...all]/    # Better Auth handler (incl. Stripe webhooks via @better-auth/stripe)
-├── health/           # Health check (database + auth)
-└── user/activity/    # User activity tracking
+└── health/           # Health check (database + auth)
 ```
 
 > Billing (checkout / change-plan) and invitations are handled by **server actions**

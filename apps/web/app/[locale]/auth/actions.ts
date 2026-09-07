@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@repo/auth/server";
-import { createRequestLogger } from "@repo/logger/server";
+import { createRequestLogger } from "@repo/logger/log";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { toActionError } from "@/lib/auth/action-error";

@@ -1,4 +1,4 @@
-import type { createRequestLogger } from "@repo/logger/server";
+import type { createRequestLogger } from "@repo/logger/log";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -10,9 +10,6 @@ const mocks = vi.hoisted(() => ({
   fileUpdateMany: vi.fn(),
   organizationUpdate: vi.fn(),
   transaction: vi.fn(),
-  fileFindMany: vi.fn(),
-  fileUpdateMany: vi.fn(),
-  organizationUpdate: vi.fn(),
   uploadFile: vi.fn(),
 }));
 
@@ -138,8 +135,8 @@ describe("storeOrganizationLogo", () => {
       slug: "acme",
     });
     expect(warn).toHaveBeenCalledWith(
-      expect.objectContaining({ storagePath: "logos/old.png" }),
-      "Stored object not deleted"
+      "Stored object not deleted",
+      expect.objectContaining({ storagePath: "logos/old.png" })
     );
   });
 

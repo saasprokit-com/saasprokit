@@ -43,16 +43,14 @@ always a `Promise` — `await` them (see `saasprokit:conventions`).
 ## Recipe 3: new API route
 
 1. Create `apps/web/app/api/your-endpoint/route.ts`; export `GET`/`POST`/`DELETE`
-   returning `NextResponse`. Real routes: `health/` (no auth),
-   `user/activity/`, `auth/[...all]/` (Better Auth's own handler via
-   `toNextJsHandler`).
+   returning `NextResponse`. Real routes: `health/` (no auth) and
+   `auth/[...all]/` (Better Auth's own handler via `toNextJsHandler`).
 2. Guard with `const session = await getServerSession()` from `@/lib/auth/auth`;
    `if (!session?.user?.id) return new NextResponse(null, { status: 401 })`.
-   (`user/activity` inlines `auth.api.getSession({ headers })` — that call is
-   exactly what `getServerSession` wraps and caches.)
-3. Add `createRequestLogger` from `@repo/logger/server`; scope all work by
+   Never inline `auth.api.getSession({ headers })` — `getServerSession` wraps
+   and caches exactly that call.
+3. Add `createRequestLogger` from `@repo/logger/log`; scope all work by
    `session.user.id`, never a client-supplied id.
-4. Add the path to `API_ROUTES` in `@/lib/routes`.
 
 Note: `app/api/*` is skipped by the edge middleware matcher, so an API route gets
 **no** default-deny protection — the session check in step 2 is the only gate.

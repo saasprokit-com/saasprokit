@@ -48,7 +48,7 @@ Optional: `pnpm skills:install` restores third-party skills into `.agents/skills
 
 **Core packages**: `@repo/auth` (Better Auth, dual RBAC, Stripe billing + plans), `@repo/database` (Prisma), `@repo/design-system` (shadcn/ui + Radix), `@repo/email` (React Email + Resend).
 
-**Supporting packages**: `@repo/utils`, `@repo/logger` (Pino, `/server` + `/client` exports), `@repo/internationalization`, `@repo/seo`, `@repo/storage`, `@repo/typescript-config`.
+**Supporting packages**: `@repo/utils`, `@repo/logger` (console-backed, single `/log` export), `@repo/internationalization`, `@repo/seo`, `@repo/storage`, `@repo/typescript-config`.
 
 ## SaaSProKit Skills (read before working in these areas)
 

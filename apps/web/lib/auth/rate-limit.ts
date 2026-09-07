@@ -2,7 +2,7 @@ import "server-only";
 
 import { IP_ADDRESS_HEADERS } from "@repo/auth/ip-headers";
 import { database } from "@repo/database";
-import { createRequestLogger } from "@repo/logger/server";
+import { createRequestLogger } from "@repo/logger/log";
 import { MILLISECONDS_PER_SECOND } from "@repo/utils/date";
 import { getIp } from "better-auth/api";
 import { headers } from "next/headers";

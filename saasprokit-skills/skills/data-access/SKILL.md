@@ -28,7 +28,6 @@ it rather than creating a parallel location.
 | Path | Purpose |
 | --- | --- |
 | `lib/organization/queries.ts` | Org membership validation, org context/listing (`getActiveOrganization`, `validateOrganizationMembership`, `getUserOrganizations`, `getDefaultOrganization`). |
-| `lib/organization/personal-org.ts` | Personal-org creation + unique slug generation. |
 | `lib/files/actions.ts` | `storeOrganizationLogo` (upload → `File` row → atomic logo swap → previous object deleted) and `deleteStoredObjects`. `server-only`, not a `"use server"` module. |
 | `lib/files/storage-quota.ts` | Per-org storage quota enforcement (coupled to plan limits via `lib/billing`). |
 | `lib/billing/subscription-queries.ts` | Subscription + usage queries feeding `@repo/auth` plan logic. **No `billing` action module — reads only.** |

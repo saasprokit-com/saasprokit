@@ -47,7 +47,7 @@ vi.mock("@repo/database", () => ({
   },
 }));
 
-vi.mock("@repo/logger/server", () => ({
+vi.mock("@repo/logger/log", () => ({
   createRequestLogger: () => ({ error: vi.fn() }),
 }));
 

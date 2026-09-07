@@ -139,9 +139,3 @@ export const adminRoutes = {
   organization: (orgId: string) =>
     `${PAGE_ROUTES.ADMIN_ORGANIZATIONS}/${orgId}`,
 } as const;
-
-export const API_ROUTES = {
-  AUTH: "/api/auth",
-  HEALTH: "/api/health",
-  USER_ACTIVITY: "/api/user/activity",
-} as const;

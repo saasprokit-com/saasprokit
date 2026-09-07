@@ -3,7 +3,7 @@
 import type { OrgRoleName } from "@repo/auth/permissions";
 import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
-import { createRequestLogger } from "@repo/logger/server";
+import { createRequestLogger } from "@repo/logger/log";
 import { headers } from "next/headers";
 import type { z } from "zod";
 import { actionError, toActionError } from "@/lib/auth/action-error";
@@ -57,10 +57,10 @@ async function releaseInviteLinkUse(
       data: { usedCount: { decrement: 1 } },
     });
   } catch (error) {
-    logger.error(
-      { err: error, inviteLinkId },
-      "Failed to release invite link use after addMember failed"
-    );
+    logger.error("Failed to release invite link use after addMember failed", {
+      err: error,
+      inviteLinkId,
+    });
   }
 }
 

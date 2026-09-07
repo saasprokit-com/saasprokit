@@ -16,8 +16,8 @@ Next's `basePath: "/docs"`, so `/` is a 404 everywhere including local dev and D
 index is `/docs`. `docs.saasprokit.com` still resolves here and 308s to the new URLs.
 
 It is a workspace package named `kit-docs`, excluded from the default `pnpm dev` / `pnpm build`
-fan-out so it never slows down app work. Production Docker image: `docker build -f docs/Dockerfile .`
-runs `pnpm --filter kit-docs build` (not the root `pnpm build --filter=kit-docs`, which turbo-excludes this package).
+fan-out so it never slows down app work. It deploys to Cloudflare Workers only — build it with
+`pnpm --filter kit-docs build`, not the root `pnpm build --filter=kit-docs`, which turbo-excludes this package.
 
 ## Layout
 
