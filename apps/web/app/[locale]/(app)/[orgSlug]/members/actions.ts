@@ -3,7 +3,7 @@
 import { isOwnerRole, ORG_ROLES } from "@repo/auth/permissions";
 import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
-import { createRequestLogger } from "@repo/logger/server";
+import { createRequestLogger } from "@repo/logger/log";
 import {
   BULK_INVITE_CONCURRENCY,
   INVITATION_STATUS,
@@ -134,15 +134,12 @@ export async function removeMembersAction(
     }
 
     if (rejected.length > 0) {
-      logger.error(
-        {
-          err: rejected[0].reason,
-          organizationId: validated.organizationId,
-          rejectedCount: rejected.length,
-          requestedCount: validMembers.length,
-        },
-        "Some member removals were rejected"
-      );
+      logger.error("Some member removals were rejected", {
+        err: rejected[0].reason,
+        organizationId: validated.organizationId,
+        rejectedCount: rejected.length,
+        requestedCount: validMembers.length,
+      });
     }
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);

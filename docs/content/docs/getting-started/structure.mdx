@@ -99,9 +99,8 @@ saasprokit/
 │   │   ├── organization.ts, payment.ts, storage.ts, auth.ts
 │   │   └── package.json
 │   │
-│   ├── logger/                    # Structured logging (Pino)
-│   │   ├── server.ts              # @repo/logger/server
-│   │   ├── client.ts              # @repo/logger/client
+│   ├── logger/                    # Console-backed structured logging
+│   │   ├── log.ts                 # @repo/logger/log
 │   │   └── package.json
 │   │
 │   ├── seo/                       # SEO utilities
@@ -127,7 +126,7 @@ saasprokit/
 A few notes beyond what the tree above already shows:
 
 - **`apps/email`** is a thin React Email **preview runner** (`email dev`) — it has no local `app/` or `emails/` dir; the templates live in `@repo/email` (`packages/email/templates/`), which this app points at.
-- **`apps/web/middleware.ts`** stays `middleware.ts` rather than Next.js 16's `proxy.ts` convention, because `proxy.ts` is Node-runtime-only and can't run on the Cloudflare/OpenNext deploy target. It does an optimistic, cookie-presence-only route gate — see [Sessions & Route Protection](/docs/authentication/sessions-and-routing).
+- **`apps/web/middleware.ts`** stays `middleware.ts` rather than Next.js 16's `proxy.ts` convention, because `proxy.ts` is Node-runtime-only and can't run on the Cloudflare/OpenNext deploy target. It does an optimistic, cookie-presence-only route gate — see [Sessions & Route Protection](/authentication/sessions-and-routing).
 - **`@repo/auth`** implements dual RBAC: platform-level admin roles plus separate organization-scoped roles. Stripe billing lives here too (there is no `packages/payment`).
 - **Root `docs/`** is this site (`kit-docs`, port 3006). `apps/docs` is the empty product-docs starter (port 3004). `pnpm setup` deletes root `docs/`.
 
@@ -190,8 +189,7 @@ Each route is a Server-Component `page.tsx` plus a `components/` folder of `"use
 ```
 /api/
 ├── auth/[...all]/    # Better Auth handler (incl. Stripe webhooks via @better-auth/stripe)
-├── health/           # Health check (database + auth)
-└── user/activity/    # User activity tracking
+└── health/           # Health check (database + auth)
 ```
 
 > Billing (checkout / change-plan) and invitations are handled by **server actions**

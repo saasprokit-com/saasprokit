@@ -1,4 +1,4 @@
-import { logger } from "@repo/logger/client";
+import { logger } from "@repo/logger/log";
 
 // Catch uncaught errors (e.g. in event handlers, setTimeout, etc.)
 window.addEventListener("error", (event) => {

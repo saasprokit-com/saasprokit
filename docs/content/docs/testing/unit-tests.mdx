@@ -9,7 +9,7 @@ description: Catalog of Vitest unit tests and coverage gaps
 
 | File | Tests | Covers |
 |------|-------|--------|
-| `packages/auth/billing-authorize.test.ts` | 22 | `isOrgMember`, `canManageBilling`, `authorizeBillingAction` — the allow/deny matrix from [Billing Authorization](/docs/payment/billing-authorization) across member/admin/owner roles, plus the unknown-action fallback |
+| `packages/auth/billing-authorize.test.ts` | 22 | `isOrgMember`, `canManageBilling`, `authorizeBillingAction` — the allow/deny matrix from [Billing Authorization](/payment/billing-authorization) across member/admin/owner roles, plus the unknown-action fallback |
 | `packages/auth/helpers.test.ts` | 21 | `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `isSubscriptionActive` across all 8 Stripe subscription statuses, `getCurrentPlan`, and `getStatusDisplayText` |
 | `packages/auth/admin-bootstrap.test.ts` | 7 | `isBootstrapAdminEmail` — the `ADMIN_EMAILS` bootstrap allowlist (case-insensitivity, CSV parsing with spaces, partial-match rejection, empty/undefined list) |
 | `packages/auth/ba-i18n.test.ts` | 9 | `baErrorTranslations`, `localeFromPathname`, `localeFromReferer` — Better Auth error-code localization and locale-detection helpers |
@@ -20,7 +20,7 @@ description: Catalog of Vitest unit tests and coverage gaps
 | `apps/web/app/[locale]/(app)/admin/users/guards.test.ts` | 3 | `guardUserMutation` — blocks self-targeting admin mutations, allows the same mutation against another user, always allows revoke-sessions |
 | `apps/web/hooks/use-action-result.test.ts` | 15 | `useActionResult` — idle-state skip, success/error dispatch, silence on `fieldErrors`-only failures, and the replay guard under StrictMode |
 | `apps/web/lib/auth/action-error.test.ts` | 6 | `toActionError`, `actionError` — server-action error normalization and i18n fallback |
-| `apps/web/lib/billing/checkout-queries.test.ts` | 9 | `verifyCheckoutSession` — the independent post-checkout verification described in [Subscribe & Checkout](/docs/payment/subscribe-and-checkout) |
+| `apps/web/lib/billing/checkout-queries.test.ts` | 9 | `verifyCheckoutSession` — the independent post-checkout verification described in [Subscribe & Checkout](/payment/subscribe-and-checkout) |
 | `apps/web/lib/seo-config.test.ts` | 2 | Site config carries no kit branding and derives the name from `NEXT_PUBLIC_APP_NAME` |
 | `packages/database/redact.test.ts` | 10 | `argShape` — redacts tokens, passwords, emails, and nested Prisma args so query logs stay diagnosable |
 

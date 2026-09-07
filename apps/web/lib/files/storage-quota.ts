@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getPlanLimits } from "@repo/auth/plans";
-import type { createRequestLogger } from "@repo/logger/server";
+import type { createRequestLogger } from "@repo/logger/log";
 import { UNLIMITED } from "@repo/utils/payment";
 import { BYTES_PER_MB } from "@repo/utils/storage";
 import {
@@ -25,10 +25,12 @@ export async function validateStorageQuota(
     return { valid: true };
   }
 
-  logger.warn(
-    { organizationId, usageMB, fileMB, maxStorageMB },
-    "Storage quota exceeded"
-  );
+  logger.warn("Storage quota exceeded", {
+    organizationId,
+    usageMB,
+    fileMB,
+    maxStorageMB,
+  });
   return {
     valid: false,
     error: `Storage quota exceeded. You have used ${usageMB.toFixed(1)} MB of ${maxStorageMB} MB. Please upgrade your plan or delete unused files.`,

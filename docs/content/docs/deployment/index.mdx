@@ -5,9 +5,9 @@ description: Deploy the web app to Vercel, Cloudflare Workers, or Docker — com
 
 The web app (`apps/web`) deploys to three hosts that `pnpm run setup` offers (`scripts/hosts.ts`). Vercel and Cloudflare have full guides; Docker has a short build guide:
 
-- **[Vercel](/docs/deployment/vercel)** — the recommended path. Zero code changes, native Next.js support.
-- **[Cloudflare Workers](/docs/deployment/cloudflare)** — cheaper at scale. Runs through the OpenNext adapter; the Prisma driver adapter and S3-compatible storage config it needs already ship in the repo, so it's accounts and env vars, not code.
-- **[Docker](/docs/deployment/docker)** — `docker build -f apps/web/Dockerfile .` from the repo root (AWS / VPS).
+- **[Vercel](/deployment/vercel)** — the recommended path. Zero code changes, native Next.js support.
+- **[Cloudflare Workers](/deployment/cloudflare)** — cheaper at scale. Runs through the OpenNext adapter; the Prisma driver adapter and S3-compatible storage config it needs already ship in the repo, so it's accounts and env vars, not code.
+- **[Docker](/deployment/docker)** — `docker build -f apps/web/Dockerfile .` from the repo root (AWS / VPS).
 
 ## One-time setup
 
@@ -69,7 +69,7 @@ After either guide's deploy step:
 
 4. **Production URLs** — `NEXT_PUBLIC_APP_URL`, `BETTER_AUTH_URL`, and `BETTER_AUTH_TRUSTED_ORIGINS` must all match the final domain. `NEXT_PUBLIC_*` values are baked in at build time — changing them requires a rebuild, not just a restart.
 
-5. **First admin** — set `ADMIN_EMAILS` to your email *before anyone signs up*, then sign up normally with that address and verify it. You land with `role: "admin"` and can open `/admin`. The var only applies at signup — see [Authentication → Configuration](/docs/authentication/configuration#first-admin-bootstrap-admin_emails). Do **not** run the dev seed against production; it wipes every table.
+5. **First admin** — set `ADMIN_EMAILS` to your email *before anyone signs up*, then sign up normally with that address and verify it. You land with `role: "admin"` and can open `/admin`. The var only applies at signup — see [Authentication → Configuration](/authentication/configuration#first-admin-bootstrap-admin_emails). Do **not** run the dev seed against production; it wipes every table.
 
 ## Verification checklist
 

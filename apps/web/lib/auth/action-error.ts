@@ -17,7 +17,7 @@ export interface ActionFailure {
 
 interface ActionErrorOptions {
   fallback: ActionErrorCode;
-  logger?: { error: (obj: Record<string, unknown>, msg: string) => void };
+  logger?: { error: (msg: string, data?: Record<string, unknown>) => void };
   logMessage?: string;
 }
 
@@ -72,8 +72,8 @@ export async function toActionError(
   // 2. Log error if logger provided
   if (options.logger) {
     options.logger.error(
-      { err: error instanceof Error ? error : new Error(String(error)) },
-      options.logMessage ?? dict.errors.action[options.fallback]
+      options.logMessage ?? dict.errors.action[options.fallback],
+      { err: error instanceof Error ? error : new Error(String(error)) }
     );
   }
 

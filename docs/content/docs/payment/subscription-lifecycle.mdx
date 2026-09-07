@@ -11,11 +11,10 @@ that gate features by plan.
 
 ## The Subscription record
 
-The row shape is Prisma's `Subscription` model — import it from `@repo/database`, not
-from `@repo/auth/types`. `packages/auth/types.ts` holds related app types
-(`SubscriptionWithPlan`, `FeatureAccess`, `UsageStats`, `UpgradeOptions`,
-`CancelOptions`, `BillingPortalSession`); there is no hand-maintained `Subscription`
-interface or Zod `SubscriptionSchema`. The fields that drive the state model are:
+The row shape is Prisma's `Subscription` model — import it from `@repo/database`.
+`packages/auth/helpers.ts` holds the one related app type, `UsageStats`; there is no
+hand-maintained `Subscription` interface or Zod `SubscriptionSchema`. The fields that
+drive the state model are:
 
 - `plan` — one of `free`, `pro`, `enterprise`.
 - `status` — a nullable `SubscriptionStatus` string (see below).
@@ -234,8 +233,7 @@ strings to UI text/colors. Of note for the state model: `incomplete_expired` dis
 
 - `packages/utils/payment.ts` — `SUBSCRIPTION_STATUS`, `ACTIVE_STATUSES`, `PLAN_NAMES`, `PLAN_ORDER`, `UNLIMITED`, `checkOrgCreationEligibility`.
 - `packages/database/prisma/schema.prisma` — `Subscription` model (`trialStart` / `trialEnd`, `cancelAt`, `cancelAtPeriodEnd`).
-- `packages/auth/types.ts` — `SubscriptionWithPlan`, `FeatureAccess`, `UsageStats` (import `Subscription` from `@repo/database`).
-- `packages/auth/helpers.ts` — `isSubscriptionActive`, `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getCurrentPlan`, `calculateUsageStats`, `getStatusDisplayText`, `getStatusColor`.
+- `packages/auth/helpers.ts` — `isSubscriptionActive`, `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getCurrentPlan`, `calculateUsageStats`, `getStatusDisplayText`, `getStatusColor`, `UsageStats` (import `Subscription` from `@repo/database`).
 - `packages/auth/guards.ts` — `guardDowngrade`, `GuardResult`.
 - `packages/auth/plans.ts` — `PLANS`, `getPlanLimits`, `comparePlans`, `isPlanHigherTier`.
 - `apps/web/lib/billing/subscription-queries.ts` — `getActiveSubscription`, `getCurrentPlanForOrg`, `canUserCreateOrg`, `getOrgUsageStats`.

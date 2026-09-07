@@ -44,7 +44,7 @@ Features are marked as: **Implemented** (working in code), **Partial** (scaffold
 
 ## Platform Admin
 
-Staff surface at `/admin`, gated on platform `User.role` (not org `Member.role`). Dual RBAC: see [Authentication](/docs/authentication).
+Staff surface at `/admin`, gated on platform `User.role` (not org `Member.role`). Dual RBAC: see [Authentication](/authentication).
 
 | Feature | Status | Notes |
 |---------|--------|-------|
@@ -59,7 +59,7 @@ Staff surface at `/admin`, gated on platform `User.role` (not org `Member.role`)
 |---------|--------|-------|
 | Multiple Organizations per User | Implemented | Up to 10 orgs per user (configurable) |
 | Organization Creation | Implemented | Create new orgs at `/account/new-org` |
-| Auto Personal Workspace | Planned | `createDefaultWorkspace()` helper exists but is not called anywhere — not wired to sign-up |
+| Auto Personal Workspace | Planned | Sign-up creates no organization — no scaffold in the repo |
 | Organization Settings | Implemented | Configure name, logo, slug at `/[orgSlug]/settings` |
 | Organization Switcher | Implemented | Sidebar dropdown. `/org` is a post-login redirect hop, not a switcher UI |
 | Default Organization | Implemented | Set and remember preferred org |
@@ -136,7 +136,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Email Preview | Implemented | Preview templates in email app (port 3003) |
-| Email Templating | Implemented | React Email templates in `packages/email/` — wired subset vs preview-only; see [Templates](/docs/email/templates) |
+| Email Templating | Implemented | React Email templates in `packages/email/` — wired subset vs preview-only; see [Templates](/email/templates) |
 | Resend Integration | Implemented | Primary email provider via Resend API |
 | Nodemailer (SMTP) | Implemented | Fallback SMTP provider |
 | Pluggable Providers | Implemented | Swap between Resend and Nodemailer |
@@ -145,7 +145,7 @@ Organization creation isn't plan-gated by count — it's capped at 10 total orgs
 
 Wired today (Better Auth hooks + Stripe hooks): email verification, password reset, magic link, sign-in OTP, verification OTP, 2FA OTP, org invitation, subscription started / upgraded / downgraded / cancelled.
 
-The rest of `packages/email/templates/` exist for preview only — they are not sent. See [Templates](/docs/email/templates).
+The rest of `packages/email/templates/` exist for preview only — they are not sent. See [Templates](/email/templates).
 
 ## Security
 
@@ -169,7 +169,6 @@ The rest of `packages/email/templates/` exist for preview only — they are not 
 |---------|--------|-------|
 | Structured Logging | Implemented | Pino logger (separate server + client exports) |
 | Health Check | Implemented | `/api/health` endpoint with database + auth validation |
-| User Activity Tracking | Implemented | `/api/user/activity` endpoint |
 | Error Boundaries | Implemented | React error boundary components |
 
 ## SEO & Metadata
@@ -179,7 +178,7 @@ The rest of `packages/email/templates/` exist for preview only — they are not 
 | Per-Page Metadata | Implemented | Static `export const metadata` on several pages overrides the root title template; no route uses `generateMetadata` for param-based dynamic titles |
 | Open Graph | Implemented | OG tags for social sharing (root layout only) |
 | Twitter Cards | Implemented | Twitter card metadata (root layout only) |
-| JSON-LD | Implemented | Organization + WebSite schemas only (see [SEO](/docs/seo)) |
+| JSON-LD | Implemented | Organization + WebSite schemas only (see [SEO](/seo)) |
 | Sitemap | Partial | `sitemap.ts` returns a single static homepage entry, no dynamic route enumeration |
 | Canonical URLs | Implemented | Canonical link tag (root layout only) |
 
@@ -212,8 +211,8 @@ The rest of `packages/email/templates/` exist for preview only — they are not 
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Unit Tests | Partial | Vitest in `@repo/auth`, `apps/web`, and `@repo/database` (`redact.test.ts`). `@repo/storage` / `@repo/utils` have no test setup. See [Testing](/docs/testing) |
-| E2E Tests | Implemented | Playwright specs under `apps/web/e2e/` (see [Testing](/docs/testing)) |
+| Unit Tests | Partial | Vitest in `@repo/auth`, `apps/web`, and `@repo/database` (`redact.test.ts`). `@repo/storage` / `@repo/utils` have no test setup. See [Testing](/testing) |
+| E2E Tests | Implemented | Playwright specs under `apps/web/e2e/` (see [Testing](/testing)) |
 | Integration Tests | Planned | Not yet implemented |
 
 ## Infrastructure & DevOps
@@ -237,7 +236,7 @@ The rest of `packages/email/templates/` exist for preview only — they are not 
 | `@repo/storage` | File uploads with local + S3 providers, quota management |
 | `@repo/seo` | Site metadata, Organization + WebSite JSON-LD schemas |
 | `@repo/internationalization` | 6 languages, locale routing, dictionary translations |
-| `@repo/logger` | Structured logging with Pino (server + client) |
+| `@repo/logger` | Console-backed logging, one universal export (`@repo/logger/log`) |
 | `@repo/utils` | Date, payment, slug, organization, storage, user utilities |
 
 ## Feature Coverage by App

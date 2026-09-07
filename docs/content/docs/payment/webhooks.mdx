@@ -98,7 +98,7 @@ Every handler first calls `claimWebhookEvent(event)` (`packages/auth/webhook-ide
 | `subscription.onSubscriptionDeleted` | `customer.subscription.deleted` | `handleSubscriptionDeleted` | Computes the access cutoff from the first subscription item's `current_period_end` (Stripe v22.2+ moved this onto each `SubscriptionItem`) and sends `sendSubscriptionCancelledEmail` with `accessUntil` and a `reactivateUrl`. |
 
 <Callout type="warn">
-There is no handler for `invoice.payment_failed` or `invoice.paid` — dunning/payment-failure notifications and renewal-receipt emails are not implemented. `sendPaymentReceiptEmail` exists in `@repo/email` but is not currently called from anywhere (see [Email Templates](/docs/email/templates)).
+There is no handler for `invoice.payment_failed` or `invoice.paid` — dunning/payment-failure notifications and renewal-receipt emails are not implemented. `sendPaymentReceiptEmail` exists in `@repo/email` but is not currently called from anywhere (see [Email Templates](/email/templates)).
 </Callout>
 
 ### Idempotency

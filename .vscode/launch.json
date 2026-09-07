@@ -47,7 +47,7 @@
       "name": "Next.js: debug client-side (kit-docs)",
       "type": "chrome",
       "request": "launch",
-      "url": "http://localhost:3006"
+      "url": "http://localhost:3006/docs"
     },
     {
       "name": "Next.js: debug full stack",

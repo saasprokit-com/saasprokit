@@ -5,7 +5,7 @@ description: Step-by-step production deployment of the web app on Vercel — no 
 
 The recommended path. Vercel runs Next.js 16 natively, understands the pnpm + Turborepo monorepo, and needs no code changes. Budget ~30 minutes plus DNS propagation.
 
-Complete the [shared prerequisites](/docs/deployment) first (Neon, Stripe, Resend, OAuth apps).
+Complete the [shared prerequisites](/deployment) first (Neon, Stripe, Resend, OAuth apps).
 
 ## 1. Import the project
 
@@ -76,11 +76,11 @@ Trigger the first deploy, then add your domain under **Settings → Domains**. I
 
 ## 5. Stripe webhook and OAuth callbacks
 
-Follow the [shared post-deploy configuration](/docs/deployment#shared-post-deploy-configuration): register `https://yourdomain.com/api/auth/stripe/webhook`, copy the signing secret into `STRIPE_WEBHOOK_SECRET`, redeploy, and add the OAuth callback URLs.
+Follow the [shared post-deploy configuration](/deployment#shared-post-deploy-configuration): register `https://yourdomain.com/api/auth/stripe/webhook`, copy the signing secret into `STRIPE_WEBHOOK_SECRET`, redeploy, and add the OAuth callback URLs.
 
 ## 6. Verify
 
-Run the full [verification checklist](/docs/deployment#verification-checklist).
+Run the full [verification checklist](/deployment#verification-checklist).
 
 ## Vercel-specific notes
 

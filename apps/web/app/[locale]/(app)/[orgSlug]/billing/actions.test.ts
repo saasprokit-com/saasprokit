@@ -27,7 +27,7 @@ vi.mock("@repo/auth/server", () => ({
     },
   },
 }));
-vi.mock("@repo/logger/server", () => ({
+vi.mock("@repo/logger/log", () => ({
   createRequestLogger: () => ({
     child: () => ({ info: vi.fn(), warn: vi.fn() }),
     error: vi.fn(),

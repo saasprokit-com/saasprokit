@@ -52,8 +52,7 @@ The Stripe SDK instance itself lives in `packages/auth/stripe-client.ts` as `str
 Alongside the plugin wiring, `@repo/auth` exposes the data and pure-logic layer for billing. These modules do **not** talk to Stripe's network API directly — that is the plugin's job. They provide:
 
 - **Plan catalog** — `plans.ts` defines `PLANS` and `PlanConfig` (the single source of truth) plus ordering/comparison helpers: `getPlanLimits`, `getAllPlans`, `isPlanHigherTier`, `getMonthlyFromAnnual`, `getAnnualSavingsPercent`, and `comparePlans` (returns `"upgrade" | "downgrade" | "same"`), and the Stripe plumbing `buildStripePlans` / `getPlanNameFromPriceId`.
-- **Types** — `types.ts` defines `SubscriptionWithPlan`, `UpgradeOptions`, `CancelOptions`, `BillingPortalSession`, `FeatureAccess`, and `UsageStats`. The subscription **row** shape is Prisma's: import `Subscription` from `@repo/database`. There is no hand-maintained `Subscription` interface or Zod `SubscriptionSchema` in `@repo/auth/types`.
-- **Subscription helpers** — `helpers.ts` provides `isSubscriptionActive`, `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getCurrentPlan`, `calculateUsageStats`, `formatStorage`, `getStatusDisplayText`, and `getStatusColor`.
+- **Subscription helpers** — `helpers.ts` provides `isSubscriptionActive`, `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getCurrentPlan`, `calculateUsageStats`, `formatStorage`, `getStatusDisplayText`, and `getStatusColor`, plus the `UsageStats` type. The subscription **row** shape is Prisma's: import `Subscription` from `@repo/database`. There is no hand-maintained `Subscription` interface or Zod `SubscriptionSchema` anywhere in `@repo/auth`.
 - **Guards** — `guards.ts` provides `guardDowngrade` (and `GuardResult`).
 
 ## Plan tiers
@@ -139,8 +138,7 @@ Outbound: the billing UI calls four server actions (`upgradeSubscriptionAction`,
 - `packages/auth/stripe-hooks.ts` — `handleSubscriptionComplete` / `Update` / `Deleted` (emails + `claimWebhookEvent`)
 - `packages/auth/webhook-idempotency.ts` — `claimWebhookEvent`, backed by the `WebhookEvent` model's `(provider, eventId)` unique constraint
 - `packages/auth/keys.ts` — Stripe env var schema (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, price-id vars)
-- `packages/auth/types.ts` — `SubscriptionWithPlan`, `UpgradeOptions`, `CancelOptions`, `FeatureAccess`, `UsageStats`
-- `packages/auth/helpers.ts` — subscription state + display helpers
+- `packages/auth/helpers.ts` — subscription state + display helpers, `UsageStats`
 - `packages/auth/guards.ts` — `guardDowngrade`, `GuardResult`
 - `packages/utils/payment.ts` — `PLAN_NAMES`, `PRICING`, `LIMITS`, `SUBSCRIPTION_STATUS`, `ACTIVE_STATUSES`, `STRIPE_API_VERSION`
 - `apps/web/app/[locale]/(app)/[orgSlug]/billing/actions.ts` — `upgradeSubscriptionAction`, `openBillingPortalAction`, `cancelSubscriptionAction`, `changePlanAction`

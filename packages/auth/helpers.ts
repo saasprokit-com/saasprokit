@@ -9,7 +9,19 @@ import {
   UNLIMITED,
 } from "@repo/utils/payment";
 import { getPlanLimits } from "./plans";
-import type { UsageStats } from "./types";
+
+export interface UsageStats {
+  members: {
+    current: number;
+    limit: number;
+    percentage: number;
+  };
+  storage: {
+    currentMB: number;
+    limitMB: number;
+    percentage: number;
+  };
+}
 
 export function isSubscriptionActive(
   subscription: Subscription | null | undefined

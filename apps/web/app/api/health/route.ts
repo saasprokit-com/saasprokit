@@ -1,5 +1,5 @@
 import { database } from "@repo/database";
-import { createRequestLogger } from "@repo/logger/server";
+import { createRequestLogger } from "@repo/logger/log";
 import { NextResponse } from "next/server";
 import { env } from "@/lib/env";
 
@@ -107,7 +107,7 @@ function checkAuth(): {
 
     if (missing.length > 0) {
       // SECURITY: Log specific details server-side but return generic error
-      logger.error({ missing }, "Health Check: Missing auth configuration");
+      logger.error("Health Check: Missing auth configuration", { missing });
 
       return {
         status: "error",
@@ -118,10 +118,9 @@ function checkAuth(): {
     return { status: "ok" };
   } catch (error) {
     // SECURITY: Don't expose error details to external callers
-    logger.error(
-      { err: error instanceof Error ? error : new Error(String(error)) },
-      "Health Check: Auth check exception"
-    );
+    logger.error("Health Check: Auth check exception", {
+      err: error instanceof Error ? error : new Error(String(error)),
+    });
 
     return {
       status: "error",

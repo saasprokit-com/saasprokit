@@ -5,7 +5,7 @@ description: Deploying apps/web to Cloudflare Workers via the pre-wired OpenNext
 
 The cost-efficient-at-scale path. `apps/web` already ships everything needed to run on Cloudflare Workers through the **OpenNext adapter** (`@opennextjs/cloudflare`) on the `workerd` runtime — `wrangler.jsonc`, `open-next.config.ts`, the `cf:build`/`deploy`/`preview` scripts, an R2-backed incremental cache, and a runtime-detected Prisma driver adapter are all committed to the repo. You provision accounts and set env vars; you don't write the integration. Budget ~30–45 minutes.
 
-Complete the [shared prerequisites](/docs/deployment) first. If you want the simplest path, use [Vercel](/docs/deployment/vercel) instead — Cloudflare is cheaper at scale but carries the workerd caveats below.
+Complete the [shared prerequisites](/deployment) first. If you want the simplest path, use [Vercel](/deployment/vercel) instead — Cloudflare is cheaper at scale but carries the workerd caveats below.
 
 ## 1. Run the host setup
 
@@ -71,7 +71,7 @@ Then in the Cloudflare dashboard: **Workers → your worker → Settings → Dom
 
 ## 7. Shared post-deploy + verify
 
-Follow the [shared post-deploy configuration](/docs/deployment#shared-post-deploy-configuration) (schema push, Stripe webhook, OAuth callbacks), then run the full [verification checklist](/docs/deployment#verification-checklist). Pay special attention to:
+Follow the [shared post-deploy configuration](/deployment#shared-post-deploy-configuration) (schema push, Stripe webhook, OAuth callbacks), then run the full [verification checklist](/deployment#verification-checklist). Pay special attention to:
 
 - the Stripe webhook delivery status — `@better-auth/stripe` already prefers `constructEventAsync` over the synchronous `constructEvent` when the installed Stripe SDK supports it, which is what makes webhook verification work on workerd without any change here. Confirm a real `checkout.session.completed` delivery still returns `200`
 - file uploads (storage provider change)
@@ -83,7 +83,7 @@ None of this needs to be written — it's in the repo already, gated on env vars
 
 - **Prisma driver adapter** — `packages/database/index.ts` detects `workerd` at runtime (`navigator.userAgent === "Cloudflare-Workers"`, or the `CF_BUILD` build-time flag) and picks PrismaNeon. `CF_BUILD=1` bakes that adapter into the Worker bundle; Vercel/Docker use `PrismaPg`.
 - **Stripe HTTP client** — `packages/auth/stripe-client.ts` constructs the SDK with `Stripe.createFetchHttpClient()`, required because `stripe` is in `serverExternalPackages` and would otherwise fall back to a Node-only HTTP client that fails on workerd
-- **Middleware, not `proxy.ts`** — `apps/web/middleware.ts` deliberately isn't Next 16's `proxy.ts` convention, which is Node-runtime-only and can't run on Workers — see [Sessions & Route Protection](/docs/authentication/sessions-and-routing)
+- **Middleware, not `proxy.ts`** — `apps/web/middleware.ts` deliberately isn't Next 16's `proxy.ts` convention, which is Node-runtime-only and can't run on Workers — see [Sessions & Route Protection](/authentication/sessions-and-routing)
 - **Build output mode** — `next.config.ts` skips Next's `standalone` output under `CF_BUILD`/`VERCEL`, since OpenNext and Vercel both do their own bundling
 
 ## Known limitations

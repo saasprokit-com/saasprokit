@@ -1,4 +1,4 @@
-import type { createRequestLogger } from "@repo/logger/server";
+import type { createRequestLogger } from "@repo/logger/log";
 import { UNLIMITED } from "@repo/utils/payment";
 import { BYTES_PER_MB } from "@repo/utils/storage";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -54,8 +54,8 @@ describe("validateStorageQuota", () => {
       expect.stringContaining("99.5 MB of 100 MB")
     );
     expect(warn).toHaveBeenCalledWith(
-      expect.objectContaining({ organizationId: "org_1", maxStorageMB: 100 }),
-      "Storage quota exceeded"
+      "Storage quota exceeded",
+      expect.objectContaining({ organizationId: "org_1", maxStorageMB: 100 })
     );
   });
 

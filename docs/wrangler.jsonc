@@ -14,7 +14,17 @@
   "env": {
     "site": {
       "name": "saasprokit-docs",
+      "workers_dev": false,
+      "preview_urls": false,
       "routes": [
+        {
+          "pattern": "saasprokit.com/docs",
+          "zone_name": "saasprokit.com"
+        },
+        {
+          "pattern": "saasprokit.com/docs/*",
+          "zone_name": "saasprokit.com"
+        },
         {
           "pattern": "docs.saasprokit.com",
           "custom_domain": true
