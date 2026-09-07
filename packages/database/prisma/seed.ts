@@ -592,6 +592,34 @@ async function main() {
     }),
   ]);
 
+  const seededConversation = await prisma.aiConversation.create({
+    data: { organizationId: acmeOrg.id, userId: adminUser.id },
+  });
+
+  await prisma.aiMessage.createMany({
+    data: [
+      {
+        id: "seed_ai_m1",
+        conversationId: seededConversation.id,
+        role: "user",
+        parts: JSON.stringify([
+          { type: "text", text: "What can this workspace do?" },
+        ]),
+      },
+      {
+        id: "seed_ai_m2",
+        conversationId: seededConversation.id,
+        role: "assistant",
+        parts: JSON.stringify([
+          {
+            type: "text",
+            text: "Seeded reply — no provider was called to create this.",
+          },
+        ]),
+      },
+    ],
+  });
+
   const foundingDate = daysAgo(now, HISTORY_DAYS + FOUNDING_OFFSET_DAYS);
 
   await Promise.all([

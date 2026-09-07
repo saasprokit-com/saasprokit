@@ -47,6 +47,7 @@ export const env = createEnv({
 
     ANTHROPIC_API_KEY: z.string().startsWith("sk-ant-").optional(),
     OPENAI_API_KEY: z.string().startsWith("sk-").optional(),
+    AI_MOCK: z.stringbool().optional(),
   },
   client: {
     // Required at app level (optional in package schemas)
@@ -63,6 +64,7 @@ export const env = createEnv({
     ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    AI_MOCK: process.env.AI_MOCK,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
     NEXT_PUBLIC_DOCS_URL: process.env.NEXT_PUBLIC_DOCS_URL,

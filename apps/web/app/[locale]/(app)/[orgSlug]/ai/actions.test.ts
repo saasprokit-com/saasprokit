@@ -49,6 +49,7 @@ vi.mock("@/lib/ai/registry", () => ({
   isConfigured: mocks.isConfigured,
   registry: { imageModel: mocks.imageModel },
 }));
+vi.mock("@/lib/env", () => ({ env: { AI_MOCK: undefined } }));
 vi.mock("@/lib/auth/action-auth", () => ({
   verifySession: mocks.verifySession,
 }));
@@ -63,6 +64,7 @@ vi.mock("@/lib/organization/queries", () => ({
   validateOrganizationMembership: mocks.validateOrganizationMembership,
 }));
 
+import { IMAGE_MODEL } from "@/lib/ai/models";
 import { ORG_PAGES } from "@/lib/routes";
 import {
   createConversationAction,
@@ -195,7 +197,7 @@ describe("generateImageAction", () => {
     mocks.isConfigured.mockReturnValue(false);
     const result = await generateImageAction(input);
     expect(result.success).toBe(false);
-    expect(mocks.isConfigured).toHaveBeenCalledWith("openai:gpt-image-1");
+    expect(mocks.isConfigured).toHaveBeenCalledWith(IMAGE_MODEL);
     expect(mocks.actionError).toHaveBeenCalledWith("invalidInput");
   });
 
@@ -208,7 +210,7 @@ describe("generateImageAction", () => {
 
   it("generates, stores, persists both messages, records usage and returns them", async () => {
     const result = await generateImageAction(input);
-    expect(mocks.imageModel).toHaveBeenCalledWith("openai:gpt-image-1");
+    expect(mocks.imageModel).toHaveBeenCalledWith(IMAGE_MODEL);
     expect(mocks.generateImage).toHaveBeenCalledWith({
       model: "image-model",
       prompt: "a red panda",
@@ -244,7 +246,7 @@ describe("generateImageAction", () => {
     expect(mocks.recordAiUsage).toHaveBeenCalledWith({
       organizationId: "org_1",
       userId: "user_1",
-      modelId: "openai:gpt-image-1",
+      modelId: IMAGE_MODEL,
       imageCount: 1,
     });
     expect(mocks.revalidateOrgPage).toHaveBeenCalledWith(

@@ -8,12 +8,13 @@ import {
   saveMessages,
   storeGeneratedImage,
 } from "@/lib/ai/actions";
-import { IMAGE_MODEL } from "@/lib/ai/models";
+import { IMAGE_MODEL, MOCK_IMAGE_MODEL } from "@/lib/ai/models";
 import { getAiQuotaStatus, isWithinAiQuota } from "@/lib/ai/queries";
 import { isConfigured, registry } from "@/lib/ai/registry";
 import { verifySession } from "@/lib/auth/action-auth";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
+import { env } from "@/lib/env";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
 import { validateOrganizationMembership } from "@/lib/organization/queries";
 import { ORG_PAGES } from "@/lib/routes";
@@ -137,7 +138,8 @@ export async function generateImageAction(
       return actionError("notFound");
     }
 
-    if (!isConfigured(IMAGE_MODEL)) {
+    const imageModelId = env.AI_MOCK === true ? MOCK_IMAGE_MODEL : IMAGE_MODEL;
+    if (!isConfigured(imageModelId)) {
       return actionError("invalidInput");
     }
 
@@ -147,7 +149,7 @@ export async function generateImageAction(
     }
 
     const { image } = await generateImage({
-      model: registry.imageModel(IMAGE_MODEL),
+      model: registry.imageModel(imageModelId),
       prompt,
       size: IMAGE_SIZE,
     });
@@ -182,7 +184,7 @@ export async function generateImageAction(
     await recordAiUsage({
       organizationId,
       userId,
-      modelId: IMAGE_MODEL,
+      modelId: imageModelId,
       imageCount: 1,
     });
 
