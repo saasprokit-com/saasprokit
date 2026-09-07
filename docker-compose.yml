@@ -67,7 +67,7 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-    command: pnpm --filter app dev
+    command: pnpm --filter web dev
     env_file:
       - apps/web/.env.local
     environment:

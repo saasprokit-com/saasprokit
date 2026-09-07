@@ -17,8 +17,8 @@ reads.
 ## Deploy
 
 ```bash
-pnpm --filter app run deploy              # Cloudflare — build vars from apps/web/.env.production.local
-pnpm --filter app run preview             # localhost:8787 on real workerd
+pnpm --filter web run deploy              # Cloudflare — build vars from apps/web/.env.production.local
+pnpm --filter web run preview             # localhost:8787 on real workerd
 docker build -f apps/web/Dockerfile .     # Docker/AWS
 # Vercel: git push, root apps/web — vercel.json forces the Turbo build
 ```
@@ -122,7 +122,7 @@ fine either way.
 
 ## Verify before deploying server changes
 
-`pnpm --filter app run preview` is the only check that catches workerd failures. Then
+`pnpm --filter web run preview` is the only check that catches workerd failures. Then
 exercise: a protected route redirecting, sign-in, **creating an org** (interactive
 transaction), an image upload, and a signed Stripe event. Drive server actions
 **through the form** — `/api/auth/*` skips `enforceRateLimit`, so `curl` misses that

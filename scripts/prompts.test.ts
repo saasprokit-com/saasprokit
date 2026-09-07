@@ -78,7 +78,7 @@ describe("planCommit", () => {
 
 const FIXTURE: Record<string, string> = {
   "package.json": JSON.stringify({ name: "saasprokit", scripts: {} }),
-  "apps/web/package.json": JSON.stringify({ name: "app", scripts: {} }),
+  "apps/web/package.json": JSON.stringify({ name: "web", scripts: {} }),
   "apps/web/.env.example": 'DATABASE_URL=""\nBETTER_AUTH_SECRET=\n',
   "packages/database/prisma/schema.prisma":
     'generator client {\n  provider = "prisma-client"\n}\n',

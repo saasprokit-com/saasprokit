@@ -18,7 +18,7 @@ Pick **Cloudflare Workers** when prompted. This keeps `apps/web/wrangler.jsonc`,
 
 After setup, **read the rewritten `apps/web/wrangler.jsonc`**. Worker name and the R2 cache bucket are rebranded to your slug (`<slug>-web-cache`). Named envs such as `env.demo` are stripped — do not copy them from the kit repo.
 
-Run every `wrangler` command from **`apps/web`** (or `pnpm --filter app …`).
+Run every `wrangler` command from **`apps/web`** (or `pnpm --filter web …`).
 
 ## 2. Provision the R2 buckets
 
@@ -61,8 +61,8 @@ There's no filesystem on Workers, so `STORAGE_PROVIDER=local` can't work — the
 ## 6. Build and deploy
 
 ```bash
-pnpm --filter app run deploy      # cf:build (turbo build for @repo/database, then opennextjs-cloudflare build) + opennextjs-cloudflare deploy
-pnpm --filter app run preview     # same build, served locally on real workerd (localhost:8787)
+pnpm --filter web run deploy      # cf:build (turbo build for @repo/database, then opennextjs-cloudflare build) + opennextjs-cloudflare deploy
+pnpm --filter web run preview     # same build, served locally on real workerd (localhost:8787)
 ```
 
 `preview` is the only local check that catches workerd-only failures — `next dev` and typecheck both pass on code that breaks in production.

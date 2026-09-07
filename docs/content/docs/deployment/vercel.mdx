@@ -11,7 +11,7 @@ Complete the [shared prerequisites](/deployment) first (Neon, Stripe, Resend, OA
 
 1. Push the repository to GitHub and import it at **vercel.com/new**
 2. Set **Root Directory** to `apps/web`
-3. Leave the framework preset on **Next.js**. `apps/web/vercel.json` already sets a custom **Build Command** — `cd ../.. && pnpm turbo build --filter=app` — so Vercel doesn't fall back to a bare `next build`, which would skip Prisma client generation. The generated client is gitignored, so without the Turbo build the deploy fails; this isn't optional and needs no manual setup
+3. Leave the framework preset on **Next.js**. `apps/web/vercel.json` already sets a custom **Build Command** — `cd ../.. && pnpm turbo build --filter=web` — so Vercel doesn't fall back to a bare `next build`, which would skip Prisma client generation. The generated client is gitignored, so without the Turbo build the deploy fails; this isn't optional and needs no manual setup
 
 ## 2. Environment variables
 
