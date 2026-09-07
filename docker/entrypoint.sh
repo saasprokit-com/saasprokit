@@ -27,5 +27,5 @@ if echo "$@" | grep -qE "(app|studio)"; then
   pnpm --filter database db:seed || echo "[entrypoint] Seed skipped (may already be seeded)"
 fi
 
-# Execute the command passed via docker-compose (e.g., pnpm --filter app dev)
+# Execute the command passed via docker-compose (e.g., pnpm --filter web dev)
 exec "$@"

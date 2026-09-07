@@ -52,8 +52,8 @@ export const HOST_TARGETS: Record<HostId, HostTarget> = {
       "  BETTER_AUTH_SECRET, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY,",
       "  AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_ENDPOINT (R2 endpoint).",
       "Uncomment BETTER_AUTH_URL in wrangler.jsonc vars after the first deploy.",
-      "Deploy: pnpm --filter=app run deploy",
-      "Verify on real workerd first: pnpm --filter=app run preview",
+      "Deploy: pnpm --filter=web run deploy",
+      "Verify on real workerd first: pnpm --filter=web run preview",
     ],
   },
   vercel: {

@@ -28,11 +28,11 @@ page regardless of plan (see [Known Gaps](#known-gaps--notes) #1).
 ```bash
 # Start local infra (Postgres on 5433 + Maildev) and the app
 docker compose -f docker-compose.e2e.yml up -d
-pnpm --filter app dev            # or a production build, per playwright.config
+pnpm --filter web dev            # or a production build, per playwright.config
 
 # Run the payment specs (they belong to the `authenticated` project)
 cd apps/web
-pnpm --filter app test:e2e:app                    # --project=authenticated
+pnpm --filter web test:e2e:app                    # --project=authenticated
 npx playwright test e2e/payment/                  # same specs, direct
 npx playwright test e2e/payment/ --list           # list without running
 ```

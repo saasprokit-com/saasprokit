@@ -19,13 +19,13 @@ pnpm migrate                            # prisma format + generate + db push
 pnpm --filter @repo/database db:seed    # wipes tables, seeds admin@example.com
 
 pnpm dev                                # All apps except kit-docs (main app: 3000)
-pnpm --filter app dev                   # Main app only
+pnpm --filter web dev                   # Main app only
 pnpm kit-docs:dev                       # SaaSProKit's own docs (port 3006)
 pnpm build                              # All apps and packages (excludes kit-docs)
 pnpm check                              # Lint (Biome via ultracite)
-pnpm --filter app typecheck
+pnpm --filter web typecheck
 pnpm test                               # Unit tests via turbo (app, @repo/auth)
-pnpm --filter app test:e2e              # Playwright
+pnpm --filter web test:e2e              # Playwright
 ```
 
 Optional: `pnpm skills:install` restores third-party skills into `.agents/skills/` (needs `git`; not part of `pnpm install`).

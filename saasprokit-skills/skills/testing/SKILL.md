@@ -13,15 +13,15 @@ Two independent layers: **Vitest** unit tests (fast, no DB) and **Playwright** E
 ```bash
 pnpm test                        # all unit tests via `turbo test` (app, @repo/auth, @repo/database)
 pnpm --filter @repo/auth test    # one package's unit tests (vitest run)
-pnpm --filter app test           # web-app unit tests (vitest run)
+pnpm --filter web test           # web-app unit tests (vitest run)
 pnpm --filter @repo/database test # database package unit tests (vitest run)
-pnpm --filter app test:e2e       # all Playwright projects
-pnpm --filter app test:e2e:ui    # Playwright UI mode
-pnpm --filter app test:e2e:auth  # --project=no-auth   (name is a misnomer)
-pnpm --filter app test:e2e:app   # --project=authenticated
+pnpm --filter web test:e2e       # all Playwright projects
+pnpm --filter web test:e2e:ui    # Playwright UI mode
+pnpm --filter web test:e2e:auth  # --project=no-auth   (name is a misnomer)
+pnpm --filter web test:e2e:app   # --project=authenticated
 ```
 
-`pnpm check` / `pnpm fix` run lint; `pnpm --filter app typecheck` runs `tsc`. None
+`pnpm check` / `pnpm fix` run lint; `pnpm --filter web typecheck` runs `tsc`. None
 of these are turbo `test` — see the task graph below.
 
 ## Layout — unit tests
@@ -49,7 +49,7 @@ So the setup projects run first and gate `authenticated`. Local infra:
 
 ## CI (`.github/workflows/`)
 
-- `ci.yml` — four jobs: **lint** (`pnpm check`), **typecheck** (`pnpm --filter app
+- `ci.yml` — four jobs: **lint** (`pnpm check`), **typecheck** (`pnpm --filter web
   typecheck`), **test** (`pnpm test`, unit), and **setup-cli**. No DB is
   provisioned — a stub `DATABASE_URL` env is enough.
 - `e2e.yml` — Playwright, **gated behind the `e2e` PR label**

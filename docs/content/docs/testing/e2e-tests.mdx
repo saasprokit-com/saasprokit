@@ -15,9 +15,9 @@ Default projects in `apps/web/playwright.config.ts`:
 | `org-setup` | `setup/org.setup.ts` — writes org slug | `auth-setup` |
 | `no-auth` | `(public\|auth)/*.spec.ts` — no login | — |
 | `authenticated` | `(account\|admin\|dashboard\|members\|payment)/*.spec.ts` | `auth-setup`, `org-setup` |
-| `capture` (opt-in) | `e2e/capture/*.capture.ts` | `CAPTURE=1` / `pnpm --filter app capture` |
+| `capture` (opt-in) | `e2e/capture/*.capture.ts` | `CAPTURE=1` / `pnpm --filter web capture` |
 
-`globalSetup` (`e2e/setup/global-setup.ts`) clears MailDev. `pnpm --filter app test:e2e` is plain `playwright test` and does **not** load `capture`.
+`globalSetup` (`e2e/setup/global-setup.ts`) clears MailDev. `pnpm --filter web test:e2e` is plain `playwright test` and does **not** load `capture`.
 
 Local infra: `docker compose -f docker-compose.e2e.yml up -d` (Postgres on **5433**, Maildev). CI (`.github/workflows/e2e.yml`) is **gated behind the `e2e` PR label**.
 
@@ -85,10 +85,10 @@ Local infra: `docker compose -f docker-compose.e2e.yml up -d` (Postgres on **543
 
 ```bash
 docker compose -f docker-compose.e2e.yml up -d
-pnpm --filter app test:e2e
-pnpm --filter app test:e2e:ui
-pnpm --filter app test:e2e:auth          # --project=no-auth
-pnpm --filter app test:e2e:app           # --project=authenticated
-pnpm --filter app capture                # CAPTURE=1
-pnpm --filter app test:e2e -- e2e/payment
+pnpm --filter web test:e2e
+pnpm --filter web test:e2e:ui
+pnpm --filter web test:e2e:auth          # --project=no-auth
+pnpm --filter web test:e2e:app           # --project=authenticated
+pnpm --filter web capture                # CAPTURE=1
+pnpm --filter web test:e2e -- e2e/payment
 ```

@@ -20,7 +20,7 @@ pnpm --filter @repo/database db:seed   # wipes every table, then seeds admin@exa
 
 # Development
 pnpm dev                      # All apps except kit-docs
-pnpm --filter app dev         # Main app only (port 3000)
+pnpm --filter web dev         # Main app only (port 3000)
 pnpm --filter docs dev        # Customer's product docs, empty Fumadocs starter (port 3004)
 pnpm --filter storybook dev   # Component library (port 6006)
 pnpm --filter email dev       # Email preview (port 3003)
@@ -31,11 +31,11 @@ pnpm kit-docs:dev             # SaaSProKit's own documentation (port 3006)
 pnpm build                    # All apps and packages (excludes kit-docs)
 pnpm check                    # Lint via ultracite + Biome
 pnpm fix                      # Auto-fix lint issues
-pnpm --filter app typecheck   # Type check web app
+pnpm --filter web typecheck   # Type check web app
 
 # Testing (details: saasprokit:testing)
 pnpm test                     # Unit tests via turbo (app, @repo/auth, @repo/database)
-pnpm --filter app test:e2e    # Playwright E2E
+pnpm --filter web test:e2e    # Playwright E2E
 ```
 
 Optional: `pnpm skills:install` restores third-party skills into `.agents/skills/` (needs `git`; not part of `pnpm install`).

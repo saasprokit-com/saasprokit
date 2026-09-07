@@ -62,7 +62,7 @@ jobs:
         run: pnpm --filter @repo/database exec prisma generate
 
       - name: Typecheck web app
-        run: pnpm --filter app typecheck
+        run: pnpm --filter web typecheck
 
       - name: Typecheck setup CLI
         run: pnpm typecheck:cli
@@ -147,4 +147,4 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Typecheck pruned project
-        run: pnpm --filter app typecheck
+        run: pnpm --filter web typecheck

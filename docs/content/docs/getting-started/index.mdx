@@ -154,7 +154,7 @@ After starting the app:
 pnpm dev
 
 # Run a specific app
-pnpm --filter app dev        # Main SaaS app (port 3000)
+pnpm --filter web dev        # Main SaaS app (port 3000)
 pnpm --filter docs dev       # Customer product docs (port 3004)
 pnpm kit-docs:dev            # This site — kit-docs (port 3006)
 pnpm --filter storybook dev  # Component library (port 6006)
@@ -173,7 +173,7 @@ pnpm fix
 pnpm test                    # Unit tests via turbo (app, @repo/auth, @repo/database)
 
 # Type check the web app
-pnpm --filter app typecheck
+pnpm --filter web typecheck
 
 # Database commands
 pnpm migrate                              # Format, generate, push schema
@@ -183,7 +183,7 @@ pnpm --filter @repo/database db:seed      # Wipe (keeps RateLimit), then seed
 ### Troubleshooting
 
 **Port already in use**
-- Change the port: `pnpm --filter app dev -- -p 3001`
+- Change the port: `pnpm --filter web dev -- -p 3001`
 
 **Database connection issues**
 - Verify `DATABASE_URL` in `apps/web/.env.local` **and** `packages/database/.env` (both are required, and must match)
@@ -200,7 +200,7 @@ pnpm --filter @repo/database db:seed      # Wipe (keeps RateLimit), then seed
 **Build fails**
 - Ensure all environment variables are set
 - Run `pnpm migrate` to update database schema
-- Check TypeScript errors: `pnpm --filter app typecheck`
+- Check TypeScript errors: `pnpm --filter web typecheck`
 
 ### Next Steps
 

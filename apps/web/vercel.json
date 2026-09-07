@@ -1,5 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "ignoreCommand": "node scripts/skip-ci.js",
-  "buildCommand": "cd ../.. && pnpm turbo build --filter=app"
+  "buildCommand": "cd ../.. && pnpm turbo build --filter=web"
 }

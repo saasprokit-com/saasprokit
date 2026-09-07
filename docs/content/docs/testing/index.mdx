@@ -53,12 +53,12 @@ See [Unit Tests](/testing/unit-tests) for the file-by-file list. `@repo/storage`
 docker compose -f docker-compose.e2e.yml up -d
 
 # All default Playwright projects (not capture)
-pnpm --filter app test:e2e
+pnpm --filter web test:e2e
 
-pnpm --filter app test:e2e:ui
-pnpm --filter app test:e2e:auth   # --project=no-auth
-pnpm --filter app test:e2e:app    # --project=authenticated
-pnpm --filter app capture         # CAPTURE=1, e2e/capture/*.capture.ts
+pnpm --filter web test:e2e:ui
+pnpm --filter web test:e2e:auth   # --project=no-auth
+pnpm --filter web test:e2e:app    # --project=authenticated
+pnpm --filter web capture         # CAPTURE=1, e2e/capture/*.capture.ts
 ```
 
 ### Unit Tests (Vitest)
@@ -71,7 +71,7 @@ pnpm test
 pnpm test:cli
 
 pnpm --filter @repo/auth test
-pnpm --filter app test
+pnpm --filter web test
 pnpm --filter @repo/database test
 ```
 
@@ -106,4 +106,4 @@ See [Unit Tests](/testing/unit-tests) for what each file covers.
 
 ## How E2E is wired
 
-Four Playwright projects in `apps/web/playwright.config.ts` by default — `auth-setup` and `org-setup` run first and gate `authenticated`, while `no-auth` runs without a login. A fifth **`capture`** project is prepended only when `CAPTURE=1` (`pnpm --filter app capture`). Local infra: `docker compose -f docker-compose.e2e.yml up` (Postgres on **5433**, Maildev). CI (`.github/workflows/e2e.yml`) is gated on the `e2e` PR label. Project-by-project table: [E2E Tests](/testing/e2e-tests#how-e2e-is-wired).
+Four Playwright projects in `apps/web/playwright.config.ts` by default — `auth-setup` and `org-setup` run first and gate `authenticated`, while `no-auth` runs without a login. A fifth **`capture`** project is prepended only when `CAPTURE=1` (`pnpm --filter web capture`). Local infra: `docker compose -f docker-compose.e2e.yml up` (Postgres on **5433**, Maildev). CI (`.github/workflows/e2e.yml`) is gated on the `e2e` PR label. Project-by-project table: [E2E Tests](/testing/e2e-tests#how-e2e-is-wired).

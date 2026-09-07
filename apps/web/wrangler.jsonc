@@ -60,7 +60,7 @@
   // Named environments do NOT inherit vars/routes/services/r2_buckets —
   // each block must restate them in full.
   "env": {
-    // The maintainers' demo deployment: `pnpm --filter=app run deploy:demo`.
+    // The maintainers' demo deployment: `pnpm --filter=web run deploy:demo`.
     "demo": {
       // Keep the original worker name: without this the env would deploy a
       // second worker named "saasprokit-web-demo", orphaning the existing
