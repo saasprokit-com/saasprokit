@@ -17,18 +17,18 @@ datasource db {
 }
 
 model User {
-  id                    String       @id @default(cuid())
+  id                    String           @id @default(cuid())
   name                  String
-  email                 String       @unique
-  emailVerified         Boolean      @default(false)
+  email                 String           @unique
+  emailVerified         Boolean          @default(false)
   image                 String?
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
-  role                  String?      @default("user")
-  banned                Boolean?     @default(false)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  role                  String?          @default("user")
+  banned                Boolean?         @default(false)
   banReason             String?
   banExpires            DateTime?
-  twoFactorEnabled      Boolean?     @default(false)
+  twoFactorEnabled      Boolean?         @default(false)
   stripeCustomerId      String?
   firstName             String?
   lastName              String?
@@ -39,9 +39,10 @@ model User {
   twofactors            TwoFactor[]
   members               Member[]
   invitations           Invitation[]
-  createdInviteLinks    InviteLink[] @relation("InviteLinkCreator")
+  createdInviteLinks    InviteLink[]     @relation("InviteLinkCreator")
   uploadedFiles         File[]
   teamMembers           TeamMember[]
+  aiConversations       AiConversation[]
 
   @@map("user")
 }
@@ -111,17 +112,19 @@ model TwoFactor {
 }
 
 model Organization {
-  id               String       @id @default(cuid())
+  id               String           @id @default(cuid())
   name             String
-  slug             String       @unique
+  slug             String           @unique
   logo             String?
-  createdAt        DateTime     @default(now())
+  createdAt        DateTime         @default(now())
   metadata         String?
   stripeCustomerId String?
   members          Member[]
   invitations      Invitation[]
   inviteLinks      InviteLink[]
   teams            Team[]
+  aiConversations  AiConversation[]
+  aiUsage          AiUsage[]
 
   @@map("organization")
 }
@@ -312,4 +315,44 @@ model RateLimit {
   lastRequest BigInt
 
   @@map("rateLimit")
+}
+
+model AiConversation {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  messages       AiMessage[]
+
+  @@index([organizationId, userId, updatedAt])
+  @@map("ai_conversation")
+}
+
+model AiMessage {
+  id             String         @id
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  parts          String
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("ai_message")
+}
+
+model AiUsage {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  modelId        String
+  totalTokens    Int          @default(0)
+  imageCount     Int          @default(0)
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
+  @@map("ai_usage")
 }

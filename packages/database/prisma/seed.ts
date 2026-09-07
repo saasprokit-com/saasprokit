@@ -154,6 +154,9 @@ async function main() {
       error instanceof Error ? error.message : error
     );
   });
+  await prisma.aiUsage.deleteMany();
+  await prisma.aiMessage.deleteMany();
+  await prisma.aiConversation.deleteMany();
   await prisma.file.deleteMany();
   await prisma.webhookEvent.deleteMany();
   await prisma.invitation.deleteMany();
