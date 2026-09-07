@@ -21,6 +21,9 @@
     "cf:build": "turbo build --filter=@repo/database && CF_BUILD=1 opennextjs-cloudflare build"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.49",
+    "@ai-sdk/openai": "^4.0.60",
+    "@ai-sdk/react": "^4.0.96",
     "@better-fetch/fetch": "^1.3.1",
     "@hookform/resolvers": "^5.4.2",
     "@repo/auth": "workspace:*",
@@ -32,6 +35,7 @@
     "@repo/utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.11",
     "@tanstack/react-table": "^8.21.3",
+    "ai": "^7.0.93",
     "bcryptjs": "^3.0.3",
     "better-auth": "^1.6.25",
     "date-fns": "^4.4.0",
