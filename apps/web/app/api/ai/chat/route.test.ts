@@ -9,6 +9,11 @@ const mocks = vi.hoisted(() => ({
   isConfigured: vi.fn(),
   isWithinAiQuota: vi.fn(),
   languageModel: vi.fn(),
+  logger: {
+    debug: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+  },
   recordAiUsage: vi.fn(),
   saveMessages: vi.fn(),
   streamText: vi.fn(),
@@ -24,7 +29,7 @@ vi.mock("ai", () => ({
   toUIMessageStream: mocks.toUIMessageStream,
 }));
 vi.mock("@repo/logger/log", () => ({
-  createRequestLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn() }),
+  createRequestLogger: () => mocks.logger,
 }));
 vi.mock("@/lib/ai/registry", () => ({
   isConfigured: mocks.isConfigured,
@@ -173,5 +178,72 @@ describe("POST /api/ai/chat", () => {
     };
     await uiArgs.onEnd({ responseMessage: assistant });
     expect(mocks.saveMessages).toHaveBeenLastCalledWith("c1", [assistant]);
+  });
+
+  it("derives total usage when the SDK omits totalTokens", async () => {
+    await POST(request(validBody));
+    const streamArgs = mocks.streamText.mock.calls[0]?.[0] as {
+      onEnd: (event: { totalUsage: unknown }) => Promise<void>;
+    };
+
+    await streamArgs.onEnd({
+      totalUsage: { inputTokens: 5, outputTokens: 7 },
+    });
+
+    expect(mocks.recordAiUsage).toHaveBeenCalledWith({
+      organizationId: "org_1",
+      userId: "user_1",
+      modelId: "anthropic:claude-opus-5",
+      totalTokens: 12,
+    });
+  });
+
+  it("logs and swallows usage persistence failures", async () => {
+    await POST(request(validBody));
+    const streamArgs = mocks.streamText.mock.calls[0]?.[0] as {
+      onEnd: (event: { totalUsage: unknown }) => Promise<void>;
+    };
+    const err = new Error("usage persistence failed");
+    mocks.recordAiUsage.mockRejectedValueOnce(err);
+
+    await expect(
+      streamArgs.onEnd({
+        totalUsage: { inputTokens: 5, outputTokens: 7, totalTokens: 12 },
+      })
+    ).resolves.toBeUndefined();
+    expect(mocks.logger.error).toHaveBeenCalledWith(
+      "Failed to record chat usage",
+      {
+        err,
+        conversationId: "c1",
+        modelId: "anthropic:claude-opus-5",
+      }
+    );
+  });
+
+  it("logs and swallows assistant persistence failures", async () => {
+    await POST(request(validBody));
+    const uiArgs = mocks.toUIMessageStream.mock.calls[0]?.[0] as {
+      onEnd: (event: { responseMessage: unknown }) => Promise<void>;
+    };
+    const assistant = {
+      id: "msg_generated",
+      role: "assistant",
+      parts: [{ type: "text", text: "Hi" }],
+    };
+    const err = new Error("assistant persistence failed");
+    mocks.saveMessages.mockRejectedValueOnce(err);
+
+    await expect(
+      uiArgs.onEnd({ responseMessage: assistant })
+    ).resolves.toBeUndefined();
+    expect(mocks.logger.error).toHaveBeenCalledWith(
+      "Failed to persist assistant message",
+      {
+        err,
+        conversationId: "c1",
+        modelId: "anthropic:claude-opus-5",
+      }
+    );
   });
 });

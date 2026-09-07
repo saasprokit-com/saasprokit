@@ -35,6 +35,18 @@ function textOnly(messages: UIMessage[]): UIMessage[] {
     .filter((message) => message.parts.length > 0);
 }
 
+interface TokenUsage {
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+}
+
+function totalTokensOf(usage: TokenUsage): number {
+  return (
+    usage.totalTokens ?? (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0)
+  );
+}
+
 export async function POST(request: Request) {
   const session = await getServerSession();
   if (!session?.user?.id) {
@@ -93,12 +105,20 @@ export async function POST(request: Request) {
     ),
     providerOptions: { anthropic: { thinking: { type: "adaptive" } } },
     onEnd: async ({ totalUsage }) => {
-      await recordAiUsage({
-        organizationId: conversation.organizationId,
-        userId,
-        modelId,
-        totalTokens: totalUsage.totalTokens,
-      });
+      try {
+        await recordAiUsage({
+          organizationId: conversation.organizationId,
+          userId,
+          modelId,
+          totalTokens: totalTokensOf(totalUsage),
+        });
+      } catch (error) {
+        logger.error("Failed to record chat usage", {
+          err: error,
+          conversationId: id,
+          modelId,
+        });
+      }
     },
     onError: ({ error }) => {
       logger.error("Chat stream failed", {
@@ -115,7 +135,15 @@ export async function POST(request: Request) {
       originalMessages: history,
       generateMessageId,
       onEnd: async ({ responseMessage }) => {
-        await saveMessages(id, [responseMessage]);
+        try {
+          await saveMessages(id, [responseMessage]);
+        } catch (error) {
+          logger.error("Failed to persist assistant message", {
+            err: error,
+            conversationId: id,
+            modelId,
+          });
+        }
       },
     }),
   });
