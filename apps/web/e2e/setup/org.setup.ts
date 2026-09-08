@@ -4,12 +4,18 @@ import { test as setup } from "@playwright/test";
 import { LIMITS } from "@repo/utils/payment";
 
 import { BASE_URL, TEST_CONFIG } from "../fixtures/test-config";
+import { postAuth } from "../helpers/auth-api";
 import type { Organization } from "../helpers/org-api";
-import { ensureVerifiedUser } from "../helpers/test-user";
 
 const ORG_SLUG_PATH = "e2e/.auth/org-slug.txt";
 const DEFAULT_SLUG = "e2e-test-org";
-const FILLER_PASSWORD = "FillerPass123!";
+
+// Verified, unbanned, no-2FA users from packages/database/prisma/seed.ts.
+// Reusing them keeps this step to one /sign-in/email each — creating users
+// instead would spend sign-ups, and Better Auth allows only 3 per minute in
+// production, which is how CI runs the app.
+const SEEDED_FILLERS = ["john@example.com", "jane@example.com"];
+const SEEDED_PASSWORD = "Password@saaspro";
 
 // The fill step reads the org the first step creates.
 setup.describe.configure({ mode: "serial" });
@@ -59,10 +65,10 @@ setup("create organization", async ({ request }) => {
   writeFileSync(ORG_SLUG_PATH, org.slug);
 });
 
-// members/invite-accept.spec.ts asserts that accepting an invite to a full
+// members/invite-accept.spec.ts asserts that accepting an invite into a full
 // Free-plan org is refused. Without this the org only reaches its limit by
-// accumulating leaked members from earlier runs, so the assertion passes on
-// some machines and fails on a freshly seeded database.
+// accumulating members leaked by earlier runs, so the assertion passes on some
+// machines and fails on a freshly seeded database.
 setup(
   "fill organization to the member limit",
   async ({ request, playwright }) => {
@@ -81,7 +87,7 @@ setup(
       throw new Error(`Organization "${TEST_CONFIG.org.name}" was not created`);
     }
 
-    const countMembers = async (): Promise<number> => {
+    const memberEmails = async (): Promise<string[]> => {
       const res = await request.get(
         `/api/auth/organization/get-full-organization?organizationId=${org.id}`
       );
@@ -89,30 +95,40 @@ setup(
         throw new Error(`get-full-organization failed: ${res.status()}`);
       }
       const full = await res.json();
-      return (full.members ?? []).length;
+      return (full.members ?? []).map(
+        (m: { user?: { email?: string } }) => m.user?.email ?? ""
+      );
     };
 
     const limit = LIMITS.FREE.MAX_MEMBERS;
+    const existing = await memberEmails();
+    let count = existing.length;
 
-    for (let i = 1; i < limit; i++) {
-      if ((await countMembers()) >= limit) {
+    if (count < limit && SEEDED_FILLERS.length < limit - 1) {
+      throw new Error(
+        `The Free plan allows ${limit} members but only ${SEEDED_FILLERS.length} seeded filler accounts are listed — add more from prisma/seed.ts`
+      );
+    }
+
+    for (const email of SEEDED_FILLERS) {
+      if (count >= limit) {
         break;
       }
-
-      const filler = {
-        name: `E2E Filler ${i}`,
-        email: `e2e-filler-${i}@example.com`,
-        password: FILLER_PASSWORD,
-      };
+      if (existing.includes(email)) {
+        continue;
+      }
 
       const fillerApi = await playwright.request.newContext({
         baseURL: BASE_URL,
       });
       try {
-        const { verified } = await ensureVerifiedUser(fillerApi, filler);
-        if (!verified) {
+        const signIn = await postAuth(fillerApi, "/api/auth/sign-in/email", {
+          email,
+          password: SEEDED_PASSWORD,
+        });
+        if (!signIn.ok()) {
           throw new Error(
-            `Could not verify ${filler.email} — is Maildev running?`
+            `Could not sign in as the seeded user ${email}: ${signIn.status()}. Has the database been seeded (pnpm --filter @repo/database db:seed)?`
           );
         }
 
@@ -120,33 +136,37 @@ setup(
           "/api/auth/organization/invite-member",
           {
             headers: { origin: BASE_URL },
-            data: {
-              organizationId: org.id,
-              email: filler.email,
-              role: "member",
-            },
+            data: { organizationId: org.id, email, role: "member" },
           }
         );
         if (!inviteRes.ok()) {
           throw new Error(
-            `invite-member failed for ${filler.email}: ${await inviteRes.text()}`
+            `invite-member failed for ${email}: ${await inviteRes.text()}`
           );
         }
         const invitation = await inviteRes.json();
 
-        await fillerApi.post("/api/auth/organization/accept-invitation", {
-          headers: { origin: BASE_URL },
-          data: { invitationId: invitation.id },
-        });
+        const acceptRes = await fillerApi.post(
+          "/api/auth/organization/accept-invitation",
+          {
+            headers: { origin: BASE_URL },
+            data: { invitationId: invitation.id },
+          }
+        );
+        if (!acceptRes.ok()) {
+          throw new Error(
+            `accept-invitation failed for ${email}: ${await acceptRes.text()}`
+          );
+        }
+        count++;
       } finally {
         await fillerApi.dispose();
       }
     }
 
-    const finalCount = await countMembers();
-    if (finalCount < limit) {
+    if (count < limit) {
       throw new Error(
-        `Organization has ${finalCount} members but the Free plan limit is ${limit} — invite-accept limit assertions will not hold`
+        `Organization has ${count} members but the Free plan limit is ${limit} — invite-accept limit assertions will not hold`
       );
     }
   }

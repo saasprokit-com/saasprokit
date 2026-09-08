@@ -29,7 +29,7 @@ services:
       retries: 10
 
   maildev:
-    image: maildev/maildev:latest
+    image: maildev/maildev:3.0.0-rc.1
     container_name: e2e-maildev
     ports:
       - "1080:1080"
