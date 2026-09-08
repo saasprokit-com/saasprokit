@@ -4,7 +4,7 @@ import { guardDowngrade } from "@repo/auth/guards";
 import { isAlreadyCancelingError } from "@repo/auth/helpers";
 import { comparePlans } from "@repo/auth/plans";
 import { auth } from "@repo/auth/server";
-import { createRequestLogger } from "@repo/logger/server";
+import { createRequestLogger } from "@repo/logger/log";
 import {
   BILLING_INTERVALS,
   PLAN_NAMES,
@@ -77,10 +77,11 @@ export async function changePlanAction(
     const direction = comparePlans(currentPlan, validated.targetPlan);
 
     if (direction !== "downgrade") {
-      userLogger.warn(
-        { currentPlan, targetPlan: validated.targetPlan, direction },
-        "Change plan rejected — not a downgrade"
-      );
+      userLogger.warn("Change plan rejected — not a downgrade", {
+        currentPlan,
+        targetPlan: validated.targetPlan,
+        direction,
+      });
       return actionError("changePlan");
     }
 
@@ -104,10 +105,10 @@ export async function changePlanAction(
     }
 
     if (validated.targetPlan === PLAN_NAMES.FREE) {
-      userLogger.info(
-        { currentPlan, targetPlan: validated.targetPlan },
-        "Downgrade to free — client should use cancel flow"
-      );
+      userLogger.info("Downgrade to free — client should use cancel flow", {
+        currentPlan,
+        targetPlan: validated.targetPlan,
+      });
       return { success: true, data: { action: "cancel" } };
     }
 
@@ -121,14 +122,11 @@ export async function changePlanAction(
       },
     });
 
-    userLogger.info(
-      {
-        currentPlan,
-        targetPlan: validated.targetPlan,
-        billingInterval: validated.billingInterval,
-      },
-      "Plan downgrade scheduled at period end"
-    );
+    userLogger.info("Plan downgrade scheduled at period end", {
+      currentPlan,
+      targetPlan: validated.targetPlan,
+      billingInterval: validated.billingInterval,
+    });
 
     return { success: true, data: { action: "changed" } };
   } catch (error) {

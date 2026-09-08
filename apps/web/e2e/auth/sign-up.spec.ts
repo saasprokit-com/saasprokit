@@ -1,4 +1,4 @@
-import { clearInbox, isMaildevAvailable, waitForEmail } from "../helpers/maildev";
+import { isMaildevAvailable, waitForEmail } from "../helpers/maildev";
 import { expect, localePath, test } from "../fixtures/fixtures";
 import { fillSignUpForm } from "../helpers/ui";
 
@@ -45,7 +45,6 @@ test.describe("Sign Up", () => {
   }) => {
     const available = await isMaildevAvailable();
     test.skip(!available, "Maildev is not available");
-    await clearInbox();
 
     const email = `e2e-signup-${Date.now()}@example.com`;
     await page.goto(localePath("/auth/sign-up"));

@@ -2,16 +2,13 @@ import "server-only";
 
 import { calculateUsageStats, getCurrentPlan } from "@repo/auth/helpers";
 import { ORG_ROLES } from "@repo/auth/permissions";
-import { getPlanLimits } from "@repo/auth/plans";
 import { database, type Subscription } from "@repo/database";
-import { INVITATION_STATUS } from "@repo/utils/organization";
 import {
   ACTIVE_STATUSES,
   checkOrgCreationEligibility,
   type OrgCreationCheck,
   PLAN_NAMES,
   type PlanName,
-  UNLIMITED,
 } from "@repo/utils/payment";
 import { ATTACHABLE_TYPE, BYTES_PER_MB } from "@repo/utils/storage";
 import { cache } from "react";
@@ -51,77 +48,17 @@ export async function getOrgStorageUsage(
   });
 
   const bytes = result._sum.size || 0;
-  return Math.round(bytes / BYTES_PER_MB);
-}
-
-function getOrgPendingInvitationCount(organizationId: string): Promise<number> {
-  return database.invitation.count({
-    where: {
-      organizationId,
-      status: INVITATION_STATUS.PENDING,
-      expiresAt: { gt: new Date() },
-    },
-  });
+  return bytes / BYTES_PER_MB;
 }
 
 export async function getOrgUsageStats(organizationId: string) {
-  const [subscription, memberCount, pendingCount, storageMB] =
-    await Promise.all([
-      getActiveSubscription(organizationId),
-      getOrgMemberCount(organizationId),
-      getOrgPendingInvitationCount(organizationId),
-      getOrgStorageUsage(organizationId),
-    ]);
-
-  const occupiedSeats = memberCount + pendingCount;
-
-  return calculateUsageStats(subscription, occupiedSeats, storageMB);
-}
-
-function evaluateMemberCapacity(
-  subscription: Subscription | null,
-  occupiedSeats: number
-): { allowed: boolean; reason?: string; remaining: number } {
-  const planName = getCurrentPlan(subscription);
-  const { maxMembers } = getPlanLimits(planName);
-
-  if (maxMembers === UNLIMITED) {
-    return { allowed: true, remaining: UNLIMITED };
-  }
-
-  const remaining = Math.max(0, maxMembers - occupiedSeats);
-  if (remaining === 0) {
-    return {
-      allowed: false,
-      reason: `You have reached the maximum of ${maxMembers} members on your ${planName} plan`,
-      remaining: 0,
-    };
-  }
-
-  return { allowed: true, remaining };
-}
-
-export async function canOrgAddMember(
-  organizationId: string
-): Promise<{ allowed: boolean; reason?: string; remaining: number }> {
-  const [subscription, memberCount, pendingCount] = await Promise.all([
+  const [subscription, memberCount, storageMB] = await Promise.all([
     getActiveSubscription(organizationId),
     getOrgMemberCount(organizationId),
-    getOrgPendingInvitationCount(organizationId),
+    getOrgStorageUsage(organizationId),
   ]);
-  return evaluateMemberCapacity(subscription, memberCount + pendingCount);
-}
 
-export async function canOrgAcceptMember(
-  organizationId: string
-): Promise<{ allowed: boolean; reason?: string }> {
-  const [subscription, memberCount] = await Promise.all([
-    getActiveSubscription(organizationId),
-    getOrgMemberCount(organizationId),
-  ]);
-  const { allowed, reason } = evaluateMemberCapacity(subscription, memberCount);
-
-  return { allowed, reason };
+  return calculateUsageStats(subscription, memberCount, storageMB);
 }
 
 export async function canUserCreateOrg(

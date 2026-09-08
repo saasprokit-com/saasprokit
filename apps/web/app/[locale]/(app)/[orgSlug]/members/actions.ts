@@ -1,8 +1,9 @@
 "use server";
 
-import { ORG_ROLES } from "@repo/auth/permissions";
+import { isOwnerRole, ORG_ROLES } from "@repo/auth/permissions";
 import { auth } from "@repo/auth/server";
 import { database } from "@repo/database";
+import { createRequestLogger } from "@repo/logger/log";
 import {
   BULK_INVITE_CONCURRENCY,
   INVITATION_STATUS,
@@ -16,7 +17,6 @@ import {
   getServerSession,
   hasOrgPermission,
 } from "@/lib/auth/auth";
-import { canOrgAddMember } from "@/lib/billing/subscription-queries";
 import { type FormState, fieldErrorsFrom } from "@/lib/forms";
 import { revalidateOrgPage } from "@/lib/infrastructure/revalidation";
 import { ORG_PAGES } from "@/lib/routes";
@@ -50,11 +50,6 @@ export async function inviteMemberAction(
   try {
     const validated = parsed.data;
 
-    const memberCheck = await canOrgAddMember(validated.organizationId);
-    if (!memberCheck.allowed) {
-      return actionError("memberLimitReached");
-    }
-
     await auth.api.createInvitation({
       body: {
         email: validated.email,
@@ -76,6 +71,8 @@ export async function inviteMemberAction(
 export async function removeMembersAction(
   input: RemoveMembersInput
 ): Promise<ActionResult<{ removedCount: number }>> {
+  const logger = createRequestLogger({ action: "removeMembers" });
+
   try {
     const validated = removeMembersSchema.parse(input);
 
@@ -91,7 +88,6 @@ export async function removeMembersAction(
       return actionError("unauthorized");
     }
 
-    // Get members to remove and validate
     const membersToRemove = await database.member.findMany({
       where: {
         id: { in: validated.memberIds },
@@ -100,29 +96,56 @@ export async function removeMembersAction(
       select: { id: true, role: true, userId: true },
     });
 
-    // Filter out owners and self
     const validMembers = membersToRemove.filter(
-      (m) => m.role !== ORG_ROLES.OWNER && m.userId !== session.user.id
+      (m) => !isOwnerRole(m.role) && m.userId !== session.user.id
     );
 
     if (validMembers.length === 0) {
       return actionError("noValidMembers");
     }
 
-    // Deleting the membership row is enough to revoke access: every org-scoped page
-    // re-reads membership on each request via getActiveOrganization(), so a removed
-    // member is locked out on their very next request. Their session stays valid for
-    // the organizations they still belong to.
-    const memberResult = await database.member.deleteMany({
-      where: {
-        id: { in: validMembers.map((m) => m.id) },
-      },
-    });
+    const reqHeaders = await headers();
+    const results: PromiseSettledResult<unknown>[] = [];
+    for (let i = 0; i < validMembers.length; i += BULK_INVITE_CONCURRENCY) {
+      const batch = validMembers.slice(i, i + BULK_INVITE_CONCURRENCY);
+      const settled = await Promise.allSettled(
+        batch.map((member) =>
+          auth.api.removeMember({
+            body: {
+              memberIdOrEmail: member.id,
+              organizationId: validated.organizationId,
+            },
+            headers: reqHeaders,
+          })
+        )
+      );
+      results.push(...settled);
+    }
+
+    const rejected = results.filter(
+      (result): result is PromiseRejectedResult => result.status === "rejected"
+    );
+    const removedCount = results.length - rejected.length;
+    if (removedCount === 0) {
+      return toActionError(rejected[0]?.reason, {
+        fallback: "removeMember",
+        logger,
+      });
+    }
+
+    if (rejected.length > 0) {
+      logger.error("Some member removals were rejected", {
+        err: rejected[0].reason,
+        organizationId: validated.organizationId,
+        rejectedCount: rejected.length,
+        requestedCount: validMembers.length,
+      });
+    }
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
-    return { success: true, data: { removedCount: memberResult.count } };
+    return { success: true, data: { removedCount } };
   } catch (error) {
-    return toActionError(error, { fallback: "removeMember" });
+    return toActionError(error, { fallback: "removeMember", logger });
   }
 }
 
@@ -156,21 +179,28 @@ export async function updateMemberRoleAction(
       return actionError("unauthorized");
     }
 
-    // Atomic update with constraints to prevent TOCTOU race conditions.
-    // Uses updateMany so all guards (not owner, not self) are enforced atomically.
-    const result = await database.member.updateMany({
+    const member = await database.member.findFirst({
       where: {
         id: validated.memberId,
         organizationId: validated.organizationId,
-        role: { not: ORG_ROLES.OWNER },
-        userId: { not: session.user.id },
       },
-      data: { role: validated.newRole },
+      select: { role: true, userId: true },
     });
-
-    if (result.count === 0) {
+    if (!member) {
+      return actionError("memberNotFound");
+    }
+    if (isOwnerRole(member.role) || member.userId === session.user.id) {
       return actionError("updateRole");
     }
+
+    await auth.api.updateMemberRole({
+      body: {
+        memberId: validated.memberId,
+        organizationId: validated.organizationId,
+        role: validated.newRole,
+      },
+      headers: await headers(),
+    });
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
     return { success: true };
@@ -202,33 +232,16 @@ async function processBulkInviteEmail(
   }
 }
 
-/**
- * Throw if valid email count exceeds remaining plan capacity.
- * -1 means unlimited (no check needed).
- */
-function enforceCapacity(validCount: number, remaining: number): void {
-  if (remaining !== -1 && validCount > remaining) {
-    throw new Error(
-      `Cannot invite ${validCount} members. Only ${remaining} seat(s) remaining on your plan. Remove some emails and try again.`
-    );
-  }
-}
-
-/**
- * Uses batch pre-check for performance, then delegates each invite to BA API
- */
 async function processBulkInviteEmails(
   emails: string[],
   organizationId: string,
   role: BulkInviteInput["role"],
-  opts: { reqHeaders: Headers; remainingCapacity: number }
+  reqHeaders: Headers
 ): Promise<{ invited: number; skipped: string[] }> {
-  const { reqHeaders, remainingCapacity } = opts;
   const skipReasons = await checkBulkInviteSkip(emails, organizationId);
   const skipped: string[] = [];
   let invited = 0;
 
-  // Separate skipped emails from valid ones
   const validEmails: string[] = [];
   for (const email of emails) {
     const skipReason = skipReasons.get(email);
@@ -239,9 +252,6 @@ async function processBulkInviteEmails(
     }
   }
 
-  enforceCapacity(validEmails.length, remainingCapacity);
-
-  // Process valid emails in parallel batches for performance
   for (let i = 0; i < validEmails.length; i += BULK_INVITE_CONCURRENCY) {
     const batch = validEmails.slice(i, i + BULK_INVITE_CONCURRENCY);
     const results = await Promise.allSettled(
@@ -352,28 +362,23 @@ export async function bulkInviteAction(
   try {
     const validated = parsed.data;
 
-    // Permission (invitation:create) is enforced by BA's createInvitation itself;
-    // only the plan seat cap — which BA has no concept of — is checked here.
-    const memberCheck = await canOrgAddMember(validated.organizationId);
-    if (!memberCheck.allowed) {
-      return actionError("memberLimitReached");
+    const allowed = await hasOrgPermission(validated.organizationId, {
+      invitation: ["create"],
+    });
+    if (!allowed) {
+      return actionError("unauthorized");
     }
-
-    const reqHeaders = await headers();
 
     const { invited, skipped } = await processBulkInviteEmails(
       validated.emails,
       validated.organizationId,
       validated.role,
-      { reqHeaders, remainingCapacity: memberCheck.remaining }
+      await headers()
     );
 
     await revalidateOrgPage(validated.orgSlug, ORG_PAGES.MEMBERS);
     return { status: "success", data: { invited, skipped } };
   } catch (error) {
-    if (error instanceof Error && error.message.includes("seat(s) remaining")) {
-      return actionError("seatLimitReached");
-    }
     return toActionError(error, {
       fallback: "invalidInput",
     });

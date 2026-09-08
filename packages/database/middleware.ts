@@ -1,4 +1,4 @@
-import { logger } from "@repo/logger/server";
+import { logger } from "@repo/logger/log";
 
 import { Prisma } from "./generated/client/client";
 import { argShape } from "./redact";
@@ -19,29 +19,23 @@ export const queryLoggingExtension = ({ thresholdMs }: QueryLoggingOptions) =>
             const duration = Date.now() - start;
 
             if (duration > thresholdMs) {
-              logger.warn(
-                {
-                  model: model ?? "raw",
-                  operation,
-                  durationMs: duration,
-                  argShape: argShape(args),
-                },
-                "slow query"
-              );
+              logger.warn("slow query", {
+                model: model ?? "raw",
+                operation,
+                durationMs: duration,
+                argShape: argShape(args),
+              });
             }
 
             return result;
           } catch (error) {
-            logger.error(
-              {
-                model: model ?? "raw",
-                operation,
-                durationMs: Date.now() - start,
-                argShape: argShape(args),
-                error: error instanceof Error ? error.message : String(error),
-              },
-              "query failed"
-            );
+            logger.error("query failed", {
+              model: model ?? "raw",
+              operation,
+              durationMs: Date.now() - start,
+              argShape: argShape(args),
+              error: error instanceof Error ? error.message : String(error),
+            });
 
             throw error;
           }

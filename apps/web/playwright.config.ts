@@ -33,7 +33,10 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: [["html", { open: "never" }], ["list"]],
-  timeout: 30_000,
+  // CI runs a production build, where Better Auth enforces its rate limits (3
+  // sign-ups per minute). Setup and the auth specs wait out a 429 rather than
+  // failing, and that wait has to fit inside the test timeout.
+  timeout: process.env.CI ? 90_000 : 30_000,
   expect: {
     timeout: 10_000,
   },

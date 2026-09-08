@@ -5,13 +5,13 @@ description: Step-by-step production deployment of the web app on Vercel — no 
 
 The recommended path. Vercel runs Next.js 16 natively, understands the pnpm + Turborepo monorepo, and needs no code changes. Budget ~30 minutes plus DNS propagation.
 
-Complete the [shared prerequisites](/docs/deployment) first (Neon, Stripe, Resend, OAuth apps).
+Complete the [shared prerequisites](/deployment) first (Neon, Stripe, Resend, OAuth apps).
 
 ## 1. Import the project
 
 1. Push the repository to GitHub and import it at **vercel.com/new**
 2. Set **Root Directory** to `apps/web`
-3. Leave the framework preset on **Next.js**. `apps/web/vercel.json` already sets a custom **Build Command** — `cd ../.. && pnpm turbo build --filter=app` — so Vercel doesn't fall back to a bare `next build`, which would skip Prisma client generation. The generated client is gitignored, so without the Turbo build the deploy fails; this isn't optional and needs no manual setup
+3. Leave the framework preset on **Next.js**. `apps/web/vercel.json` already sets a custom **Build Command** — `cd ../.. && pnpm turbo build --filter=web` — so Vercel doesn't fall back to a bare `next build`, which would skip Prisma client generation. The generated client is gitignored, so without the Turbo build the deploy fails; this isn't optional and needs no manual setup
 
 ## 2. Environment variables
 
@@ -64,7 +64,7 @@ AWS_S3_PUBLIC_URL=https://your-bucket.s3.amazonaws.com
 
 ## 3. Push the database schema
 
-From your machine, with the production `DATABASE_URL` in `packages/database/.env`:
+From your machine, put the **unpooled** Neon URL in `DIRECT_URL` in `packages/database/.env`. Leave Vercel `DATABASE_URL` as the `-pooler` string. `prisma.config.ts` uses `DIRECT_URL || DATABASE_URL`; the pooler cannot run DDL.
 
 ```bash
 cd packages/database && npx prisma db push
@@ -76,14 +76,14 @@ Trigger the first deploy, then add your domain under **Settings → Domains**. I
 
 ## 5. Stripe webhook and OAuth callbacks
 
-Follow the [shared post-deploy configuration](/docs/deployment#shared-post-deploy-configuration): register `https://yourdomain.com/api/auth/stripe/webhook`, copy the signing secret into `STRIPE_WEBHOOK_SECRET`, redeploy, and add the OAuth callback URLs.
+Follow the [shared post-deploy configuration](/deployment#shared-post-deploy-configuration): register `https://yourdomain.com/api/auth/stripe/webhook`, copy the signing secret into `STRIPE_WEBHOOK_SECRET`, redeploy, and add the OAuth callback URLs.
 
 ## 6. Verify
 
-Run the full [verification checklist](/docs/deployment#verification-checklist).
+Run the full [verification checklist](/deployment#verification-checklist).
 
 ## Vercel-specific notes
 
-- **Middleware** (`apps/web/middleware.ts`) runs on Vercel's edge runtime. It performs an optimistic `getSessionCookie()` check with no database access — it never calls Better Auth directly, so it can't distinguish a valid session from a stale cookie. It has no error handling of its own — the cookie read cannot fail meaningfully, so there is nothing to fail open or closed on. Real enforcement happens in the layouts via `requireAuth`, which do hit the database — watch for unexpected sign-in redirects there, not in the middleware.
+- **Middleware** (`apps/web/middleware.ts`) runs on Vercel's edge runtime. It performs an optimistic `getSessionCookie()` check with no database access — a **missing** cookie redirects to sign-in here. It cannot distinguish a valid session from a stale or garbage cookie (any present token string is truthy). Real enforcement happens in the layouts via `requireAuth`.
 - **Preview deployments** get `*.vercel.app` URLs that won't match `BETTER_AUTH_TRUSTED_ORIGINS`; auth flows on previews will be limited unless you add the preview origin.
 - **Rollback**: `vercel rollback` restores the previous deployment; the schema is managed separately via Prisma, so roll it back deliberately if a deploy included schema changes.

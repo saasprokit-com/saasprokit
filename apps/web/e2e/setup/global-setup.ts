@@ -19,6 +19,15 @@ async function globalSetup() {
   if (maildevUp) {
     await clearInbox();
     console.log("✓ Maildev is running — inbox cleared");
+  } else if (process.env.CI) {
+    // Locally a missing Maildev only skips the email specs, which is a fair
+    // trade. In CI that silence is the bug: the specs skip, auth setup fails
+    // for an unrelated-looking reason, and the run still reports "5 skipped".
+    throw new Error(
+      `Maildev is not reachable at ${process.env.MAILDEV_URL || "http://localhost:1080"}/api/email. ` +
+        "Email-dependent specs would skip silently and auth setup would fail. " +
+        "Check the Maildev image version — the REST API moved to /api/email in v3."
+    );
   } else {
     console.warn(
       "⚠️  Maildev not available at http://localhost:1080 — email-dependent tests will fail.\n" +

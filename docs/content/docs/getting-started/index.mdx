@@ -3,6 +3,8 @@ title: Getting Started
 description: How to start the SaaSProKit project
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 ## Quick Start
 
 SaaSProKit is a production-grade Next.js 16 monorepo using pnpm workspaces and Turborepo. Follow these steps to get the project running locally.
@@ -51,22 +53,30 @@ Ensure you have the following installed:
      | `--keep-all-hosts` | Keep every host's deploy config |
      | `--no-install` | Skip `pnpm install` and the Prisma client build |
      | `--no-commit` | Skip the git commit step |
-     | `--yes` | Accept defaults and ask nothing |
+     | `--yes` | Skip confirmations (dirty-tree warning, env overwrite, commit). Still asks for project name and deploy target unless you also pass `--name` and `--host` |
+     | `--name <name>` | Project name (required to skip the name prompt) |
+     | `--host <host>` | Deploy target: `cloudflare` \| `vercel` \| `docker` |
 
      The interactive run asks before committing. `--yes` does not — it commits
      straight away on a clean tree, and on a dirty tree it skips the commit
      rather than sweeping your uncommitted work into it. `docs/` is always
      removed; there is no flag to keep kit-docs.
+
+     `--yes` alone is not unattended. For a no-prompt run:
+
+     ```bash
+     pnpm run setup --yes --name acme --host cloudflare
+     ```
    </Callout>
 
-   The manual steps below remain for reference and for adjusting values later.
-   Copy `apps/web/.env.example` → `apps/web/.env.local` and
-   `packages/database/.env.example` → `packages/database/.env`. Both
-   `DATABASE_URL`s must match — Prisma CLI commands (`migrate`, `studio`,
-   `db:seed`) load `packages/database/.env`, not the Next.js app env. Generate
-   `BETTER_AUTH_SECRET` with `openssl rand -base64 48`.
+   Do not copy the `.env.example` files by hand — `pnpm run setup` writes both
+   `apps/web/.env.local` and `packages/database/.env` from the same
+   `DATABASE_URL`. The database example ships with an empty URL. Prisma CLI
+   commands (`migrate`, `studio`, `db:seed`) load `packages/database/.env`,
+   not the Next.js app env.
 
-   Families in `apps/web/.env.example` (optional vars ship commented out):
+   Families in `apps/web/.env.example` (edit the files setup wrote if you need
+   to fill optional keys later):
 
    | Family | Vars |
    | --- | --- |
@@ -83,7 +93,7 @@ Ensure you have the following installed:
    `pnpm dev` does **not** start Postgres or MailDev.
 
    ```bash
-   docker compose up postgres maildev
+   docker compose up -d postgres maildev
    ```
 
    Postgres is on `5432`. MailDev SMTP is `1025`; caught mail is at http://localhost:1080.
@@ -99,10 +109,11 @@ Ensure you have the following installed:
    ```
 
    <Callout type="warn">
-     This **wipes every table first**, then creates sample users (including
-     `admin@example.com` / `Password@saaspro`), organizations, memberships, and
-     subscriptions. It exits without running if `NODE_ENV=production`. See
-     [Database Design](/docs/database/database-design) for what is seeded.
+     This **wipes tables first** (except `RateLimit`), then creates sample users
+     (including `admin@example.com` / `Password@saaspro`), organizations,
+     memberships, and subscriptions. It exits without running if
+     `NODE_ENV=production`. See [Database Design](/database/database-design)
+     for what is seeded.
    </Callout>
 
 7. **Run the development server**
@@ -133,7 +144,7 @@ Ensure you have the following installed:
 After starting the app:
 
 1. Navigate to http://localhost:3000
-2. Sign up, or use seeded credentials `admin@example.com` / `Password@saaspro` (seed already creates organizations — skip "create your first org" unless you want another)
+2. **Sign in** (not sign up) with the seed user `admin@example.com` / `Password@saaspro`. Signing up with that email collides with the seeded account. Seed already creates organizations — skip "create your first org" unless you want another
 3. Explore the dashboard
 
 ### Common Development Commands
@@ -143,7 +154,7 @@ After starting the app:
 pnpm dev
 
 # Run a specific app
-pnpm --filter app dev        # Main SaaS app (port 3000)
+pnpm --filter web dev        # Main SaaS app (port 3000)
 pnpm --filter docs dev       # Customer product docs (port 3004)
 pnpm kit-docs:dev            # This site — kit-docs (port 3006)
 pnpm --filter storybook dev  # Component library (port 6006)
@@ -159,24 +170,24 @@ pnpm check
 pnpm fix
 
 # Run tests
-pnpm test                    # Unit tests via turbo (app, @repo/auth, @repo/database)
+pnpm test                    # Unit tests via turbo (web, @repo/auth, @repo/database)
 
 # Type check the web app
-pnpm --filter app typecheck
+pnpm --filter web typecheck
 
 # Database commands
 pnpm migrate                              # Format, generate, push schema
-pnpm --filter @repo/database db:seed      # Wipe every table, then seed
+pnpm --filter @repo/database db:seed      # Wipe (keeps RateLimit), then seed
 ```
 
 ### Troubleshooting
 
 **Port already in use**
-- Change the port: `pnpm --filter app dev -- -p 3001`
+- Change the port: `pnpm --filter web dev -- -p 3001`
 
 **Database connection issues**
 - Verify `DATABASE_URL` in `apps/web/.env.local` **and** `packages/database/.env` (both are required, and must match)
-- Ensure Postgres is running (`docker compose up postgres maildev`)
+- Ensure Postgres is running (`docker compose up -d postgres maildev`)
 - Check Neon credentials if using Neon
 
 **Caught email (password reset, magic link, verify)**
@@ -189,11 +200,11 @@ pnpm --filter @repo/database db:seed      # Wipe every table, then seed
 **Build fails**
 - Ensure all environment variables are set
 - Run `pnpm migrate` to update database schema
-- Check TypeScript errors: `pnpm --filter app typecheck`
+- Check TypeScript errors: `pnpm --filter web typecheck`
 
 ### Next Steps
 
-- Read the [Project Structure](/docs/getting-started/structure) guide
-- Learn about [Features](/docs/getting-started/features)
-- Understand the [Database Design](/docs/database/database-design)
-- Review [Deployment](/docs/deployment) options
+- Read the [Project Structure](/getting-started/structure) guide
+- Learn about [Features](/getting-started/features)
+- Understand the [Database Design](/database/database-design)
+- Review [Deployment](/deployment) options

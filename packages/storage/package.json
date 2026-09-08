@@ -2,10 +2,7 @@
   "name": "@repo/storage",
   "version": "0.0.0",
   "private": true,
-  "main": "./index.ts",
-  "types": "./index.ts",
   "exports": {
-    ".": "./index.ts",
     "./server": "./server.ts",
     "./keys": "./keys.ts",
     "./constants": "./constants.ts"

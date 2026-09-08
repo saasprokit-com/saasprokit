@@ -2,7 +2,7 @@
 
 import { ErrorContent } from "@repo/design-system/components/molecules/error/error-content";
 import { Button } from "@repo/design-system/components/ui/button";
-import { logger } from "@repo/logger/client";
+import { logger } from "@repo/logger/log";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 

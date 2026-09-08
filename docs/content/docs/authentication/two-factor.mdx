@@ -1,9 +1,31 @@
 ---
 title: Two-Factor Authentication
-description: The TOTP second factor, the server-action handoff from password sign-in, the /auth/2fa step, and how it gates session creation
+description: Enable TOTP in account settings; password sign-in is the only first factor that challenges 2FA
 ---
 
-When a user has two-factor enabled, a correct password (or other first factor) is **not enough** to mint a session. Better Auth returns a "two-factor required" result; the sign-in **server action** surfaces that flag, the form navigates to `/auth/2fa`, and only a valid second factor completes the sign-in. 2FA handoff is **not** a client hook.
+import { Callout } from 'fumadocs-ui/components/callout';
+
+**Password** sign-in is the only first factor that is 2FA-gated. Magic link, email OTP, and OAuth mint a session with no TOTP step.
+
+When 2FA is enabled, a correct password is not enough: `signInEmailAction` maps Better Auth's `twoFactorRedirect` to `data.twoFactorRequired`, the form navigates to `/auth/2fa`, and only TOTP or a backup code completes the sign-in. Handoff is a server action, not a client hook.
+
+## Enabling 2FA
+
+A signed-in user turns this on at **`/account/security`**. UI: `apps/web/app/[locale]/(app)/account/security/components/two-factor-manager.tsx`. Actions: `.../security/actions.ts`.
+
+1. Enter current password.
+2. `enable2FAAction` → `auth.api.enableTwoFactor` — returns a QR (`totpURI`) and backup codes.
+3. Scan the QR. Backup codes are shown **before** verify — abandoning the dialog is recoverable.
+4. `verify2FAAction` → `auth.api.verifyTOTP` — flips the factor verified. Rate limit: `enforceRateLimit("2fa")`.
+5. Disable later with `disable2FAAction` (password). Enable/disable also use `enforceRateLimit("change-password")`.
+
+There is no regenerate-backup-codes UI. Codes are issued only at enable/reconfigure and burn once at challenge.
+
+`/admin/users/[userId]` shows Enabled/Disabled only. Staff cannot reset 2FA.
+
+### Reconfigure lockout
+
+"Reconfigure 2FA" reuses enable, which **deletes** the old `twoFactor` row (old TOTP + codes are already gone). Better Auth would carry `verified: true` onto the new row; `packages/auth/two-factor-hooks.ts` forces `verified: false` until in-session `verifyTOTP`. That is why the QR step must be completed.
 
 ## Server configuration
 
@@ -22,11 +44,7 @@ twoFactor({
 }),
 ```
 
-Per-user 2FA state is persisted in the `TwoFactor` model (`secret`, `backupCodes`) and flagged on `User.twoFactorEnabled`. The `/two-factor/*` endpoints are rate-limited to 5 requests/minute.
-
-## Enabling 2FA
-
-Generating the TOTP secret, showing the QR code, and issuing backup codes happens in **account settings** (`/account/security`), not on the auth pages — a user must already be signed in to turn it on. This section covers the *challenge* side: proving the second factor at sign-in.
+Per-user 2FA state is the `TwoFactor` model (`secret`, `backupCodes`, `verified`) plus `User.twoFactorEnabled`. Live limiters are `enforceRateLimit` on the **server actions** — Better Auth's HTTP `/two-factor/*` rules do not apply to `auth.api.*`.
 
 ## The server-action path
 
@@ -35,7 +53,7 @@ Generating the TOTP secret, showing the QR code, and issuing backup codes happen
 1. `signInEmailAction` (`sign-in/actions.ts`) calls `auth.api.signInEmail`. When Better Auth withholds the session it returns `twoFactorRedirect`; the action maps that to `data.twoFactorRequired`.
 2. `sign-in-form.tsx` reads the flag in `useActionResult` and `router.push(PAGE_ROUTES.TWO_FACTOR)`.
 
-A 2FA-enabled account never gets a full session from the first factor — the form navigates to `/auth/2fa` instead of the post-login destination.
+A 2FA-enabled account never gets a full session from **password** sign-in — the form navigates to `/auth/2fa` instead of the post-login destination.
 
 ## The /auth/2fa page
 
@@ -96,7 +114,10 @@ sequenceDiagram
 
 ## Source files
 
-- `apps/web/app/[locale]/auth/2fa/page.tsx` — server page
+- `apps/web/app/[locale]/(app)/account/security/components/two-factor-manager.tsx` — enable / verify / disable UI
+- `apps/web/app/[locale]/(app)/account/security/actions.ts` — `enable2FAAction`, `verify2FAAction`, `disable2FAAction`
+- `packages/auth/two-factor-hooks.ts` — reconfigure lockout (`verified: false` on enable)
+- `apps/web/app/[locale]/auth/2fa/page.tsx` — challenge page
 - `apps/web/app/[locale]/auth/2fa/components/two-factor-form.tsx` — dispatches `verifyTwoFactorAction`
 - `apps/web/app/[locale]/auth/2fa/actions.ts` — `verifyTwoFactorAction` → `auth.api.verifyTOTP`; `verifyBackupCodeAction` → `auth.api.verifyBackupCode`
 - `apps/web/app/[locale]/auth/sign-in/actions.ts` — `signInEmailAction` maps `twoFactorRedirect` → `data.twoFactorRequired`
@@ -104,4 +125,4 @@ sequenceDiagram
 - `packages/auth/server.ts` — `twoFactor()` plugin config
 - `packages/auth/client.ts` — `twoFactorClient()`
 - `apps/web/lib/routes.ts` — `AUTH_ROUTE_PREFIXES` (includes `/auth/2fa`)
-- `packages/database/prisma/schema.prisma` — `TwoFactor` model, `User.twoFactorEnabled`
+- `packages/database/prisma/schema.prisma` — `TwoFactor` model (`verified`), `User.twoFactorEnabled`

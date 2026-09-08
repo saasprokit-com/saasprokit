@@ -45,6 +45,7 @@ import { isBootstrapAdminEmail } from "./admin-bootstrap";
 import { authorizeBillingAction } from "./billing-authorize";
 import { IP_ADDRESS_HEADERS } from "./ip-headers";
 import { keys } from "./keys";
+import { getOrganizationMembershipLimit } from "./membership-limit";
 import { canUserCreateOrg } from "./org-eligibility";
 import {
   ADMIN_ROLES,
@@ -297,6 +298,25 @@ export const auth = betterAuth({
       organizationLimit: MAX_ORGS_PER_USER,
       allowUserToCreateOrganization: (user) =>
         canUserCreateOrg(user.id, MAX_ORGS_PER_USER),
+      membershipLimit: (_user, org) => getOrganizationMembershipLimit(org.id),
+      organizationHooks: {
+        // Better Auth 1.6.25 skips this duplicate check during acceptance.
+        async beforeAcceptInvitation({ invitation, user }) {
+          const existingMember = await database.member.findFirst({
+            where: {
+              organizationId: invitation.organizationId,
+              userId: user.id,
+            },
+            select: { id: true },
+          });
+          if (existingMember) {
+            throw new APIError("BAD_REQUEST", {
+              code: "USER_IS_ALREADY_A_MEMBER_OF_THIS_ORGANIZATION",
+              message: "User is already a member",
+            });
+          }
+        },
+      },
       invitationExpiresIn: INVITATION_EXPIRES_IN_DAYS * SECONDS_PER_DAY,
       cancelPendingInvitationsOnReInvite: false,
       async sendInvitationEmail(data) {

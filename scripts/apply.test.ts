@@ -34,7 +34,7 @@ const FIXTURE_FILES: Record<string, string> = {
   "docker/dev.Dockerfile": "COPY apps/docs/package.json apps/docs/source.config.ts ./apps/docs/\nCOPY docs/package.json docs/source.config.ts ./docs/\nCOPY apps/email/package.json ./apps/email/package.json\n",
   "biome.jsonc": '{\n  "files": {\n    "includes": [\n      "**/*",\n      "!apps/docs/**/*.json",\n      "!docs/**/*.json"\n    ]\n  }\n}\n',
   "apps/web/package.json": JSON.stringify({
-    name: "app",
+    name: "web",
     scripts: {
       build: "next build",
       deploy: "pnpm cf:build && opennextjs-cloudflare deploy",

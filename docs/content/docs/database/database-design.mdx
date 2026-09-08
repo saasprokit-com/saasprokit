@@ -43,7 +43,6 @@ model User {
   invitations           Invitation[]
   createdInviteLinks    InviteLink[]
   uploadedFiles         File[]
-  auditLogs             AuditLog[]
   teamMembers           TeamMember[]
 
   @@map("user")
@@ -361,27 +360,7 @@ model File {
 }
 ```
 
-## Audit & Security Models
-
-### AuditLog
-
-Tracks user actions for security and compliance.
-
-```prisma
-model AuditLog {
-  id        String   @id @default(cuid())
-  userId    String
-  action    String       // "password_changed", "profile_updated", "2fa_enabled", etc.
-  changes   String?      // JSON with before/after values
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now())
-
-  user      User     @relation(...)
-
-  @@map("audit_log")
-}
-```
+## Webhook Models
 
 ### WebhookEvent
 
@@ -433,15 +412,14 @@ User (1) ──→ (N) Member ←── (1) Organization
   ├─→ (N) Session                ├─→ (N) InviteLink
   │                              └─→ (N) Team
   ├─→ (N) TwoFactor                    └─→ (N) TeamMember
-  ├─→ (N) File
-  ├─→ (N) AuditLog              Subscription (standalone, linked via referenceId)
+  ├─→ (N) File                  Subscription (standalone, linked via referenceId)
   └─→ (N) TeamMember
                                  WebhookEvent (standalone)
 ```
 
 ### Cascade Deletes
 
-- **Delete User** → Removes accounts, sessions, members, audit logs, team memberships. `File.uploadedBy` is `onDelete: SetNull` — files are not deleted with the user.
+- **Delete User** → Removes accounts, sessions, members, team memberships. `File.uploadedBy` is `onDelete: SetNull` — files are not deleted with the user.
 - **Delete Organization** → Removes members, invitations, invite links, teams
 - **Delete Team** → Removes team members
 

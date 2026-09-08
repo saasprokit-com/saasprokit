@@ -1,6 +1,6 @@
 ---
 name: auth
-description: Use when touching sessions, roles, permissions, protected pages, server-action auth, or the platform /admin area in this repo. Covers Better Auth setup, the dual admin + org RBAC systems, session helpers, org-slug guards, and rate limiting.
+description: Use when touching sessions, roles, permissions, protected pages, server-action auth, or the platform /admin area in this repo. Covers Better Auth setup, the dual admin + org RBAC systems, session helpers, org-slug guards, rate limiting, and which org mutations (members, roles, invitations, seat limits) delegate to Better Auth.
 ---
 
 # Authentication & Authorization
@@ -77,7 +77,13 @@ covered). Add new plugins *before* it, never at the end.
    `verifySession` pre-check adds no security. Keep it when you touch raw Prisma or
    need `session.user.id`.
 3. **Authorize** — org: `hasOrgPermission`; admin: `hasAdminPermission`; else
-   `actionError("unauthorized")`.
+   `actionError("unauthorized")`. Place `hasOrgPermission` only where a raw Prisma
+   read or write follows it. In front of a bare `auth.api.*` call it is redundant:
+   `createInvitation`, `cancelInvitation`, `removeMember`, `updateMemberRole`,
+   `updateOrganization`, `deleteOrganization` and the billing endpoints each re-derive
+   membership and re-check the same permission from the session (verified in the
+   installed plugin source). Admin actions keep `hasAdminPermission` regardless — it
+   is the only per-request `banned` check (see Platform admin).
 4. **Identity from the session, never the payload.**
 5. **Return `ActionResult<T>`**; in `catch`, `return toActionError(error, { fallback })`.
 
@@ -89,6 +95,34 @@ the i18n plugin; `toActionError` surfaces that message, else the localized
 the fallback `ActionErrorCode`). New BA codes go in
 `packages/internationalization/ba-errors/<locale>.json` — **6 locales** (de, en, es,
 fr, pt, zh), key-parity enforced by `packages/auth/ba-i18n.test.ts`.
+
+## Org mutations go through Better Auth
+
+Member and organization writes are `auth.api.*` calls, never raw Prisma on
+`member` / `organization` / `invitation`: `removeMember` also deletes the member's
+`teamMember` rows (teams are enabled), `updateMemberRole` validates the role and the
+owner invariants, `updateOrganization` returns the updated org (use its `slug`; don't
+pre-read). Product rules stricter than Better Auth — never remove or re-role the
+owner or yourself from the members table — stay as pre-guards on a scoped
+`member.findFirst`/`findMany`, which is what the preceding `hasOrgPermission`
+protects. Two writes remain raw by necessity: `transferOwnershipAction` (no Better
+Auth transfer primitive; two role updates in one `$transaction`) and the custom
+`InviteLink` table.
+
+**Seat limits are members-only and enforced once**, by the organization plugin's
+`membershipLimit` callback (`packages/auth/membership-limit.ts`, plan `maxMembers`)
+inside `acceptInvitation` and `addMember`. `createInvitation` is not gated, pending
+invitations reserve nothing, and an over-invited org rejects acceptances once full
+(`ORGANIZATION_MEMBERSHIP_LIMIT_REACHED`, localized in all 6 locales; the invitation
+stays pending so it can be retried). Do not add an app-level seat pre-check. The
+count-then-insert inside Better Auth is not atomic, so a burst of concurrent
+acceptances can overshoot by the burst size; this is accepted.
+
+**Invite links** (`acceptInviteLinkAction`) reserve a use with one conditional
+`inviteLink.updateMany` (`isActive: true`, `usedCount < maxUses` when capped) *before*
+`auth.api.addMember`, and release it with a guarded decrement if `addMember` throws.
+The session read there is the entire authorization: `addMember` is server-only and
+trusts the `userId` it is handed.
 
 ## Platform admin (`/admin`, `apps/web/lib/auth/admin.ts`)
 
@@ -108,7 +142,7 @@ fr, pt, zh), key-parity enforced by `packages/auth/ba-i18n.test.ts`.
   (`packages/auth/server.ts`). Keep the `admin()` plugin's `adminRoles` option unset
   or the impersonation block breaks.
 - **Impersonation:** amber banner mounts in `(app)/layout.tsx`; exit via
-  `stopImpersonatingAction`. Mutations write `AuditLog` via `recordAdminAudit`.
+  `stopImpersonatingAction`.
 - **Seed staff (dev):** `admin@example.com`, `moderator@example.com`,
   `banned@example.com` — password `Password@saaspro`.
 
@@ -116,6 +150,10 @@ fr, pt, zh), key-parity enforced by `packages/auth/ba-i18n.test.ts`.
 
 - `hasOrgPermission`/`hasAdminPermission` return `boolean`, not `ActionResult` —
   branch to `actionError("unauthorized")` yourself.
+- `hasOrgPermission` returns `false` for non-members too. Better Auth throws
+  `UNAUTHORIZED` when the caller has no member row; the helper maps any `APIError`
+  to `false` so every caller reaches its own `unauthorized` branch. Failures that
+  are not `APIError` (a DB outage) still propagate.
 - Don't remove `enforceRateLimit` from auth actions believing the client transport
   still protects them; these are server actions, not `/api/auth/*` requests.
 - Never pass a client-supplied role to `canOrg`/`canAdmin`.

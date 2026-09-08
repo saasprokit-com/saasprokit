@@ -17,8 +17,8 @@ reads.
 ## Deploy
 
 ```bash
-pnpm --filter app run deploy              # Cloudflare — build vars from apps/web/.env.production.local
-pnpm --filter app run preview             # localhost:8787 on real workerd
+pnpm --filter web run deploy              # Cloudflare — build vars from apps/web/.env.production.local
+pnpm --filter web run preview             # localhost:8787 on real workerd
 docker build -f apps/web/Dockerfile .     # Docker/AWS
 # Vercel: git push, root apps/web — vercel.json forces the Turbo build
 ```
@@ -114,15 +114,15 @@ isolates: queries run 950ms–2.5s and ~2% fail with *"Cannot perform I/O on beh
 different request"*. `poolQueryViaFetch` does not help — it only affects
 `pool.query()`, which the adapter bypasses. Fix is **Hyperdrive** (free on the paid
 plan): warm pooled connections, interactive transactions retained. `PrismaNeonHttp` is
-faster but cannot do interactive transactions, and four callback-form `$transaction`
-sites exist — `members/actions.ts` (ownership transfer, TOCTOU guard),
-`lib/files/actions.ts` ×2, and `lib/organization/personal-org.ts` (unreachable —
-`createDefaultWorkspace` has no callers) — so that route costs three rewrites. The two
-array-form batches are fine either way.
+faster but cannot do interactive transactions, and one callback-form `$transaction`
+site exists — `members/actions.ts` (ownership transfer, TOCTOU guard) — so that
+route costs one rewrite. The three array-form batches
+(`settings/actions.ts`, `lib/files/actions.ts`, `packages/auth/user-deletion.ts`) are
+fine either way.
 
 ## Verify before deploying server changes
 
-`pnpm --filter app run preview` is the only check that catches workerd failures. Then
+`pnpm --filter web run preview` is the only check that catches workerd failures. Then
 exercise: a protected route redirecting, sign-in, **creating an org** (interactive
 transaction), an image upload, and a signed Stripe event. Drive server actions
 **through the form** — `/api/auth/*` skips `enforceRateLimit`, so `curl` misses that

@@ -32,8 +32,7 @@ RUN pnpm add -g turbo@^2
 COPY . .
 
 # Turbo 2.x positional syntax: turbo prune <package> --docker
-# "app" is the package name from apps/web/package.json
-RUN turbo prune app --docker
+RUN turbo prune web --docker
 
 # ---------------------------------------------------------------------------
 # Stage 3: builder — Install dependencies and build
@@ -61,7 +60,7 @@ ENV NEXT_PUBLIC_DOCS_URL=$NEXT_PUBLIC_DOCS_URL
 
 # Generate Prisma client + build Next.js app
 # turbo handles the dependency graph: prisma generate → next build
-RUN pnpm build --filter=app
+RUN pnpm build --filter=web
 
 # ---------------------------------------------------------------------------
 # Stage 4: runner — Minimal production image

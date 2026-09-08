@@ -1,7 +1,7 @@
-import { logger } from "@repo/logger/server";
+import { logger } from "@repo/logger/log";
 
 export function register() {
-  logger.info({}, "Next.js server started");
+  logger.info("Next.js server started");
 }
 
 export function onRequestError(
@@ -19,17 +19,14 @@ export function onRequestError(
       ? (err as { digest: string }).digest
       : undefined;
 
-  logger.error(
-    {
-      digest,
-      message: error.message,
-      stack: error.stack,
-      path: request.path,
-      method: request.method,
-      routerKind: context.routerKind,
-      routeType: context.routeType,
-      renderSource: context.renderSource,
-    },
-    "Unhandled server error"
-  );
+  logger.error("Unhandled server error", {
+    digest,
+    message: error.message,
+    stack: error.stack,
+    path: request.path,
+    method: request.method,
+    routerKind: context.routerKind,
+    routeType: context.routeType,
+    renderSource: context.renderSource,
+  });
 }

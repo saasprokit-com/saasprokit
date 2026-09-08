@@ -1,9 +1,8 @@
 "use server";
 
 import { auth } from "@repo/auth/server";
-import { createRequestLogger } from "@repo/logger/server";
+import { createRequestLogger } from "@repo/logger/log";
 import { headers } from "next/headers";
-import { ADMIN_AUDIT_ACTIONS, recordAdminAudit } from "@/lib/admin/audit";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import { hasAdminPermission } from "@/lib/auth/admin";
 import { type ActionResult, getServerSession } from "@/lib/auth/auth";
@@ -64,12 +63,6 @@ export async function setUserRoleAction(
     await auth.api.setRole({
       body: { userId: data.userId, role: data.role },
       headers: await headers(),
-    });
-
-    await recordAdminAudit({
-      actorId,
-      action: ADMIN_AUDIT_ACTIONS.SET_ROLE,
-      changes: { targetUserId: data.userId, role: data.role },
     });
 
     await Promise.all([
@@ -134,16 +127,6 @@ export async function banUserAction(
       headers: await headers(),
     });
 
-    await recordAdminAudit({
-      actorId,
-      action: ADMIN_AUDIT_ACTIONS.BAN,
-      changes: {
-        targetUserId: data.userId,
-        banReason: data.banReason,
-        banExpiresInDays: data.banExpiresInDays,
-      },
-    });
-
     await Promise.all([
       revalidateAdminPage(ADMIN_PAGES.USERS),
       revalidateAdminPage(`users/${data.userId}`),
@@ -175,17 +158,10 @@ export async function unbanUserAction(
     if (!(await hasAdminPermission({ user: ["ban"] }))) {
       return actionError("unauthorized");
     }
-    const actorId = session.user.id;
 
     await auth.api.unbanUser({
       body: { userId: data.userId },
       headers: await headers(),
-    });
-
-    await recordAdminAudit({
-      actorId,
-      action: ADMIN_AUDIT_ACTIONS.UNBAN,
-      changes: { targetUserId: data.userId },
     });
 
     await Promise.all([
@@ -238,12 +214,6 @@ export async function impersonateUserAction(
       headers: await headers(),
     });
 
-    await recordAdminAudit({
-      actorId,
-      action: ADMIN_AUDIT_ACTIONS.IMPERSONATE,
-      changes: { targetUserId: data.userId },
-    });
-
     return { success: true };
   } catch (error) {
     return toActionError(error, {
@@ -273,17 +243,10 @@ export async function revokeUserSessionsAction(
     if (!(await hasAdminPermission({ session: ["revoke"] }))) {
       return actionError("unauthorized");
     }
-    const actorId = session.user.id;
 
     await auth.api.revokeUserSessions({
       body: { userId: data.userId },
       headers: await headers(),
-    });
-
-    await recordAdminAudit({
-      actorId,
-      action: ADMIN_AUDIT_ACTIONS.REVOKE_SESSIONS,
-      changes: { targetUserId: data.userId },
     });
 
     await Promise.all([
@@ -333,12 +296,6 @@ export async function removeUserAction(
     await auth.api.removeUser({
       body: { userId: data.userId },
       headers: await headers(),
-    });
-
-    await recordAdminAudit({
-      actorId,
-      action: ADMIN_AUDIT_ACTIONS.DELETE_USER,
-      changes: { targetUserId: data.userId },
     });
 
     await Promise.all([

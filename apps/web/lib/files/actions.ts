@@ -1,55 +1,91 @@
 import "server-only";
 
 import { database } from "@repo/database";
+import type { createRequestLogger } from "@repo/logger/log";
+import { deleteFile, uploadFile } from "@repo/storage/server";
 import { ATTACHABLE_TYPE } from "@repo/utils/storage";
 
-export async function handlePostUploadOperations(options: {
-  type: string | null;
-  fileRecord: { id: string };
-  uploadResult: { publicUrl: string | null };
-  userId: string;
-  organizationId: string | null;
-}): Promise<void> {
-  const { type, fileRecord, uploadResult, userId, organizationId } = options;
+interface StoredObject {
+  bucket: string | null;
+  storagePath: string;
+}
 
-  // CRITICAL: Wrap all post-upload operations in a transaction
-  // Ensures either both user/org update AND old file soft-delete happen, or neither
-  // Prevents data inconsistency if one operation fails
-  if (type === "avatar") {
-    await database.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: userId },
-        data: { image: uploadResult.publicUrl },
-      });
+export async function deleteStoredObjects(
+  files: StoredObject[],
+  logger: ReturnType<typeof createRequestLogger>
+): Promise<void> {
+  await Promise.all(
+    files.map((file) =>
+      deleteFile(file.storagePath, file.bucket ?? undefined).catch(
+        (error: unknown) =>
+          logger.warn("Stored object not deleted", {
+            storagePath: file.storagePath,
+            err: error,
+          })
+      )
+    )
+  );
+}
 
-      await tx.file.updateMany({
-        where: {
-          attachableType: ATTACHABLE_TYPE.USER,
-          attachableId: userId,
-          id: { not: fileRecord.id },
-          deletedAt: null,
-        },
-        data: { deletedAt: new Date() },
-      });
-    });
-  }
+export async function storeOrganizationLogo(options: {
+  file: File;
+  organizationId: string;
+  uploadedById: string;
+  logger: ReturnType<typeof createRequestLogger>;
+}): Promise<{ publicUrl: string | null; slug: string }> {
+  const { file, organizationId, uploadedById, logger } = options;
 
-  if (type === "org-logo" && organizationId) {
-    await database.$transaction(async (tx) => {
-      await tx.organization.update({
-        where: { id: organizationId },
-        data: { logo: uploadResult.publicUrl },
-      });
+  const uploadResult = await uploadFile({
+    filename: file.name,
+    buffer: Buffer.from(await file.arrayBuffer()),
+    mimeType: file.type,
+    folder: "logos",
+    uploadedById,
+    attachableType: ATTACHABLE_TYPE.ORGANIZATION,
+    attachableId: organizationId,
+  });
 
-      await tx.file.updateMany({
-        where: {
-          attachableType: ATTACHABLE_TYPE.ORGANIZATION,
-          attachableId: organizationId,
-          id: { not: fileRecord.id },
-          deletedAt: null,
-        },
-        data: { deletedAt: new Date() },
-      });
-    });
-  }
+  const fileRecord = await database.file.create({
+    data: {
+      filename: uploadResult.filename,
+      storagePath: uploadResult.storagePath,
+      publicUrl: uploadResult.publicUrl,
+      mimeType: uploadResult.mimeType,
+      size: uploadResult.size,
+      provider: uploadResult.provider,
+      bucket: uploadResult.bucket,
+      visibility: uploadResult.visibility,
+      attachableType: ATTACHABLE_TYPE.ORGANIZATION,
+      attachableId: organizationId,
+      uploadedById,
+    },
+    select: { id: true },
+  });
+
+  const siblings = {
+    attachableType: ATTACHABLE_TYPE.ORGANIZATION,
+    attachableId: organizationId,
+    id: { not: fileRecord.id },
+    deletedAt: null,
+  };
+
+  const [organization, replaced] = await database.$transaction([
+    database.organization.update({
+      where: { id: organizationId },
+      data: { logo: uploadResult.publicUrl },
+      select: { slug: true },
+    }),
+    database.file.findMany({
+      where: siblings,
+      select: { storagePath: true, bucket: true },
+    }),
+    database.file.updateMany({
+      where: siblings,
+      data: { deletedAt: new Date() },
+    }),
+  ]);
+
+  await deleteStoredObjects(replaced, logger);
+
+  return { publicUrl: uploadResult.publicUrl, slug: organization.slug };
 }

@@ -125,6 +125,10 @@ export const orgRoleDefinitions = {
   [ORG_ROLES.MEMBER]: orgMemberRole,
 } as const;
 
+export function isOwnerRole(role: string): boolean {
+  return role.split(",").includes(ORG_ROLES.OWNER);
+}
+
 export function canOrg(
   role: string,
   permissions: Record<string, string[]>

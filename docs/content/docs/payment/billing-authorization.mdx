@@ -5,9 +5,9 @@ description: Which roles can view and manage billing, enforced via Better Auth o
 
 Billing in this monorepo is mounted by the `@better-auth/stripe` plugin (not hand-rolled API routes). Every subscription action the plugin exposes — listing, upgrading, cancelling, restoring, and opening the billing portal — is gated by a single authorization function, `authorizeBillingAction`, defined in `packages/auth/billing-authorize.ts`.
 
-The core rule: **billing is organization-scoped, and only org owners and admins can mutate it.** Plain members get read-only visibility into the subscription.
+The core rule: **billing is organization-scoped, and only org owners and admins can mutate it.** In this app, members do **not** see billing — the org sidebar omits it unless `organization: ["update"]`, and the billing page wraps the UI in `OrgPermissionGate` with that same permission.
 
-The org billing page loads membership with `getActiveOrganization(orgSlug)` and wraps the UI in `OrgPermissionGate` (`organization: ["update"]`). That gate is UX only. The three thin `auth.api.*` wrappers (`upgradeSubscriptionAction`, `openBillingPortalAction`, `cancelSubscriptionAction`) rely on the plugin's `authorizeReference` — they do **not** also call `hasOrgPermission`. **`changePlanAction` is the exception**: it gates with `hasOrgPermission` because it does authorization-sensitive pre-work (`guardDowngrade`, member/storage reads) and can return early (cancel / blocked) without ever reaching `auth.api.*`.
+The org billing page loads membership with `getActiveOrganization(orgSlug)` and wraps Change Plan / usage / actions in `OrgPermissionGate` (`organization: ["update"]`). That gate is UX only. The plugin's `list-subscription` Allow for members is unused API surface. The three thin `auth.api.*` wrappers (`upgradeSubscriptionAction`, `openBillingPortalAction`, `cancelSubscriptionAction`) rely on the plugin's `authorizeReference` — they do **not** also call `hasOrgPermission`. **`changePlanAction` is the exception**: it gates with `hasOrgPermission` because it does authorization-sensitive pre-work (`guardDowngrade`, member/storage reads) and can return early (cancel / blocked) without ever reaching `auth.api.*`.
 
 ## Where authorization is wired
 
@@ -22,7 +22,7 @@ authorizeReference: ({ user, referenceId, action }) =>
   }),
 ```
 
-Here `referenceId` is the organization id (the plugin is configured with `organization: { enabled: true }`, so subscriptions are per-organization). Every call into the plugin's mounted endpoints under `/api/auth/*` passes through this single decision point.
+Here `referenceId` is the organization id (the plugin is configured with `organization: { enabled: true }`, so subscriptions are per-organization). `authorizeReference` wraps the five `AuthorizeReferenceAction`s only. Stripe webhook `/api/auth/stripe/webhook` and `/subscription/success` do not call it.
 
 ## The decision function
 
@@ -84,12 +84,12 @@ Capabilities below are derived directly from the `switch` routing and the `canMa
 | --- | --- | --- | --- | --- | --- |
 | `owner` | Allow | Allow | Allow | Allow | Allow |
 | `admin` | Allow | Allow | Allow | Allow | Allow |
-| `member` | Allow | Deny | Deny | Deny | Deny |
+| `member` | Plugin Allow; **no UI** | Deny | Deny | Deny | Deny |
 | non-member | Deny | Deny | Deny | Deny | Deny |
 
 Notes:
 - "Upgrade", "Cancel", and "Restore" map to the `upgrade-subscription`, `cancel-subscription`, and `restore-subscription` actions respectively; all four management actions share the same `canManageBilling` gate.
-- A plain `member` can see the current subscription but cannot change it or reach the Stripe portal.
+- A plain `member` cannot view or manage billing in this app. Plugin `list-subscription` would allow them; the sidebar and page never expose it.
 
 ## Relationship to org role permissions
 

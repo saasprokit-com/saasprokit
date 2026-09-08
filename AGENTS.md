@@ -19,13 +19,13 @@ pnpm migrate                            # prisma format + generate + db push
 pnpm --filter @repo/database db:seed    # wipes tables, seeds admin@example.com
 
 pnpm dev                                # All apps except kit-docs (main app: 3000)
-pnpm --filter app dev                   # Main app only
+pnpm --filter web dev                   # Main app only
 pnpm kit-docs:dev                       # SaaSProKit's own docs (port 3006)
 pnpm build                              # All apps and packages (excludes kit-docs)
 pnpm check                              # Lint (Biome via ultracite)
-pnpm --filter app typecheck
-pnpm test                               # Unit tests via turbo (app, @repo/auth)
-pnpm --filter app test:e2e              # Playwright
+pnpm --filter web typecheck
+pnpm test                               # Unit tests via turbo (web, @repo/auth)
+pnpm --filter web test:e2e              # Playwright
 ```
 
 Optional: `pnpm skills:install` restores third-party skills into `.agents/skills/` (needs `git`; not part of `pnpm install`).
@@ -34,7 +34,7 @@ Optional: `pnpm skills:install` restores third-party skills into `.agents/skills
 
 Architecture docs and recipes live as Agent Skills in `.agents/skills/` — symlinked from `saasprokit-skills/skills/`. Codex and Cursor discover them automatically; invoke with `$<name>` (Codex) or `/` in Agent chat (Cursor), or let the description trigger them. **Read the relevant skill before writing code in its area:**
 
-- `auth` — Better Auth, dual admin + org RBAC, session helpers (`getServerSession`, `requireAuth`, `hasOrgPermission`), org-slug access (`getActiveOrganization`), server-action auth (`verifySession`, `toActionError`)
+- `auth` — Better Auth, dual admin + org RBAC, session helpers (`getServerSession`, `requireAuth`, `hasOrgPermission`), org-slug access (`getActiveOrganization`), server-action auth (`verifySession`, `toActionError`), which org mutations delegate to Better Auth (members, roles, seat limits)
 - `routing` — Route groups, edge `apps/web/middleware.ts`, centralized routes (`@/lib/routes`), locale handling
 - `data-access` — unified `lib/` server-side data layer in `apps/web`, Prisma workflow
 - `forms` — Recipe A (RHF + `useActionState` + typed values), Recipe B (`<form action>`), `useTransition` for non-forms; one zod schema on client and server

@@ -36,8 +36,7 @@ indistinguishable from a real `/acme` at the edge without a DB lookup — hence
 default-deny.
 
 **API** (`app/api/`, all bypass the middleware matcher): `auth/[...all]` (Better
-Auth handler, incl. the Stripe webhook via `@better-auth/stripe`), `health`,
-`upload`, `user/activity`.
+Auth handler, incl. the Stripe webhook via `@better-auth/stripe`), `health`.
 
 ## Edge middleware — `apps/web/middleware.ts`
 
@@ -80,7 +79,7 @@ plus `x-nonce`, so Server Components read it via `headers()`.
 Exports, in file order: `PAGE_ROUTES`, `PUBLIC_ROUTE_EXACT` (`[HOME]`),
 `PUBLIC_ROUTE_PREFIXES` (`[INVITE]`), `resolveCallbackUrl` (open-redirect guard),
 `AUTH_ROUTE_PREFIXES`, `ORG_PAGES`, `orgRoutes`, `accountRoutes`, `ADMIN_PAGES`,
-`adminRoutes`, `API_ROUTES`.
+`adminRoutes`.
 
 ```ts
 import { PAGE_ROUTES, orgRoutes, adminRoutes } from "@/lib/routes";

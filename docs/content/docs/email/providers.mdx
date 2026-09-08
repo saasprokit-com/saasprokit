@@ -1,297 +1,37 @@
 ---
 title: Email Providers
-description: Resend and Nodemailer provider implementations
+description: Resend and Nodemailer — the only two transports in this kit
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
-## Provider Architecture
+The kit has two providers: **`resend`** and **`nodemailer`**. There is no SendGrid or Mailgun package, and MailDev is not a third provider — it is SMTP on `localhost:1025` that Nodemailer talks to.
 
-The email package uses a provider abstraction pattern that allows switching between different email services without changing application code.
+Implementations: `packages/email/providers/resend.ts`, `packages/email/providers/nodemailer.ts`, factory in `packages/email/providers/index.ts`. Both `send()` catch failures and return `{ success: false, error }` — they do not throw.
 
-```typescript
-interface EmailProvider {
-  name: string;
-  send(options: SendEmailOptions): Promise<SendEmailResult>;
-}
+## Switching
 
-interface SendEmailOptions {
-  to: string | string[];
-  subject: string;
-  react: React.ReactElement;
-  from?: string;
-  replyTo?: string;
-  cc?: string[];
-  bcc?: string[];
-}
+1. Explicit `EMAIL_PROVIDER=resend` or `EMAIL_PROVIDER=nodemailer` in `apps/web/.env.local`.
+2. If unset: production + `RESEND_API_KEY` → Resend, otherwise Nodemailer.
 
-interface SendEmailResult {
-  success: boolean;
-  messageId?: string;
-  error?: Error;
-}
-```
+See [Setup](/email/setup) for the env blocks.
 
-## Resend Provider
+## Resend
 
-[Resend](https://resend.com) is a modern email API designed for developers. It's the recommended provider for production environments.
+Production API. Set `RESEND_API_KEY` and a verified `EMAIL_FROM`. This kit only calls `emails.send` — no Resend webhooks or analytics routes.
 
-### Features
+## Nodemailer
 
-- Native React Email support (no HTML conversion needed)
-- High deliverability rates
-- Real-time analytics and logs
-- Webhook support for tracking events
-- Domain verification for branded sending
+SMTP. Local defaults are `localhost:1025` (MailDev). `docker compose up -d maildev`, then http://localhost:1080.
 
-### Configuration
-
-```bash
-EMAIL_PROVIDER=resend
-RESEND_API_KEY=re_xxxxxxxxxxxxx
-EMAIL_FROM="Your App <noreply@yourdomain.com>"
-```
-
-### Implementation
-
-```typescript
-// providers/resend.ts
-import { Resend } from 'resend';
-import type { EmailProvider, SendEmailOptions, SendEmailResult } from './types';
-
-export class ResendProvider implements EmailProvider {
-  name = 'resend' as const;
-  private client: Resend;
-
-  constructor(apiKey: string) {
-    this.client = new Resend(apiKey);
-  }
-
-  async send(options: SendEmailOptions): Promise<SendEmailResult> {
-    const { data, error } = await this.client.emails.send({
-      from: options.from!,
-      to: options.to,
-      subject: options.subject,
-      react: options.react, // Native React support
-      replyTo: options.replyTo,
-      cc: options.cc,
-      bcc: options.bcc,
-    });
-
-    if (error) {
-      return { success: false, error: new Error(error.message) };
-    }
-
-    return { success: true, messageId: data?.id };
-  }
-}
-```
-
-### Domain Setup
-
-1. Add your domain in Resend Dashboard
-2. Add the required DNS records (SPF, DKIM, DMARC)
-3. Wait for verification (usually a few minutes)
-4. Update `EMAIL_FROM` to use your verified domain
-
-<Callout type="warn">
-  Using an unverified domain will result in emails being sent from `onboarding@resend.dev` instead of your domain.
+<Callout type="info">
+  Other SMTP hosts (Gmail, SES, …) work with the same `SMTP_*` vars. They are not separate providers.
 </Callout>
 
-## Nodemailer Provider
+## Comparison
 
-[Nodemailer](https://nodemailer.com) is a Node.js module for sending emails via SMTP. It's ideal for local development and self-hosted SMTP servers.
-
-### Features
-
-- Works with any SMTP server
-- No external API dependencies
-- Perfect for local development with Maildev
-- Connection pooling for high-volume sending
-
-### Configuration
-
-```bash
-EMAIL_PROVIDER=nodemailer
-SMTP_HOST=localhost
-SMTP_PORT=1025
-SMTP_SECURE=false
-SMTP_USER=           # Optional
-SMTP_PASS=           # Optional
-SMTP_POOL=false      # Optional — connection pooling
-```
-
-### Implementation
-
-```typescript
-// providers/nodemailer.ts
-import nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
-import { render } from '@react-email/render';
-import type { EmailProvider, SendEmailOptions, SendEmailResult } from './types';
-
-export class NodemailerProvider implements EmailProvider {
-  name = 'nodemailer' as const;
-  private transporter: Transporter;
-
-  constructor(config: SMTPConfig) {
-    this.transporter = nodemailer.createTransport({
-      host: config.host,
-      port: config.port,
-      secure: config.secure,
-      auth: config.user ? { user: config.user, pass: config.pass } : undefined,
-      pool: config.pool,
-    });
-  }
-
-  async send(options: SendEmailOptions): Promise<SendEmailResult> {
-    // Convert React Email component to HTML
-    const html = await render(options.react);
-    const text = await render(options.react, { plainText: true });
-
-    const info = await this.transporter.sendMail({
-      from: options.from,
-      to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
-      subject: options.subject,
-      html,
-      text,
-      replyTo: options.replyTo,
-      cc: options.cc,
-      bcc: options.bcc,
-    });
-
-    return { success: true, messageId: info.messageId };
-  }
-}
-```
-
-### SMTP Server Examples
-
-<Tabs items={['Maildev (Local)', 'Gmail', 'AWS SES', 'Custom SMTP']}>
-  <Tab value="Maildev (Local)">
-    ```bash
-    SMTP_HOST=localhost
-    SMTP_PORT=1025
-    SMTP_SECURE=false
-    ```
-  </Tab>
-  <Tab value="Gmail">
-    ```bash
-    SMTP_HOST=smtp.gmail.com
-    SMTP_PORT=587
-    SMTP_SECURE=false
-    SMTP_USER=your-email@gmail.com
-    SMTP_PASS=your-app-password  # Use App Password, not account password
-    ```
-
-    <Callout type="info">
-      Gmail requires an [App Password](https://support.google.com/accounts/answer/185833) for SMTP access.
-    </Callout>
-  </Tab>
-  <Tab value="AWS SES">
-    ```bash
-    SMTP_HOST=email-smtp.us-east-1.amazonaws.com
-    SMTP_PORT=587
-    SMTP_SECURE=false
-    SMTP_USER=your-smtp-username
-    SMTP_PASS=your-smtp-password
-    ```
-  </Tab>
-  <Tab value="Custom SMTP">
-    ```bash
-    SMTP_HOST=mail.yourdomain.com
-    SMTP_PORT=465
-    SMTP_SECURE=true
-    SMTP_USER=noreply@yourdomain.com
-    SMTP_PASS=your-password
-    ```
-  </Tab>
-</Tabs>
-
-## Provider Comparison
-
-| Feature | Resend | Nodemailer |
-|---------|--------|------------|
-| **Best For** | Production | Local Development |
-| **React Support** | Native | Via `@react-email/render` |
-| **Setup Complexity** | Low (API key only) | Medium (SMTP config) |
-| **Cost** | Free tier available | Free (self-hosted) |
-| **Deliverability** | High | Depends on SMTP server |
-| **Analytics** | Built-in dashboard | Manual tracking |
-| **Offline Support** | No | Yes (with local SMTP) |
-
-## Provider Factory
-
-The provider is selected and instantiated automatically:
-
-```typescript
-// providers/index.ts
-import { keys } from '../keys';
-import { ResendProvider } from './resend';
-import { NodemailerProvider } from './nodemailer';
-
-const env = keys();
-let cachedProvider: EmailProvider | null = null;
-
-export function getEmailProvider(): EmailProvider {
-  if (cachedProvider) return cachedProvider;
-
-  const providerType = env.EMAIL_PROVIDER || detectProvider();
-
-  if (providerType === 'resend') {
-    if (!env.RESEND_API_KEY) {
-      throw new Error('RESEND_API_KEY required for Resend provider');
-    }
-    cachedProvider = new ResendProvider(env.RESEND_API_KEY);
-  } else {
-    cachedProvider = new NodemailerProvider({
-      host: env.SMTP_HOST,
-      port: env.SMTP_PORT,
-      secure: env.SMTP_SECURE,
-      user: env.SMTP_USER,
-      pass: env.SMTP_PASS,
-      pool: env.SMTP_POOL,
-    });
-  }
-
-  return cachedProvider;
-}
-```
-
-## Adding Custom Providers
-
-To add a new provider (e.g., SendGrid, Mailgun):
-
-1. Create a new file in `providers/`
-2. Implement the `EmailProvider` interface
-3. Add configuration to `keys.ts`
-4. Update the factory in `providers/index.ts`
-
-```typescript
-// providers/sendgrid.ts
-import sgMail from '@sendgrid/mail';
-import { render } from '@react-email/render';
-import type { EmailProvider, SendEmailOptions, SendEmailResult } from './types';
-
-export class SendGridProvider implements EmailProvider {
-  name = 'sendgrid' as const;
-
-  constructor(apiKey: string) {
-    sgMail.setApiKey(apiKey);
-  }
-
-  async send(options: SendEmailOptions): Promise<SendEmailResult> {
-    const html = await render(options.react);
-
-    await sgMail.send({
-      to: options.to,
-      from: options.from!,
-      subject: options.subject,
-      html,
-    });
-
-    return { success: true };
-  }
-}
-```
+| | Resend | Nodemailer |
+|---|--------|------------|
+| Use | Production | Local / any SMTP |
+| React Email | Native `react` field | Rendered to HTML/text first |
+| Offline | No | Yes, with MailDev |

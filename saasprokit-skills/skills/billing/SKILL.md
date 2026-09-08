@@ -42,8 +42,8 @@ All billing config and logic lives in **`packages/auth`** (exports `./plans`,
   owners/admins may mutate).
 - **Web helpers (server-only)**: `apps/web/lib/billing/` holds
   `subscription-queries.ts` (`getActiveSubscription`, `getCurrentPlanForOrg`,
-  `getOrgUsageStats`, `getOrgMemberCount`, `canOrgAddMember`, `canOrgAcceptMember`,
-  `canUserCreateOrg`, …) and `checkout-queries.ts` (`verifyCheckoutSession` —
+  `getOrgUsageStats` (members only — pending invitations occupy no seat),
+  `getOrgMemberCount`, `canUserCreateOrg`, …) and `checkout-queries.ts` (`verifyCheckoutSession` —
   confirms a Stripe Checkout session is paid and owned by the org; consumed by the
   checkout success page).
 - **Org billing page**: `apps/web/app/[locale]/(app)/[orgSlug]/billing/`. Its
@@ -82,9 +82,7 @@ Env vars: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
   (API-only, not in the Dashboard portal settings UI); re-apply it on any new or
   live-mode account via `POST /v1/billing_portal/configurations/:id` on the default
   configuration.
-- **`API_ROUTES.STRIPE_WEBHOOK = "/api/stripe/webhook"`** (`apps/web/lib/routes.ts`)
-  is a stale constant — it does **not** match the real `/api/auth/stripe/webhook`
-  path and has **no handler**. Do not point Stripe at it or reference it.
+- The webhook path is **`/api/auth/stripe/webhook`** (Better Auth catch-all). Do not invent a `/api/stripe/webhook` route.
 - Plugin is **conditional** — miss `STRIPE_WEBHOOK_SECRET` and all billing endpoints
   silently 404.
 - Don't add `hasOrgPermission` before the thin `auth.api.*` wrappers
@@ -97,5 +95,9 @@ Env vars: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
   needed there — `hasOrgPermission` throws `UNAUTHORIZED` when unauthenticated.
 - Edit plans in `packages/auth/plans.ts` — the single source of truth for tiers and
   tier math.
+- **Seat limits are not checked in the web app.** `maxMembers` is enforced once, by
+  the organization plugin's `membershipLimit` callback
+  (`packages/auth/membership-limit.ts`) when an invitation is accepted or a member is
+  added; invitations can always be sent. Details in `saasprokit:auth`.
 
 See `saasprokit:auth`, `saasprokit:data-access`, `saasprokit:env-setup`.

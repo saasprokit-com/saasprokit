@@ -1,285 +1,46 @@
 ---
 title: Local Development
-description: Set up Maildev for local email testing
+description: Catch mail with MailDev from this repo's Compose file
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
-import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-## Overview
-
-[Maildev](https://github.com/maildev/maildev) is a local SMTP server with a web interface for viewing and testing emails during development. It captures all emails sent via SMTP without actually delivering them.
-
-### Benefits
-
-- **No API keys needed** - Works completely offline
-- **Instant feedback** - See emails immediately in the web UI
-- **Full email inspection** - View HTML, plain text, headers, and raw source
-- **Responsive testing** - Preview emails at different screen sizes
-- **REST API** - Automate email testing in your test suite
-
-## Quick Start
-
-<Steps>
-  <Step>
-    ### Start Maildev
-
-    <Tabs items={['Docker (Recommended)', 'NPX', 'Global Install']}>
-      <Tab value="Docker (Recommended)">
-        ```bash
-        docker run -p 1080:1080 -p 1025:1025 maildev/maildev
-        ```
-
-        Or add to your `docker-compose.yml`:
-        ```yaml
-        services:
-          maildev:
-            image: maildev/maildev:latest
-            ports:
-              - "1080:1080"  # Web UI
-              - "1025:1025"  # SMTP
-        ```
-
-        Then run:
-        ```bash
-        docker compose up maildev -d
-        ```
-      </Tab>
-      <Tab value="NPX">
-        ```bash
-        npx maildev --web 1080 --smtp 1025
-        ```
-      </Tab>
-      <Tab value="Global Install">
-        ```bash
-        npm install -g maildev
-        maildev --web 1080 --smtp 1025
-        ```
-      </Tab>
-    </Tabs>
-  </Step>
-
-  <Step>
-    ### Configure Environment
-
-    The email package auto-detects Maildev in development. No configuration needed!
-
-    If you want to be explicit:
-    ```bash
-    EMAIL_PROVIDER=nodemailer
-    SMTP_HOST=localhost
-    SMTP_PORT=1025
-    ```
-  </Step>
-
-  <Step>
-    ### Send Test Emails
-
-    Start your application and trigger any email:
-    ```typescript
-    import { sendWelcomeEmail } from '@repo/email';
-
-    await sendWelcomeEmail({
-      email: 'test@example.com',
-      name: 'Test User',
-    });
-    ```
-  </Step>
-
-  <Step>
-    ### View in Maildev
-
-    Open http://localhost:1080 to see captured emails.
-  </Step>
-</Steps>
-
-## Maildev Web Interface
-
-The web interface at http://localhost:1080 provides:
-
-| Feature | Description |
-|---------|-------------|
-| **Inbox** | List of all captured emails |
-| **HTML View** | Rendered HTML email |
-| **Plain Text** | Plain text version |
-| **Headers** | Email headers (From, To, Subject, etc.) |
-| **Source** | Raw email source (RFC 822) |
-| **Responsive Preview** | Resize viewport to test responsive design |
-
-## Docker Compose Setup (already configured)
-
-This repo's root `docker-compose.yml` already defines Maildev — you don't need to add it:
-
-```yaml
-maildev:
-  image: maildev/maildev:latest
-  container_name: maildev
-  ports:
-    - "1080:1080"  # Web UI
-    - "1025:1025"  # SMTP
-  environment:
-    - MAILDEV_WEB_PORT=1080
-    - MAILDEV_SMTP_PORT=1025
-  restart: unless-stopped
-  healthcheck:
-    # 127.0.0.1, not localhost: the web UI binds IPv4-only, and localhost
-    # resolves to ::1 inside the container, failing the check.
-    test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:1080"]
-    interval: 30s
-    timeout: 10s
-    retries: 3
-```
-
-### Commands
+This repo already defines MailDev. Do not `docker run`, `npx maildev`, or add a service to Compose.
 
 ```bash
-# Start Postgres + Maildev
-docker compose up postgres maildev
-
-# Stop them
-docker compose down
-
-# View Maildev logs
-docker compose logs maildev
+docker compose up -d postgres maildev
 ```
 
-## Related Scripts
+Then open **http://localhost:1080**. SMTP is `localhost:1025`.
+
+`pnpm --filter email dev` (port **3003**) only previews templates. It does not send, and MailDev will not show those previews.
+
+## Env
+
+Leave `EMAIL_PROVIDER` unset. Nodemailer defaults to `localhost:1025` (`packages/email/keys.ts`). Auto-detect is Resend vs Nodemailer, not “MailDev vs production”.
+
+## Trigger a real send
+
+Sign up at `/auth/sign-up` (or request a password reset). Auth hooks in `packages/auth/server.ts` send the mail. `sendWelcomeEmail` is not wired.
+
+The Playwright helper is `apps/web/e2e/helpers/maildev.ts`:
+
+```ts
+await clearInbox();
+const mail = await waitForEmail(email, { subjectContains: "verif" });
+```
+
+Spec that uses it: `apps/web/e2e/auth/sign-up.spec.ts`.
+
+## REST (MailDev v2)
+
+Same paths the e2e helper uses — **`/api/email`**, not `/email`:
 
 ```bash
-docker compose up postgres maildev   # Start Postgres + Maildev (CLAUDE.md's recommended flow for app dev)
-pnpm --filter email dev              # Preview email templates directly (port 3003), independent of Maildev
-```
-
-## Testing with Maildev REST API
-
-Maildev provides a REST API for automated testing:
-
-### Get All Emails
-
-```bash
-curl http://localhost:1080/email
-```
-
-### Get Specific Email
-
-```bash
-curl http://localhost:1080/email/{id}
-```
-
-### Delete All Emails
-
-```bash
-curl -X DELETE http://localhost:1080/email/all
-```
-
-### Example: E2E Test
-
-This repo already has a Maildev REST API helper at `apps/web/e2e/helpers/maildev.ts` — use `clearInbox()`/`waitForEmail()` from there instead of reimplementing the polling/fetch logic:
-
-```typescript
-import { test, expect } from '@playwright/test';
-import { clearInbox, waitForEmail } from '../helpers/maildev';
-
-test('sends a verification email on sign-up', async ({ page }) => {
-  await clearInbox();
-
-  await page.goto('/auth/sign-up');
-  await page.fill('[name="email"]', 'test@example.com');
-  await page.fill('[name="password"]', 'password123');
-  await page.click('button[type="submit"]');
-
-  const email = await waitForEmail('test@example.com', {
-    subjectContains: 'verify',
-  });
-
-  expect(email.to[0].address).toBe('test@example.com');
-});
-```
-
-## Email Relay (Optional)
-
-Maildev can relay selected emails to a real SMTP server for testing:
-
-```bash
-docker run -p 1080:1080 -p 1025:1025 \
-  -e MAILDEV_OUTGOING_HOST=smtp.gmail.com \
-  -e MAILDEV_OUTGOING_PORT=587 \
-  -e MAILDEV_OUTGOING_USER=your-email@gmail.com \
-  -e MAILDEV_OUTGOING_PASS=your-app-password \
-  maildev/maildev
-```
-
-Then click "Relay" on any email in the web UI to send it to the real SMTP server.
-
-<Callout type="warn">
-  Only use relay for testing specific emails. Never relay sensitive or test data to real inboxes.
-</Callout>
-
-## Alternative: Ethereal Email
-
-If you prefer a cloud-based solution, [Ethereal](https://ethereal.email) is a free SMTP service for testing:
-
-```typescript
-import nodemailer from 'nodemailer';
-
-// Create test account
-const testAccount = await nodemailer.createTestAccount();
-
-// Configure transport
-const transporter = nodemailer.createTransport({
-  host: 'smtp.ethereal.email',
-  port: 587,
-  auth: {
-    user: testAccount.user,
-    pass: testAccount.pass,
-  },
-});
-
-// View emails at: https://ethereal.email
+curl http://localhost:1080/api/email
+curl -X DELETE http://localhost:1080/api/email/all
 ```
 
 <Callout type="info">
-  Ethereal requires internet access and creates temporary accounts. Maildev is recommended for offline development.
+  The Compose `web` service does not override `SMTP_HOST`. From the host, `localhost:1025` is correct. Inside another container on the Compose network, the hostname would be `maildev`.
 </Callout>
-
-## Troubleshooting
-
-### Port Already in Use
-
-```bash
-# Find process using port 1025
-lsof -i :1025
-
-# Kill the process
-kill -9 <PID>
-```
-
-### Emails Not Appearing
-
-1. Verify Maildev is running: `docker ps` or check http://localhost:1080
-2. Check your app is using port 1025: `EMAIL_PROVIDER=nodemailer SMTP_PORT=1025`
-3. Look for errors in your app logs
-
-### Connection Refused
-
-```bash
-# Check if Maildev is listening
-nc -zv localhost 1025
-
-# If using Docker, ensure ports are mapped
-docker port maildev
-```
-
-### Docker Network Issues
-
-If your app is also in Docker, use the service name instead of localhost:
-
-```yaml
-# docker-compose.yml
-services:
-  app:
-    environment:
-      - SMTP_HOST=maildev  # Use service name, not localhost
-      - SMTP_PORT=1025
-```

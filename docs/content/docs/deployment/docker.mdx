@@ -3,17 +3,21 @@ title: Deploy with Docker
 description: Build the web app (and optional customer docs) from the repo-root Dockerfiles
 ---
 
-Setup offers Docker as a third host (`scripts/hosts.ts` — "Docker / AWS / VPS"). There is no Compose production stack; you build the image and run it behind your own reverse proxy.
+Setup offers Docker as a third host (`scripts/hosts.ts` — "Docker / AWS / VPS").
+
+Compose files in this repo:
+
+| File | Role |
+|------|------|
+| `docker-compose.yml` | Local Postgres + MailDev (+ optional `web` for dev) |
+| `docker-compose.e2e.yml` | Playwright Postgres on **5433** + MailDev |
+| `docker-compose.prod.yml` | Exists, **unsupported** — incomplete (healthcheck/storage/env gaps). Do not follow it. |
+
+Build the image and run it behind your own reverse proxy.
 
 ## Web app
 
-`apps/web/Dockerfile` exists. Build from the **repo root** (the Dockerfile copies the monorepo, then `turbo prune app`):
-
-```bash
-docker build -f apps/web/Dockerfile .
-```
-
-Optional public build args (`NEXT_PUBLIC_*` are baked in at build time):
+Build from the **repo root**. `NEXT_PUBLIC_*` are baked in at `next build` and are **required** (`apps/web/lib/env.ts`). Host `.env` files are excluded by `.dockerignore` — they never enter the build context.
 
 ```bash
 docker build -f apps/web/Dockerfile \
@@ -23,13 +27,21 @@ docker build -f apps/web/Dockerfile \
   -t web:latest .
 ```
 
-Run (port 3000) with runtime env — `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL`, `EMAIL_PROVIDER`, `EMAIL_FROM` (plus provider creds), `STORAGE_PROVIDER` (plus S3 creds when `s3`), and Stripe keys. Put a reverse proxy (nginx/ALB) in front; the app reads client IPs from `cf-connecting-ip`, then `x-real-ip`, then `x-forwarded-for`. With no proxy, rate limiting collapses every visitor into one bucket.
+`next build` also validates server env. If the build fails on missing `DATABASE_URL` / `BETTER_AUTH_SECRET`, pass dummy build-time values for those (they are not the production secrets). Runtime secrets go in `docker run`.
 
-Then follow the [shared post-deploy configuration](/docs/deployment#shared-post-deploy-configuration) (schema push, Stripe webhook, OAuth callbacks) and the [verification checklist](/docs/deployment#verification-checklist). Do **not** run the dev seed against production; it wipes every table.
+```bash
+docker run -p 3000:3000 --env-file apps/web/.env.local web:latest
+```
+
+Runtime env: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `BETTER_AUTH_TRUSTED_ORIGINS`, `NEXT_PUBLIC_APP_URL`, `EMAIL_FROM` (plus provider creds), `STORAGE_PROVIDER` (plus S3 when `s3`), Stripe keys. `EMAIL_PROVIDER` is optional (auto-detect). Postgres is not in the app image.
+
+The app reads client IPs from `cf-connecting-ip`, then `x-real-ip`, then `x-forwarded-for`. Put a reverse proxy in front; without one, rate limiting collapses every visitor into one bucket.
+
+Then follow the [shared post-deploy configuration](/deployment#shared-post-deploy-configuration) and the [verification checklist](/deployment#verification-checklist). Do **not** run the dev seed against production.
 
 ## Customer docs (optional)
 
-`apps/docs/Dockerfile` builds the customer's Fumadocs app (`apps/docs`, port **3004**). Same repo-root pattern:
+`apps/docs/Dockerfile` builds the customer's Fumadocs app (`apps/docs`, port **3004**):
 
 ```bash
 docker build -f apps/docs/Dockerfile -t docs:latest .

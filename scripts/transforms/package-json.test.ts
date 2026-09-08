@@ -7,7 +7,7 @@ import {
 } from "./package-json";
 
 const appPkg = () => ({
-  name: "app",
+  name: "web",
   scripts: {
     dev: "next dev -p 3000",
     build: "next build",

@@ -9,10 +9,19 @@ import {
   UNLIMITED,
 } from "@repo/utils/payment";
 import { getPlanLimits } from "./plans";
-import type { UsageStats } from "./types";
 
-const STORAGE_GB_THRESHOLD = 1000; // MB threshold for displaying as GB
-const FRACTION_DIGITS = 1; // For storage formatting
+export interface UsageStats {
+  members: {
+    current: number;
+    limit: number;
+    percentage: number;
+  };
+  storage: {
+    currentMB: number;
+    limitMB: number;
+    percentage: number;
+  };
+}
 
 export function isSubscriptionActive(
   subscription: Subscription | null | undefined
@@ -90,16 +99,6 @@ export function calculateUsageStats(
             ),
     },
   };
-}
-
-export function formatStorage(mb: number): string {
-  if (mb === UNLIMITED) {
-    return "Unlimited";
-  }
-  if (mb >= STORAGE_GB_THRESHOLD) {
-    return `${(mb / STORAGE_GB_THRESHOLD).toFixed(FRACTION_DIGITS)} GB`;
-  }
-  return `${mb} MB`;
 }
 
 export function getStatusDisplayText(

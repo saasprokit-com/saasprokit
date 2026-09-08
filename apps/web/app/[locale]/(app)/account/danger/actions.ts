@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@repo/auth/server";
-import { createRequestLogger } from "@repo/logger/server";
+import { createRequestLogger } from "@repo/logger/log";
 import { headers } from "next/headers";
 import { toActionError } from "@/lib/auth/action-error";
 import type { ActionResult } from "@/lib/auth/auth";
@@ -17,7 +17,7 @@ import type { ActionResult } from "@/lib/auth/auth";
  *   owns an org with other members);
  * - deletes the user + sessions and clears the auth cookie server-side.
  * The Prisma schema cascade removes the remaining related rows (members,
- * invitations, 2FA, accounts, audit logs; files keep the row with a null owner).
+ * invitations, 2FA, accounts; files keep the row with a null owner).
  *
  * SECURITY: CSRF protection is enforced by Next.js via allowedOrigins validation on the Origin header
  */

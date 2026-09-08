@@ -39,7 +39,7 @@ services:
   # Web UI: http://localhost:1080
   # SMTP: localhost:1025
   maildev:
-    image: maildev/maildev:latest
+    image: maildev/maildev:3.0.0-rc.1
     container_name: maildev
     ports:
       - "1080:1080"  # Web UI
@@ -67,7 +67,7 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-    command: pnpm --filter app dev
+    command: pnpm --filter web dev
     env_file:
       - apps/web/.env.local
     environment:

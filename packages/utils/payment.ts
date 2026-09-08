@@ -48,7 +48,7 @@ export const UNLIMITED = -1;
 
 export const LIMITS = {
   FREE: {
-    MAX_MEMBERS: 1,
+    MAX_MEMBERS: 3,
     MAX_STORAGE_MB: 100, // 100 MB
   },
   PRO: {
@@ -60,6 +60,19 @@ export const LIMITS = {
     MAX_STORAGE_MB: 50_000, // 50 GB
   },
 } as const;
+
+const STORAGE_GB_THRESHOLD = 1000;
+const FRACTION_DIGITS = 1;
+
+export function formatStorage(mb: number): string {
+  if (mb === UNLIMITED) {
+    return "Unlimited";
+  }
+  if (mb >= STORAGE_GB_THRESHOLD) {
+    return `${(mb / STORAGE_GB_THRESHOLD).toFixed(FRACTION_DIGITS)} GB`;
+  }
+  return `${Math.round(mb)} MB`;
+}
 
 export const PLAN_ORDER: PlanName[] = [
   PLAN_NAMES.FREE,

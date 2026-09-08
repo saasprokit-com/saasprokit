@@ -28,13 +28,10 @@ it rather than creating a parallel location.
 | Path | Purpose |
 | --- | --- |
 | `lib/organization/queries.ts` | Org membership validation, org context/listing (`getActiveOrganization`, `validateOrganizationMembership`, `getUserOrganizations`, `getDefaultOrganization`). |
-| `lib/organization/personal-org.ts` | Personal-org creation + unique slug generation. |
-| `lib/files/queries.ts` | File upload validation + listing / lookup queries. |
-| `lib/files/actions.ts` | File mutation helpers (`server-only`, not a `"use server"` module). |
+| `lib/files/actions.ts` | `storeOrganizationLogo` (upload → `File` row → atomic logo swap → previous object deleted) and `deleteStoredObjects`. `server-only`, not a `"use server"` module. |
 | `lib/files/storage-quota.ts` | Per-org storage quota enforcement (coupled to plan limits via `lib/billing`). |
 | `lib/billing/subscription-queries.ts` | Subscription + usage queries feeding `@repo/auth` plan logic. **No `billing` action module — reads only.** |
 | `lib/billing/checkout-queries.ts` | `verifyCheckoutSession` — Stripe Checkout session verification (paid + owned by org) for the checkout success page. |
-| `lib/admin/audit.ts` | `AuditLog` write helpers for platform-admin mutations. |
 
 ## Map — `lib/` foundation & infrastructure
 
@@ -50,7 +47,7 @@ it rather than creating a parallel location.
 
 Schema: `packages/database/prisma/schema.prisma` — **16 models**: `User`, `Session`,
 `Account`, `Verification`, `TwoFactor`, `Organization`, `Member`, `Invitation`,
-`Subscription`, `InviteLink`, `File`, `AuditLog`, `WebhookEvent`, `Team`,
+`Subscription`, `InviteLink`, `File`, `WebhookEvent`, `Team`,
 `TeamMember`, `RateLimit`.
 
 1. Edit `schema.prisma`.
@@ -66,16 +63,16 @@ them.
 ## Gotchas
 
 - **`lib/` is not client-safe and not DB-free.** `lib/auth/` (`admin.ts`,
-  `rate-limit.ts`), `lib/billing/`, `lib/organization/`, `lib/files/`, and
-  `lib/admin/` run Prisma directly. The line between a *domain data-access* module
+  `rate-limit.ts`), `lib/billing/`, `lib/organization/`, and `lib/files/` run
+  Prisma directly. The line between a *domain data-access* module
   and a *foundation* module is organizational, not pure-vs-impure — never assume a
   `lib/` file is client-safe; check for the `import "server-only"` guard.
-- **`lib/files/actions.ts` and `lib/admin/audit.ts` are `server-only`, not
-  `"use server"` modules** — their first line is `import "server-only"`, so they hold
-  mutation *helpers*, not directly-callable Server Actions. Feature Server Actions
+- **`lib/files/actions.ts` is `server-only`, not a `"use server"` module** — its
+  first line is `import "server-only"`, so it holds mutation *helpers*, not
+  directly-callable Server Actions. Feature Server Actions
   live colocated with the feature (see `saasprokit:forms`).
 - **Only `organization` and `files` have both query and action modules; `billing` is
-  reads-only and `admin` is a single audit-write helper.** Add new domain folders
+  reads-only.** Add new domain folders
   under `lib/<domain>/` following the same `queries.ts`/`actions.ts` shape.
 
 See `saasprokit:auth`, `saasprokit:forms`, `saasprokit:tables`.

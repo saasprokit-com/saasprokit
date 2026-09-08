@@ -1,4 +1,5 @@
-import { clearInbox, isMaildevAvailable, waitForEmail } from "../helpers/maildev";
+import { postAuth } from "../helpers/auth-api";
+import { isMaildevAvailable, waitForEmail } from "../helpers/maildev";
 import { expect, localePath, test } from "../fixtures/fixtures";
 
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -20,16 +21,13 @@ test("Should receive a new verification email and see a success toast When resen
 
   const uniqueId = `verify-${Date.now()}`;
   const testEmail = `${uniqueId}@test.local`;
-  const signUpRes = await page.request.post("/api/auth/sign-up/email", {
-    data: {
-      email: testEmail,
-      password: "TestPassword123!",
-      name: "Verify E2E User",
-    },
+  const signUpRes = await postAuth(page.request, "/api/auth/sign-up/email", {
+    email: testEmail,
+    password: "TestPassword123!",
+    name: "Verify E2E User",
   });
   expect(signUpRes.ok()).toBeTruthy();
 
-  await clearInbox();
   await page.goto(
     localePath(`/auth/verify-email?email=${encodeURIComponent(testEmail)}`)
   );
@@ -37,11 +35,13 @@ test("Should receive a new verification email and see a success toast When resen
   const resendBtn = page.getByRole("button", {
     name: /resend verification email/i,
   });
+  const since = Date.now();
   await resendBtn.click();
 
   const email = await waitForEmail(testEmail, {
     subjectContains: "verif",
     timeout: 15_000,
+    since,
   });
   expect(email.to[0].address.toLowerCase()).toBe(testEmail.toLowerCase());
 

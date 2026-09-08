@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@repo/auth/server";
-import { createRequestLogger } from "@repo/logger/server";
+import { createRequestLogger } from "@repo/logger/log";
 import { headers } from "next/headers";
 import { actionError, toActionError } from "@/lib/auth/action-error";
 import { type FormState, fieldErrorsFrom } from "@/lib/forms";
@@ -50,10 +50,10 @@ export async function createOrganizationAction(
       return actionError("createOrganization");
     }
 
-    logger.info(
-      { slug: parsed.data.slug, orgId: result.id },
-      "Organization created"
-    );
+    logger.info("Organization created", {
+      slug: parsed.data.slug,
+      orgId: result.id,
+    });
 
     return { status: "success", data: { slug: parsed.data.slug } };
   } catch (error) {

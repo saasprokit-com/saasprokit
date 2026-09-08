@@ -28,11 +28,11 @@ page regardless of plan (see [Known Gaps](#known-gaps--notes) #1).
 ```bash
 # Start local infra (Postgres on 5433 + Maildev) and the app
 docker compose -f docker-compose.e2e.yml up -d
-pnpm --filter app dev            # or a production build, per playwright.config
+pnpm --filter web dev            # or a production build, per playwright.config
 
 # Run the payment specs (they belong to the `authenticated` project)
 cd apps/web
-pnpm --filter app test:e2e:app                    # --project=authenticated
+pnpm --filter web test:e2e:app                    # --project=authenticated
 npx playwright test e2e/payment/                  # same specs, direct
 npx playwright test e2e/payment/ --list           # list without running
 ```
@@ -364,9 +364,9 @@ Covers the canceled page and its retry navigation.
    server-side `guardDowngrade` in `changePlanAction` using real member/storage counts.
 
 3. **Webhook endpoint.** Point Stripe at `/api/auth/stripe/webhook` (the plugin's
-   catch-all mount) — **not** the stale `API_ROUTES.STRIPE_WEBHOOK = "/api/stripe/webhook"`
-   constant, which has no handler. The plugin is also **conditional**: without
-   `STRIPE_WEBHOOK_SECRET` the entire Stripe plugin is skipped and billing endpoints 404.
+   catch-all mount) — **not** `/api/stripe/webhook`. The plugin is also
+   **conditional**: without `STRIPE_WEBHOOK_SECRET` the entire Stripe plugin is
+   skipped and billing endpoints 404.
 
 4. **Success page trusts nothing from the URL.** `verifyCheckoutSession` re-checks
    the session with Stripe (`paid`/`complete`) and confirms an owning `Subscription`

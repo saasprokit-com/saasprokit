@@ -60,8 +60,8 @@ function generateUniqueFilename(
       RANDOM_SUBSTRING_START + RANDOM_SUBSTRING_LENGTH
     );
   const ext =
-    extname(originalFilename) ||
     MIME_TO_EXTENSION[mimeType as keyof typeof MIME_TO_EXTENSION] ||
+    extname(originalFilename) ||
     "";
   const baseName = originalFilename
     .replace(EXTENSION_REGEX, "")

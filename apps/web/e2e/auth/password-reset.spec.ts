@@ -1,5 +1,4 @@
 import {
-  clearInbox,
   isMaildevAvailable,
   waitForEmail,
   waitForEmailLink,
@@ -31,12 +30,12 @@ test.describe("Password Reset", () => {
     test.skip(!maildevUp, "Maildev is not available");
     await ensureVerifiedUser(page.request, TEST_CONFIG.user);
     await page.context().clearCookies();
-    await clearInbox();
 
     await page.goto(localePath("/auth/forgot-password"));
     await page
       .getByRole("textbox", { name: "Email" })
       .fill(TEST_CONFIG.user.email);
+    const since = Date.now();
     await page.getByRole("button", { name: /Send Reset Link/i }).click();
 
     await expect(
@@ -46,6 +45,7 @@ test.describe("Password Reset", () => {
     const email = await waitForEmail(TEST_CONFIG.user.email, {
       subjectContains: "reset",
       timeout: TEST_CONFIG.timeouts.navigation,
+      since,
     });
     expect(email.to[0].address.toLowerCase()).toBe(
       TEST_CONFIG.user.email.toLowerCase()
@@ -67,15 +67,16 @@ test.describe("Password Reset", () => {
     const { verified } = await ensureVerifiedUser(page.request, resetUser);
     expect(verified).toBe(true);
     await page.context().clearCookies();
-    await clearInbox();
 
     async function requestReset(email: string) {
       await page.goto(localePath("/auth/forgot-password"));
       await page.getByRole("textbox", { name: "Email" }).fill(email);
+      const since = Date.now();
       await page.getByRole("button", { name: /send reset link/i }).click();
       await expect(
         page.getByText(/check your email/i).first()
       ).toBeVisible({ timeout: TEST_CONFIG.timeouts.navigation });
+      return since;
     }
 
     async function completeReset(resetUrl: string, newPassword: string) {
@@ -104,22 +105,21 @@ test.describe("Password Reset", () => {
       });
     }
 
-    await requestReset(resetUser.email);
+    const resetSince = await requestReset(resetUser.email);
     const { url: resetUrl } = await waitForEmailLink(
       resetUser.email,
       "reset-password",
-      { subjectContains: "reset", timeout: 20_000 }
+      { subjectContains: "reset", timeout: 20_000, since: resetSince }
     );
     await completeReset(resetUrl, tempPassword);
     await verifySignIn(resetUser.email, tempPassword);
 
     await page.context().clearCookies();
-    await clearInbox();
-    await requestReset(resetUser.email);
+    const restoreSince = await requestReset(resetUser.email);
     const { url: restoreUrl } = await waitForEmailLink(
       resetUser.email,
       "reset-password",
-      { subjectContains: "reset", timeout: 20_000 }
+      { subjectContains: "reset", timeout: 20_000, since: restoreSince }
     );
     await completeReset(restoreUrl, resetUser.password);
     await verifySignIn(resetUser.email, resetUser.password);

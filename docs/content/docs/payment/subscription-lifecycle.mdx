@@ -11,11 +11,10 @@ that gate features by plan.
 
 ## The Subscription record
 
-The row shape is Prisma's `Subscription` model — import it from `@repo/database`, not
-from `@repo/auth/types`. `packages/auth/types.ts` holds related app types
-(`SubscriptionWithPlan`, `FeatureAccess`, `UsageStats`, `UpgradeOptions`,
-`CancelOptions`, `BillingPortalSession`); there is no hand-maintained `Subscription`
-interface or Zod `SubscriptionSchema`. The fields that drive the state model are:
+The row shape is Prisma's `Subscription` model — import it from `@repo/database`.
+`packages/auth/helpers.ts` holds the one related app type, `UsageStats`; there is no
+hand-maintained `Subscription` interface or Zod `SubscriptionSchema`. The fields that
+drive the state model are:
 
 - `plan` — one of `free`, `pro`, `enterprise`.
 - `status` — a nullable `SubscriptionStatus` string (see below).
@@ -207,10 +206,14 @@ resolves the effective plan via `getCurrentPlan` and computes member/storage usa
 percentages (treating `UNLIMITED` limits as `Infinity`, percentage `0`). The server query
 `getOrgUsageStats` feeds it real DB counts.
 
-`canOrgAddMember(organizationId)` (in `subscription-queries.ts`) gates seat additions: it
-sums current members **plus** pending invitations (both reserve seats) against
-`getPlanLimits(plan).maxMembers`, returning `{ allowed, reason?, remaining }`. A
-`maxMembers` of `-1` means unlimited.
+Seat limits are enforced by Better Auth, not by the web app. The organization plugin's
+`membershipLimit` callback (`packages/auth/membership-limit.ts`) resolves the org's
+current plan and returns `getPlanLimits(plan).maxMembers`; Better Auth compares it against
+the **current member count** when an invitation is accepted or a member is added, and
+rejects with `ORGANIZATION_MEMBERSHIP_LIMIT_REACHED` once the org is full. Pending
+invitations occupy no seat, so invitations can always be sent; a rejected invitation
+stays pending and can be accepted later once a seat frees up. A `maxMembers` of `-1`
+means unlimited.
 
 `canUserCreateOrg(userId)` gates organization creation: it counts the user's owned orgs
 and how many of them are on the free plan (only counting orgs with an `ACTIVE_STATUSES`
@@ -230,9 +233,9 @@ strings to UI text/colors. Of note for the state model: `incomplete_expired` dis
 
 - `packages/utils/payment.ts` — `SUBSCRIPTION_STATUS`, `ACTIVE_STATUSES`, `PLAN_NAMES`, `PLAN_ORDER`, `UNLIMITED`, `checkOrgCreationEligibility`.
 - `packages/database/prisma/schema.prisma` — `Subscription` model (`trialStart` / `trialEnd`, `cancelAt`, `cancelAtPeriodEnd`).
-- `packages/auth/types.ts` — `SubscriptionWithPlan`, `FeatureAccess`, `UsageStats` (import `Subscription` from `@repo/database`).
-- `packages/auth/helpers.ts` — `isSubscriptionActive`, `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getCurrentPlan`, `calculateUsageStats`, `getStatusDisplayText`, `getStatusColor`.
+- `packages/auth/helpers.ts` — `isSubscriptionActive`, `isSubscriptionPendingCancel`, `isAlreadyCancelingError`, `getCurrentPlan`, `calculateUsageStats`, `getStatusDisplayText`, `getStatusColor`, `UsageStats` (import `Subscription` from `@repo/database`).
 - `packages/auth/guards.ts` — `guardDowngrade`, `GuardResult`.
 - `packages/auth/plans.ts` — `PLANS`, `getPlanLimits`, `comparePlans`, `isPlanHigherTier`.
-- `apps/web/lib/billing/subscription-queries.ts` — `getActiveSubscription`, `getCurrentPlanForOrg`, `canOrgAddMember`, `canUserCreateOrg`, `getOrgUsageStats`.
+- `apps/web/lib/billing/subscription-queries.ts` — `getActiveSubscription`, `getCurrentPlanForOrg`, `canUserCreateOrg`, `getOrgUsageStats`.
+- `packages/auth/membership-limit.ts` — `getOrganizationMembershipLimit`, the Better Auth `membershipLimit` callback.
 - `apps/web/app/[locale]/(app)/[orgSlug]/billing/components/billing-actions.tsx` — pending-cancel UI and `cancelSubscriptionAction`.

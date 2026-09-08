@@ -20,7 +20,7 @@ pnpm --filter @repo/database db:seed   # wipes every table, then seeds admin@exa
 
 # Development
 pnpm dev                      # All apps except kit-docs
-pnpm --filter app dev         # Main app only (port 3000)
+pnpm --filter web dev         # Main app only (port 3000)
 pnpm --filter docs dev        # Customer's product docs, empty Fumadocs starter (port 3004)
 pnpm --filter storybook dev   # Component library (port 6006)
 pnpm --filter email dev       # Email preview (port 3003)
@@ -31,30 +31,30 @@ pnpm kit-docs:dev             # SaaSProKit's own documentation (port 3006)
 pnpm build                    # All apps and packages (excludes kit-docs)
 pnpm check                    # Lint via ultracite + Biome
 pnpm fix                      # Auto-fix lint issues
-pnpm --filter app typecheck   # Type check web app
+pnpm --filter web typecheck   # Type check web app
 
 # Testing (details: saasprokit:testing)
-pnpm test                     # Unit tests via turbo (app, @repo/auth, @repo/database)
-pnpm --filter app test:e2e    # Playwright E2E
+pnpm test                     # Unit tests via turbo (web, @repo/auth, @repo/database)
+pnpm --filter web test:e2e    # Playwright E2E
 ```
 
 Optional: `pnpm skills:install` restores third-party skills into `.agents/skills/` (needs `git`; not part of `pnpm install`).
 
 ## Monorepo Structure
 
-**Apps** (independently deployable): `web` (main SaaS app, port 3000, package name `app`), `docs` (customer's Fumadocs, 3004), `email` (React Email previews, 3003), `storybook` (design system, 6006), `studio` (Prisma Studio, 3005).
+**Apps** (independently deployable): `web` (main SaaS app, port 3000), `docs` (customer's Fumadocs, 3004), `email` (React Email previews, 3003), `storybook` (design system, 6006), `studio` (Prisma Studio, 3005).
 
 `apps/docs` ships as an **empty** Fumadocs starter — it is the customer's product documentation, not ours. SaaSProKit's own documentation is the root **`docs/`** folder (workspace package `kit-docs`, port 3006), excluded from the default `pnpm dev` / `pnpm build` fan-out. `pnpm setup` initializes `apps/docs` alongside `apps/web`, then deletes `docs/` and every reference to it (workspace entry, `kit-docs:*` scripts, the `--filter=!kit-docs` guards, the dev Dockerfile COPY, the Biome exclude, the README tree line, the VS Code launch config, and kit-docs mentions in CLAUDE.md / AGENTS.md / env-setup) — the customer's clone keeps none of our documentation.
 
 **Core packages**: `@repo/auth` (Better Auth, dual RBAC, Stripe billing + plans), `@repo/database` (Prisma), `@repo/design-system` (shadcn/ui + Radix), `@repo/email` (React Email + Resend).
 
-**Supporting packages**: `@repo/utils`, `@repo/logger` (Pino, `/server` + `/client` exports), `@repo/internationalization`, `@repo/seo`, `@repo/storage`, `@repo/typescript-config`.
+**Supporting packages**: `@repo/utils`, `@repo/logger` (console-backed, single `/log` export), `@repo/internationalization`, `@repo/seo`, `@repo/storage`, `@repo/typescript-config`.
 
 ## SaaSProKit Skills (read before working in these areas)
 
 Architecture docs live as skills in the `saasprokit` plugin at `saasprokit-skills/skills/*/SKILL.md`. Once the plugin is installed they are invocable as `/saasprokit:<name>`; either way, read the relevant SKILL.md **before** writing code in its area:
 
-- `saasprokit:auth` — Better Auth, dual admin + org RBAC, session helpers (`getServerSession`, `requireAuth`, `hasOrgPermission`), org-slug access (`getActiveOrganization`), server-action auth (`verifySession`, `toActionError`), platform `/admin` gates
+- `saasprokit:auth` — Better Auth, dual admin + org RBAC, session helpers (`getServerSession`, `requireAuth`, `hasOrgPermission`), org-slug access (`getActiveOrganization`), server-action auth (`verifySession`, `toActionError`), which org mutations delegate to Better Auth (members, roles, seat limits), platform `/admin` gates
 - `saasprokit:routing` — Route groups, edge `apps/web/middleware.ts`, centralized routes (`@/lib/routes`), locale handling
 - `saasprokit:data-access` — unified `lib/` server-side data layer in `apps/web` (domain queries/actions + foundation), Prisma workflow
 - `saasprokit:forms` — Recipe A (RHF + `useActionState` + typed values), Recipe B (`<form action>`), `useTransition` for non-forms; one zod schema on client and server
