@@ -18,6 +18,8 @@ export type BillingInterval =
 
 export interface PlanLimits {
   advancedAnalytics: boolean;
+  maxAiImagesPerMonth: number;
+  maxAiTokensPerMonth: number;
   maxMembers: number;
   maxStorageMB: number;
   prioritySupport: boolean;
@@ -50,14 +52,20 @@ export const LIMITS = {
   FREE: {
     MAX_MEMBERS: 3,
     MAX_STORAGE_MB: 100, // 100 MB
+    MAX_AI_TOKENS_PER_MONTH: 50_000,
+    MAX_AI_IMAGES_PER_MONTH: 10,
   },
   PRO: {
     MAX_MEMBERS: 10,
     MAX_STORAGE_MB: 5000, // 5 GB
+    MAX_AI_TOKENS_PER_MONTH: 1_000_000,
+    MAX_AI_IMAGES_PER_MONTH: 200,
   },
   ENTERPRISE: {
     MAX_MEMBERS: 50,
     MAX_STORAGE_MB: 50_000, // 50 GB
+    MAX_AI_TOKENS_PER_MONTH: 10_000_000,
+    MAX_AI_IMAGES_PER_MONTH: 2000,
   },
 } as const;
 

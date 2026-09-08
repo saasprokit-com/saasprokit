@@ -23,9 +23,16 @@ describe("orgRoutes", () => {
     );
   });
 
+  it("builds AI chat paths", () => {
+    expect(orgRoutes.ai("acme")).toBe("/acme/ai");
+    expect(orgRoutes.aiConversation("acme", "c_1")).toBe("/acme/ai/c_1");
+  });
+
   it("never produces double slashes", () => {
-    for (const build of Object.values(orgRoutes)) {
-      expect(build("acme")).not.toMatch(/\/\//);
+    for (const build of Object.values(orgRoutes) as Array<
+      (...args: string[]) => string
+    >) {
+      expect(build("acme", "c_1")).not.toMatch(/\/\//);
     }
   });
 });

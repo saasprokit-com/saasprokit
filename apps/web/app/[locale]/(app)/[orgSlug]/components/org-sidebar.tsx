@@ -21,6 +21,7 @@ import {
   Link,
   Mail,
   Settings,
+  Sparkles,
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -63,6 +64,11 @@ export function OrgSidebar({
           title: "Dashboard",
           url: orgRoutes.home(orgSlug),
           icon: LayoutDashboard,
+        },
+        {
+          title: "AI Chat",
+          url: orgRoutes.ai(orgSlug),
+          icon: Sparkles,
         },
       ],
     },

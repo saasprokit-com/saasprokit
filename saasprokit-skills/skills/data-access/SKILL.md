@@ -32,6 +32,9 @@ it rather than creating a parallel location.
 | `lib/files/storage-quota.ts` | Per-org storage quota enforcement (coupled to plan limits via `lib/billing`). |
 | `lib/billing/subscription-queries.ts` | Subscription + usage queries feeding `@repo/auth` plan logic. **No `billing` action module — reads only.** |
 | `lib/billing/checkout-queries.ts` | `verifyCheckoutSession` — Stripe Checkout session verification (paid + owned by org) for the checkout success page. |
+| `lib/ai/models.ts` | Client-safe chat model catalog, fixed image model id, chat request schema. |
+| `lib/ai/registry.ts` | Vercel AI SDK provider registry; `isConfigured` / `availableChatModels` hide providers without a key. |
+| `lib/ai/queries.ts`, `lib/ai/actions.ts` | Conversation/message reads, monthly usage vs plan quota, mutation helpers (`server-only`). |
 
 ## Map — `lib/` foundation & infrastructure
 
@@ -45,10 +48,10 @@ it rather than creating a parallel location.
 
 ## Prisma workflow
 
-Schema: `packages/database/prisma/schema.prisma` — **16 models**: `User`, `Session`,
+Schema: `packages/database/prisma/schema.prisma` — **19 models**: `User`, `Session`,
 `Account`, `Verification`, `TwoFactor`, `Organization`, `Member`, `Invitation`,
 `Subscription`, `InviteLink`, `File`, `WebhookEvent`, `Team`,
-`TeamMember`, `RateLimit`.
+`TeamMember`, `RateLimit`, `AiConversation`, `AiMessage`, `AiUsage`.
 
 1. Edit `schema.prisma`.
 2. Run `pnpm migrate` — `prisma format && prisma generate && prisma db push`. This
@@ -71,7 +74,7 @@ them.
   first line is `import "server-only"`, so it holds mutation *helpers*, not
   directly-callable Server Actions. Feature Server Actions
   live colocated with the feature (see `saasprokit:forms`).
-- **Only `organization` and `files` have both query and action modules; `billing` is
+- **Only `organization`, `files` and `ai` have both query and action modules; `billing` is
   reads-only.** Add new domain folders
   under `lib/<domain>/` following the same `queries.ts`/`actions.ts` shape.
 

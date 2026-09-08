@@ -17,7 +17,7 @@ file (`apps/web/lib/routes.ts`); import them, never hardcode.
 
 - **`(app)`** — authenticated app; own `layout.tsx`/`loading.tsx`/`not-found.tsx`:
   - `[orgSlug]/` — org-scoped: index, `billing`, `members` (+ `members/invitations`,
-    `members/invite-links`), `settings`, `checkout/success`, `checkout/canceled`
+    `members/invite-links`), `settings`, `ai` (+ `ai/[conversationId]`), `checkout/success`, `checkout/canceled`
   - `account/` — `profile`, `security`, `danger`, `new-org`
   - `admin/` — platform admin: index, `users` (+ `users/[userId]`), `organizations`
     (+ `organizations/[orgId]`)
@@ -36,7 +36,8 @@ indistinguishable from a real `/acme` at the edge without a DB lookup — hence
 default-deny.
 
 **API** (`app/api/`, all bypass the middleware matcher): `auth/[...all]` (Better
-Auth handler, incl. the Stripe webhook via `@better-auth/stripe`), `health`.
+Auth handler, incl. the Stripe webhook via `@better-auth/stripe`), `health`,
+`ai/chat` (streaming, session-gated like every `/api` route).
 
 ## Edge middleware — `apps/web/middleware.ts`
 
